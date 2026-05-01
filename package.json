@@ -1,0 +1,29 @@
+{
+  "name": "unspeakable-world",
+  "private": true,
+  "version": "0.0.0",
+  "description": "The first emotionally legible front-end to the entire Virtual Observatory.",
+  "license": "MIT",
+  "author": "Stephane Boghossian",
+  "homepage": "https://space.dashable.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sboghossian/unspeakable-world"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.0",
+    "typescript": "^5.7.0",
+    "@types/node": "^22.10.0"
+  },
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=20"
+  }
+}
