@@ -20,6 +20,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@hscmap/healpix':
+        specifier: ^1.4.12
+        version: 1.4.12
       react:
         specifier: ^19.0.0
         version: 19.2.5
@@ -305,6 +308,9 @@ packages:
     engines: {node: '>=18'}
     cpu: [x64]
     os: [win32]
+
+  '@hscmap/healpix@1.4.12':
+    resolution: {integrity: sha512-PR5PEHfvDYUxG73SCDLWJySfff7Bvn0tdKWj53YjFH6R37n3DuyeteeJfZYMGIsXQwOHbFIxJbS8DQVkC7Qskg==}
 
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
@@ -1208,6 +1214,8 @@ snapshots:
 
   '@esbuild/win32-x64@0.25.12':
     optional: true
+
+  '@hscmap/healpix@1.4.12': {}
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:

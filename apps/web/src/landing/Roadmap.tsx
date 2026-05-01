@@ -10,13 +10,13 @@ const PHASES: Phase[] = [
     day: "Day 1",
     title: "Foundation",
     detail: "Public repo · landing live · Cloudflare tunnel · MIT license",
-    status: "now",
+    status: "ship",
   },
   {
     day: "Day 2-3",
     title: "HEALPix Toy",
     detail: "Real DSS2 sky tiles streaming onto a 3D sphere · Voyager camera",
-    status: "next",
+    status: "now",
   },
   {
     day: "Day 4",

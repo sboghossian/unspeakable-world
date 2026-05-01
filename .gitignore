@@ -18,3 +18,4 @@ pkg
 *.tsbuildinfo
 coverage
 .vite
+.gstack/
