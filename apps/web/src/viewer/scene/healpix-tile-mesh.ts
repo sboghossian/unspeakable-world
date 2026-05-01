@@ -32,8 +32,10 @@ export type TileMesh = {
   ipix: number;
   order: number;
   mesh: Mesh;
-  /** Resolves once texture has been loaded once (mesh becomes visible). */
+  /** Resolves once the texture-load attempt finishes (success or error). */
   ready: Promise<void>;
+  /** True after texture is bound to the material. */
+  loaded: boolean;
 };
 
 export function buildTile(
@@ -58,11 +60,20 @@ export function buildTile(
   // Inside-out rendering: backface is what we see.
   mat.side = 2 as 0 | 1 | 2; // THREE.BackSide
 
-  const ready = loadTile(survey, order, ipix)
+  const tile: TileMesh = {
+    ipix,
+    order,
+    mesh,
+    loaded: false,
+    ready: Promise.resolve(),
+  };
+
+  tile.ready = loadTile(survey, order, ipix)
     .then((tex) => {
       mat.map = tex;
       mat.color.set(0xffffff);
       mat.needsUpdate = true;
+      tile.loaded = true;
     })
     .catch((err) => {
       console.warn(
@@ -71,7 +82,7 @@ export function buildTile(
       );
     });
 
-  return { ipix, order, mesh, ready };
+  return tile;
 }
 
 function buildTileGeometry(nside: number, ipix: number): BufferGeometry {

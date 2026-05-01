@@ -1,15 +1,35 @@
-import { PerspectiveCamera, Scene, WebGLRenderer } from "three";
+import { PerspectiveCamera, Scene, Vector3, WebGLRenderer } from "three";
 import { SURVEYS } from "../hips/surveys";
 import { HipsSphere } from "./hips-sphere";
 import { VoyagerControls } from "./voyager-controls";
 
 /**
+ * Observable view-state the UI can subscribe to (loading veil, log-scale chip,
+ * etc). One tiny pub-sub, no Zustand inside the renderer — the renderer is
+ * framework-agnostic and the React layer adapts on top.
+ */
+export type ViewerState = {
+  /** Number of base (Norder 0) HiPS tiles that have finished their first fetch. */
+  baseTilesLoaded: number;
+  /** Total expected base tiles (always 12 for HEALPix). */
+  baseTilesTotal: number;
+  /** Number of higher-order detail tiles currently mounted in the scene. */
+  detailTiles: number;
+  /** Current camera field of view in degrees. */
+  fov: number;
+  /** Camera forward vector in equatorial-cartesian coords. */
+  forward: { x: number; y: number; z: number };
+};
+
+type Listener = (s: ViewerState) => void;
+
+/**
  * Top-level Three.js scene for the viewer.
  *
- * Render-on-demand: we only run a frame when the camera changed since last
- * draw, or when a tile texture finished loading. Pauses entirely when the
- * tab is hidden. This is mandatory — continuous rAF on a Three.js scene
- * burns 10-25% mobile battery per 5 minutes (per our Day 0 research).
+ * Render-on-demand: only run a frame when the camera changed since last draw,
+ * or when a tile texture finished loading. Pauses entirely when the tab is
+ * hidden. Continuous rAF on a Three.js scene burns 10-25% mobile battery per
+ * 5 minutes (per Day 0 research).
  */
 export class ViewerScene {
   private renderer: WebGLRenderer;
@@ -22,6 +42,12 @@ export class ViewerScene {
   private rafHandle = 0;
   private resizeObs: ResizeObserver | null = null;
   private disposed = false;
+  private lodPending = false;
+  private lodTimer = 0;
+
+  private state: ViewerState;
+  private listeners = new Set<Listener>();
+  private fwd = new Vector3();
 
   constructor(readonly canvas: HTMLCanvasElement) {
     this.renderer = new WebGLRenderer({
@@ -41,29 +67,115 @@ export class ViewerScene {
     this.scene.add(this.sphere.group);
 
     this.controls = new VoyagerControls(this.camera, canvas);
-    // Mark dirty whenever the user interacts with the controls.
-    canvas.addEventListener("pointermove", this.markDirty);
-    canvas.addEventListener("wheel", this.markDirty, { passive: true });
-    canvas.addEventListener("pointerdown", this.markDirty);
+    this.controls.onChange = () => {
+      this.dirty = true;
+      this.publishState();
+      this.scheduleLODUpdate();
+    };
 
-    // Re-render when each base tile lands.
+    // Wire each base tile's load → dirty + state update.
     for (const t of this.sphere.tiles) {
-      t.ready.finally(() => this.markDirty());
+      t.ready.finally(() => {
+        this.dirty = true;
+        this.state = {
+          ...this.state,
+          baseTilesLoaded: this.sphere.tiles.filter((tile) => tile.loaded)
+            .length,
+        };
+        this.emit();
+      });
     }
 
     this.resizeObs = new ResizeObserver(() => this.handleResize());
     this.resizeObs.observe(canvas);
     this.handleResize();
 
+    this.state = {
+      baseTilesLoaded: 0,
+      baseTilesTotal: this.sphere.tiles.length,
+      detailTiles: 0,
+      fov: this.camera.fov,
+      forward: { x: 0, y: 0, z: -1 },
+    };
+
     this.tick();
+    this.scheduleLODUpdate();
   }
 
-  private markDirty = (): void => {
-    this.dirty = true;
-  };
+  /**
+   * Debounced LOD pass. We coalesce camera-change firings to ~50 ms so a fast
+   * drag doesn't kick off a fetch storm — only the *resting* frustum decides
+   * which tiles get pulled.
+   */
+  private scheduleLODUpdate(): void {
+    if (this.lodPending) return;
+    this.lodPending = true;
+    window.clearTimeout(this.lodTimer);
+    this.lodTimer = window.setTimeout(() => {
+      this.lodPending = false;
+      if (this.disposed) return;
+      this.camera.getWorldDirection(this.fwd);
+      const changed = this.sphere.updateLOD(this.fwd, this.camera.fov);
+      if (changed) {
+        this.dirty = true;
+        // Tile-load events from new detail tiles will mark dirty again.
+        for (const t of this.sphere.tilesAll()) {
+          if (!t.loaded) {
+            void t.ready.finally(() => {
+              this.dirty = true;
+            });
+          }
+        }
+      }
+    }, 80);
+  }
+
+  private publishState(): void {
+    this.camera.getWorldDirection(this.fwd);
+    this.state = {
+      ...this.state,
+      fov: this.camera.fov,
+      forward: { x: this.fwd.x, y: this.fwd.y, z: this.fwd.z },
+      detailTiles: this.sphere.detailCount(),
+    };
+    this.emit();
+  }
+
+  private emit(): void {
+    for (const l of this.listeners) l(this.state);
+  }
+
+  subscribe(listener: Listener): () => void {
+    this.listeners.add(listener);
+    listener(this.state);
+    return () => this.listeners.delete(listener);
+  }
+
+  /** Smooth-fly the camera so its forward points at the given world direction. */
+  flyTo(direction: Vector3, durationMs = 1200): void {
+    const target = direction.clone().normalize();
+    const start = new Vector3();
+    this.camera.getWorldDirection(start);
+    const startTime = performance.now();
+    const ease = (t: number) => 1 - Math.pow(1 - t, 3); // easeOutCubic
+
+    const step = () => {
+      if (this.disposed) return;
+      const t = Math.min(1, (performance.now() - startTime) / durationMs);
+      const k = ease(t);
+      const interp = start.clone().lerp(target, k).normalize();
+      this.controls.setForward(interp);
+      this.dirty = true;
+      this.publishState();
+      if (t < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
 
   private tick = (): void => {
     if (this.disposed) return;
+    this.controls.tickInertia(); // mark dirty if drifting
+    if (this.controls.drifting) this.dirty = true;
     if (this.dirty) {
       this.renderer.render(this.scene, this.camera);
       this.dirty = false;
@@ -78,18 +190,17 @@ export class ViewerScene {
     this.renderer.setSize(w, h, false);
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
-    this.markDirty();
+    this.dirty = true;
   }
 
   dispose(): void {
     this.disposed = true;
     cancelAnimationFrame(this.rafHandle);
+    window.clearTimeout(this.lodTimer);
     this.resizeObs?.disconnect();
     this.controls.dispose();
-    this.canvas.removeEventListener("pointermove", this.markDirty);
-    this.canvas.removeEventListener("wheel", this.markDirty);
-    this.canvas.removeEventListener("pointerdown", this.markDirty);
     this.sphere.dispose();
     this.renderer.dispose();
+    this.listeners.clear();
   }
 }

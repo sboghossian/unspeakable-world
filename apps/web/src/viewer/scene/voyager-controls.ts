@@ -1,35 +1,42 @@
-import { MathUtils, PerspectiveCamera, Vector2 } from "three";
+import { MathUtils, PerspectiveCamera, Vector2, Vector3 } from "three";
 
 /**
- * Voyager camera, Day 2 cut.
+ * Voyager camera, Day 3 cut.
  *
- * The camera sits at the origin (we are inside the celestial sphere, looking
- * outward). Drag rotates the look direction (yaw + pitch). Wheel/pinch zooms
- * the FOV (logarithmic) — that is the 6DOF-friendly alternative to dolly.
+ * Camera sits at origin (we're inside the celestial sphere looking outward).
+ * - One-finger drag / left-click drag → yaw + pitch
+ * - Two-finger pinch → zoom FOV (logarithmic)
+ * - Wheel → zoom FOV (logarithmic)
+ * - Damped inertia after release
+ * - `setForward(dir)` for tap-to-fly programmatic camera moves
  *
- * Day 3 adds:
- * - touch pinch zoom + two-finger pan
- * - tap-to-fly with eased Catmull-Rom path
- * - log-scale chip readout
- * - inertial damping
+ * Day 3+ TODO: tilt-to-look on mobile (DeviceOrientation), velocity tap-fly.
  */
 
 const MIN_FOV = 6;
 const MAX_FOV = 100;
 const ROT_SPEED = 0.0035;
 const ZOOM_SPEED = 0.06;
+const INERTIA_DAMPING = 0.92;
+const INERTIA_THRESHOLD = 0.00005;
+const PINCH_STEP = 0.3;
 
 export class VoyagerControls {
-  /** Yaw around world Y (radians). */
   yaw = 0;
-  /** Pitch around local X (radians). Clamped to ±89° to avoid gimbal flip. */
   pitch = 0;
-  /** Field of view (degrees). */
   fov = 60;
+  drifting = false;
 
-  private dragging = false;
-  private last = new Vector2();
+  /** Called when the camera state changes (drag, wheel, pinch, programmatic). */
+  onChange: (() => void) | null = null;
+
   private active = true;
+  private dragging = false;
+  private pointers = new Map<number, { x: number; y: number }>();
+  private last = new Vector2();
+  private velYaw = 0;
+  private velPitch = 0;
+  private lastPinchDist = 0;
 
   constructor(
     readonly camera: PerspectiveCamera,
@@ -37,6 +44,46 @@ export class VoyagerControls {
   ) {
     this.bind();
     this.applyToCamera();
+  }
+
+  setForward(dir: Vector3): void {
+    // Convert the unit forward vector to YXZ Euler so we keep our (yaw, pitch).
+    // forward = (sin(yaw)*cos(pitch), sin(pitch), -cos(yaw)*cos(pitch))   [YXZ, no roll]
+    const v = dir.clone().normalize();
+    this.pitch = Math.asin(MathUtils.clamp(v.y, -1, 1));
+    this.yaw = Math.atan2(v.x, -v.z);
+    this.velYaw = 0;
+    this.velPitch = 0;
+    this.applyToCamera();
+    this.onChange?.();
+  }
+
+  /** Called once per frame by the scene. Drives inertial drift. */
+  tickInertia(): void {
+    if (!this.active) return;
+    if (this.dragging) {
+      this.drifting = false;
+      return;
+    }
+    if (
+      Math.abs(this.velYaw) < INERTIA_THRESHOLD &&
+      Math.abs(this.velPitch) < INERTIA_THRESHOLD
+    ) {
+      this.drifting = false;
+      return;
+    }
+    this.drifting = true;
+    this.yaw += this.velYaw;
+    this.pitch += this.velPitch;
+    this.pitch = MathUtils.clamp(
+      this.pitch,
+      -Math.PI / 2 + 0.01,
+      Math.PI / 2 - 0.01,
+    );
+    this.velYaw *= INERTIA_DAMPING;
+    this.velPitch *= INERTIA_DAMPING;
+    this.applyToCamera();
+    this.onChange?.();
   }
 
   private bind(): void {
@@ -60,54 +107,96 @@ export class VoyagerControls {
 
   private onDown = (e: PointerEvent): void => {
     if (!this.active) return;
-    this.dragging = true;
-    this.last.set(e.clientX, e.clientY);
+    this.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     this.element.setPointerCapture(e.pointerId);
+    this.dragging = true;
+    this.velYaw = 0;
+    this.velPitch = 0;
+
+    if (this.pointers.size === 1) {
+      this.last.set(e.clientX, e.clientY);
+    } else if (this.pointers.size === 2) {
+      this.lastPinchDist = this.pinchDistance();
+    }
   };
 
   private onMove = (e: PointerEvent): void => {
     if (!this.dragging) return;
-    const dx = e.clientX - this.last.x;
-    const dy = e.clientY - this.last.y;
-    this.last.set(e.clientX, e.clientY);
-    // Drag-rate scales with FOV — higher zoom = slower pixel movement
-    const k = ROT_SPEED * (this.fov / 60);
-    this.yaw -= dx * k;
-    this.pitch -= dy * k;
-    this.pitch = MathUtils.clamp(
-      this.pitch,
-      -Math.PI / 2 + 0.01,
-      Math.PI / 2 - 0.01,
-    );
-    this.applyToCamera();
+    const p = this.pointers.get(e.pointerId);
+    if (!p) return;
+    p.x = e.clientX;
+    p.y = e.clientY;
+
+    if (this.pointers.size === 1) {
+      const dx = e.clientX - this.last.x;
+      const dy = e.clientY - this.last.y;
+      this.last.set(e.clientX, e.clientY);
+      const k = ROT_SPEED * (this.fov / 60);
+      const dyaw = -dx * k;
+      const dpitch = -dy * k;
+      this.yaw += dyaw;
+      this.pitch += dpitch;
+      this.pitch = MathUtils.clamp(
+        this.pitch,
+        -Math.PI / 2 + 0.01,
+        Math.PI / 2 - 0.01,
+      );
+      // Track velocity for post-release inertia.
+      this.velYaw = dyaw * 0.4;
+      this.velPitch = dpitch * 0.4;
+      this.applyToCamera();
+      this.onChange?.();
+    } else if (this.pointers.size === 2) {
+      const d = this.pinchDistance();
+      if (this.lastPinchDist > 0) {
+        const ratio = d / this.lastPinchDist;
+        // Pinch out (ratio > 1) zooms in (smaller FOV)
+        this.fov = MathUtils.clamp(
+          this.fov / Math.pow(ratio, PINCH_STEP * 4),
+          MIN_FOV,
+          MAX_FOV,
+        );
+        this.applyToCamera();
+        this.onChange?.();
+      }
+      this.lastPinchDist = d;
+    }
   };
 
   private onUp = (e: PointerEvent): void => {
-    if (!this.dragging) return;
-    this.dragging = false;
+    this.pointers.delete(e.pointerId);
     if (this.element.hasPointerCapture(e.pointerId)) {
       this.element.releasePointerCapture(e.pointerId);
     }
+    if (this.pointers.size === 0) {
+      this.dragging = false;
+    }
+    this.lastPinchDist = 0;
   };
 
   private onWheel = (e: WheelEvent): void => {
     e.preventDefault();
     const dir = Math.sign(e.deltaY);
-    // Logarithmic FOV step
     this.fov = MathUtils.clamp(
       this.fov * (1 + dir * ZOOM_SPEED),
       MIN_FOV,
       MAX_FOV,
     );
     this.applyToCamera();
+    this.onChange?.();
   };
+
+  private pinchDistance(): number {
+    const pts = [...this.pointers.values()];
+    if (pts.length < 2) return 0;
+    const a = pts[0]!;
+    const b = pts[1]!;
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  }
 
   private applyToCamera(): void {
     this.camera.fov = this.fov;
     this.camera.updateProjectionMatrix();
-    // Rotate the camera by yaw (world Y) then pitch (local X). Order matters:
-    // we set Euler in YXZ order so yaw applies first, then pitch on the new
-    // local X axis, then no roll.
     this.camera.rotation.set(this.pitch, this.yaw, 0, "YXZ");
   }
 }
