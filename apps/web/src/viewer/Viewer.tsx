@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Vector3 } from "three";
-import { ViewerScene, type ViewerState } from "./scene/scene";
-import { navigate } from "../router";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Vector3 } from 'three';
+import { ViewerScene, type ViewerState } from './scene/scene';
+import { navigate } from '../router';
+import { TimeStrip } from './ui/TimeStrip';
 
 type SceneStatus = "init" | "live" | "unsupported" | "error";
 
@@ -18,6 +19,10 @@ const DEFAULT_STATE: ViewerState = {
   baseTilesLoaded: 0,
   baseTilesTotal: 12,
   detailTiles: 0,
+  starCount: 0,
+  time: new Date(),
+  playing: false,
+  timeRate: 1,
   fov: 60,
   forward: { x: 0, y: 0, z: -1 },
 };
@@ -102,13 +107,16 @@ export function Viewer() {
         </div>
       </div>
 
-      {/* Bottom bar */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-end justify-between gap-2 p-4">
+      {/* Bottom bar (chips + warnings) */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-20 z-10 flex items-end justify-between gap-2 p-4">
         <div className="pointer-events-auto flex flex-wrap items-center gap-2">
           <Chip label="FOV" value={`${state.fov.toFixed(1)}°`} />
           <Chip label="zoom" value={fovToZoomLabel(state.fov)} />
           {state.detailTiles > 0 && (
             <Chip label="detail" value={`+${state.detailTiles} tiles`} accent />
+          )}
+          {state.starCount > 0 && (
+            <Chip label="HYG" value={`${state.starCount.toLocaleString()} stars`} />
           )}
         </div>
 
@@ -116,6 +124,20 @@ export function Viewer() {
           ⚠ polar seam crack at lat ±41.81° — Day 3+ work
         </div>
       </div>
+
+      {/* Time strip (very bottom, centered) */}
+      {status === 'live' && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex justify-center px-2">
+          <TimeStrip
+            time={state.time}
+            playing={state.playing}
+            rate={state.timeRate}
+            onPlayToggle={() => sceneRef.current?.setPlaying(!state.playing)}
+            onRateChange={(r) => sceneRef.current?.setTimeRate(r)}
+            onTimeChange={(t) => sceneRef.current?.setTime(t)}
+          />
+        </div>
+      )}
 
       {/* Hint (top-center) */}
       {status === "live" && (

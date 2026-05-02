@@ -1,7 +1,9 @@
-import { PerspectiveCamera, Scene, Vector3, WebGLRenderer } from "three";
-import { SURVEYS } from "../hips/surveys";
-import { HipsSphere } from "./hips-sphere";
-import { VoyagerControls } from "./voyager-controls";
+import { PerspectiveCamera, Scene, Vector3, WebGLRenderer } from 'three';
+import { SURVEYS } from '../hips/surveys';
+import { HipsSphere } from './hips-sphere';
+import { StarField } from '../stars/star-field';
+import { SolarSystem } from '../solar/solar-system';
+import { VoyagerControls } from './voyager-controls';
 
 /**
  * Observable view-state the UI can subscribe to (loading veil, log-scale chip,
@@ -15,6 +17,14 @@ export type ViewerState = {
   baseTilesTotal: number;
   /** Number of higher-order detail tiles currently mounted in the scene. */
   detailTiles: number;
+  /** Number of stars in the bright-star catalog (0 until catalog loads). */
+  starCount: number;
+  /** Simulation time. The clock the renderer is using for ephemerides. */
+  time: Date;
+  /** True when the time clock is auto-advancing. */
+  playing: boolean;
+  /** Time speed multiplier (1 = real-time, 60 = 1 min/sec, etc). */
+  timeRate: number;
   /** Current camera field of view in degrees. */
   fov: number;
   /** Camera forward vector in equatorial-cartesian coords. */
@@ -36,6 +46,8 @@ export class ViewerScene {
   private camera: PerspectiveCamera;
   private scene = new Scene();
   private sphere: HipsSphere;
+  private stars: StarField;
+  private solar: SolarSystem;
   private controls: VoyagerControls;
 
   private dirty = true;
@@ -44,6 +56,11 @@ export class ViewerScene {
   private disposed = false;
   private lodPending = false;
   private lodTimer = 0;
+
+  private simTime = new Date();
+  private playing = false;
+  private timeRate = 1;
+  private lastWallClock = performance.now();
 
   private state: ViewerState;
   private listeners = new Set<Listener>();
@@ -65,6 +82,21 @@ export class ViewerScene {
 
     this.sphere = new HipsSphere(SURVEYS.dss2!);
     this.scene.add(this.sphere.group);
+
+    this.stars = new StarField();
+    this.scene.add(this.stars.group);
+    void this.stars
+      .load('/data/hyg-bright.bin')
+      .then(() => {
+        this.dirty = true;
+        this.state = { ...this.state, starCount: this.stars.count() };
+        this.emit();
+      })
+      .catch((err) => console.warn('[stars] catalog load failed', err));
+
+    this.solar = new SolarSystem();
+    this.scene.add(this.solar.group);
+    this.solar.update(this.simTime);
 
     this.controls = new VoyagerControls(this.camera, canvas);
     this.controls.onChange = () => {
@@ -94,6 +126,10 @@ export class ViewerScene {
       baseTilesLoaded: 0,
       baseTilesTotal: this.sphere.tiles.length,
       detailTiles: 0,
+      starCount: 0,
+      time: this.simTime,
+      playing: this.playing,
+      timeRate: this.timeRate,
       fov: this.camera.fov,
       forward: { x: 0, y: 0, z: -1 },
     };
@@ -137,8 +173,29 @@ export class ViewerScene {
       fov: this.camera.fov,
       forward: { x: this.fwd.x, y: this.fwd.y, z: this.fwd.z },
       detailTiles: this.sphere.detailCount(),
+      time: this.simTime,
+      playing: this.playing,
+      timeRate: this.timeRate,
     };
     this.emit();
+  }
+
+  setTime(time: Date): void {
+    this.simTime = new Date(time.getTime());
+    this.solar.update(this.simTime);
+    this.dirty = true;
+    this.publishState();
+  }
+
+  setPlaying(playing: boolean): void {
+    this.playing = playing;
+    this.lastWallClock = performance.now();
+    this.publishState();
+  }
+
+  setTimeRate(rate: number): void {
+    this.timeRate = rate;
+    this.publishState();
   }
 
   private emit(): void {
@@ -176,6 +233,19 @@ export class ViewerScene {
     if (this.disposed) return;
     this.controls.tickInertia(); // mark dirty if drifting
     if (this.controls.drifting) this.dirty = true;
+
+    // Advance simulation time when playing.
+    if (this.playing) {
+      const now = performance.now();
+      const elapsedMs = now - this.lastWallClock;
+      this.lastWallClock = now;
+      const simElapsedMs = elapsedMs * this.timeRate;
+      this.simTime = new Date(this.simTime.getTime() + simElapsedMs);
+      this.solar.update(this.simTime);
+      this.dirty = true;
+      this.publishState();
+    }
+
     if (this.dirty) {
       this.renderer.render(this.scene, this.camera);
       this.dirty = false;
@@ -200,6 +270,8 @@ export class ViewerScene {
     this.resizeObs?.disconnect();
     this.controls.dispose();
     this.sphere.dispose();
+    this.stars.dispose();
+    this.solar.dispose();
     this.renderer.dispose();
     this.listeners.clear();
   }

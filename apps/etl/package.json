@@ -1,0 +1,9 @@
+{
+  "name": "@unspeakable/etl",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "build:hyg": "node hyg-bright.mjs"
+  }
+}
