@@ -36,15 +36,15 @@ type BodySpec = {
 };
 
 const BODIES: BodySpec[] = [
-  { body: Body.Sun, label: 'Sun', color: 0xffe98a, size: 0.06 },
-  { body: Body.Moon, label: 'Moon', color: 0xfafaf2, size: 0.05 },
-  { body: Body.Mercury, label: 'Mercury', color: 0xc8c1b8, size: 0.022 },
-  { body: Body.Venus, label: 'Venus', color: 0xfff0c2, size: 0.034 },
-  { body: Body.Mars, label: 'Mars', color: 0xff8a5e, size: 0.026 },
-  { body: Body.Jupiter, label: 'Jupiter', color: 0xffd9a8, size: 0.04 },
-  { body: Body.Saturn, label: 'Saturn', color: 0xffe1a3, size: 0.035 },
-  { body: Body.Uranus, label: 'Uranus', color: 0xb6e6f0, size: 0.024 },
-  { body: Body.Neptune, label: 'Neptune', color: 0x7fa6ff, size: 0.024 },
+  { body: Body.Sun, label: 'Sun', color: 0xffe98a, size: 0.12 },
+  { body: Body.Moon, label: 'Moon', color: 0xfafaf2, size: 0.09 },
+  { body: Body.Mercury, label: 'Mercury', color: 0xc8c1b8, size: 0.04 },
+  { body: Body.Venus, label: 'Venus', color: 0xfff0c2, size: 0.06 },
+  { body: Body.Mars, label: 'Mars', color: 0xff8a5e, size: 0.05 },
+  { body: Body.Jupiter, label: 'Jupiter', color: 0xffd9a8, size: 0.075 },
+  { body: Body.Saturn, label: 'Saturn', color: 0xffe1a3, size: 0.065 },
+  { body: Body.Uranus, label: 'Uranus', color: 0xb6e6f0, size: 0.045 },
+  { body: Body.Neptune, label: 'Neptune', color: 0x7fa6ff, size: 0.045 },
 ];
 
 type PlacedBody = {
@@ -60,6 +60,7 @@ export class SolarSystem {
   constructor() {
     this.group.name = 'SolarSystem';
     this.group.renderOrder = 1; // in front of HiPS + stars
+    this.group.rotation.x = -Math.PI / 2; // Z-up astronomy → Y-up Three.js
     this.build();
   }
 
@@ -114,6 +115,19 @@ export class SolarSystem {
         void offset;
       }
     }
+  }
+
+  /**
+   * Returns a normalized direction vector pointing at a body in *world*
+   * coordinates (i.e. after the Z-up → Y-up rotation has been applied),
+   * suitable for handing to `VoyagerControls.setForward`.
+   */
+  directionOf(label: string): Vector3 | null {
+    const p = this.placed.find((x) => x.spec.label === label);
+    if (!p) return null;
+    // Apply the group's rotation so the local Z-up position becomes a world
+    // Y-up direction.
+    return p.sprite.position.clone().applyEuler(this.group.rotation).normalize();
   }
 
   setLabelOpacity(opacity: number): void {

@@ -1,8 +1,8 @@
 import {
-  AdditiveBlending,
   BufferAttribute,
   BufferGeometry,
   Group,
+  NormalBlending,
   Points,
   ShaderMaterial,
 } from 'three';
@@ -35,6 +35,7 @@ export class StarField {
   constructor() {
     this.group.name = 'StarField';
     this.group.renderOrder = -5; // in front of HiPS (-10/-8) but behind anything else
+    this.group.rotation.x = -Math.PI / 2; // Z-up astronomy → Y-up Three.js
   }
 
   async load(url: string): Promise<void> {
@@ -98,7 +99,10 @@ export class StarField {
       transparent: true,
       depthWrite: false,
       depthTest: false, // we sit inside the HiPS sphere; render order owns visibility
-      blending: AdditiveBlending,
+      // Normal alpha blending so the star core *overwrites* the HiPS imagery
+      // pixel — additive blending just clipped to white over bright regions
+      // and made stars invisible against the galactic plane.
+      blending: NormalBlending,
     });
 
     this.material = material;
@@ -151,14 +155,19 @@ const FRAG = /* glsl */ `
   uniform float uIntensity;
 
   void main() {
-    // Soft round point with radial falloff.
+    // Soft round point with radial falloff in screen space.
     vec2 c = gl_PointCoord - 0.5;
     float r2 = dot(c, c);
     if (r2 > 0.25) discard;
-    float a = 1.0 - smoothstep(0.0, 0.25, r2);
-    // Halo + core
-    float halo = 0.35 * exp(-r2 * 12.0);
-    float core = a * a;
-    gl_FragColor = vec4(vColor * uIntensity * (core + halo), core + halo);
+    // Core is opaque white-tinted (mostly the body color washed toward white),
+    // halo blends to color. The high core alpha is what makes the star *pop*
+    // against bright HiPS regions instead of disappearing into them.
+    float core = 1.0 - smoothstep(0.0, 0.04, r2);
+    float halo = (1.0 - smoothstep(0.04, 0.25, r2)) * 0.55;
+    vec3 coreCol = mix(vColor, vec3(1.0), 0.85);
+    vec3 haloCol = vColor;
+    vec3 col = coreCol * core + haloCol * halo;
+    float alpha = clamp(core + halo, 0.0, 1.0) * uIntensity;
+    gl_FragColor = vec4(col, alpha);
   }
 `;

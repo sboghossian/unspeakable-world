@@ -33,7 +33,12 @@ export class HipsSphere {
 
   constructor(survey: Survey) {
     this.currentSurvey = survey;
-    this.group.name = "HipsSphere";
+    this.group.name = 'HipsSphere';
+    // Astronomy data (HEALPix, raDecToVec3) is Z-up (celestial north on +Z).
+    // Three.js camera defaults to Y-up. Rotate the whole sphere -90° around X
+    // so celestial north lands on +Y and yaw/pitch on the camera mean what
+    // a casual observer expects.
+    this.group.rotation.x = -Math.PI / 2;
     this.buildOrder0();
   }
 

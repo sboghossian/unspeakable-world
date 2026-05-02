@@ -3,6 +3,7 @@ import { SURVEYS } from '../hips/surveys';
 import { HipsSphere } from './hips-sphere';
 import { StarField } from '../stars/star-field';
 import { SolarSystem } from '../solar/solar-system';
+import { IssTracker, type IssState } from '../iss/iss-tracker';
 import { VoyagerControls } from './voyager-controls';
 
 /**
@@ -27,8 +28,10 @@ export type ViewerState = {
   timeRate: number;
   /** Current camera field of view in degrees. */
   fov: number;
-  /** Camera forward vector in equatorial-cartesian coords. */
+  /** Camera forward vector in world Y-up cartesian coords. */
   forward: { x: number; y: number; z: number };
+  /** Latest ISS state, or null if we haven't fetched yet. */
+  iss: IssState | null;
 };
 
 type Listener = (s: ViewerState) => void;
@@ -48,6 +51,7 @@ export class ViewerScene {
   private sphere: HipsSphere;
   private stars: StarField;
   private solar: SolarSystem;
+  private iss: IssTracker;
   private controls: VoyagerControls;
 
   private dirty = true;
@@ -98,12 +102,26 @@ export class ViewerScene {
     this.scene.add(this.solar.group);
     this.solar.update(this.simTime);
 
+    this.iss = new IssTracker();
+    this.scene.add(this.iss.group);
+    this.iss.subscribe((s) => {
+      this.dirty = true;
+      this.state = { ...this.state, iss: s };
+      this.emit();
+    });
+    this.iss.start();
+
     this.controls = new VoyagerControls(this.camera, canvas);
     this.controls.onChange = () => {
       this.dirty = true;
       this.publishState();
       this.scheduleLODUpdate();
     };
+
+    // Aim the initial camera at the Sun so the first frame guarantees at
+    // least one planet/Moon nearby in the FOV. User can drag away.
+    const sunDir = this.solar.directionOf('Sun');
+    if (sunDir) this.controls.setForward(sunDir);
 
     // Wire each base tile's load → dirty + state update.
     for (const t of this.sphere.tiles) {
@@ -132,6 +150,7 @@ export class ViewerScene {
       timeRate: this.timeRate,
       fov: this.camera.fov,
       forward: { x: 0, y: 0, z: -1 },
+      iss: null,
     };
 
     this.tick();
@@ -263,6 +282,14 @@ export class ViewerScene {
     this.dirty = true;
   }
 
+  /** Programmatic camera fly to a named target ("Sun", "Moon", "ISS", etc). */
+  flyToTarget(target: 'Sun' | 'Moon' | 'Mercury' | 'Venus' | 'Mars' | 'Jupiter' | 'Saturn' | 'Uranus' | 'Neptune' | 'ISS'): void {
+    let dir: Vector3 | null = null;
+    if (target === 'ISS') dir = this.iss.direction();
+    else dir = this.solar.directionOf(target);
+    if (dir) this.flyTo(dir);
+  }
+
   dispose(): void {
     this.disposed = true;
     cancelAnimationFrame(this.rafHandle);
@@ -272,6 +299,7 @@ export class ViewerScene {
     this.sphere.dispose();
     this.stars.dispose();
     this.solar.dispose();
+    this.iss.dispose();
     this.renderer.dispose();
     this.listeners.clear();
   }

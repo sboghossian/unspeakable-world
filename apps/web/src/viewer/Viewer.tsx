@@ -3,6 +3,7 @@ import { Vector3 } from 'three';
 import { ViewerScene, type ViewerState } from './scene/scene';
 import { navigate } from '../router';
 import { TimeStrip } from './ui/TimeStrip';
+import { QuickTargets } from './ui/QuickTargets';
 
 type SceneStatus = "init" | "live" | "unsupported" | "error";
 
@@ -25,6 +26,7 @@ const DEFAULT_STATE: ViewerState = {
   timeRate: 1,
   fov: 60,
   forward: { x: 0, y: 0, z: -1 },
+  iss: null,
 };
 
 export function Viewer() {
@@ -102,8 +104,14 @@ export function Viewer() {
           ← The Unspeakable World
         </button>
 
-        <div className="pointer-events-auto rounded-lg border border-white/10 bg-space-950/70 px-3 py-1.5 font-mono text-xs text-white/60 backdrop-blur">
-          DSS2 color · CDS / STScI
+        <div className="pointer-events-auto flex items-center gap-2">
+          <QuickTargets
+            hasIssFix={state.iss !== null}
+            onTarget={(t) => sceneRef.current?.flyToTarget(t)}
+          />
+          <div className="rounded-lg border border-white/10 bg-space-950/70 px-3 py-1.5 font-mono text-xs text-white/60 backdrop-blur">
+            DSS2 color · CDS / STScI
+          </div>
         </div>
       </div>
 
@@ -117,6 +125,13 @@ export function Viewer() {
           )}
           {state.starCount > 0 && (
             <Chip label="HYG" value={`${state.starCount.toLocaleString()} stars`} />
+          )}
+          {state.iss && (
+            <Chip
+              label="ISS"
+              value={`${state.iss.lat.toFixed(1)}°, ${state.iss.lon.toFixed(1)}°`}
+              accent
+            />
           )}
         </div>
 
