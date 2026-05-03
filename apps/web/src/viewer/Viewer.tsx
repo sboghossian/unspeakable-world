@@ -5,6 +5,12 @@ import { navigate } from "../router";
 import { TimeStrip } from "./ui/TimeStrip";
 import { QuickTargets } from "./ui/QuickTargets";
 import { WavelengthBar } from "./ui/WavelengthBar";
+import { InfoPanel } from "./ui/InfoPanel";
+import {
+  simbadConeSearch,
+  worldDirectionToRaDec,
+  type SimbadHit,
+} from "./info/simbad";
 
 type SceneStatus = "init" | "live" | "unsupported" | "error";
 
@@ -32,12 +38,25 @@ const DEFAULT_STATE: ViewerState = {
   overlayMix: 0,
 };
 
+type Inspect = {
+  raDeg: number;
+  decDeg: number;
+  /** Sky direction at click time, kept so "Fly here" can re-apply after the
+   *  camera has been moved by something else. */
+  dir: Vector3;
+  loading: boolean;
+  hit: SimbadHit | null;
+  error: string | null;
+};
+
 export function Viewer() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const sceneRef = useRef<ViewerScene | null>(null);
   const [status, setStatus] = useState<SceneStatus>("init");
   const [errorDetail, setErrorDetail] = useState<string>("");
   const [state, setState] = useState<ViewerState>(DEFAULT_STATE);
+  const [inspect, setInspect] = useState<Inspect | null>(null);
+  const inspectGenRef = useRef(0); // race-guard for SIMBAD calls
 
   useEffect(() => {
     if (!detectWebGL2()) {
@@ -66,24 +85,51 @@ export function Viewer() {
     };
   }, []);
 
-  // Tap-to-fly: convert click coords to a sky direction and fly camera.
+  // Tap on sky: open the SIMBAD info panel for that direction *and* fly camera.
   const onCanvasClick = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
       const scene = sceneRef.current;
       if (!scene) return;
       const target = e.currentTarget;
       const rect = target.getBoundingClientRect();
-      // Discriminate tap from drag end: skip if the user is in mid-drag.
       if ((e.target as HTMLElement) !== target) return;
       const ndc = {
         x: ((e.clientX - rect.left) / rect.width) * 2 - 1,
         y: -(((e.clientY - rect.top) / rect.height) * 2 - 1),
       };
-      // We need access to the camera's projection to unproject NDC → world.
-      // Scene exposes flyTo(direction) so we compute the direction here from NDC
-      // by combining the current forward + screen offset under the FOV.
       const dir = unprojectNdcToDirection(state, ndc);
       scene.flyTo(dir);
+
+      // Open the inspector with a SIMBAD cone search at this sky point.
+      const { ra, dec } = worldDirectionToRaDec(dir);
+      const myGen = ++inspectGenRef.current;
+      setInspect({
+        raDeg: ra,
+        decDeg: dec,
+        dir: dir.clone(),
+        loading: true,
+        hit: null,
+        error: null,
+      });
+      // FOV-scaled radius — when zoomed out, search a wider cone, so the user
+      // hits *something* even with imprecise clicks.
+      // Cone radius scales with FOV but stays small — the Milky Way at large
+      // radius returns 250 KB of objects and SIMBAD takes 30s to respond.
+      const radiusArcmin = Math.max(1, Math.min(12, state.fov * 0.4));
+      simbadConeSearch(ra, dec, radiusArcmin)
+        .then((hit) => {
+          if (inspectGenRef.current !== myGen) return;
+          setInspect((prev) =>
+            prev ? { ...prev, loading: false, hit } : prev,
+          );
+        })
+        .catch((err: unknown) => {
+          if (inspectGenRef.current !== myGen) return;
+          const msg = err instanceof Error ? err.message : String(err);
+          setInspect((prev) =>
+            prev ? { ...prev, loading: false, error: `SIMBAD: ${msg}` } : prev,
+          );
+        });
     },
     [state],
   );
@@ -173,6 +219,19 @@ export function Viewer() {
             drag · pinch · wheel · tap
           </div>
         </div>
+      )}
+
+      {/* SIMBAD info panel (click on sky) */}
+      {status === "live" && inspect && (
+        <InfoPanel
+          raDeg={inspect.raDeg}
+          decDeg={inspect.decDeg}
+          loading={inspect.loading}
+          error={inspect.error}
+          hit={inspect.hit}
+          onClose={() => setInspect(null)}
+          onFlyTo={() => sceneRef.current?.flyTo(inspect.dir)}
+        />
       )}
 
       {/* Loading veil */}
