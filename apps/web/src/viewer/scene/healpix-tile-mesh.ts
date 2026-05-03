@@ -25,7 +25,14 @@ import type { Survey } from "../hips/surveys";
  * - LOD limited to a single order at a time
  */
 
-const SUB = 16; // subdivision per tile axis
+/**
+ * Triangle subdivision per tile axis. Higher = smoother sphere curvature
+ * but quadratically more vertices. 32×32 = 1024 quads/tile × 12 base tiles
+ * = ~12K quads — still trivial, and tightens the polar Collignon-seam
+ * cracks at lat ±41.81° because the polygonal edge of each base tile
+ * approximates the curved sphere boundary more closely.
+ */
+const SUB = 32;
 const RADIUS = 1; // sky sphere radius — we render inside-out
 
 export type TileMesh = {
