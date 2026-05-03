@@ -4,6 +4,7 @@ import { ViewerScene, type ViewerState } from "./scene/scene";
 import { navigate } from "../router";
 import { TimeStrip } from "./ui/TimeStrip";
 import { QuickTargets } from "./ui/QuickTargets";
+import { TonightSky } from "./ui/TonightSky";
 import { WavelengthBar } from "./ui/WavelengthBar";
 import { InfoPanel } from "./ui/InfoPanel";
 import {
@@ -57,6 +58,22 @@ export function Viewer() {
   const [state, setState] = useState<ViewerState>(DEFAULT_STATE);
   const [inspect, setInspect] = useState<Inspect | null>(null);
   const inspectGenRef = useRef(0); // race-guard for SIMBAD calls
+  const [observer, setObserver] = useState<{ lat: number; lon: number } | null>(
+    () => {
+      // Cache last-known location across reloads — we never send it anywhere.
+      try {
+        const raw = localStorage.getItem("uw:observer");
+        if (raw) {
+          const parsed = JSON.parse(raw) as { lat: number; lon: number };
+          if (Number.isFinite(parsed.lat) && Number.isFinite(parsed.lon))
+            return parsed;
+        }
+      } catch {
+        // ignore
+      }
+      return null;
+    },
+  );
 
   useEffect(() => {
     if (!detectWebGL2()) {
@@ -154,6 +171,21 @@ export function Viewer() {
         </button>
 
         <div className="pointer-events-auto flex items-center gap-2">
+          <TonightSky
+            location={observer}
+            onLocationFix={(lat, lon) => {
+              setObserver({ lat, lon });
+              try {
+                localStorage.setItem(
+                  "uw:observer",
+                  JSON.stringify({ lat, lon }),
+                );
+              } catch {
+                // ignore quota / privacy-mode errors
+              }
+            }}
+            onZenith={(lat, lon) => sceneRef.current?.flyToZenith(lat, lon)}
+          />
           <QuickTargets
             hasIssFix={state.iss !== null}
             onTarget={(t) => sceneRef.current?.flyToTarget(t)}

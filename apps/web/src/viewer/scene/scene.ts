@@ -4,6 +4,7 @@ import { HipsSphere } from "./hips-sphere";
 import { StarField } from "../stars/star-field";
 import { SolarSystem } from "../solar/solar-system";
 import { IssTracker, type IssState } from "../iss/iss-tracker";
+import { zenithWorldDirection } from "../observer/zenith";
 import { VoyagerControls } from "./voyager-controls";
 
 /**
@@ -376,6 +377,16 @@ export class ViewerScene {
     if (target === "ISS") dir = this.iss.direction();
     else dir = this.solar.directionOf(target);
     if (dir) this.flyTo(dir);
+  }
+
+  /**
+   * Tonight's-sky framing: aim the camera straight up from the user's
+   * location at the current simulation time. (lat, lon) in degrees, lon
+   * positive east.
+   */
+  flyToZenith(lat: number, lonEast: number): void {
+    const dir = zenithWorldDirection(lat, lonEast, this.simTime);
+    this.flyTo(dir, 1500);
   }
 
   dispose(): void {
