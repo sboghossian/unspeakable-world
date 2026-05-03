@@ -2,8 +2,9 @@ import { EmailCapture } from "./EmailCapture";
 import { navigate } from "../router";
 
 const COUNTERS = [
-  { value: "~1,400", label: "open sky surveys" },
-  { value: "γ → radio", label: "every wavelength" },
+  { value: "8,921", label: "bright stars" },
+  { value: "3", label: "wavelengths live" },
+  { value: "γ → radio", label: "roadmap" },
   { value: "MIT", label: "forever free" },
 ];
 
@@ -12,7 +13,7 @@ export function Hero() {
     <section className="mx-auto flex w-full max-w-5xl flex-col items-center px-6 pb-16 pt-24 text-center md:pt-36">
       <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.2em] text-plasma-400/90 backdrop-blur">
         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-plasma-500" />
-        <span>Day 2 of 7 · building in public</span>
+        <span>Day 7 · live in your browser</span>
       </div>
 
       <h1 className="text-balance font-display text-5xl font-semibold leading-[1.05] glow md:text-7xl">
@@ -54,14 +55,15 @@ export function Hero() {
         </a>
       </div>
 
-      <p className="mt-3 text-xs text-white/40">
-        Day 2 toy: real DSS2 sky tiles streaming from CDS Strasbourg onto a 3D
-        Three.js sphere.
+      <p className="mt-3 max-w-xl text-xs text-white/50">
+        Real DSS2 / 2MASS / WISE sky tiles streaming from CDS Strasbourg · 8,921
+        bright stars · Sun + planets via AstronomyEngine · live ISS · click any
+        sky to ask SIMBAD what's there.
       </p>
 
       <EmailCapture />
 
-      <dl className="mt-12 grid w-full max-w-3xl grid-cols-3 gap-2 text-left md:gap-6">
+      <dl className="mt-12 grid w-full max-w-3xl grid-cols-2 gap-2 text-left md:grid-cols-4 md:gap-4">
         {COUNTERS.map((c) => (
           <div
             key={c.label}
@@ -78,9 +80,9 @@ export function Hero() {
       </dl>
 
       <p className="mt-12 text-sm text-white/40">
-        Live preview at{" "}
+        Live at{" "}
         <span className="font-mono text-white/60">space.dashable.dev</span> · v1
-        ships in seven days
+        shipped on Day 7 · still building in public
       </p>
     </section>
   );
