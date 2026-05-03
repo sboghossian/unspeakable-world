@@ -7,7 +7,11 @@
  * Returns a vector that points outward from origin to the (ra, dec) on
  * the celestial sphere — same orientation HEALPix's `corners_nest` uses.
  */
-export function raDecToVec3(raDeg: number, decDeg: number, radius = 1): [number, number, number] {
+export function raDecToVec3(
+  raDeg: number,
+  decDeg: number,
+  radius = 1,
+): [number, number, number] {
   const ra = (raDeg * Math.PI) / 180;
   const dec = (decDeg * Math.PI) / 180;
   const cosDec = Math.cos(dec);
@@ -48,5 +52,9 @@ export function bvToRgb(bv: number): [number, number, number] {
     g = 0.82 - 0.5 * (t - 1.6);
     b = 0.35 - 0.1 * (t - 1.6);
   }
-  return [Math.max(0, Math.min(1, r)), Math.max(0, Math.min(1, g)), Math.max(0, Math.min(1, b))];
+  return [
+    Math.max(0, Math.min(1, r)),
+    Math.max(0, Math.min(1, g)),
+    Math.max(0, Math.min(1, b)),
+  ];
 }

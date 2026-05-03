@@ -30,10 +30,17 @@ export class HipsSphere {
   readonly tiles: TileMesh[] = []; // base layer (Norder 0)
   private detailTiles = new Map<string, TileMesh>(); // key = "order|ipix"
   private currentSurvey: Survey;
+  /**
+   * Render-order offset applied to every tile mesh. Default 0 → base tiles
+   * land at -10, detail tiles at -8. Overlay sphere passes +5 → -5 / -3,
+   * strictly above the background sphere.
+   */
+  private renderOrderOffset: number;
 
-  constructor(survey: Survey) {
+  constructor(survey: Survey, renderOrderOffset = 0) {
     this.currentSurvey = survey;
-    this.group.name = 'HipsSphere';
+    this.renderOrderOffset = renderOrderOffset;
+    this.group.name = "HipsSphere";
     // Astronomy data (HEALPix, raDecToVec3) is Z-up (celestial north on +Z).
     // Three.js camera defaults to Y-up. Rotate the whole sphere -90° around X
     // so celestial north lands on +Y and yaw/pitch on the camera mean what
@@ -45,6 +52,7 @@ export class HipsSphere {
   private buildOrder0(): void {
     for (let ipix = 0; ipix < 12; ipix++) {
       const tile = buildTile(this.currentSurvey, 0, ipix);
+      tile.mesh.renderOrder += this.renderOrderOffset;
       this.tiles.push(tile);
       this.group.add(tile.mesh);
     }
@@ -92,7 +100,9 @@ export class HipsSphere {
       const order = Number(parts[0]);
       const ipix = Number(parts[1]);
       const tile = buildTile(this.currentSurvey, order, ipix);
-      tile.mesh.renderOrder = -8; // in front of base (-10) but behind everything else
+      // Detail tiles paint on top of base tiles within the same sphere; the
+      // overlay sphere shifts both layers via renderOrderOffset.
+      tile.mesh.renderOrder = -8 + this.renderOrderOffset;
       this.detailTiles.set(key, tile);
       this.group.add(tile.mesh);
       changed = true;
@@ -131,6 +141,52 @@ export class HipsSphere {
     const base = this.tiles;
     const detail = [...this.detailTiles.values()];
     return [...base, ...detail];
+  }
+
+  /** Active survey, exposed for wavelength UI labels. */
+  survey(): Survey {
+    return this.currentSurvey;
+  }
+
+  /**
+   * Push the same uniform opacity to every tile material in the sphere.
+   * Used by the multi-wavelength overlay to cross-fade against the base.
+   */
+  setOpacity(opacity: number): void {
+    for (const t of this.tilesAll()) {
+      const mat = t.mesh.material;
+      if (Array.isArray(mat)) {
+        for (const m of mat) {
+          m.opacity = opacity;
+          m.transparent = true;
+          m.needsUpdate = true;
+        }
+      } else {
+        mat.opacity = opacity;
+        mat.transparent = true;
+        mat.needsUpdate = true;
+      }
+    }
+  }
+
+  /**
+   * Swap the active survey: dispose the current tile pyramid and rebuild the
+   * 12 base tiles for `next`. Detail tiles are cleared and will rebuild on the
+   * next LOD pass. This is what powers wavelength toggling on the overlay
+   * sphere.
+   */
+  setSurvey(next: Survey): void {
+    if (next.id === this.currentSurvey.id) return;
+    // Dispose current.
+    for (const t of this.tiles) {
+      this.group.remove(t.mesh);
+      t.mesh.geometry.dispose();
+      disposeMaterial(t);
+    }
+    this.tiles.length = 0;
+    this.clearDetail();
+    this.currentSurvey = next;
+    this.buildOrder0();
   }
 
   /** Wire a callback to fire when any detail tile finishes loading. */

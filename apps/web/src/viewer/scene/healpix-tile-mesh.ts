@@ -52,6 +52,10 @@ export function buildTile(
     color: 0x0a1428,
     transparent: true,
     opacity: 1,
+    // depthTest off + renderOrder lets us stack a second HiPS sphere on top
+    // for multi-wavelength overlays without z-fighting with the background.
+    depthTest: false,
+    depthWrite: false,
   });
 
   const mesh = new Mesh(geom, mat);

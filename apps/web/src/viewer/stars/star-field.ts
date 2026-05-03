@@ -5,8 +5,8 @@ import {
   NormalBlending,
   Points,
   ShaderMaterial,
-} from 'three';
-import { bvToRgb, raDecToVec3 } from './coords';
+} from "three";
+import { bvToRgb, raDecToVec3 } from "./coords";
 
 /**
  * Bright-star catalog rendered as a single GPU-instanced Points object.
@@ -33,7 +33,7 @@ export class StarField {
   private starCount = 0;
 
   constructor() {
-    this.group.name = 'StarField';
+    this.group.name = "StarField";
     this.group.renderOrder = -5; // in front of HiPS (-10/-8) but behind anything else
     this.group.rotation.x = -Math.PI / 2; // Z-up astronomy → Y-up Three.js
   }
@@ -84,9 +84,9 @@ export class StarField {
     }
 
     const geom = new BufferGeometry();
-    geom.setAttribute('position', new BufferAttribute(positions, 3));
-    geom.setAttribute('color', new BufferAttribute(colors, 3));
-    geom.setAttribute('aSize', new BufferAttribute(sizes, 1));
+    geom.setAttribute("position", new BufferAttribute(positions, 3));
+    geom.setAttribute("color", new BufferAttribute(colors, 3));
+    geom.setAttribute("aSize", new BufferAttribute(sizes, 1));
     geom.computeBoundingSphere();
 
     const material = new ShaderMaterial({

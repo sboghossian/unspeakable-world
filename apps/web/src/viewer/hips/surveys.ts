@@ -26,9 +26,24 @@ export const SURVEYS: Record<string, Survey> = {
     maxOrder: 9,
     attribution: "DSS color · CDS / STScI",
   },
-  // Day 6:
-  // '2mass': { ... },
-  // 'allwise': { ... },
+  "2mass": {
+    id: "2mass",
+    label: "2MASS J·H·K",
+    wavelength: "near-ir",
+    baseUrl: "https://alasky.cds.unistra.fr/2MASS/Color",
+    format: "jpg",
+    maxOrder: 9,
+    attribution: "2MASS color · CDS / IPAC",
+  },
+  allwise: {
+    id: "allwise",
+    label: "AllWISE W4·W2·W1",
+    wavelength: "mid-ir",
+    baseUrl: "https://alasky.cds.unistra.fr/AllWISE/RGB-W4-W2-W1",
+    format: "jpg",
+    maxOrder: 8,
+    attribution: "AllWISE · CDS / IPAC",
+  },
 };
 
 /**

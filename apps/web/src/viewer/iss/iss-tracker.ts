@@ -6,7 +6,7 @@ import {
   Sprite,
   SpriteMaterial,
   Vector3,
-} from 'three';
+} from "three";
 
 /**
  * Live ISS tracker.
@@ -20,7 +20,7 @@ import {
  * the user's location.
  */
 
-const ISS_API_URL = 'https://api.wheretheiss.at/v1/satellites/25544';
+const ISS_API_URL = "https://api.wheretheiss.at/v1/satellites/25544";
 const POLL_INTERVAL_MS = 4000;
 const ISS_RADIUS = 0.985; // slightly inside HiPS, in front of stars
 
@@ -41,7 +41,7 @@ export class IssTracker {
   private listeners = new Set<(state: IssState | null) => void>();
 
   constructor() {
-    this.group.name = 'IssTracker';
+    this.group.name = "IssTracker";
     this.group.rotation.x = -Math.PI / 2; // Z-up → Y-up like other astronomy groups
     this.group.renderOrder = 2;
     this.build();
@@ -105,7 +105,7 @@ export class IssTracker {
       this.applyPosition();
       for (const l of this.listeners) l(this.latest);
     } catch (err) {
-      console.warn('[iss] poll failed', err);
+      console.warn("[iss] poll failed", err);
     }
   }
 
@@ -116,8 +116,14 @@ export class IssTracker {
     // (lon, lat) sky direction. Day 6 will swap to true topocentric az/el.
     const dec = lat;
     const ra = lon < 0 ? lon + 360 : lon; // wrap [-180,180] → [0,360]
-    const x = ISS_RADIUS * Math.cos((dec * Math.PI) / 180) * Math.cos((ra * Math.PI) / 180);
-    const y = ISS_RADIUS * Math.cos((dec * Math.PI) / 180) * Math.sin((ra * Math.PI) / 180);
+    const x =
+      ISS_RADIUS *
+      Math.cos((dec * Math.PI) / 180) *
+      Math.cos((ra * Math.PI) / 180);
+    const y =
+      ISS_RADIUS *
+      Math.cos((dec * Math.PI) / 180) *
+      Math.sin((ra * Math.PI) / 180);
     const z = ISS_RADIUS * Math.sin((dec * Math.PI) / 180);
     this.sprite.position.set(x, y, z);
     this.sprite.visible = true;
@@ -126,7 +132,10 @@ export class IssTracker {
   /** Sky-direction unit vector pointing at the ISS (in world Y-up coords). */
   direction(): Vector3 | null {
     if (!this.sprite || !this.latest) return null;
-    return this.sprite.position.clone().applyEuler(this.group.rotation).normalize();
+    return this.sprite.position
+      .clone()
+      .applyEuler(this.group.rotation)
+      .normalize();
   }
 
   dispose(): void {
@@ -145,24 +154,24 @@ export class IssTracker {
 
 function makeIssMarker(): CanvasTexture {
   const size = 64;
-  const canvas = document.createElement('canvas');
+  const canvas = document.createElement("canvas");
   canvas.width = size;
   canvas.height = size;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('2d context unavailable');
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("2d context unavailable");
 
   // Cyan crosshair-style ISS marker.
   const cx = size / 2;
   const cy = size / 2;
   const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, size / 2);
-  grad.addColorStop(0, 'rgba(166, 241, 255, 1)');
-  grad.addColorStop(0.4, 'rgba(166, 241, 255, 0.4)');
-  grad.addColorStop(1, 'rgba(166, 241, 255, 0)');
+  grad.addColorStop(0, "rgba(166, 241, 255, 1)");
+  grad.addColorStop(0.4, "rgba(166, 241, 255, 0.4)");
+  grad.addColorStop(1, "rgba(166, 241, 255, 0)");
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, size, size);
 
   // Crosshair
-  ctx.strokeStyle = 'rgba(166, 241, 255, 0.9)';
+  ctx.strokeStyle = "rgba(166, 241, 255, 0.9)";
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.moveTo(cx - size / 2 + 6, cy);

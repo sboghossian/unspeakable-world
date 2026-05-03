@@ -1,10 +1,10 @@
-import { PerspectiveCamera, Scene, Vector3, WebGLRenderer } from 'three';
-import { SURVEYS } from '../hips/surveys';
-import { HipsSphere } from './hips-sphere';
-import { StarField } from '../stars/star-field';
-import { SolarSystem } from '../solar/solar-system';
-import { IssTracker, type IssState } from '../iss/iss-tracker';
-import { VoyagerControls } from './voyager-controls';
+import { PerspectiveCamera, Scene, Vector3, WebGLRenderer } from "three";
+import { SURVEYS } from "../hips/surveys";
+import { HipsSphere } from "./hips-sphere";
+import { StarField } from "../stars/star-field";
+import { SolarSystem } from "../solar/solar-system";
+import { IssTracker, type IssState } from "../iss/iss-tracker";
+import { VoyagerControls } from "./voyager-controls";
 
 /**
  * Observable view-state the UI can subscribe to (loading veil, log-scale chip,
@@ -32,6 +32,10 @@ export type ViewerState = {
   forward: { x: number; y: number; z: number };
   /** Latest ISS state, or null if we haven't fetched yet. */
   iss: IssState | null;
+  /** Current overlay survey id (null = no overlay). */
+  overlayId: string | null;
+  /** Cross-fade [0..1] of the overlay against the base. */
+  overlayMix: number;
 };
 
 type Listener = (s: ViewerState) => void;
@@ -49,6 +53,8 @@ export class ViewerScene {
   private camera: PerspectiveCamera;
   private scene = new Scene();
   private sphere: HipsSphere;
+  private overlaySphere: HipsSphere | null = null;
+  private overlayMix = 0;
   private stars: StarField;
   private solar: SolarSystem;
   private iss: IssTracker;
@@ -90,13 +96,13 @@ export class ViewerScene {
     this.stars = new StarField();
     this.scene.add(this.stars.group);
     void this.stars
-      .load('/data/hyg-bright.bin')
+      .load("/data/hyg-bright.bin")
       .then(() => {
         this.dirty = true;
         this.state = { ...this.state, starCount: this.stars.count() };
         this.emit();
       })
-      .catch((err) => console.warn('[stars] catalog load failed', err));
+      .catch((err) => console.warn("[stars] catalog load failed", err));
 
     this.solar = new SolarSystem();
     this.scene.add(this.solar.group);
@@ -120,7 +126,7 @@ export class ViewerScene {
 
     // Aim the initial camera at the Sun so the first frame guarantees at
     // least one planet/Moon nearby in the FOV. User can drag away.
-    const sunDir = this.solar.directionOf('Sun');
+    const sunDir = this.solar.directionOf("Sun");
     if (sunDir) this.controls.setForward(sunDir);
 
     // Wire each base tile's load → dirty + state update.
@@ -151,6 +157,8 @@ export class ViewerScene {
       fov: this.camera.fov,
       forward: { x: 0, y: 0, z: -1 },
       iss: null,
+      overlayId: null,
+      overlayMix: 0,
     };
 
     this.tick();
@@ -170,7 +178,10 @@ export class ViewerScene {
       this.lodPending = false;
       if (this.disposed) return;
       this.camera.getWorldDirection(this.fwd);
-      const changed = this.sphere.updateLOD(this.fwd, this.camera.fov);
+      const baseChanged = this.sphere.updateLOD(this.fwd, this.camera.fov);
+      const overlayChanged =
+        this.overlaySphere?.updateLOD(this.fwd, this.camera.fov) ?? false;
+      const changed = baseChanged || overlayChanged;
       if (changed) {
         this.dirty = true;
         // Tile-load events from new detail tiles will mark dirty again.
@@ -179,6 +190,18 @@ export class ViewerScene {
             void t.ready.finally(() => {
               this.dirty = true;
             });
+          }
+        }
+        if (this.overlaySphere) {
+          // Push overlay opacity to any new tiles spun up by updateLOD.
+          this.applyOverlayMix();
+          for (const t of this.overlaySphere.tilesAll()) {
+            if (!t.loaded) {
+              void t.ready.finally(() => {
+                this.dirty = true;
+                this.applyOverlayMix();
+              });
+            }
           }
         }
       }
@@ -195,6 +218,8 @@ export class ViewerScene {
       time: this.simTime,
       playing: this.playing,
       timeRate: this.timeRate,
+      overlayId: this.overlaySphere?.survey().id ?? null,
+      overlayMix: this.overlayMix,
     };
     this.emit();
   }
@@ -215,6 +240,57 @@ export class ViewerScene {
   setTimeRate(rate: number): void {
     this.timeRate = rate;
     this.publishState();
+  }
+
+  /**
+   * Multi-wavelength overlay. Pass a survey id from SURVEYS to enable, or
+   * null to remove. Initial overlay opacity is 0.6 — the user can refine
+   * with `setOverlayMix`.
+   */
+  setOverlay(surveyId: string | null): void {
+    if (surveyId === null) {
+      if (this.overlaySphere) {
+        this.scene.remove(this.overlaySphere.group);
+        this.overlaySphere.dispose();
+        this.overlaySphere = null;
+      }
+      this.overlayMix = 0;
+      this.dirty = true;
+      this.publishState();
+      return;
+    }
+    const survey = SURVEYS[surveyId];
+    if (!survey) return;
+    if (!this.overlaySphere) {
+      // renderOrderOffset=5 pushes overlay tiles to renderOrder -5 (base)
+      // and -3 (detail), strictly above the background sphere's -10/-8.
+      this.overlaySphere = new HipsSphere(survey, 5);
+      this.scene.add(this.overlaySphere.group);
+      this.overlayMix = 0.6;
+    } else {
+      this.overlaySphere.setSurvey(survey);
+    }
+    this.applyOverlayMix();
+    this.dirty = true;
+    this.publishState();
+    // Dirty again as overlay tiles land.
+    for (const t of this.overlaySphere.tiles) {
+      void t.ready.finally(() => {
+        this.dirty = true;
+      });
+    }
+  }
+
+  setOverlayMix(mix: number): void {
+    this.overlayMix = Math.max(0, Math.min(1, mix));
+    this.applyOverlayMix();
+    this.dirty = true;
+    this.publishState();
+  }
+
+  private applyOverlayMix(): void {
+    if (!this.overlaySphere) return;
+    this.overlaySphere.setOpacity(this.overlayMix);
   }
 
   private emit(): void {
@@ -283,9 +359,21 @@ export class ViewerScene {
   }
 
   /** Programmatic camera fly to a named target ("Sun", "Moon", "ISS", etc). */
-  flyToTarget(target: 'Sun' | 'Moon' | 'Mercury' | 'Venus' | 'Mars' | 'Jupiter' | 'Saturn' | 'Uranus' | 'Neptune' | 'ISS'): void {
+  flyToTarget(
+    target:
+      | "Sun"
+      | "Moon"
+      | "Mercury"
+      | "Venus"
+      | "Mars"
+      | "Jupiter"
+      | "Saturn"
+      | "Uranus"
+      | "Neptune"
+      | "ISS",
+  ): void {
     let dir: Vector3 | null = null;
-    if (target === 'ISS') dir = this.iss.direction();
+    if (target === "ISS") dir = this.iss.direction();
     else dir = this.solar.directionOf(target);
     if (dir) this.flyTo(dir);
   }
@@ -297,6 +385,11 @@ export class ViewerScene {
     this.resizeObs?.disconnect();
     this.controls.dispose();
     this.sphere.dispose();
+    if (this.overlaySphere) {
+      this.scene.remove(this.overlaySphere.group);
+      this.overlaySphere.dispose();
+      this.overlaySphere = null;
+    }
     this.stars.dispose();
     this.solar.dispose();
     this.iss.dispose();

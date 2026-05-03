@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from "react";
 
 /**
  * Bottom-strip time controller — NASA Eyes pattern.
@@ -9,11 +9,11 @@ import { useCallback, useMemo } from 'react';
  */
 
 const RATES: Array<{ rate: number; label: string }> = [
-  { rate: 1, label: '×1' },
-  { rate: 60, label: '×60' },
-  { rate: 3600, label: '×1h' },
-  { rate: 86400, label: '×1d' },
-  { rate: 2592000, label: '×30d' },
+  { rate: 1, label: "×1" },
+  { rate: 60, label: "×60" },
+  { rate: 3600, label: "×1h" },
+  { rate: 86400, label: "×1d" },
+  { rate: 2592000, label: "×30d" },
 ];
 
 type Props = {
@@ -25,7 +25,14 @@ type Props = {
   onTimeChange: (time: Date) => void;
 };
 
-export function TimeStrip({ time, playing, rate, onPlayToggle, onRateChange, onTimeChange }: Props) {
+export function TimeStrip({
+  time,
+  playing,
+  rate,
+  onPlayToggle,
+  onRateChange,
+  onTimeChange,
+}: Props) {
   const iso = useMemo(() => formatIso(time), [time]);
 
   const onScrubDay = useCallback(
@@ -52,9 +59,9 @@ export function TimeStrip({ time, playing, rate, onPlayToggle, onRateChange, onT
           type="button"
           onClick={onPlayToggle}
           className="rounded-lg border border-plasma-500/40 bg-plasma-500/15 px-3 py-1.5 text-sm text-plasma-400 transition hover:bg-plasma-500/25"
-          title={playing ? 'Pause' : 'Play'}
+          title={playing ? "Pause" : "Play"}
         >
-          {playing ? '❚❚' : '▶'}
+          {playing ? "❚❚" : "▶"}
         </button>
 
         <IconButton onClick={() => onScrubDay(1)} title="+1 day">
@@ -87,8 +94,8 @@ export function TimeStrip({ time, playing, rate, onPlayToggle, onRateChange, onT
             onClick={() => onRateChange(r.rate)}
             className={`rounded-md px-2 py-1 font-mono text-[10px] uppercase tracking-wider transition ${
               r.rate === rate
-                ? 'bg-white/15 text-white'
-                : 'text-white/50 hover:bg-white/5 hover:text-white/80'
+                ? "bg-white/15 text-white"
+                : "text-white/50 hover:bg-white/5 hover:text-white/80"
             }`}
             title={`${r.label} time speed`}
           >
@@ -122,10 +129,10 @@ function IconButton({
 }
 
 function formatIso(time: Date): string {
-  const y = time.getUTCFullYear().toString().padStart(4, '0');
-  const m = (time.getUTCMonth() + 1).toString().padStart(2, '0');
-  const d = time.getUTCDate().toString().padStart(2, '0');
-  const hh = time.getUTCHours().toString().padStart(2, '0');
-  const mm = time.getUTCMinutes().toString().padStart(2, '0');
+  const y = time.getUTCFullYear().toString().padStart(4, "0");
+  const m = (time.getUTCMonth() + 1).toString().padStart(2, "0");
+  const d = time.getUTCDate().toString().padStart(2, "0");
+  const hh = time.getUTCHours().toString().padStart(2, "0");
+  const mm = time.getUTCMinutes().toString().padStart(2, "0");
   return `${y}-${m}-${d} ${hh}:${mm}Z`;
 }
