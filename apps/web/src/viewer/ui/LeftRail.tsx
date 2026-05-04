@@ -21,6 +21,7 @@ type Props = {
   state: UniverseState;
   scene: Scene | null;
   onOpenGuide: () => void;
+  onOpenTimeMachine: () => void;
 };
 
 const TRAVEL: Array<{ label: string; key: string; tone: string }> = [
@@ -48,7 +49,7 @@ const WAVES: Array<{ id: string; label: string }> = [
   { id: "fermi", label: "γ-ray" },
 ];
 
-export function LeftRail({ state, scene, onOpenGuide }: Props) {
+export function LeftRail({ state, scene, onOpenGuide, onOpenTimeMachine }: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [open, setOpen] = useState<{
@@ -132,6 +133,14 @@ export function LeftRail({ state, scene, onOpenGuide }: Props) {
           className="flex h-9 w-9 items-center justify-center rounded-md text-white/70 hover:bg-white/5 hover:text-white"
         >
           🚀
+        </button>
+        <button
+          type="button"
+          onClick={onOpenTimeMachine}
+          title="Time machine"
+          className="flex h-9 w-9 items-center justify-center rounded-md text-white/70 hover:bg-white/5 hover:text-white"
+        >
+          🕰
         </button>
         <button
           type="button"
@@ -295,6 +304,14 @@ export function LeftRail({ state, scene, onOpenGuide }: Props) {
       </div>
 
       <div className="border-t border-white/5 p-2">
+        <button
+          type="button"
+          onClick={onOpenTimeMachine}
+          className="flex w-full items-center justify-between rounded-md px-2.5 py-1.5 font-mono text-[11px] uppercase tracking-widest text-white/65 transition hover:bg-white/5 hover:text-white"
+        >
+          <span>🕰 Time machine</span>
+          <span className="text-white/30">›</span>
+        </button>
         <button
           type="button"
           onClick={onOpenGuide}

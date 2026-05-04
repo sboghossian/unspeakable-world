@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Vector3 } from "three";
 import {
   UniverseScene,
@@ -17,6 +17,10 @@ import { ColorLegend } from "./ui/ColorLegend";
 import { LeftRail } from "./ui/LeftRail";
 import { InfoPanel } from "./ui/InfoPanel";
 import { SearchIndex, type SearchEntry } from "./search/search-index";
+
+const TimeMachinePanel = lazy(() =>
+  import("./ui/TimeMachinePanel").then((m) => ({ default: m.TimeMachinePanel })),
+);
 
 /**
  * 🌌 Universe Mode — single seamless scene from Earth to the Cosmic Web.
@@ -62,6 +66,7 @@ export function Universe({ onExit }: Props) {
   const sceneRef = useRef<UniverseScene | null>(null);
   const [state, setState] = useState<UniverseState>(DEFAULT_STATE);
   const [eventsOpen, setEventsOpen] = useState(false);
+  const [timeMachineOpen, setTimeMachineOpen] = useState(false);
   const [searchIndex, setSearchIndex] = useState<SearchIndex | null>(null);
   const [inspect, setInspect] = useState<UniverseHit | null>(null);
   const [observer, setObserver] = useState<{ lat: number; lon: number } | null>(
@@ -245,7 +250,19 @@ export function Universe({ onExit }: Props) {
         onOpenGuide={() => {
           window.location.hash = "#guide";
         }}
+        onOpenTimeMachine={() => setTimeMachineOpen(true)}
       />
+
+      {timeMachineOpen && (
+        <Suspense fallback={null}>
+          <TimeMachinePanel
+            open={timeMachineOpen}
+            scene={sceneRef.current}
+            now={state.time}
+            onClose={() => setTimeMachineOpen(false)}
+          />
+        </Suspense>
+      )}
 
       {/* Bottom bar */}
       <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex flex-col items-center gap-2 px-3">
