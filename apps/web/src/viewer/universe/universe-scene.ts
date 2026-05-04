@@ -25,6 +25,8 @@ import {
   WebGLRenderer,
 } from "three";
 import { Body, HelioVector } from "astronomy-engine";
+import { HipsSphere } from "../scene/hips-sphere";
+import { SURVEYS, type Survey } from "../hips/surveys";
 
 /**
  * 🌌 Universe Mode — single seamless scene across scales.
@@ -91,6 +93,12 @@ export type UniverseState = {
   time: Date;
   /** Active tier (which group dominates). */
   tier: "Solar" | "Stellar" | "Galactic" | "Cosmic";
+  /** HiPS sky-tile background visible? (true at near-Earth scales). */
+  skyTilesVisible: boolean;
+  /** HiPS overlay survey id ("halpha", "2mass", "allwise", "galex", "integral", "nvss", "fermi", or null). */
+  overlayId: string | null;
+  /** HiPS overlay cross-fade [0..1]. */
+  overlayMix: number;
 };
 
 type Listener = (s: UniverseState) => void;
@@ -108,9 +116,17 @@ export class UniverseScene {
   private camera: PerspectiveCamera;
   private scene = new Scene();
 
-  // Two coordinate frames, both anchored to keep camera near (0,0,0).
+  // Three coordinate frames, each anchored so the camera stays at world (0,0,0):
+  //   - solarGroup: 1 unit = 1 AU, recentered on the Sun-relative offset
+  //   - galacticGroup: 1 unit = 1 LY, recentered on the camera's logical pos
+  //   - hipsGroup: HiPS sky-tile celestial sphere (skybox, follows camera)
   private solarGroup = new Group();
   private galacticGroup = new Group();
+  private hipsGroup = new Group();
+  private hipsSphere: HipsSphere;
+  private hipsOverlay: HipsSphere | null = null;
+  private hipsOverlayId: string | null = null;
+  private hipsOverlayMix = 0;
 
   // Solar contents
   private sunMesh: Mesh;
@@ -170,6 +186,14 @@ export class UniverseScene {
 
     this.scene.add(this.solarGroup);
     this.scene.add(this.galacticGroup);
+
+    // ─── HiPS celestial-sphere background (skybox, follows camera) ─
+    // Scaled up so it sits well behind the solar planets but still
+    // inside the camera far plane. logDepthBuffer keeps z-precision.
+    this.hipsSphere = new HipsSphere(SURVEYS.dss2!);
+    this.hipsGroup.add(this.hipsSphere.group);
+    this.hipsGroup.scale.setScalar(2000); // 2000 scene-unit radius
+    this.scene.add(this.hipsGroup);
 
     // ─── Solar group ───────────────────────────────────────────
     const sunGeom = new SphereGeometry(0.35, 32, 32); // 0.35 AU
@@ -247,6 +271,39 @@ export class UniverseScene {
 
   setTime(t: Date): void {
     this.simTime = new Date(t.getTime());
+    this.publishState();
+  }
+
+  /** Switch the HiPS overlay survey (or null to clear). */
+  setOverlay(surveyId: string | null): void {
+    if (surveyId === null) {
+      if (this.hipsOverlay) {
+        this.hipsGroup.remove(this.hipsOverlay.group);
+        this.hipsOverlay.dispose();
+        this.hipsOverlay = null;
+      }
+      this.hipsOverlayId = null;
+      this.hipsOverlayMix = 0;
+      this.publishState();
+      return;
+    }
+    const survey: Survey | undefined = SURVEYS[surveyId];
+    if (!survey) return;
+    if (!this.hipsOverlay) {
+      this.hipsOverlay = new HipsSphere(survey, 5);
+      this.hipsGroup.add(this.hipsOverlay.group);
+      this.hipsOverlayMix = 0.6;
+    } else {
+      this.hipsOverlay.setSurvey(survey);
+    }
+    this.hipsOverlayId = surveyId;
+    this.hipsOverlay.setOpacity(this.hipsOverlayMix);
+    this.publishState();
+  }
+
+  setOverlayMix(mix: number): void {
+    this.hipsOverlayMix = Math.max(0, Math.min(1, mix));
+    if (this.hipsOverlay) this.hipsOverlay.setOpacity(this.hipsOverlayMix);
     this.publishState();
   }
 
@@ -548,6 +605,9 @@ export class UniverseScene {
       scaleLabel: this.scaleLabel(distLY),
       time: this.simTime,
       tier: this.detectTier(distLY),
+      skyTilesVisible: this.hipsGroup.visible,
+      overlayId: this.hipsOverlayId,
+      overlayMix: this.hipsOverlayMix,
     };
   }
 
@@ -633,6 +693,25 @@ export class UniverseScene {
     for (const o of this.orbitLoops) {
       (o.material as LineBasicMaterial).opacity = solarOpacity * 0.45;
       (o.material as LineBasicMaterial).visible = solarOpacity > 0.05;
+    }
+    // HiPS skybox: brightest at very-near-Earth scales (< 0.001 LY), fully
+    // hidden when we're far enough out that the actual galaxy + cosmic web
+    // visualisations are taking over.
+    const hipsOpacity = ramp(distLY, 1e-4, 0.05, 1.0, 0.0);
+    this.hipsGroup.visible = hipsOpacity > 0.05;
+    for (const t of this.hipsSphere.tilesAll()) {
+      const m = t.mesh.material as { opacity?: number; transparent?: boolean; needsUpdate?: boolean };
+      m.opacity = hipsOpacity;
+      m.transparent = true;
+      m.needsUpdate = true;
+    }
+    if (this.hipsOverlay) {
+      for (const t of this.hipsOverlay.tilesAll()) {
+        const m = t.mesh.material as { opacity?: number; transparent?: boolean; needsUpdate?: boolean };
+        m.opacity = hipsOpacity * this.hipsOverlayMix;
+        m.transparent = true;
+        m.needsUpdate = true;
+      }
     }
     (this.galaxyDisk.material as MeshBasicMaterial).opacity = galaxyOpacity;
     (this.galaxyBulge.material as MeshBasicMaterial).opacity = galaxyOpacity * 0.85;

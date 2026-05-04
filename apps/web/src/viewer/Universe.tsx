@@ -28,6 +28,9 @@ const DEFAULT_STATE: UniverseState = {
   scaleLabel: "Earth Vicinity",
   time: new Date(),
   tier: "Solar",
+  skyTilesVisible: true,
+  overlayId: null,
+  overlayMix: 0,
 };
 
 const FLY_TARGETS = [
@@ -102,6 +105,70 @@ export function Universe({ onExit }: Props) {
           ))}
         </div>
       </div>
+
+      {/* Wavelength bar — only visible when sky tiles dominate (Solar tier) */}
+      {state.skyTilesVisible && (
+        <div className="pointer-events-none absolute inset-x-0 top-20 z-10 flex justify-center px-3">
+          <div className="pointer-events-auto flex flex-wrap items-center gap-1 rounded-xl border border-white/10 bg-space-950/80 px-3 py-2 backdrop-blur">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-white/40">
+              wavelength
+            </span>
+            <button
+              type="button"
+              onClick={() => sceneRef.current?.setOverlay(null)}
+              className={`rounded-md border px-2.5 py-1 font-mono text-xs uppercase tracking-wider transition ${
+                state.overlayId === null
+                  ? "border-plasma-500/40 bg-plasma-500/15 text-plasma-400"
+                  : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10"
+              }`}
+            >
+              visible
+            </button>
+            {(
+              [
+                ["halpha", "Hα"],
+                ["2mass", "2MASS"],
+                ["allwise", "WISE"],
+                ["galex", "UV"],
+                ["integral", "X-ray"],
+                ["nvss", "Radio"],
+                ["fermi", "γ-ray"],
+              ] as const
+            ).map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() =>
+                  sceneRef.current?.setOverlay(
+                    state.overlayId === id ? null : id,
+                  )
+                }
+                className={`rounded-md border px-2.5 py-1 font-mono text-xs uppercase tracking-wider transition ${
+                  state.overlayId === id
+                    ? "border-amber-400/40 bg-amber-400/15 text-amber-300"
+                    : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+            {state.overlayId && (
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.01}
+                value={state.overlayMix}
+                onChange={(e) =>
+                  sceneRef.current?.setOverlayMix(parseFloat(e.target.value))
+                }
+                className="ml-2 h-1 w-24 accent-amber-400"
+                aria-label="Wavelength cross-fade"
+              />
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Bottom bar */}
       <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex flex-col items-center gap-2 px-3">
