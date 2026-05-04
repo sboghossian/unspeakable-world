@@ -91,6 +91,24 @@ export function SpaceWeatherPanel({ observer }: Props) {
                 <ScaleTile name="S" scale={snap.current.S.scale} />
                 <ScaleTile name="G" scale={snap.current.G.scale} />
               </div>
+              {(snap.sunspots || snap.solarWindKms !== null) && (
+                <div className="grid grid-cols-2 gap-2 border-t border-white/5 px-3 py-3">
+                  {snap.sunspots && (
+                    <SolarTile
+                      label="Sunspots"
+                      value={snap.sunspots.ssn.toFixed(0)}
+                      unit={`SSN · F10.7 ${snap.sunspots.f107.toFixed(0)}`}
+                    />
+                  )}
+                  {snap.solarWindKms !== null && (
+                    <SolarTile
+                      label="Solar wind"
+                      value={`${snap.solarWindKms.toFixed(0)}`}
+                      unit="km/s · ACE / DSCOVR"
+                    />
+                  )}
+                </div>
+              )}
               <AuroraOutlook kp={snap.kp} observer={observer} />
               <div className="border-t border-white/5 px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-white/40">
                 recent alerts · {snap.alerts.length}
@@ -158,6 +176,28 @@ function KpTile({ kp }: { kp: number }) {
       <div className={`font-mono text-lg leading-none ${tone}`}>
         {kp.toFixed(0)}
       </div>
+    </div>
+  );
+}
+
+function SolarTile({
+  label,
+  value,
+  unit,
+}: {
+  label: string;
+  value: string;
+  unit: string;
+}) {
+  return (
+    <div className="rounded-md border border-white/10 bg-white/[0.03] px-2.5 py-1.5">
+      <div className="font-mono text-[9px] uppercase tracking-widest text-white/40">
+        {label}
+      </div>
+      <div className="font-mono text-sm leading-none text-amber-200">
+        {value}
+      </div>
+      <div className="mt-0.5 font-mono text-[10px] text-white/40">{unit}</div>
     </div>
   );
 }

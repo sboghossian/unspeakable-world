@@ -15,6 +15,10 @@
 const KP_URL = "https://services.swpc.noaa.gov/json/planetary_k_index_1m.json";
 const SCALES_URL = "https://services.swpc.noaa.gov/products/noaa-scales.json";
 const ALERTS_URL = "https://services.swpc.noaa.gov/products/alerts.json";
+const SUNSPOTS_URL =
+  "https://services.swpc.noaa.gov/json/solar-cycle/observed-solar-cycle-indices.json";
+const SOLAR_WIND_URL =
+  "https://services.swpc.noaa.gov/products/summary/solar-wind-speed.json";
 
 export type NoaaScale = {
   /** "0" – "5" (or null when only probabilistic forecast available). */
@@ -32,6 +36,10 @@ export type SpaceWeatherSnapshot = {
   current: { R: NoaaScale; S: NoaaScale; G: NoaaScale };
   /** Most recent alerts, newest-first, capped at 10. */
   alerts: Alert[];
+  /** Latest monthly mean sunspot number, or null if the feed is unavailable. */
+  sunspots: { ssn: number; f107: number; tag: string } | null;
+  /** Real-time solar wind proton speed (km/s) from ACE / DSCOVR, or null. */
+  solarWindKms: number | null;
 };
 
 export type Alert = {
@@ -44,11 +52,16 @@ export type Alert = {
 };
 
 export async function fetchSpaceWeather(): Promise<SpaceWeatherSnapshot> {
-  const [kpRaw, scalesRaw, alertsRaw] = await Promise.all([
-    fetchJson<KpSample[]>(KP_URL),
-    fetchJson<ScalesEnvelope>(SCALES_URL),
-    fetchJson<RawAlert[]>(ALERTS_URL),
-  ]);
+  const [kpRaw, scalesRaw, alertsRaw, sunspotsRaw, solarWindRaw] =
+    await Promise.all([
+      fetchJson<KpSample[]>(KP_URL),
+      fetchJson<ScalesEnvelope>(SCALES_URL),
+      fetchJson<RawAlert[]>(ALERTS_URL),
+      fetchJson<SunspotSample[]>(SUNSPOTS_URL).catch(() => [] as SunspotSample[]),
+      fetchJson<SolarWindSample[]>(SOLAR_WIND_URL).catch(
+        () => [] as SolarWindSample[],
+      ),
+    ]);
 
   const lastKp = kpRaw[kpRaw.length - 1];
   if (!lastKp) throw new Error("SWPC Kp feed returned no samples");
@@ -64,6 +77,20 @@ export async function fetchSpaceWeather(): Promise<SpaceWeatherSnapshot> {
     .sort((a, b) => b.issued.getTime() - a.issued.getTime())
     .slice(0, 10);
 
+  // Sunspots: walk back to find the most recent month with a real
+  // (>=0) ssn value. The historical archive starts in 1749 so we trim.
+  let sunspots: SpaceWeatherSnapshot["sunspots"] = null;
+  for (let i = sunspotsRaw.length - 1; i >= 0 && i > sunspotsRaw.length - 6; i--) {
+    const s = sunspotsRaw[i]!;
+    if (s.ssn >= 0) {
+      sunspots = { ssn: s.ssn, f107: s["f10.7"], tag: s["time-tag"] };
+      break;
+    }
+  }
+
+  const sw = solarWindRaw[solarWindRaw.length - 1];
+  const solarWindKms = sw && Number.isFinite(sw.proton_speed) ? sw.proton_speed : null;
+
   return {
     kp,
     kpTime,
@@ -73,8 +100,21 @@ export async function fetchSpaceWeather(): Promise<SpaceWeatherSnapshot> {
       G: { scale: now.G.Scale, text: now.G.Text },
     },
     alerts,
+    sunspots,
+    solarWindKms,
   };
 }
+
+type SunspotSample = {
+  "time-tag": string;
+  ssn: number;
+  "f10.7": number;
+};
+
+type SolarWindSample = {
+  proton_speed: number;
+  time_tag: string;
+};
 
 async function fetchJson<T>(url: string): Promise<T> {
   const res = await fetch(url, { cache: "no-store" });

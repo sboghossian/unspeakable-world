@@ -4,7 +4,7 @@ import { navigate } from "../router";
 const COUNTERS = [
   { value: "8,921", label: "bright stars" },
   { value: "879", label: "deep-sky objects" },
-  { value: "4", label: "wavelengths" },
+  { value: "8", label: "wavelengths" },
   { value: "MIT", label: "forever free" },
 ];
 
@@ -13,7 +13,7 @@ export function Hero() {
     <section className="mx-auto flex w-full max-w-5xl flex-col items-center px-6 pb-16 pt-24 text-center md:pt-36">
       <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.2em] text-plasma-400/90 backdrop-blur">
         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-plasma-500" />
-        <span>Day 20 · v2 live in your browser</span>
+        <span>Day 41 · v3 — eight wavelengths, every sky event</span>
       </div>
 
       <h1 className="text-balance font-display text-5xl font-semibold leading-[1.05] glow md:text-7xl">
@@ -56,10 +56,13 @@ export function Hero() {
       </div>
 
       <p className="mt-3 max-w-xl text-xs text-white/50">
-        DSS2 · 2MASS · WISE · INTEGRAL X-ray sky tiles streaming from CDS & ESA
-        · 8,921 bright stars · 879 deep-sky objects · 88 constellations · Sun +
-        planets · live ISS · search · tonight's sky · 8-step Grand Tour · SIMBAD
-        + Wikipedia inspector · shareable URLs.
+        DSS2 · Hα · 2MASS · AllWISE · GALEX UV · INTEGRAL X-ray · NVSS radio ·
+        Fermi γ-ray sky tiles federated from CDS & ESA · 8,921 bright stars
+        labelled by name · 879 deep-sky objects · 88 IAU constellations · Sun
+        + 8 planets + 4 Galilean moons + Moon · live ISS · 90-day events
+        calendar · click-to-fly meteor radiants · SIMBAD + Wikipedia
+        inspector · aurora outlook · coordinate grid + galactic landmarks ·
+        snapshot button · shareable URLs · installable PWA.
       </p>
 
       <EmailCapture />
