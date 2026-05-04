@@ -100,6 +100,10 @@ export class ViewerScene {
       powerPreference: "high-performance",
       alpha: false,
       stencil: false,
+      // Required so we can call canvas.toDataURL() / toBlob() for the
+      // snapshot button — without it the framebuffer is cleared after
+      // each rAF and the read returns transparent black.
+      preserveDrawingBuffer: true,
     });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setClearColor(0x03050a, 1);
@@ -469,6 +473,16 @@ export class ViewerScene {
     this.camera.updateProjectionMatrix();
     this.dirty = true;
     this.publishState();
+  }
+
+  /**
+   * Force one immediate render and return the canvas as a PNG data URL.
+   * Used by the snapshot button so the reader gets a deterministic image
+   * regardless of whether render-on-demand has skipped this frame.
+   */
+  snapshotPng(): string {
+    this.renderer.render(this.scene, this.camera);
+    return this.canvas.toDataURL("image/png");
   }
 
   /** Resolve a body name to its current direction (used by the tour). */

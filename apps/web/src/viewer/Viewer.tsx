@@ -16,6 +16,7 @@ import { CenterHud } from "./ui/CenterHud";
 import { EventsPanel } from "./ui/EventsPanel";
 import { NeoPanel } from "./ui/NeoPanel";
 import { ShareButton } from "./ui/ShareButton";
+import { SnapshotButton } from "./ui/SnapshotButton";
 import { ShortcutsOverlay } from "./ui/ShortcutsOverlay";
 import { SkyTonightPanel } from "./ui/SkyTonightPanel";
 import { SpaceWeatherPanel } from "./ui/SpaceWeatherPanel";
@@ -529,7 +530,7 @@ export function Viewer() {
           <EventsPanel open={eventsOpen} onOpenChange={setEventsOpen} />
           <NeoPanel />
           <SkyTonightPanel observer={observer} />
-          <SpaceWeatherPanel />
+          <SpaceWeatherPanel observer={observer} />
           {searchIndex && (
             <TonightTargetsPanel
               entries={searchIndex.allEntries()}
@@ -543,6 +544,9 @@ export function Viewer() {
             onChange={reloadFavorites}
           />
           <ShareButton />
+          <SnapshotButton
+            onCapture={() => sceneRef.current?.snapshotPng() ?? null}
+          />
           <button
             type="button"
             onClick={() => setAboutOpen(true)}
