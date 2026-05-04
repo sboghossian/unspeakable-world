@@ -7,6 +7,7 @@ import {
   Color,
   DoubleSide,
   Group,
+  Line as ThreeLine,
   LinearFilter,
   LineBasicMaterial,
   LineLoop,
@@ -151,6 +152,11 @@ export class SolarFlightScene {
   private backgroundLabels: Sprite[] = [];
   private satellites: SatelliteField | null = null;
 
+  // Gravity sandbox — light n-body projectiles pulled by Sun + planets.
+  private projectiles: Projectile[] = [];
+  private projectileGroup = new Group();
+  private projectileTrails: LineLoop[] = [];
+
   // State
   private rafHandle = 0;
   private resizeObs: ResizeObserver | null = null;
@@ -198,6 +204,9 @@ export class SolarFlightScene {
     void this.satellites.load("/data/satellites.json").catch(() => {
       // optional layer
     });
+
+    // Gravity sandbox layer (initially empty).
+    this.scene.add(this.projectileGroup);
 
     // Camera + interaction
     this.applyCamera();
@@ -562,6 +571,83 @@ export class SolarFlightScene {
     return this.satellites?.count() ?? 0;
   }
 
+  /**
+   * Gravity Sandbox — launch a projectile with given type + speed. The
+   * projectile is born at a random sun-frame radius (1–6 AU), aimed
+   * tangentially with the requested speed. Up to 15 projectiles at once,
+   * older ones pop. Each is integrated via leapfrog under the Sun + 8
+   * planets' gravity.
+   */
+  launchProjectile(
+    kind: ProjectileSpec["kind"],
+    speedKmS: number,
+  ): void {
+    const spec = PROJECTILE_SPECS[kind];
+    if (this.projectiles.length >= 15) {
+      const old = this.projectiles.shift();
+      if (old) {
+        old.dispose(this.projectileGroup);
+      }
+    }
+    // Birth: random radius 1–6 AU at ~ecliptic, tangential aim.
+    const r = 1 + Math.random() * 5;
+    const theta = Math.random() * Math.PI * 2;
+    const startX = r * Math.cos(theta);
+    const startZ = r * Math.sin(theta);
+    // Tangential direction (perpendicular to radial in ecliptic plane).
+    const tangX = -Math.sin(theta);
+    const tangZ = Math.cos(theta);
+    // Convert km/s → AU/day: 1 AU = 149.6e6 km, 1 day = 86400 s.
+    // dx/dt in AU/day = (km/s) × (86400 / 149.6e6) ≈ (km/s) × 5.78e-4.
+    const auPerDay = speedKmS * 5.78e-4;
+    const proj = new Projectile(
+      spec,
+      new Vector3(startX, 0, startZ),
+      new Vector3(tangX * auPerDay, 0, tangZ * auPerDay),
+    );
+    proj.attachTo(this.projectileGroup);
+    this.projectiles.push(proj);
+  }
+
+  clearProjectiles(): void {
+    for (const p of this.projectiles) p.dispose(this.projectileGroup);
+    this.projectiles = [];
+  }
+
+  projectileCount(): number {
+    return this.projectiles.length;
+  }
+
+  /** Step every projectile forward by `dtDays` simulated days using
+   *  the Sun (heliocentric, mass=1) and four giants. Inner planets are
+   *  too weak to matter at typical orbital regimes. */
+  private stepProjectiles(dtDays: number): void {
+    if (this.projectiles.length === 0) return;
+    const G_AU3_PER_DAY2 = 0.00029591220828559104; // GM_sun in AU^3/day^2
+    const masses: Array<{ pos: Vector3; mu: number }> = [
+      // Sun
+      { pos: new Vector3(0, 0, 0), mu: G_AU3_PER_DAY2 },
+    ];
+    // Add gas giants only — inner planets contribute negligibly to orbital
+    // dynamics on solar-system scales. Use scene positions captured in
+    // updatePlanets().
+    const giantNames = ["Jupiter", "Saturn", "Uranus", "Neptune"];
+    const giantMu: Record<string, number> = {
+      Jupiter: G_AU3_PER_DAY2 * 9.547e-4,
+      Saturn: G_AU3_PER_DAY2 * 2.857e-4,
+      Uranus: G_AU3_PER_DAY2 * 4.366e-5,
+      Neptune: G_AU3_PER_DAY2 * 5.151e-5,
+    };
+    for (const n of giantNames) {
+      const p = this.planets.find((x) => x.name === n);
+      if (!p) continue;
+      masses.push({ pos: p.group.position.clone(), mu: giantMu[n]! });
+    }
+    for (const proj of this.projectiles) {
+      proj.step(dtDays, masses);
+    }
+  }
+
   private buildMarsMoons(): void {
     // Real semi-major axes (Phobos: 9,376 km = 6.27e-5 AU, Deimos: 23,463
     // km = 1.57e-4 AU) are way smaller than Mars's drawn radius (0.035
@@ -903,6 +989,9 @@ export class SolarFlightScene {
       );
       this.updatePlanets();
       this.refreshSatellites();
+      // Step projectiles by the same dt (in days).
+      const dtDays = (elapsedMs * this.timeRate) / 86400000;
+      this.stepProjectiles(dtDays);
       this.publishState();
     }
     // Tracking mode keeps the camera glued to the moving focus body each
@@ -993,6 +1082,9 @@ export class SolarFlightScene {
       this.scene.remove(this.satellites.group);
       this.satellites = null;
     }
+    for (const p of this.projectiles) p.dispose(this.projectileGroup);
+    this.projectiles = [];
+    void this.projectileTrails; // suppress unused warning
     for (const s of this.backgroundLabels) {
       const m = s.material as SpriteMaterial;
       m.map?.dispose();
@@ -1133,6 +1225,139 @@ function makeRingTexture(): CanvasTexture {
   tex.minFilter = LinearFilter;
   tex.magFilter = LinearFilter;
   return tex;
+}
+
+/**
+ * Gravity-sandbox projectile spec. The `mu` (GM) field doesn't actually
+ * matter for the projectile's own motion (in test-particle integration)
+ * but the visual size + glow color come from here.
+ */
+export type ProjectileSpec = {
+  kind:
+    | "Comet"
+    | "Earth-class"
+    | "Jupiter-class"
+    | "Brown Dwarf"
+    | "White Dwarf"
+    | "Neutron Star"
+    | "Black Hole";
+  color: number;
+  drawSize: number;
+};
+
+export const PROJECTILE_SPECS: Record<ProjectileSpec["kind"], ProjectileSpec> = {
+  Comet: { kind: "Comet", color: 0x9adcff, drawSize: 0.04 },
+  "Earth-class": { kind: "Earth-class", color: 0x6ea4ff, drawSize: 0.05 },
+  "Jupiter-class": { kind: "Jupiter-class", color: 0xffd9a8, drawSize: 0.09 },
+  "Brown Dwarf": { kind: "Brown Dwarf", color: 0xb45c2c, drawSize: 0.11 },
+  "White Dwarf": { kind: "White Dwarf", color: 0xffffff, drawSize: 0.06 },
+  "Neutron Star": { kind: "Neutron Star", color: 0xc8d6ff, drawSize: 0.05 },
+  "Black Hole": { kind: "Black Hole", color: 0x2a1a3a, drawSize: 0.07 },
+};
+
+class Projectile {
+  readonly spec: ProjectileSpec;
+  readonly pos: Vector3;
+  readonly vel: Vector3;
+  private sphere: Mesh;
+  private trail: BufferGeometry;
+  private trailMesh: ThreeLine;
+  private trailPositions: Float32Array;
+  private trailIndex = 0;
+  private trailFull = false;
+  private static readonly TRAIL_LEN = 400;
+
+  constructor(spec: ProjectileSpec, pos: Vector3, vel: Vector3) {
+    this.spec = spec;
+    this.pos = pos.clone();
+    this.vel = vel.clone();
+
+    // Sphere body
+    const geom = new SphereGeometry(spec.drawSize, 16, 16);
+    const mat = new MeshBasicMaterial({
+      color: spec.color,
+      transparent: spec.kind === "Black Hole",
+      opacity: spec.kind === "Black Hole" ? 0.95 : 1.0,
+    });
+    this.sphere = new Mesh(geom, mat);
+    this.sphere.position.copy(this.pos);
+
+    // Trail line
+    this.trailPositions = new Float32Array(Projectile.TRAIL_LEN * 3);
+    this.trail = new BufferGeometry();
+    this.trail.setAttribute(
+      "position",
+      new BufferAttribute(this.trailPositions, 3),
+    );
+    const trailMat = new LineBasicMaterial({
+      color: spec.color,
+      transparent: true,
+      opacity: 0.6,
+    });
+    this.trailMesh = new ThreeLine(this.trail, trailMat);
+    this.trailMesh.frustumCulled = false;
+  }
+
+  attachTo(group: Group): void {
+    group.add(this.sphere);
+    group.add(this.trailMesh);
+  }
+
+  /** Leapfrog integration with the bodies' point-mass gravity (GM provided). */
+  step(dtDays: number, masses: Array<{ pos: Vector3; mu: number }>): void {
+    const accel = (p: Vector3) => {
+      const a = new Vector3();
+      for (const m of masses) {
+        const dx = m.pos.x - p.x;
+        const dy = m.pos.y - p.y;
+        const dz = m.pos.z - p.z;
+        const r2 = dx * dx + dy * dy + dz * dz;
+        if (r2 < 1e-6) continue;
+        const r = Math.sqrt(r2);
+        const f = m.mu / (r2 * r);
+        a.x += dx * f;
+        a.y += dy * f;
+        a.z += dz * f;
+      }
+      return a;
+    };
+    // Leapfrog (kick-drift-kick).
+    const a1 = accel(this.pos);
+    this.vel.x += a1.x * (dtDays / 2);
+    this.vel.y += a1.y * (dtDays / 2);
+    this.vel.z += a1.z * (dtDays / 2);
+    this.pos.x += this.vel.x * dtDays;
+    this.pos.y += this.vel.y * dtDays;
+    this.pos.z += this.vel.z * dtDays;
+    const a2 = accel(this.pos);
+    this.vel.x += a2.x * (dtDays / 2);
+    this.vel.y += a2.y * (dtDays / 2);
+    this.vel.z += a2.z * (dtDays / 2);
+
+    this.sphere.position.copy(this.pos);
+    // Update trail ring buffer.
+    const i = this.trailIndex * 3;
+    this.trailPositions[i] = this.pos.x;
+    this.trailPositions[i + 1] = this.pos.y;
+    this.trailPositions[i + 2] = this.pos.z;
+    this.trailIndex = (this.trailIndex + 1) % Projectile.TRAIL_LEN;
+    if (this.trailIndex === 0) this.trailFull = true;
+    void this.trailFull;
+    (this.trail.attributes.position as BufferAttribute).needsUpdate = true;
+    this.trail.setDrawRange(
+      0,
+      this.trailFull ? Projectile.TRAIL_LEN : this.trailIndex,
+    );
+  }
+
+  dispose(group: Group): void {
+    this.sphere.geometry.dispose();
+    (this.sphere.material as MeshBasicMaterial).dispose();
+    group.remove(this.sphere);
+    this.trail.dispose();
+    (this.trailMesh.material as LineBasicMaterial).dispose();
+    group.remove(this.trailMesh);
+  }
 }
 
 function makeColoredLabel(text: string, color: string): CanvasTexture {

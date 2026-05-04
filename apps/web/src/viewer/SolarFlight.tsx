@@ -68,6 +68,11 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
   ];
   const [zonesOn, setZonesOn] = useState(false);
   const [satellitesOn, setSatellitesOn] = useState(false);
+  const [sandboxOpen, setSandboxOpen] = useState(false);
+  const [sandboxKind, setSandboxKind] = useState<
+    "Comet" | "Earth-class" | "Jupiter-class" | "Brown Dwarf" | "White Dwarf" | "Neutron Star" | "Black Hole"
+  >("Comet");
+  const [sandboxSpeed, setSandboxSpeed] = useState(30);
 
   return (
     <div className="relative h-full w-full bg-[#000208]">
@@ -160,6 +165,18 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
           </button>
           <button
             type="button"
+            onClick={() => setSandboxOpen((v) => !v)}
+            title="Open the Gravity Sandbox — launch projectiles and watch them interact with the Sun + giants"
+            className={`rounded-lg border px-3 py-1.5 font-mono text-xs uppercase tracking-widest backdrop-blur transition ${
+              sandboxOpen
+                ? "border-orange-400/50 bg-orange-400/15 text-orange-200"
+                : "border-white/10 bg-space-950/70 text-white/65 hover:bg-white/10"
+            }`}
+          >
+            ⚛ sandbox
+          </button>
+          <button
+            type="button"
             onClick={() => {
               const next = !satellitesOn;
               setSatellitesOn(next);
@@ -204,6 +221,93 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
           drag to orbit · wheel to zoom · pick a focus body above
         </div>
       </div>
+
+      {/* Gravity Sandbox panel */}
+      {sandboxOpen && (
+        <div className="pointer-events-auto absolute bottom-44 left-3 z-20 w-[min(320px,90vw)] rounded-xl border border-orange-400/30 bg-space-950/90 p-3 backdrop-blur">
+          <div className="mb-2 flex items-baseline justify-between">
+            <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-orange-300/80">
+              ⚛ gravity sandbox
+            </div>
+            <button
+              type="button"
+              onClick={() => setSandboxOpen(false)}
+              aria-label="Close"
+              className="rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[10px] text-white/60 hover:bg-white/10 hover:text-white"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="mb-1 font-mono text-[10px] uppercase tracking-widest text-white/40">
+            select projectile
+          </div>
+          <div className="mb-3 grid grid-cols-2 gap-1.5">
+            {(
+              [
+                "Comet",
+                "Earth-class",
+                "Jupiter-class",
+                "Brown Dwarf",
+                "White Dwarf",
+                "Neutron Star",
+                "Black Hole",
+              ] as const
+            ).map((k) => (
+              <button
+                key={k}
+                type="button"
+                onClick={() => setSandboxKind(k)}
+                className={`rounded-md border px-2 py-1 font-mono text-[11px] transition ${
+                  sandboxKind === k
+                    ? "border-orange-400/50 bg-orange-400/15 text-orange-200"
+                    : "border-white/10 bg-white/5 text-white/65 hover:bg-white/10"
+                }`}
+              >
+                {k}
+              </button>
+            ))}
+          </div>
+          <div className="mb-1 flex items-baseline justify-between">
+            <div className="font-mono text-[10px] uppercase tracking-widest text-white/40">
+              launch speed
+            </div>
+            <div className="font-mono text-[10px] text-white/65">
+              {sandboxSpeed} km/s
+            </div>
+          </div>
+          <input
+            type="range"
+            min={5}
+            max={200}
+            step={1}
+            value={sandboxSpeed}
+            onChange={(e) => setSandboxSpeed(parseInt(e.target.value, 10))}
+            className="mb-3 h-1 w-full accent-orange-400"
+          />
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() =>
+                sceneRef.current?.launchProjectile(sandboxKind, sandboxSpeed)
+              }
+              className="flex-1 rounded-md border border-orange-400/40 bg-orange-400/15 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-orange-200 hover:bg-orange-400/25"
+            >
+              ▶ launch
+            </button>
+            <button
+              type="button"
+              onClick={() => sceneRef.current?.clearProjectiles()}
+              className="rounded-md border border-white/10 bg-white/5 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-white/65 hover:bg-white/10"
+            >
+              clear
+            </button>
+          </div>
+          <div className="mt-2 font-mono text-[10px] text-white/35">
+            n-body integration: leapfrog under Sun + 4 gas giants. Up to 15
+            projectiles at a time.
+          </div>
+        </div>
+      )}
     </div>
   );
 }
