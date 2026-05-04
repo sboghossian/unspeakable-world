@@ -24,9 +24,22 @@ const Galactic = lazy(() =>
 const Universe = lazy(() =>
   import("./viewer/Universe").then((m) => ({ default: m.Universe })),
 );
+const Guide = lazy(() =>
+  import("./guide/Guide").then((m) => ({ default: m.Guide })),
+);
 
 export function App() {
   const route = useRoute();
+
+  if (route === "guide") {
+    return (
+      <main className="relative h-full w-full bg-space-950">
+        <Suspense fallback={<ViewerLoadingVeil />}>
+          <Guide onExit={() => navigate("landing")} />
+        </Suspense>
+      </main>
+    );
+  }
 
   if (route === "universe") {
     return (
