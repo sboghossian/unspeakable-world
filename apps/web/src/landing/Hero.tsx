@@ -3,8 +3,8 @@ import { navigate } from "../router";
 
 const COUNTERS = [
   { value: "8,921", label: "bright stars" },
-  { value: "3", label: "wavelengths live" },
-  { value: "γ → radio", label: "roadmap" },
+  { value: "879", label: "deep-sky objects" },
+  { value: "4", label: "wavelengths" },
   { value: "MIT", label: "forever free" },
 ];
 
@@ -13,7 +13,7 @@ export function Hero() {
     <section className="mx-auto flex w-full max-w-5xl flex-col items-center px-6 pb-16 pt-24 text-center md:pt-36">
       <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.2em] text-plasma-400/90 backdrop-blur">
         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-plasma-500" />
-        <span>Day 7 · live in your browser</span>
+        <span>Day 20 · v2 live in your browser</span>
       </div>
 
       <h1 className="text-balance font-display text-5xl font-semibold leading-[1.05] glow md:text-7xl">
@@ -56,9 +56,10 @@ export function Hero() {
       </div>
 
       <p className="mt-3 max-w-xl text-xs text-white/50">
-        Real DSS2 / 2MASS / WISE sky tiles streaming from CDS Strasbourg · 8,921
-        bright stars · Sun + planets via AstronomyEngine · live ISS · click any
-        sky to ask SIMBAD what's there.
+        DSS2 · 2MASS · WISE · INTEGRAL X-ray sky tiles streaming from CDS & ESA
+        · 8,921 bright stars · 879 deep-sky objects · 88 constellations · Sun +
+        planets · live ISS · search · tonight's sky · 8-step Grand Tour · SIMBAD
+        + Wikipedia inspector · shareable URLs.
       </p>
 
       <EmailCapture />

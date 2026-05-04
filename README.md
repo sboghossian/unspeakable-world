@@ -14,24 +14,27 @@
 
 **Drag the sky.** Pinch / wheel to zoom. Tap any region to fly there. The viewer streams real DSS2 sky tiles from CDS Strasbourg onto a 3D Three.js sphere — when you zoom in, higher-order Norder 1+ tiles fetch into the camera frustum.
 
-**Cross-fade wavelengths.** Visible (DSS2) ↔ near-IR (2MASS) ↔ mid-IR (AllWISE). Slide the mix between any two wavelengths and watch the sky transform — galactic dust appears, hot dust glows red, stars resolve differently.
+**Cross-fade wavelengths.** Visible (DSS2) ↔ near-IR (2MASS) ↔ mid-IR (AllWISE) ↔ X-ray (INTEGRAL). Slide the mix between two layers and watch the sky transform — galactic dust appears, hot dust glows red, X-ray binaries flare into view.
 
-**Click anything → ask SIMBAD.** Tap a region on the sky and the inspector resolves the closest known object via CDS's open SIMBAD endpoint: name, type, V magnitude, spectral class, redshift. "Fly here →" re-applies the camera path.
+**Click anything → ask SIMBAD + Wikipedia.** Tap a region on the sky and the inspector resolves the closest known object via CDS's open SIMBAD endpoint, then chains to Wikipedia for the article extract + thumbnail when one exists.
 
-**Live ISS.** Polls `wheretheiss.at` every 4 s. Click "ISS" in the targets menu and the camera flies to wherever the station is right now.
+**Search anything.** ⌘K opens search across 314 named stars, 879 deep-sky objects (Messier + NGC/IC + common-name aliases like "Crab Nebula" or "Pleiades"), 9 solar bodies, and the 88 IAU constellations. Click any result to fly there.
+
+**Take the Grand Tour.** Click ▶ TOUR for an 8-step guided walkthrough — Sun, Andromeda, Pleiades, Orion Nebula, Galactic Center, Crab Nebula, Large Magellanic Cloud, Jupiter — each automatically switching to the wavelength that tells the best story.
+
+**Tonight's sky from your location.** ↑ TONIGHT'S SKY uses geolocation (button-gated) + IAU sidereal-time math to fly the camera straight up from where you are right now. Your coordinates never leave your device.
 
 **Real solar system.** Sun, Moon, and 8 planets via [AstronomyEngine](https://github.com/cosinekitty/astronomy). Time slider scrubs ±days, with ×60 / ×1h / ×1d / ×30d speeds — watch Mars cross the sky, watch the Moon track its phase.
 
-**8,921 bright stars.** HYG v4.0 filtered to apparent magnitude ≤ 6.5 (naked-eye limit), packed into a 139 KB binary, GPU-instanced with B-V → RGB color and magnitude → screen-pixel size.
+**Live ISS.** Polls `wheretheiss.at` every 4 s. Click "ISS" in the targets menu and the camera flies to wherever the station is right now.
+
+**88 constellations + labels.** Toggle ✦ LINES for the IAU constellation lines from d3-celestial, with the 3-letter code at every centroid.
+
+**8,921 bright stars + 879 deep-sky objects.** HYG v4.0 stars (CC BY-SA, 139 KB packed binary) GPU-instanced with B-V → RGB color, plus OpenNGC's bright filtered subset as type-coded ring markers (galaxy / cluster / nebula).
+
+**Shareable URLs.** Every camera state, FOV, time, overlay + mix, and constellation toggle round-trips via the URL hash — copy-paste any view to share exactly what you see.
 
 ---
-
-## What's coming
-
-| Days 8-9 | Tonight's sky (DeviceOrientation gyro + geolocation) · polar Collignon seam fix |
-| Days 10-12 | Messier + NGC catalog · constellation lines · Chandra X-ray + Planck CMB + Hα |
-| Days 13-15 | Local SIMBAD mirror · mobile UX polish · scripted camera tours |
-| Days 16-20 | Search bar · satellite swarm · grounded "what am I looking at" AI copilot |
 
 The full plan lives in [`tasks/todo.md`](./tasks/todo.md). Every commit lands on `main` and pushes here. **No private branches, no stealth — every dragon is a public issue.**
 
@@ -118,16 +121,29 @@ tasks/
 
 ## Build in public — daily commits
 
-| Day | Commit  | What shipped                                                     |
-| --- | ------- | ---------------------------------------------------------------- |
-| 1   | a03d0e2 | Bootstrap monorepo + landing page + tunnel                       |
-| 2   | 82e8eb2 | HEALPix toy + DSS2 streaming + Voyager camera                    |
-| 3   | 83b5439 | LOD switching + touch + inertia + chips + tap-to-fly             |
-| 4   | c3177f5 | HYG bright stars + AstronomyEngine + time strip                  |
-| 5   | 5234e10 | Multi-pointer + Y-up coords + ISS tracker + Quick Targets        |
-| 6.A | a6fa461 | Multi-wavelength toggle (Visible / 2MASS / WISE) with cross-fade |
-| 6.B | 3ad41d3 | SIMBAD info panel — click sky, ask "what am I looking at"        |
-| 7   | (this)  | v1 launch · README · OG card · public landing                    |
+| Day | Commit  | What shipped                                                              |
+| --- | ------- | ------------------------------------------------------------------------- |
+| 1   | a03d0e2 | Bootstrap monorepo + landing page + Cloudflare tunnel                     |
+| 2   | 82e8eb2 | HEALPix toy + DSS2 streaming + Voyager camera                             |
+| 3   | 83b5439 | LOD switching + touch + inertia + chips + tap-to-fly                      |
+| 4   | c3177f5 | HYG bright stars + AstronomyEngine + time strip                           |
+| 5   | 5234e10 | Multi-pointer + Y-up coords + ISS tracker + Quick Targets                 |
+| 6.A | a6fa461 | Multi-wavelength toggle (Visible / 2MASS / WISE) with cross-fade          |
+| 6.B | 3ad41d3 | SIMBAD info panel — click sky, ask "what am I looking at"                 |
+| 7   | 777de83 | v1 public launch · README · OG card · landing polish                      |
+| 8   | 9d6c7f6 | Tonight's sky — geolocation → fly to your zenith                          |
+| 9   | 2bafb13 | Polar Collignon seam tightened (SUB 16→32)                                |
+| 10  | 934cfae | Messier + bright NGC overlay (879 deep-sky rings)                         |
+| 11  | 240fe83 | 88 IAU constellation lines (toggleable)                                   |
+| 12  | 28f8307 | INTEGRAL hard X-ray as 4th wavelength layer                               |
+| 13  | 7602ed4 | Top-bar search across stars / DSO / planets / constellations              |
+| 14  | bd9511a | Mobile UX — top bar collapses to icons; engineering chrome hides          |
+| 15  | 2cea894 | Grand Tour — 8-step guided sky walkthrough with auto-wavelength           |
+| 16  | 3c4b052 | URL deep-linking — every view is a shareable hash                         |
+| 17  | e8c1b4c | Wikipedia summary in the SIMBAD inspector                                 |
+| 18  | f1d0f27 | Famous-object alias map ("Crab" → M1, "Pleiades" → M45)                   |
+| 19  | 56eebf0 | 88 constellation labels at line centroids                                 |
+| 20  | (this)  | v2 ship — refreshed README · OG card · landing roadmap update             |
 
 ---
 

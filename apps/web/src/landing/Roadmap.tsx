@@ -42,38 +42,101 @@ const PHASES: Phase[] = [
   },
   {
     day: "Day 7",
-    title: "Public launch",
+    title: "Public launch (v1)",
     detail:
-      "You are here. Show HN · Reddit r/space · Product Hunt · Twitter devlog. Now go open the viewer.",
+      "Show HN, Reddit, Product Hunt — first public sharing of the OSS viewer.",
+    status: "shipped",
+  },
+  {
+    day: "Day 8",
+    title: "Tonight's sky",
+    detail:
+      'Geolocation-gated "↑ tonight\'s sky" button computes your local zenith via IAU GMST and flies the camera straight up — coordinates stay on-device.',
+    status: "shipped",
+  },
+  {
+    day: "Day 9",
+    title: "Polar seam tightened",
+    detail:
+      "Bumped tile subdivision SUB=16→32. The wide diagonal cracks at lat ±41.81° collapse to thin lines.",
+    status: "shipped",
+  },
+  {
+    day: "Day 10",
+    title: "Deep-sky overlay",
+    detail:
+      "879 Messier + bright NGC/IC objects from OpenNGC — type-coded ring markers (galaxy / cluster / nebula).",
+    status: "shipped",
+  },
+  {
+    day: "Day 11",
+    title: "Constellation lines",
+    detail:
+      "All 88 IAU constellations from d3-celestial — toggle with ✦ LINES.",
+    status: "shipped",
+  },
+  {
+    day: "Day 12",
+    title: "X-ray wavelength",
+    detail:
+      "INTEGRAL hard X-ray (20-100 keV color) joins DSS2 / 2MASS / WISE in the wavelength toggle. Visible → mid-IR → X-ray cross-fade.",
+    status: "shipped",
+  },
+  {
+    day: "Day 13",
+    title: "Search bar",
+    detail:
+      "⌘K opens search across stars, deep-sky objects, planets, constellations — fly to any of them.",
+    status: "shipped",
+  },
+  {
+    day: "Day 14",
+    title: "Mobile UX",
+    detail:
+      "Top bar collapses to icons on phones; engineering chrome hidden on small screens.",
+    status: "shipped",
+  },
+  {
+    day: "Day 15",
+    title: "Grand Tour",
+    detail:
+      "8-step guided walkthrough: Sun → Andromeda → Pleiades → Orion → Sgr A* → Crab → LMC → Jupiter, each with the right wavelength.",
+    status: "shipped",
+  },
+  {
+    day: "Day 16",
+    title: "Shareable URLs",
+    detail:
+      "Every camera state, FOV, time, overlay + mix, and toggles round-trip via the URL hash. Copy-paste any view.",
+    status: "shipped",
+  },
+  {
+    day: "Day 17",
+    title: "Wikipedia inspector",
+    detail:
+      "Click the sky → SIMBAD identifies the object + Wikipedia article excerpt + thumbnail in the side panel.",
+    status: "shipped",
+  },
+  {
+    day: "Day 18",
+    title: "Famous-name aliases",
+    detail:
+      'Type "Crab" or "Pleiades" — search and Wikipedia lookups now bridge SIMBAD codes to common names.',
+    status: "shipped",
+  },
+  {
+    day: "Day 19",
+    title: "Constellation labels",
+    detail:
+      "88 three-letter IAU codes overlay the sky at each constellation centroid when ✦ LINES is on.",
+    status: "shipped",
+  },
+  {
+    day: "Day 20",
+    title: "v2 ship",
+    detail:
+      "You are here. Refreshed README, updated OG card, new screenshots, fresh hello on socials.",
     status: "now",
-  },
-  {
-    day: "Day 8-9",
-    title: "Tonight's sky + seam fix",
-    detail:
-      "DeviceOrientation + geolocation gyro mode · proper polar Collignon seam handling at lat ±41.81°",
-    status: "next",
-  },
-  {
-    day: "Day 10-12",
-    title: "Deeper sky",
-    detail:
-      "Messier + NGC overlay · constellation lines · more wavelengths (Chandra X-ray, Planck CMB, H-alpha)",
-    status: "soon",
-  },
-  {
-    day: "Day 13-15",
-    title: "Speed + tours",
-    detail:
-      "Local SIMBAD mirror so panels resolve in <100ms · mobile tier polish · scripted camera tours through the catalog",
-    status: "soon",
-  },
-  {
-    day: "Day 16-20",
-    title: "Search + AI + v2",
-    detail:
-      'Search bar with named-star autocomplete · satellite swarm beyond ISS · grounded "what am I looking at" AI copilot',
-    status: "soon",
   },
 ];
 
@@ -97,7 +160,7 @@ export function Roadmap() {
       <div className="mb-10 flex flex-col items-start justify-between gap-3 md:flex-row md:items-end">
         <div>
           <h2 className="font-display text-3xl font-semibold md:text-4xl">
-            6 days shipped.{" "}
+            19 days shipped.{" "}
             <span className="text-white/40">Building in public.</span>
           </h2>
           <p className="mt-2 text-sm text-white/50">
