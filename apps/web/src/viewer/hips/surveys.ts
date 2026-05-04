@@ -61,6 +61,33 @@ export const SURVEYS: Record<string, Survey> = {
     maxOrder: 6,
     attribution: "INTEGRAL hard X-ray · ESA",
   },
+  galex: {
+    id: "galex",
+    label: "GALEX UV",
+    wavelength: "microwave", // closest "ultraviolet" bucket we have; UI labels it UV
+    baseUrl: "https://alasky.cds.unistra.fr/GALEX/GR6-03-2014/AIS-Color",
+    format: "jpg",
+    maxOrder: 8,
+    attribution: "GALEX AIS color · CDS / Caltech",
+  },
+  halpha: {
+    id: "halpha",
+    label: "Hα Finkbeiner",
+    wavelength: "visible",
+    baseUrl: "https://alasky.cds.unistra.fr/FinkbeinerHalpha",
+    format: "jpg",
+    maxOrder: 7,
+    attribution: "Finkbeiner Hα composite · CDS",
+  },
+  nvss: {
+    id: "nvss",
+    label: "NVSS 1.4 GHz",
+    wavelength: "radio",
+    baseUrl: "https://alasky.cds.unistra.fr/NVSS/intensity",
+    format: "jpg",
+    maxOrder: 5,
+    attribution: "NVSS 1.4 GHz · NRAO",
+  },
 };
 
 /**

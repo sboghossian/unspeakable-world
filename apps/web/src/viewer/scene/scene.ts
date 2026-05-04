@@ -6,6 +6,7 @@ import { SolarSystem } from "../solar/solar-system";
 import { IssTracker, type IssState } from "../iss/iss-tracker";
 import { DsoField } from "../dso/dso-field";
 import { ConstellationLines } from "../constellations/constellation-lines";
+import { CoordGrid } from "./coord-grid";
 import { zenithWorldDirection } from "../observer/zenith";
 import { VoyagerControls } from "./voyager-controls";
 
@@ -43,6 +44,8 @@ export type ViewerState = {
   overlayMix: number;
   /** Whether constellation lines are visible. */
   constellations: boolean;
+  /** Whether the equatorial / ecliptic / galactic coordinate grid is visible. */
+  coordGrid: boolean;
 };
 
 type Listener = (s: ViewerState) => void;
@@ -67,6 +70,7 @@ export class ViewerScene {
   private iss: IssTracker;
   private dsos: DsoField;
   private constellations: ConstellationLines;
+  private coordGrid: CoordGrid;
   private controls: VoyagerControls;
 
   private dirty = true;
@@ -139,6 +143,9 @@ export class ViewerScene {
 
     this.constellations = new ConstellationLines();
     this.scene.add(this.constellations.group);
+
+    this.coordGrid = new CoordGrid();
+    this.scene.add(this.coordGrid.group);
     void this.constellations
       .load("/data/constellations.lines.json")
       .then(() => {
@@ -190,6 +197,7 @@ export class ViewerScene {
       overlayId: null,
       overlayMix: 0,
       constellations: false,
+      coordGrid: false,
     };
 
     this.tick();
@@ -252,6 +260,7 @@ export class ViewerScene {
       overlayId: this.overlaySphere?.survey().id ?? null,
       overlayMix: this.overlayMix,
       constellations: this.constellations?.group.visible ?? false,
+      coordGrid: this.coordGrid?.group.visible ?? false,
     };
     this.emit();
   }
@@ -322,6 +331,12 @@ export class ViewerScene {
 
   setConstellations(visible: boolean): void {
     this.constellations.setVisible(visible);
+    this.dirty = true;
+    this.publishState();
+  }
+
+  setCoordGrid(visible: boolean): void {
+    this.coordGrid.setVisible(visible);
     this.dirty = true;
     this.publishState();
   }
@@ -457,6 +472,7 @@ export class ViewerScene {
     this.stars.dispose();
     this.dsos.dispose();
     this.constellations.dispose();
+    this.coordGrid.dispose();
     this.solar.dispose();
     this.iss.dispose();
     this.renderer.dispose();

@@ -39,7 +39,9 @@ const SHORTCUTS: Array<{ section: string; items: Shortcut[] }> = [
     items: [
       { keys: ["t", ""], label: "Start the Grand Tour" },
       { keys: ["c", ""], label: "Toggle constellation lines" },
+      { keys: ["g", ""], label: "Toggle coordinate grid" },
       { keys: ["i", ""], label: "About / credits" },
+      { keys: ["e", ""], label: "Astronomical events" },
       { keys: ["?"], label: "Show this overlay" },
     ],
   },

@@ -1,0 +1,34 @@
+{
+  "name": "The Unspeakable World",
+  "short_name": "Unspeakable",
+  "description": "The first emotionally legible front-end to the entire Virtual Observatory. Every wavelength of every sky survey. In a browser. MIT licensed.",
+  "start_url": "/#viewer",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#03050a",
+  "theme_color": "#03050a",
+  "categories": ["education", "science", "utilities"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/og-card.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/og-card.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ]
+}

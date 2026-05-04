@@ -12,6 +12,8 @@ import { GRAND_TOUR } from "./tour/tour";
 import { FavoritesMenu } from "./ui/FavoritesMenu";
 import { AboutOverlay } from "./ui/AboutOverlay";
 import { FirstRunHint } from "./ui/FirstRunHint";
+import { CenterHud } from "./ui/CenterHud";
+import { EventsPanel } from "./ui/EventsPanel";
 import { NeoPanel } from "./ui/NeoPanel";
 import { ShareButton } from "./ui/ShareButton";
 import { ShortcutsOverlay } from "./ui/ShortcutsOverlay";
@@ -66,6 +68,7 @@ const DEFAULT_STATE: ViewerState = {
   overlayId: null,
   overlayMix: 0,
   constellations: false,
+  coordGrid: false,
 };
 
 type Inspect = {
@@ -110,6 +113,7 @@ export function Viewer() {
   const [searchIndex, setSearchIndex] = useState<SearchIndex | null>(null);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
+  const [eventsOpen, setEventsOpen] = useState(false);
   const [favorites, setFavorites] = useState<Favorite[]>(() => readFavorites());
 
   const reloadFavorites = useCallback(() => {
@@ -237,6 +241,10 @@ export function Viewer() {
         setAboutOpen((v) => !v);
         return;
       }
+      if (e.key === "e") {
+        setEventsOpen((v) => !v);
+        return;
+      }
       if (e.key === "?") {
         e.preventDefault();
         setShortcutsOpen((v) => !v);
@@ -263,6 +271,10 @@ export function Viewer() {
         sceneRef.current?.setConstellations(!state.constellations);
         return;
       }
+      if (e.key === "g") {
+        sceneRef.current?.setCoordGrid(!state.coordGrid);
+        return;
+      }
       if (e.key === ".") {
         sceneRef.current?.setTime(new Date());
         return;
@@ -286,6 +298,7 @@ export function Viewer() {
     exitTour,
     state.playing,
     state.constellations,
+    state.coordGrid,
     state.time,
     state.timeRate,
   ]);
@@ -501,6 +514,7 @@ export function Viewer() {
               <span className="hidden md:inline">▶ tour</span>
             </button>
           )}
+          <EventsPanel open={eventsOpen} onOpenChange={setEventsOpen} />
           <NeoPanel />
           <SkyTonightPanel observer={observer} />
           <SpaceWeatherPanel />
@@ -607,6 +621,10 @@ export function Viewer() {
             onToggleConstellations={() =>
               sceneRef.current?.setConstellations(!state.constellations)
             }
+            coordGridVisible={state.coordGrid}
+            onToggleCoordGrid={() =>
+              sceneRef.current?.setCoordGrid(!state.coordGrid)
+            }
           />
           <TimeStrip
             time={state.time}
@@ -627,6 +645,20 @@ export function Viewer() {
           </div>
         </div>
       )}
+
+      {/* Center-pointing HUD — only when nothing else is grabbing focus */}
+      {status === "live" &&
+        !inspect &&
+        !shortcutsOpen &&
+        !aboutOpen &&
+        !eventsOpen &&
+        tourIndex === null && (
+          <CenterHud
+            forward={state.forward}
+            fov={state.fov}
+            searchIndex={searchIndex}
+          />
+        )}
 
       {/* Tour card (top-center; SIMBAD panel hides automatically when tour wins z-30) */}
       {status === "live" && tourIndex !== null && GRAND_TOUR[tourIndex] && (
