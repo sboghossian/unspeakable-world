@@ -7,15 +7,23 @@ import { upcomingEvents, type SkyEvent } from "../events/sky-events";
  * Pure ephemeris. Re-runs on every open so values are fresh against the
  * user's wall clock. Lists the next ~90 days of moon quarters, eclipses,
  * planet oppositions / max elongations, equinoxes / solstices, and the
- * major meteor-shower peaks.
+ * major meteor-shower peaks. Each row is clickable: solar-system events
+ * fly to the relevant body, meteor showers fly to the radiant.
  */
 
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onFlyToBody?: (name: string) => void;
+  onFlyToRadiant?: (raDeg: number, decDeg: number) => void;
 };
 
-export function EventsPanel({ open, onOpenChange }: Props) {
+export function EventsPanel({
+  open,
+  onOpenChange,
+  onFlyToBody,
+  onFlyToRadiant,
+}: Props) {
   const events = useMemo<SkyEvent[]>(() => {
     if (!open) return [];
     return upcomingEvents(new Date(), 90);
@@ -57,37 +65,63 @@ export function EventsPanel({ open, onOpenChange }: Props) {
             </div>
           ) : (
             <ul className="max-h-[60vh] overflow-y-auto">
-              {events.map((e, i) => (
-                <li
-                  key={`${e.kind}-${e.time.getTime()}-${i}`}
-                  className="flex items-start gap-2.5 border-b border-white/5 px-3 py-2 last:border-b-0 hover:bg-white/[0.03]"
-                >
-                  <span
-                    aria-hidden
-                    className="mt-0.5 inline-block w-5 text-center text-base"
+              {events.map((e, i) => {
+                const clickable = !!e.target && (onFlyToBody || onFlyToRadiant);
+                const handleClick = clickable
+                  ? () => {
+                      if (!e.target) return;
+                      if (e.target.kind === "body") {
+                        onFlyToBody?.(e.target.name);
+                      } else {
+                        onFlyToRadiant?.(e.target.raDeg, e.target.decDeg);
+                      }
+                      onOpenChange(false);
+                    }
+                  : undefined;
+                return (
+                  <li
+                    key={`${e.kind}-${e.time.getTime()}-${i}`}
+                    onClick={handleClick}
+                    className={`flex items-start gap-2.5 border-b border-white/5 px-3 py-2 last:border-b-0 ${
+                      clickable
+                        ? "cursor-pointer hover:bg-white/[0.06]"
+                        : "hover:bg-white/[0.03]"
+                    }`}
                   >
-                    {e.glyph}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-baseline justify-between gap-2">
-                      <span className="font-display text-sm text-white">
-                        {e.title}
-                      </span>
-                      <span className="shrink-0 font-mono text-[10px] text-white/55">
-                        {fmtRelative(e.time)}
-                      </span>
-                    </div>
-                    {e.detail && (
-                      <div className="font-mono text-[10px] text-white/45">
-                        {e.detail}
+                    <span
+                      aria-hidden
+                      className="mt-0.5 inline-block w-5 text-center text-base"
+                    >
+                      {e.glyph}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="font-display text-sm text-white">
+                          {e.title}
+                        </span>
+                        <span className="shrink-0 font-mono text-[10px] text-white/55">
+                          {fmtRelative(e.time)}
+                        </span>
                       </div>
-                    )}
-                    <div className="font-mono text-[10px] text-white/30">
-                      {fmtAbsolute(e.time)}
+                      {e.detail && (
+                        <div className="font-mono text-[10px] text-white/45">
+                          {e.detail}
+                        </div>
+                      )}
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="font-mono text-[10px] text-white/30">
+                          {fmtAbsolute(e.time)}
+                        </span>
+                        {clickable && (
+                          <span className="font-mono text-[10px] text-plasma-300/80">
+                            fly →
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
           )}
           <div className="border-t border-white/5 px-3 py-1.5 font-mono text-[10px] text-white/30">

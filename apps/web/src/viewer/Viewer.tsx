@@ -527,7 +527,26 @@ export function Viewer() {
               <span className="hidden md:inline">▶ tour</span>
             </button>
           )}
-          <EventsPanel open={eventsOpen} onOpenChange={setEventsOpen} />
+          <EventsPanel
+            open={eventsOpen}
+            onOpenChange={setEventsOpen}
+            onFlyToBody={(name) => {
+              const dir = sceneRef.current?.bodyDirection(name);
+              if (dir) sceneRef.current?.flyTo(dir);
+            }}
+            onFlyToRadiant={(raDeg, decDeg) => {
+              const raRad = (raDeg * Math.PI) / 180;
+              const decRad = (decDeg * Math.PI) / 180;
+              const cdec = Math.cos(decRad);
+              // Match the Z-up → Y-up rotation used elsewhere on the sphere.
+              const dir = new Vector3(
+                cdec * Math.cos(raRad),
+                Math.sin(decRad),
+                -cdec * Math.sin(raRad),
+              );
+              sceneRef.current?.flyTo(dir);
+            }}
+          />
           <NeoPanel />
           <SkyTonightPanel observer={observer} />
           <SpaceWeatherPanel observer={observer} />

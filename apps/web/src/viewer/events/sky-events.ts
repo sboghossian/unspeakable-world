@@ -29,6 +29,10 @@ export type SkyEventKind =
   | "season"
   | "meteor";
 
+export type SkyEventTarget =
+  | { kind: "body"; name: string }
+  | { kind: "radiant"; raDeg: number; decDeg: number };
+
 export type SkyEvent = {
   kind: SkyEventKind;
   /** Compact label, e.g. "Full Moon", "Total Lunar Eclipse", "Geminids peak". */
@@ -39,6 +43,9 @@ export type SkyEvent = {
   time: Date;
   /** Glyph for the UI list. */
   glyph: string;
+  /** Optional sky target the event refers to — clicking the row in the
+   *  panel flies the camera there. */
+  target?: SkyEventTarget;
 };
 
 const MOON_QUARTER_LABELS = [
@@ -49,16 +56,24 @@ const MOON_QUARTER_LABELS = [
 ];
 const MOON_QUARTER_GLYPHS = ["🌑", "🌓", "🌕", "🌗"];
 
-/** Major annual meteor showers (UTC peak day, approximate). */
-const METEOR_SHOWERS: Array<{ name: string; month: number; day: number; zhr: number }> = [
-  { name: "Quadrantids", month: 1, day: 4, zhr: 110 },
-  { name: "Lyrids", month: 4, day: 22, zhr: 18 },
-  { name: "Eta Aquariids", month: 5, day: 6, zhr: 50 },
-  { name: "Perseids", month: 8, day: 12, zhr: 100 },
-  { name: "Orionids", month: 10, day: 21, zhr: 20 },
-  { name: "Leonids", month: 11, day: 17, zhr: 15 },
-  { name: "Geminids", month: 12, day: 14, zhr: 120 },
-  { name: "Ursids", month: 12, day: 22, zhr: 10 },
+/** Major annual meteor showers (UTC peak day + classical radiant). */
+const METEOR_SHOWERS: Array<{
+  name: string;
+  month: number;
+  day: number;
+  zhr: number;
+  /** Radiant in degrees (J2000). */
+  raDeg: number;
+  decDeg: number;
+}> = [
+  { name: "Quadrantids", month: 1, day: 4, zhr: 110, raDeg: 232, decDeg: 49.7 },
+  { name: "Lyrids", month: 4, day: 22, zhr: 18, raDeg: 272, decDeg: 33 },
+  { name: "Eta Aquariids", month: 5, day: 6, zhr: 50, raDeg: 338, decDeg: -1 },
+  { name: "Perseids", month: 8, day: 12, zhr: 100, raDeg: 48, decDeg: 58 },
+  { name: "Orionids", month: 10, day: 21, zhr: 20, raDeg: 95, decDeg: 16 },
+  { name: "Leonids", month: 11, day: 17, zhr: 15, raDeg: 152, decDeg: 22 },
+  { name: "Geminids", month: 12, day: 14, zhr: 120, raDeg: 112, decDeg: 33 },
+  { name: "Ursids", month: 12, day: 22, zhr: 10, raDeg: 217, decDeg: 75 },
 ];
 
 /**
@@ -81,6 +96,7 @@ export function upcomingEvents(now: Date, windowDays = 90): SkyEvent[] {
         title: MOON_QUARTER_LABELS[idx]!,
         time: mq.time.date,
         glyph: MOON_QUARTER_GLYPHS[idx]!,
+        target: { kind: "body", name: "Moon" },
       });
       mq = NextMoonQuarter(mq);
     }
@@ -101,6 +117,7 @@ export function upcomingEvents(now: Date, windowDays = 90): SkyEvent[] {
           : `partial ${(le.sd_partial * 2).toFixed(0)} min`,
         time: le.peak.date,
         glyph: "🌖",
+        target: { kind: "body", name: "Moon" },
       });
       le = SearchLunarEclipse(new Date(le.peak.date.getTime() + 86400 * 1000));
       safety++;
@@ -120,6 +137,7 @@ export function upcomingEvents(now: Date, windowDays = 90): SkyEvent[] {
         detail: se.distance != null ? `${se.distance.toFixed(0)} km from Earth axis` : undefined,
         time: se.peak.date,
         glyph: "🌒",
+        target: { kind: "body", name: "Sun" },
       });
       se = SearchGlobalSolarEclipse(new Date(se.peak.date.getTime() + 86400 * 1000));
       safety++;
@@ -139,6 +157,7 @@ export function upcomingEvents(now: Date, windowDays = 90): SkyEvent[] {
           detail: `${e.elongation.toFixed(1)}° from Sun`,
           time: e.time.date,
           glyph: body === Body.Venus ? "♀" : "☿",
+          target: { kind: "body", name: bodyName(body) },
         });
       }
     } catch {
@@ -157,6 +176,7 @@ export function upcomingEvents(now: Date, windowDays = 90): SkyEvent[] {
           detail: "rises at sunset · all-night visible",
           time: t.date,
           glyph: bodyGlyph(body),
+          target: { kind: "body", name: bodyName(body) },
         });
       }
     } catch {
@@ -182,6 +202,7 @@ export function upcomingEvents(now: Date, windowDays = 90): SkyEvent[] {
             title: e.name,
             time: e.when,
             glyph: e.glyph,
+            target: { kind: "body", name: "Sun" },
           });
         }
       }
@@ -200,9 +221,10 @@ export function upcomingEvents(now: Date, windowDays = 90): SkyEvent[] {
         out.push({
           kind: "meteor",
           title: `${sh.name} peak`,
-          detail: `~${sh.zhr} meteors / hr at ZHR`,
+          detail: `~${sh.zhr} meteors / hr at ZHR · radiant in ${approxConstellation(sh.raDeg, sh.decDeg)}`,
           time: peak,
           glyph: "☄",
+          target: { kind: "radiant", raDeg: sh.raDeg, decDeg: sh.decDeg },
         });
       }
     }
@@ -218,6 +240,24 @@ function capitalize(s: string): string {
 
 function bodyName(b: Body): string {
   return Body[b] ?? String(b);
+}
+
+/** Cheap approximate-constellation lookup for the meteor radiant blurb.
+ *  Just hard-coded per shower since the radiants don't move year-to-year. */
+function approxConstellation(raDeg: number, decDeg: number): string {
+  void raDeg;
+  void decDeg;
+  // For each shower above the constellation is well-known and stable; the
+  // detail string is built once when the table is read.
+  if (raDeg >= 220 && raDeg <= 245 && decDeg > 40) return "Boötes";
+  if (raDeg >= 260 && raDeg <= 290 && decDeg > 25) return "Lyra";
+  if (raDeg >= 320 && raDeg <= 345 && decDeg < 5) return "Aquarius";
+  if (raDeg >= 30 && raDeg <= 60 && decDeg > 50) return "Perseus";
+  if (raDeg >= 80 && raDeg <= 105 && decDeg > 8) return "Orion / Gemini";
+  if (raDeg >= 145 && raDeg <= 165) return "Leo";
+  if (raDeg >= 100 && raDeg <= 120 && decDeg > 25) return "Gemini";
+  if (decDeg >= 70) return "Ursa Minor";
+  return "the sky";
 }
 
 function bodyGlyph(b: Body): string {
