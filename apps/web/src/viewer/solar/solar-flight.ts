@@ -23,7 +23,7 @@ import {
   Vector3,
   WebGLRenderer,
 } from "three";
-import { Body, HelioVector, GeoVector } from "astronomy-engine";
+import { Body, HelioVector, GeoVector, JupiterMoons } from "astronomy-engine";
 
 /**
  * 🚀 Solar System Flight Mode.
@@ -124,6 +124,11 @@ export class SolarFlightScene {
   private sun: Mesh;
   private sunGlow: Sprite;
   private planets: PlanetMesh[] = [];
+  private galileanMoons: Array<{
+    name: "Io" | "Europa" | "Ganymede" | "Callisto";
+    sphere: Mesh;
+    label: Sprite;
+  }> = [];
   private orbits: LineLoop[] = [];
   private starPoints: Points | null = null;
   private backgroundLabels: Sprite[] = [];
@@ -158,9 +163,10 @@ export class SolarFlightScene {
     this.sunGlow = makeGlowSprite(0xffd06a, SUN_DRAW_SIZE * 6);
     this.scene.add(this.sunGlow);
 
-    // Build planets + orbits
+    // Build planets + orbits + Jupiter's Galilean moons
     void this.buildPlanets();
     void this.buildOrbits();
+    this.buildGalileanMoons();
 
     // Background star field on a giant sphere (radius STAR_RADIUS).
     void this.loadStarBackground();
@@ -346,15 +352,86 @@ export class SolarFlightScene {
   }
 
   private updatePlanets(): void {
+    let jupX = 0;
+    let jupY = 0;
+    let jupZ = 0;
     for (const p of this.planets) {
       try {
         const v = HelioVector(p.body, this.simTime);
-        // AstronomyEngine returns equatorial J2000 (x to vernal point, z to NCP).
-        // Map to scene Y-up: scene_x = x_eq, scene_y = z_eq, scene_z = -y_eq.
-        p.group.position.set(v.x * AU, v.z * AU, -v.y * AU);
+        const sx = v.x * AU;
+        const sy = v.z * AU;
+        const sz = -v.y * AU;
+        p.group.position.set(sx, sy, sz);
+        if (p.name === "Jupiter") {
+          jupX = sx;
+          jupY = sy;
+          jupZ = sz;
+        }
       } catch {
         // ignore
       }
+    }
+    // Galilean moons: position in heliocentric scene = Jupiter heliocentric
+    // + moon-relative-to-Jupiter (StateVector returns AU). Both vectors are
+    // equatorial J2000 so we apply the same Z-up→Y-up swap. We multiply
+    // the relative offset by a cosmetic factor so the moon system spreads
+    // outside Jupiter's drawn radius (planet sprites are ~200x larger
+    // than their real radius for visibility) — Callisto then sits just
+    // outside the drawn Jupiter sphere.
+    if (this.galileanMoons.length > 0) {
+      try {
+        const info = JupiterMoons(this.simTime);
+        const lookup = {
+          Io: info.io,
+          Europa: info.europa,
+          Ganymede: info.ganymede,
+          Callisto: info.callisto,
+        } as const;
+        const SCALE = 18;
+        for (const m of this.galileanMoons) {
+          const rel = lookup[m.name];
+          const x = jupX + rel.x * AU * SCALE;
+          const y = jupY + rel.z * AU * SCALE;
+          const z = jupZ + -rel.y * AU * SCALE;
+          m.sphere.position.set(x, y, z);
+          m.label.position.set(x, y + 0.005, z);
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }
+
+  private buildGalileanMoons(): void {
+    const MOONS: Array<{ name: "Io" | "Europa" | "Ganymede" | "Callisto"; color: number }> = [
+      { name: "Io", color: 0xfff0c2 },
+      { name: "Europa", color: 0xfafaf2 },
+      { name: "Ganymede", color: 0xc8b08a },
+      { name: "Callisto", color: 0x8a7a66 },
+    ];
+    for (const m of MOONS) {
+      const geom = new SphereGeometry(0.015, 16, 16);
+      const mat = new MeshBasicMaterial({
+        color: m.color,
+        depthTest: false,
+      });
+      const sphere = new Mesh(geom, mat);
+      sphere.renderOrder = 5; // always render in front of Jupiter
+      this.scene.add(sphere);
+      const labelTex = makeLabelTexture(m.name);
+      const labelMat = new SpriteMaterial({
+        map: labelTex,
+        transparent: true,
+        depthWrite: false,
+        depthTest: false,
+        opacity: 0.8,
+      });
+      const label = new Sprite(labelMat);
+      const aspect = labelTex.image.width / labelTex.image.height;
+      const h = 0.012;
+      label.scale.set(h * aspect, h, 1);
+      this.scene.add(label);
+      this.galileanMoons.push({ name: m.name, sphere, label });
     }
   }
 
@@ -646,6 +723,16 @@ export class SolarFlightScene {
       lm.map?.dispose();
       lm.dispose();
     }
+    for (const m of this.galileanMoons) {
+      m.sphere.geometry.dispose();
+      (m.sphere.material as MeshBasicMaterial).dispose();
+      const lm = m.label.material as SpriteMaterial;
+      lm.map?.dispose();
+      lm.dispose();
+      this.scene.remove(m.sphere);
+      this.scene.remove(m.label);
+    }
+    this.galileanMoons = [];
     this.sun.geometry.dispose();
     (this.sun.material as MeshBasicMaterial).dispose();
     if (this.starPoints) {
