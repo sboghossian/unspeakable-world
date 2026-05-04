@@ -1,4 +1,6 @@
-import { useState, type ReactElement } from "react";
+import { useEffect, useState, type ReactElement } from "react";
+import { getPulsarAudio } from "../sonification/pulsar-audio";
+import { getSettings, onSettingsChange } from "../../lib/settings";
 
 /**
  * Unified inspector card. Shared between Universe Mode, Solar Flight, and
@@ -25,6 +27,24 @@ export type InfoSection =
       thumbUrl?: string;
       credit: string;
       caption?: string;
+    }
+  | {
+      kind: "sonification";
+      /** Period in seconds. Click rate = 1/periodSec. */
+      periodSec: number;
+      /** Optional human label, e.g. "Crab Pulsar (B0531+21)". */
+      label?: string;
+      /** Friendly note if the period implies an audible-rate pulsar. */
+      note?: string;
+    }
+  | {
+      kind: "lightcone";
+      /** World-space (LY) center. */
+      centerLY: { x: number; y: number; z: number };
+      /** Object name, used as fallback overlay title. */
+      name: string;
+      /** Optional curated preset that pre-fills the years slider. */
+      currentAgeYears?: number;
     };
 
 export type InfoPayload = {
@@ -36,7 +56,8 @@ export type InfoPayload = {
     | "DSO"
     | "Mission"
     | "Satellite"
-    | "Landmark";
+    | "Landmark"
+    | "Pulsar";
   name: string;
   subtitle?: string;
   sections: InfoSection[];
@@ -47,6 +68,8 @@ type Props = {
   onClose: () => void;
   onFlyHere?: () => void;
   onSurface?: () => void;
+  /** Universe Mode: open the light cone tool centered on this object. */
+  onStartLightCone?: (centerLY: { x: number; y: number; z: number }, name: string, currentAgeYears?: number) => void;
 };
 
 const SECTION_TITLE: Record<InfoSection["kind"], string> = {
@@ -59,6 +82,8 @@ const SECTION_TITLE: Record<InfoSection["kind"], string> = {
   facts: "facts",
   links: "links",
   image: "image",
+  sonification: "sonification",
+  lightcone: "light cone",
 };
 
 const KIND_TONE: Record<InfoPayload["kind"], string> = {
@@ -70,6 +95,7 @@ const KIND_TONE: Record<InfoPayload["kind"], string> = {
   Mission: "text-orange-300/90",
   Satellite: "text-cyan-300/90",
   Landmark: "text-fuchsia-300/90",
+  Pulsar: "text-amber-200/90",
 };
 
 export function InfoPanel({
@@ -77,6 +103,7 @@ export function InfoPanel({
   onClose,
   onFlyHere,
   onSurface,
+  onStartLightCone,
 }: Props): ReactElement {
   return (
     <aside
@@ -118,6 +145,8 @@ export function InfoPanel({
               key={`${section.kind}-${i}`}
               title={SECTION_TITLE[section.kind]}
               section={section}
+              onStartLightCone={onStartLightCone}
+              objectName={payload.name}
             />
           ),
         )}
@@ -152,9 +181,13 @@ export function InfoPanel({
 function Section({
   title,
   section,
+  onStartLightCone,
+  objectName,
 }: {
   title: string;
   section: InfoSection;
+  onStartLightCone?: Props["onStartLightCone"];
+  objectName: string;
 }): ReactElement {
   const [open, setOpen] = useState(true);
   return (
@@ -167,12 +200,20 @@ function Section({
         <span>{title}</span>
         <span className="text-white/30">{open ? "−" : "+"}</span>
       </button>
-      {open && <div className="mt-2">{renderBody(section)}</div>}
+      {open && (
+        <div className="mt-2">
+          {renderBody(section, onStartLightCone, objectName)}
+        </div>
+      )}
     </section>
   );
 }
 
-function renderBody(section: InfoSection): ReactElement {
+function renderBody(
+  section: InfoSection,
+  onStartLightCone: Props["onStartLightCone"],
+  objectName: string,
+): ReactElement {
   switch (section.kind) {
     case "identification":
     case "physical":
@@ -221,7 +262,117 @@ function renderBody(section: InfoSection): ReactElement {
       );
     case "image":
       return <ImageHero section={section} />;
+    case "sonification":
+      return <SonificationBlock section={section} />;
+    case "lightcone":
+      return (
+        <LightConeBlock
+          section={section}
+          objectName={objectName}
+          onStart={onStartLightCone}
+        />
+      );
   }
+}
+
+function SonificationBlock({
+  section,
+}: {
+  section: Extract<InfoSection, { kind: "sonification" }>;
+}): ReactElement {
+  const [playing, setPlaying] = useState(false);
+  const [enabled, setEnabled] = useState(getSettings().sonificationOn);
+  useEffect(() => {
+    return onSettingsChange((s) => setEnabled(s.sonificationOn));
+  }, []);
+  // Stop on unmount.
+  useEffect(() => {
+    return () => {
+      const audio = getPulsarAudio();
+      if (audio.isPlaying()) audio.stop();
+    };
+  }, []);
+  const audibleHz = section.periodSec > 0 ? 1 / section.periodSec : 0;
+  const periodLabel =
+    section.periodSec >= 1
+      ? `${section.periodSec.toFixed(3)} s`
+      : `${(section.periodSec * 1000).toFixed(2)} ms`;
+  const handle = (): void => {
+    const audio = getPulsarAudio();
+    if (playing) {
+      audio.stop();
+      setPlaying(false);
+      return;
+    }
+    audio.play(section.periodSec, {
+      volume: getSettings().sonificationVolume,
+    });
+    setPlaying(true);
+  };
+  return (
+    <div className="space-y-2 text-[12.5px]">
+      <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5">
+        <dt className="font-mono text-[10px] uppercase tracking-wider text-white/40">
+          period
+        </dt>
+        <dd className="text-white/85">{periodLabel}</dd>
+        <dt className="font-mono text-[10px] uppercase tracking-wider text-white/40">
+          click rate
+        </dt>
+        <dd className="text-white/85">{audibleHz.toFixed(2)} Hz</dd>
+      </dl>
+      {section.note && (
+        <div className="font-mono text-[10px] text-amber-200/80">{section.note}</div>
+      )}
+      <button
+        type="button"
+        onClick={handle}
+        disabled={!enabled}
+        className={`mt-1 flex w-full items-center justify-center gap-2 rounded-md border px-3 py-1.5 font-mono text-[11px] uppercase tracking-widest transition ${
+          !enabled
+            ? "cursor-not-allowed border-white/10 bg-white/5 text-white/30"
+            : playing
+              ? "border-rose-400/50 bg-rose-400/15 text-rose-200 hover:bg-rose-400/25"
+              : "border-amber-400/50 bg-amber-400/15 text-amber-200 hover:bg-amber-400/25"
+        }`}
+      >
+        {!enabled
+          ? "🔇 sonification disabled"
+          : playing
+            ? "■ stop"
+            : "▶ listen"}
+      </button>
+    </div>
+  );
+}
+
+function LightConeBlock({
+  section,
+  objectName,
+  onStart,
+}: {
+  section: Extract<InfoSection, { kind: "lightcone" }>;
+  objectName: string;
+  onStart: Props["onStartLightCone"];
+}): ReactElement {
+  if (!onStart) {
+    return (
+      <div className="font-mono text-[10px] text-white/35">
+        light cone tool unavailable in this view
+      </div>
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={() =>
+        onStart(section.centerLY, section.name || objectName, section.currentAgeYears)
+      }
+      className="flex w-full items-center justify-center gap-2 rounded-md border border-cyan-400/50 bg-cyan-400/10 px-3 py-1.5 font-mono text-[11px] uppercase tracking-widest text-cyan-200 hover:bg-cyan-400/20"
+    >
+      ◎ start light cone here
+    </button>
+  );
 }
 
 function ImageHero({

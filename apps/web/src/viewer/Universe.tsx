@@ -16,6 +16,10 @@ import { SnapshotButton } from "./ui/SnapshotButton";
 import { ColorLegend } from "./ui/ColorLegend";
 import { LeftRail } from "./ui/LeftRail";
 import { InfoPanel } from "./ui/InfoPanel";
+import {
+  LightConeControls,
+  type LightConePreset,
+} from "./ui/LightConeControls";
 import { SearchIndex, type SearchEntry } from "./search/search-index";
 
 const TimeMachinePanel = lazy(() =>
@@ -67,6 +71,12 @@ const DEFAULT_STATE: UniverseState = {
     kuiper: false,
     oort: false,
   },
+  auroraOn: false,
+  lightConeOn: false,
+  lightConeCenter: null,
+  lightConeYears: 1000,
+  lightConeOpacity: 0.35,
+  lightConeTargetName: null,
 };
 
 export function Universe({ onExit }: Props) {
@@ -107,18 +117,25 @@ export function Universe({ onExit }: Props) {
     };
   }, []);
 
-  // Hotkey: `K` toggles all Solar System zone overlays at once. We listen
-  // on window so it works regardless of focus, but bail out for inputs.
+  // Hotkey: `K` toggles all Solar System zone overlays at once; `Y`
+  // toggles the aurora overlay. We listen on window so the keys work
+  // regardless of focus, but bail out for inputs.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "k" && e.key !== "K") return;
       const t = e.target as HTMLElement | null;
       if (t?.tagName === "INPUT" || t?.tagName === "TEXTAREA") return;
-      sceneRef.current?.toggleAllSolarZones();
+      if (e.key === "k" || e.key === "K") {
+        sceneRef.current?.toggleAllSolarZones();
+        return;
+      }
+      if (e.key === "y" || e.key === "Y") {
+        const on = sceneRef.current && !state.auroraOn;
+        sceneRef.current?.setAurora(!!on);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [state.auroraOn]);
 
   // Build the search index once mounted.
   useEffect(() => {
@@ -321,8 +338,33 @@ export function Universe({ onExit }: Props) {
                 }
               : undefined
           }
+          onStartLightCone={(centerLY, name, currentAgeYears) => {
+            sceneRef.current?.setLightCone(centerLY, name);
+            if (currentAgeYears && currentAgeYears > 0) {
+              sceneRef.current?.setLightConeYears(currentAgeYears);
+            }
+          }}
         />
       )}
+
+      <LightConeControls
+        open={state.lightConeOn}
+        targetName={state.lightConeTargetName}
+        years={state.lightConeYears}
+        opacity={state.lightConeOpacity}
+        onYearsChange={(y) => sceneRef.current?.setLightConeYears(y)}
+        onOpacityChange={(o) => sceneRef.current?.setLightConeOpacity(o)}
+        onPreset={(p: LightConePreset) => {
+          // Presets fire the cone from the Sun in case nothing is centered.
+          // If a center is already set, just update the years.
+          if (!state.lightConeCenter) {
+            sceneRef.current?.setLightCone({ x: 26000, y: 0, z: 0 }, p.label);
+          }
+          sceneRef.current?.setLightConeYears(p.ageYears);
+        }}
+        onStop={() => sceneRef.current?.setLightCone(null)}
+      />
+
 
       {/* Color legend (bottom-left) */}
       <ColorLegend />

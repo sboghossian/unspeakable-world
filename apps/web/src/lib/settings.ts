@@ -21,6 +21,10 @@ export type AppSettings = {
   realScale: boolean;
   realColor: boolean;
   showNames: boolean;
+  /** Master switch for pulsar sonification + aurora overlay sound cues. */
+  sonificationOn: boolean;
+  /** Master volume for sonification UI (0-1). */
+  sonificationVolume: number;
 };
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -33,6 +37,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   realScale: false,
   realColor: false,
   showNames: true,
+  sonificationOn: true,
+  sonificationVolume: 0.4,
 };
 
 const STORAGE_KEY = "uw.settings.v1";
@@ -54,6 +60,15 @@ function sanitize(raw: unknown): AppSettings {
     realScale: typeof partial.realScale === "boolean" ? partial.realScale : DEFAULT_SETTINGS.realScale,
     realColor: typeof partial.realColor === "boolean" ? partial.realColor : DEFAULT_SETTINGS.realColor,
     showNames: typeof partial.showNames === "boolean" ? partial.showNames : DEFAULT_SETTINGS.showNames,
+    sonificationOn:
+      typeof partial.sonificationOn === "boolean"
+        ? partial.sonificationOn
+        : DEFAULT_SETTINGS.sonificationOn,
+    sonificationVolume: clamp(
+      Number(partial.sonificationVolume ?? DEFAULT_SETTINGS.sonificationVolume),
+      0,
+      1,
+    ),
   };
 }
 

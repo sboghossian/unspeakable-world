@@ -30,7 +30,8 @@ import { HipsSphere } from "../scene/hips-sphere";
 import { SURVEYS, type Survey } from "../hips/surveys";
 import { ConstellationLines } from "../constellations/constellation-lines";
 import { CoordGrid } from "../scene/coord-grid";
-import { PulsarField } from "../cosmic/pulsar-field";
+import { PulsarField, type PulsarPick } from "../cosmic/pulsar-field";
+import { raDecToVec3 } from "../stars/coords";
 import { ExoplanetField } from "../exoplanets/exoplanet-field";
 import { CosmicLandmarks } from "../cosmic/cosmic-landmarks";
 import { StarLabels } from "../stars/star-labels";
@@ -54,6 +55,8 @@ import {
   type MissionManifestEntry,
 } from "./missions";
 import { SolarZones, type ZoneId } from "./solar-zones";
+import { LightCone } from "./light-cone";
+import { AuroraOverlay } from "../space-weather/aurora-overlay";
 import { getSettings, onSettingsChange } from "../../lib/settings";
 
 /**
@@ -142,6 +145,18 @@ export type UniverseState = {
   asteroidsOn: boolean;
   cometsOn: boolean;
   interstellarOn: boolean;
+  /** Aurora oval overlay on Earth. */
+  auroraOn: boolean;
+  /** Light-cone visualisation. */
+  lightConeOn: boolean;
+  /** Light-cone center in LY (galactic frame), null when off. */
+  lightConeCenter: { x: number; y: number; z: number } | null;
+  /** Light-cone Δt in years. */
+  lightConeYears: number;
+  /** Light-cone overlay opacity. */
+  lightConeOpacity: number;
+  /** Optional preset name shown in HUD. */
+  lightConeTargetName: string | null;
   /** Per-slug mission visibility. */
   missions: Record<string, boolean>;
   /** Solar System zone overlays (rings drawn in the ecliptic plane). */
@@ -157,7 +172,7 @@ export type UniverseState = {
 type Listener = (s: UniverseState) => void;
 
 export type UniverseHit = {
-  kind: "Sun" | "Planet" | "Landmark" | "Star" | "Mission";
+  kind: "Sun" | "Planet" | "Landmark" | "Star" | "Mission" | "Pulsar";
   name: string;
   detail: string;
   facts?: Array<{ label: string; value: string }>;
@@ -207,6 +222,13 @@ export class UniverseScene {
   private missions: MissionField | null = null;
   private missionManifest: MissionManifestEntry[] = [];
   private solarZones!: SolarZones;
+  private auroraOverlay: AuroraOverlay | null = null;
+  private auroraOn = false;
+  private lightCone: LightCone | null = null;
+  private lightConeCenter: Vector3 | null = null;
+  private lightConeYears = 1000;
+  private lightConeOpacity = 0.35;
+  private lightConeTargetName: string | null = null;
 
   // Solar contents
   private sunMesh: Mesh;
@@ -569,6 +591,56 @@ export class UniverseScene {
     this.publishState();
   }
 
+  setAurora(on: boolean): void {
+    this.auroraOn = on;
+    this.auroraOverlay?.setVisible(on);
+    this.publishState();
+  }
+
+  /** Activate the light-cone tool centered on a galactic-frame point.
+   *  Pass `null` to deactivate. */
+  setLightCone(center: { x: number; y: number; z: number } | null, name?: string): void {
+    if (!center) {
+      if (this.lightCone) {
+        this.galacticGroup.remove(this.lightCone);
+        this.lightCone.dispose();
+        this.lightCone = null;
+      }
+      this.lightConeCenter = null;
+      this.lightConeTargetName = null;
+      this.publishState();
+      return;
+    }
+    const v = new Vector3(center.x, center.y, center.z);
+    this.lightConeCenter = v;
+    this.lightConeTargetName = name ?? null;
+    if (!this.lightCone) {
+      this.lightCone = new LightCone({
+        centerLY: v.clone(),
+        radiusLY: this.lightConeYears,
+        opacity: this.lightConeOpacity,
+      });
+      this.galacticGroup.add(this.lightCone);
+    } else {
+      this.lightCone.setCenter(v.clone());
+      this.lightCone.setRadiusLY(this.lightConeYears);
+      this.lightCone.setOpacity(this.lightConeOpacity);
+    }
+    this.publishState();
+  }
+
+  setLightConeYears(years: number): void {
+    this.lightConeYears = Math.max(0, years);
+    this.lightCone?.setRadiusLY(this.lightConeYears);
+    this.publishState();
+  }
+
+  setLightConeOpacity(opacity: number): void {
+    this.lightConeOpacity = Math.max(0, Math.min(1, opacity));
+    this.lightCone?.setOpacity(this.lightConeOpacity);
+    this.publishState();
+  }
+
   setAllSolarZones(on: boolean): void {
     this.solarZones.setAllVisible(on);
     this.publishState();
@@ -745,6 +817,10 @@ export class UniverseScene {
         });
         const atmo = new Mesh(atmoGeom, atmoMat);
         group.add(atmo);
+        // Aurora oval overlay — fetched lazily when first toggled on.
+        const aurora = new AuroraOverlay({ earthRadius: spec.drawSize });
+        group.add(aurora);
+        this.auroraOverlay = aurora;
       }
       if (spec.name === "Saturn") {
         const ringInner = spec.drawSize * 1.4;
@@ -940,6 +1016,7 @@ export class UniverseScene {
     }
     // Cosmic landmarks (sprite labels on the celestial sphere). Only
     // pickable when the layer is on, so we don't steal solar-system clicks.
+    let landmarkPicked: { raDeg: number; decDeg: number; kind: string } | null = null;
     if (this.cosmicLandmarks.visible()) {
       for (const p of this.cosmicLandmarks.pickables()) {
         const hits = this.raycaster.intersectObject(p.sprite, false);
@@ -950,7 +1027,26 @@ export class UniverseScene {
             distance: hits[0].distance,
             detail: p.data.detail,
           });
+          landmarkPicked = {
+            raDeg: p.data.raDeg,
+            decDeg: p.data.decDeg,
+            kind: p.data.kind,
+          };
         }
+      }
+    }
+
+    // Pulsars — pick by NDC proximity (Points layer). Only when visible.
+    if (this.pulsars.visible()) {
+      const psr = this.pulsars.pick(ndc, this.raycaster, this.camera);
+      if (psr) {
+        const payload = pulsarPickToPayload(psr);
+        return {
+          kind: "Pulsar",
+          name: psr.name,
+          detail: `Pulsar · period ${(psr.periodSec * 1000).toFixed(2)} ms`,
+          payload,
+        };
       }
     }
 
@@ -990,6 +1086,30 @@ export class UniverseScene {
     let payload: InfoPayload;
     if (top.kind === "Landmark") {
       payload = cosmicLandmarkFactsToPayload(top.name, "Cosmic landmark", top.detail);
+      // Augment supernova / pulsar / SN-remnant landmarks with a light-cone
+      // launcher section pointing at their curated distance + age.
+      if (landmarkPicked) {
+        const preset = LANDMARK_LIGHTCONE[top.name];
+        if (preset) {
+          const [dx, dy, dz] = raDecToVec3(
+            landmarkPicked.raDeg,
+            landmarkPicked.decDeg,
+            preset.distanceLY,
+          );
+          payload = {
+            ...payload,
+            sections: [
+              ...payload.sections,
+              {
+                kind: "lightcone",
+                centerLY: { x: SUN_LY.x + dx, y: dy, z: SUN_LY.z + dz },
+                name: top.name,
+                ...(preset.ageYears !== undefined ? { currentAgeYears: preset.ageYears } : {}),
+              },
+            ],
+          };
+        }
+      }
     } else {
       const facts = BODY_INFO[top.name];
       payload = facts
@@ -1136,6 +1256,14 @@ export class UniverseScene {
       interstellarOn: this.interstellar?.visible ?? false,
       missions: this.missions?.visibility() ?? {},
       zones: this.solarZones.state(),
+      auroraOn: this.auroraOn,
+      lightConeOn: this.lightCone !== null && this.lightConeCenter !== null,
+      lightConeCenter: this.lightConeCenter
+        ? { x: this.lightConeCenter.x, y: this.lightConeCenter.y, z: this.lightConeCenter.z }
+        : null,
+      lightConeYears: this.lightConeYears,
+      lightConeOpacity: this.lightConeOpacity,
+      lightConeTargetName: this.lightConeTargetName,
     };
   }
 
@@ -1328,6 +1456,71 @@ export class UniverseScene {
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────
+
+/** Curated distance + current age for headline supernova / pulsar landmarks
+ *  used by the light-cone tool. Distances in LY, ages in years (since the
+ *  light from the event arrived at Earth). */
+const LANDMARK_LIGHTCONE: Record<string, { distanceLY: number; ageYears?: number }> = {
+  "SN 1987A": { distanceLY: 168_000, ageYears: 39 },
+  "SN 1054 (Crab)": { distanceLY: 6500, ageYears: 972 },
+  "Veil Nebula": { distanceLY: 2400, ageYears: 8000 },
+};
+
+/** Build an InfoPanel payload for a clicked pulsar — adds a sonification
+ *  section + a light-cone section using the pulsar's distance (when known)
+ *  along its RA/Dec direction in galactic LY space. */
+function pulsarPickToPayload(p: PulsarPick): InfoPayload {
+  const sections: InfoPayload["sections"] = [];
+  const idRows: Array<[string, string]> = [
+    ["RA", `${p.raDeg.toFixed(4)}°`],
+    ["Dec", `${p.decDeg.toFixed(4)}°`],
+  ];
+  if (p.distanceLY !== undefined) {
+    idRows.push(["Distance", `${p.distanceLY.toLocaleString()} ly`]);
+  }
+  sections.push({ kind: "identification", rows: idRows });
+  sections.push({
+    kind: "physical",
+    rows: [
+      [
+        "Period",
+        p.periodSec >= 1
+          ? `${p.periodSec.toFixed(3)} s`
+          : `${(p.periodSec * 1000).toFixed(2)} ms`,
+      ],
+      ["Pulse rate", `${(1 / p.periodSec).toFixed(2)} Hz`],
+    ],
+  });
+  sections.push({
+    kind: "sonification",
+    periodSec: p.periodSec,
+    label: p.name,
+    ...(p.note !== undefined ? { note: p.note } : {}),
+  });
+  // Light-cone target: place the pulsar at its known distance along its
+  // celestial direction in the galactic frame, anchored on the Sun.
+  if (p.distanceLY !== undefined) {
+    const [dx, dy, dz] = raDecToVec3(p.raDeg, p.decDeg, p.distanceLY);
+    sections.push({
+      kind: "lightcone",
+      // Galactic frame uses (x, z, -y) → match how planet positions are
+      // converted in this scene; raDecToVec3 returns equatorial (x,y,z), so
+      // we just reuse the same convention as the celestial-sphere transform.
+      centerLY: { x: SUN_LY.x + dx, y: dy, z: SUN_LY.z + dz },
+      name: p.name,
+    });
+  }
+  sections.push({
+    kind: "links",
+    items: [
+      {
+        label: "Wikipedia",
+        href: `https://en.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(p.name)}`,
+      },
+    ],
+  });
+  return { kind: "Pulsar", name: p.name, sections };
+}
 
 function ramp(x: number, a: number, b: number, ya: number, yb: number): number {
   if (x <= a) return ya;
