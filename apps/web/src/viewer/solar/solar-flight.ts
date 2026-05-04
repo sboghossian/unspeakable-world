@@ -135,7 +135,17 @@ export class SolarFlightScene {
     sphere: Mesh;
     label: Sprite;
   }> = [];
+  private marsMoons: Array<{
+    name: "Phobos" | "Deimos";
+    sphere: Mesh;
+    label: Sprite;
+    /** Approximate orbital radius in AU (cosmetic-scaled). */
+    a: number;
+    /** Sidereal period in days. */
+    period: number;
+  }> = [];
   private orbits: LineLoop[] = [];
+  private solarZones: LineLoop[] = [];
   private starPoints: Points | null = null;
   private backgroundLabels: Sprite[] = [];
 
@@ -173,6 +183,8 @@ export class SolarFlightScene {
     void this.buildPlanets();
     void this.buildOrbits();
     this.buildGalileanMoons();
+    this.buildMarsMoons();
+    this.buildSolarZones();
 
     // Background star field on a giant sphere (radius STAR_RADIUS).
     void this.loadStarBackground();
@@ -403,6 +415,9 @@ export class SolarFlightScene {
     let jupX = 0;
     let jupY = 0;
     let jupZ = 0;
+    let marsX = 0;
+    let marsY = 0;
+    let marsZ = 0;
     for (const p of this.planets) {
       try {
         const v = HelioVector(p.body, this.simTime);
@@ -414,9 +429,28 @@ export class SolarFlightScene {
           jupX = sx;
           jupY = sy;
           jupZ = sz;
+        } else if (p.name === "Mars") {
+          marsX = sx;
+          marsY = sy;
+          marsZ = sz;
         }
       } catch {
         // ignore
+      }
+    }
+
+    // Mars moons (Phobos / Deimos): no AstronomyEngine support, so we
+    // propagate a circular Keplerian orbit using period + cosmetic radius.
+    // Plenty good for visualization at solar-flight scales.
+    if (this.marsMoons.length > 0) {
+      const t = this.simTime.getTime() / 1000 / 86400; // days since 1970
+      for (const m of this.marsMoons) {
+        const phase = ((t / m.period) % 1) * Math.PI * 2;
+        const x = marsX + m.a * Math.cos(phase);
+        const z = marsZ + m.a * Math.sin(phase);
+        const y = marsY;
+        m.sphere.position.set(x, y, z);
+        m.label.position.set(x, y + 0.005, z);
       }
     }
     // Galilean moons: position in heliocentric scene = Jupiter heliocentric
@@ -447,6 +481,102 @@ export class SolarFlightScene {
       } catch {
         // ignore
       }
+    }
+  }
+
+  /** Five named radial zones drawn as flat ring loops. Habitable zone +
+   *  frost line + asteroid belt + Kuiper belt + heliopause. Off-screen
+   *  most of the time but contextual when zoomed wide. */
+  private buildSolarZones(): void {
+    const ZONES: Array<{ radius: number; color: number; opacity: number }> = [
+      // Habitable zone (continuous): inner edge ≈ 0.95 AU, outer ≈ 1.37 AU
+      { radius: 0.95, color: 0x4ad19c, opacity: 0.45 },
+      { radius: 1.37, color: 0x4ad19c, opacity: 0.45 },
+      // Frost line (water ice condenses): ≈ 4.85 AU (between Mars and Jupiter)
+      { radius: 4.85, color: 0xa6c8ff, opacity: 0.55 },
+      // Inner asteroid belt: ≈ 2.2 AU
+      { radius: 2.2, color: 0xc8c1b8, opacity: 0.35 },
+      // Outer asteroid belt: ≈ 3.2 AU
+      { radius: 3.2, color: 0xc8c1b8, opacity: 0.35 },
+      // Kuiper belt inner: 30 AU
+      { radius: 30, color: 0xb389ff, opacity: 0.45 },
+      // Kuiper belt outer: 50 AU
+      { radius: 50, color: 0xb389ff, opacity: 0.45 },
+    ];
+    const SAMPLES = 256;
+    for (const z of ZONES) {
+      const positions: number[] = [];
+      for (let i = 0; i < SAMPLES; i++) {
+        const a = (i / SAMPLES) * Math.PI * 2;
+        positions.push(Math.cos(a) * z.radius, 0, Math.sin(a) * z.radius);
+      }
+      const geom = new BufferGeometry();
+      geom.setAttribute(
+        "position",
+        new BufferAttribute(new Float32Array(positions), 3),
+      );
+      const mat = new LineBasicMaterial({
+        color: z.color,
+        transparent: true,
+        opacity: z.opacity,
+      });
+      const loop = new LineLoop(geom, mat);
+      loop.visible = false; // toggle on demand
+      this.scene.add(loop);
+      this.solarZones.push(loop);
+    }
+  }
+
+  setSolarZones(visible: boolean): void {
+    for (const z of this.solarZones) z.visible = visible;
+  }
+
+  private buildMarsMoons(): void {
+    // Real semi-major axes (Phobos: 9,376 km = 6.27e-5 AU, Deimos: 23,463
+    // km = 1.57e-4 AU) are way smaller than Mars's drawn radius (0.035
+    // AU). We scale them up by ~250 so they sit just outside Mars in
+    // solar flight — same cosmetic trick as the Galilean moons.
+    const MOONS: Array<{
+      name: "Phobos" | "Deimos";
+      color: number;
+      drawSize: number;
+      a: number;
+      period: number;
+    }> = [
+      { name: "Phobos", color: 0xa89886, drawSize: 0.005, a: 0.05, period: 0.31891 },
+      { name: "Deimos", color: 0x9a8a76, drawSize: 0.004, a: 0.09, period: 1.26244 },
+    ];
+    for (const m of MOONS) {
+      const geom = new SphereGeometry(m.drawSize, 12, 12);
+      const mat = new MeshBasicMaterial({
+        color: m.color,
+        depthTest: false,
+      });
+      const sphere = new Mesh(geom, mat);
+      sphere.renderOrder = 5;
+      this.scene.add(sphere);
+
+      const labelTex = makeLabelTexture(m.name);
+      const labelMat = new SpriteMaterial({
+        map: labelTex,
+        transparent: true,
+        depthWrite: false,
+        depthTest: false,
+        opacity: 0.8,
+      });
+      const label = new Sprite(labelMat);
+      const aspect = labelTex.image.width / labelTex.image.height;
+      const h = 0.012;
+      label.scale.set(h * aspect, h, 1);
+      this.scene.add(label);
+
+      this.marsMoons.push({
+        name: m.name,
+        sphere,
+        label,
+        a: m.a,
+        period: m.period,
+      });
     }
   }
 
@@ -787,6 +917,12 @@ export class SolarFlightScene {
       o.geometry.dispose();
       (o.material as LineBasicMaterial).dispose();
     }
+    for (const z of this.solarZones) {
+      z.geometry.dispose();
+      (z.material as LineBasicMaterial).dispose();
+      this.scene.remove(z);
+    }
+    this.solarZones = [];
     for (const p of this.planets) {
       p.sphere.geometry.dispose();
       (p.sphere.material as MeshBasicMaterial).dispose();
@@ -804,6 +940,16 @@ export class SolarFlightScene {
       this.scene.remove(m.label);
     }
     this.galileanMoons = [];
+    for (const m of this.marsMoons) {
+      m.sphere.geometry.dispose();
+      (m.sphere.material as MeshBasicMaterial).dispose();
+      const lm = m.label.material as SpriteMaterial;
+      lm.map?.dispose();
+      lm.dispose();
+      this.scene.remove(m.sphere);
+      this.scene.remove(m.label);
+    }
+    this.marsMoons = [];
     this.sun.geometry.dispose();
     (this.sun.material as MeshBasicMaterial).dispose();
     if (this.starPoints) {

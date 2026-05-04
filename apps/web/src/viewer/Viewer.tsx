@@ -74,7 +74,9 @@ const DEFAULT_STATE: ViewerState = {
   spacecraft: false,
   exoplanets: false,
   cosmicLandmarks: false,
+  pulsars: false,
   exoplanetCount: 0,
+  pulsarCount: 0,
 };
 
 type Inspect = {
@@ -407,6 +409,11 @@ export function Viewer() {
         sceneRef.current?.setCosmicLandmarks(!state.cosmicLandmarks);
         return;
       }
+      if (e.key === "p") {
+        // p = "pulsars"
+        sceneRef.current?.setPulsars(!state.pulsars);
+        return;
+      }
       if (e.key === ".") {
         sceneRef.current?.setTime(new Date());
         return;
@@ -435,6 +442,7 @@ export function Viewer() {
     state.spacecraft,
     state.exoplanets,
     state.cosmicLandmarks,
+    state.pulsars,
     state.time,
     state.timeRate,
   ]);
@@ -813,6 +821,10 @@ export function Viewer() {
             cosmicLandmarksVisible={state.cosmicLandmarks}
             onToggleCosmicLandmarks={() =>
               sceneRef.current?.setCosmicLandmarks(!state.cosmicLandmarks)
+            }
+            pulsarsVisible={state.pulsars}
+            onTogglePulsars={() =>
+              sceneRef.current?.setPulsars(!state.pulsars)
             }
           />
           <TimeStrip

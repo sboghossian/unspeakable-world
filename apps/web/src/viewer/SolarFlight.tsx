@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+// Using useState below.
 import {
   SolarFlightScene,
   type SolarFlightState,
@@ -65,6 +66,11 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
     "Uranus",
     "Neptune",
   ];
+  const [zonesOn, setZonesOn] = (() => {
+    // Local-state replacement using useState — but to keep this small we
+    // hold the bit on a ref-attached state. Importing useState explicitly:
+    return useState(false);
+  })();
 
   return (
     <div className="relative h-full w-full bg-[#000208]">
@@ -138,6 +144,22 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
             className="rounded-lg border border-white/10 bg-space-950/70 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-white/75 backdrop-blur transition hover:bg-white/10"
           >
             ⟲ now
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const next = !zonesOn;
+              setZonesOn(next);
+              sceneRef.current?.setSolarZones(next);
+            }}
+            title="Toggle named solar-system zones — habitable zone, frost line, asteroid belt, Kuiper belt"
+            className={`rounded-lg border px-3 py-1.5 font-mono text-xs uppercase tracking-widest backdrop-blur transition ${
+              zonesOn
+                ? "border-teal-400/50 bg-teal-400/15 text-teal-200"
+                : "border-white/10 bg-space-950/70 text-white/65 hover:bg-white/10"
+            }`}
+          >
+            ◉ zones
           </button>
           <button
             type="button"

@@ -69,6 +69,8 @@ type Props = {
   onToggleExoplanets: () => void;
   cosmicLandmarksVisible: boolean;
   onToggleCosmicLandmarks: () => void;
+  pulsarsVisible: boolean;
+  onTogglePulsars: () => void;
 };
 
 export function WavelengthBar({
@@ -88,6 +90,8 @@ export function WavelengthBar({
   onToggleExoplanets,
   cosmicLandmarksVisible,
   onToggleCosmicLandmarks,
+  pulsarsVisible,
+  onTogglePulsars,
 }: Props) {
   return (
     <div className="pointer-events-auto flex flex-col items-center gap-2 rounded-xl border border-white/10 bg-space-950/80 px-3 py-2 backdrop-blur md:flex-row">
@@ -221,6 +225,18 @@ export function WavelengthBar({
           title="Toggle named exotic objects — Sgr A*, M87*, Crab Pulsar, GW170817 etc (z)"
         >
           ◉ exotic
+        </button>
+        <button
+          type="button"
+          onClick={onTogglePulsars}
+          className={`rounded-md border px-2.5 py-1 font-mono text-xs uppercase tracking-wider transition ${
+            pulsarsVisible
+              ? "border-amber-400/40 bg-amber-400/15 text-amber-200"
+              : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10"
+          }`}
+          title="Toggle 3,927 pulsars from SIMBAD (p)"
+        >
+          ⚡ pulsars
         </button>
       </div>
     </div>

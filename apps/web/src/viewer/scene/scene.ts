@@ -11,6 +11,7 @@ import { ConstellationLines } from "../constellations/constellation-lines";
 import { CoordGrid } from "./coord-grid";
 import { CosmicLandmarks } from "../cosmic/cosmic-landmarks";
 import { ExoplanetField } from "../exoplanets/exoplanet-field";
+import { PulsarField } from "../cosmic/pulsar-field";
 import { Landmarks } from "./landmarks";
 import { zenithWorldDirection } from "../observer/zenith";
 import { VoyagerControls } from "./voyager-controls";
@@ -59,8 +60,12 @@ export type ViewerState = {
   exoplanets: boolean;
   /** Whether named exotic objects (Sgr A*, M87*, Crab Pulsar, GW170817 …) are visible. */
   cosmicLandmarks: boolean;
+  /** Whether the 3,927-entry SIMBAD pulsar field is visible. */
+  pulsars: boolean;
   /** Loaded exoplanet count (0 until catalog arrives). */
   exoplanetCount: number;
+  /** Loaded pulsar count (0 until catalog arrives). */
+  pulsarCount: number;
 };
 
 type Listener = (s: ViewerState) => void;
@@ -85,6 +90,7 @@ export class ViewerScene {
   private solar: SolarSystem;
   private spacecraft: Spacecraft;
   private exoplanets: ExoplanetField;
+  private pulsars: PulsarField;
   private cosmicLandmarks: CosmicLandmarks;
   private iss: IssTracker;
   private dsos: DsoField;
@@ -174,6 +180,20 @@ export class ViewerScene {
     this.cosmicLandmarks = new CosmicLandmarks();
     this.scene.add(this.cosmicLandmarks.group);
 
+    this.pulsars = new PulsarField();
+    this.scene.add(this.pulsars.group);
+    void this.pulsars
+      .load("/data/pulsars.json")
+      .then(() => {
+        this.dirty = true;
+        this.state = {
+          ...this.state,
+          pulsarCount: this.pulsars.count(),
+        };
+        this.emit();
+      })
+      .catch((err) => console.warn("[pulsars] load failed", err));
+
     this.iss = new IssTracker();
     this.scene.add(this.iss.group);
     this.iss.subscribe((s) => {
@@ -258,7 +278,9 @@ export class ViewerScene {
       spacecraft: false,
       exoplanets: false,
       cosmicLandmarks: false,
+      pulsars: false,
       exoplanetCount: 0,
+      pulsarCount: 0,
     };
 
     this.tick();
@@ -326,7 +348,9 @@ export class ViewerScene {
       spacecraft: this.spacecraft?.visible() ?? false,
       exoplanets: this.exoplanets?.visible() ?? false,
       cosmicLandmarks: this.cosmicLandmarks?.visible() ?? false,
+      pulsars: this.pulsars?.visible() ?? false,
       exoplanetCount: this.exoplanets?.count() ?? 0,
+      pulsarCount: this.pulsars?.count() ?? 0,
     };
     this.emit();
   }
@@ -429,6 +453,12 @@ export class ViewerScene {
 
   setCosmicLandmarks(visible: boolean): void {
     this.cosmicLandmarks.setVisible(visible);
+    this.dirty = true;
+    this.publishState();
+  }
+
+  setPulsars(visible: boolean): void {
+    this.pulsars.setVisible(visible);
     this.dirty = true;
     this.publishState();
   }
@@ -602,6 +632,7 @@ export class ViewerScene {
     this.solar.dispose();
     this.spacecraft.dispose();
     this.exoplanets.dispose();
+    this.pulsars.dispose();
     this.cosmicLandmarks.dispose();
     this.iss.dispose();
     this.renderer.dispose();
