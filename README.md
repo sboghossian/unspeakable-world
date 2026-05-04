@@ -46,6 +46,26 @@
 
 ---
 
+**⌖ Coordinate grid + named landmarks.** Toggle the equatorial mesh (RA meridians + Dec parallels), the celestial equator, the **ecliptic** (the Sun's path through the year), and the **galactic plane** as four colour-coded great circles. Sgr A* (the galactic center), the galactic poles, the vernal & autumnal equinoxes, and both solstices ride the grid as labelled chips so the lines mean something.
+
+**★ Named bright stars.** Toggle name labels for the top-60 brightest HYG stars — Sirius, Vega, Betelgeuse, Polaris, Rigel, Aldebaran, Capella, Antares, Arcturus, Procyon — sprite-rendered with a glow halo so they read on top of bright HiPS regions.
+
+**🗓 Upcoming sky events.** A 90-day forward calendar of moon quarters, lunar + solar eclipses, Mercury & Venus greatest elongations, Mars / Jupiter / Saturn oppositions, equinoxes, solstices, and the major meteor-shower peaks (Quadrantids, Lyrids, Eta Aquariids, Perseids, Orionids, Leonids, Geminids, Ursids). Pure ephemeris compute via AstronomyEngine.
+
+**🎯 Center HUD.** A faint crosshair and a tiny readout of where the camera is pointing — sexagesimal RA/Dec, the IAU constellation the line of sight lands in, and the current FOV. Auto-hides when an inspector or modal is open.
+
+**📷 Snapshot.** One tap saves the exact view you're looking at as a timestamped PNG.
+
+**🌌 More wavelengths.** Visible (DSS2) · Hα Finkbeiner · 2MASS near-IR · AllWISE mid-IR · GALEX UV · INTEGRAL X-ray · NVSS 1.4 GHz radio · Fermi LAT 1-300 GeV γ-ray. Eight wavelength windows, federated from CDS Strasbourg + ESAC.
+
+**🌠 Aurora outlook.** When you've shared your location, the space-weather panel maps the live planetary K-index to NOAA's equatorward-aurora-boundary table and tells you in one sentence whether tonight's storm is overhead, on your poleward horizon, or below it.
+
+**📱 Installable.** PWA manifest, Apple touch icons, and standalone display mode — add to home screen on iOS/Android, launches into the viewer fullscreen.
+
+**ℹ Credits panel.** Press `i` to see every data source, API, and library the viewer depends on, with licenses — required by CC-BY-SA attribution for HYG and OpenNGC; required by basic decency for everyone else.
+
+---
+
 The full plan lives in [`tasks/todo.md`](./tasks/todo.md). Every commit lands on `main` and pushes here. **No private branches, no stealth — every dragon is a public issue.**
 
 ---

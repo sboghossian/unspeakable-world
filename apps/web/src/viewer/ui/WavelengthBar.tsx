@@ -18,7 +18,6 @@ const LAYERS = [
     accent: "purple",
   },
   { id: "nvss" as const, label: "Radio", sub: "NVSS 1.4 GHz", accent: "teal" },
-  { id: "planck" as const, label: "CMB", sub: "Planck 143 GHz", accent: "indigo" },
   { id: "fermi" as const, label: "γ-ray", sub: "Fermi LAT 1-300 GeV", accent: "lime" },
 ];
 
@@ -45,10 +44,6 @@ const ACCENT: Record<string, { active: string; idle: string }> = {
   },
   teal: {
     active: "border-teal-400/40 bg-teal-400/15 text-teal-300",
-    idle: "border-white/10 bg-white/5 text-white/60 hover:bg-white/10",
-  },
-  indigo: {
-    active: "border-indigo-400/40 bg-indigo-400/15 text-indigo-300",
     idle: "border-white/10 bg-white/5 text-white/60 hover:bg-white/10",
   },
   lime: {

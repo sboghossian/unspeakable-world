@@ -8,6 +8,7 @@ import { IssTracker, type IssState } from "../iss/iss-tracker";
 import { DsoField } from "../dso/dso-field";
 import { ConstellationLines } from "../constellations/constellation-lines";
 import { CoordGrid } from "./coord-grid";
+import { Landmarks } from "./landmarks";
 import { zenithWorldDirection } from "../observer/zenith";
 import { VoyagerControls } from "./voyager-controls";
 
@@ -75,6 +76,7 @@ export class ViewerScene {
   private dsos: DsoField;
   private constellations: ConstellationLines;
   private coordGrid: CoordGrid;
+  private landmarks: Landmarks;
   private controls: VoyagerControls;
 
   private dirty = true;
@@ -162,6 +164,9 @@ export class ViewerScene {
 
     this.coordGrid = new CoordGrid();
     this.scene.add(this.coordGrid.group);
+
+    this.landmarks = new Landmarks();
+    this.scene.add(this.landmarks.group);
     void this.constellations
       .load("/data/constellations.lines.json")
       .then(() => {
@@ -355,6 +360,7 @@ export class ViewerScene {
 
   setCoordGrid(visible: boolean): void {
     this.coordGrid.setVisible(visible);
+    this.landmarks.setVisible(visible);
     this.dirty = true;
     this.publishState();
   }
@@ -508,6 +514,7 @@ export class ViewerScene {
     this.dsos.dispose();
     this.constellations.dispose();
     this.coordGrid.dispose();
+    this.landmarks.dispose();
     this.solar.dispose();
     this.iss.dispose();
     this.renderer.dispose();
