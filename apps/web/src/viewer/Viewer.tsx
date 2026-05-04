@@ -10,6 +10,7 @@ import { TonightSky } from "./ui/TonightSky";
 import { TourCard } from "./ui/TourCard";
 import { GRAND_TOUR } from "./tour/tour";
 import { FavoritesMenu } from "./ui/FavoritesMenu";
+import { AboutOverlay } from "./ui/AboutOverlay";
 import { FirstRunHint } from "./ui/FirstRunHint";
 import { NeoPanel } from "./ui/NeoPanel";
 import { ShareButton } from "./ui/ShareButton";
@@ -108,6 +109,7 @@ export function Viewer() {
   );
   const [searchIndex, setSearchIndex] = useState<SearchIndex | null>(null);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
   const [favorites, setFavorites] = useState<Favorite[]>(() => readFavorites());
 
   const reloadFavorites = useCallback(() => {
@@ -231,13 +233,18 @@ export function Viewer() {
         return;
       if (e.metaKey || e.ctrlKey || e.altKey) return; // ⌘K is owned by SearchBar
 
+      if (e.key === "i") {
+        setAboutOpen((v) => !v);
+        return;
+      }
       if (e.key === "?") {
         e.preventDefault();
         setShortcutsOpen((v) => !v);
         return;
       }
       if (e.key === "Escape") {
-        if (shortcutsOpen) setShortcutsOpen(false);
+        if (aboutOpen) setAboutOpen(false);
+        else if (shortcutsOpen) setShortcutsOpen(false);
         else if (inspect) setInspect(null);
         else if (tourIndex !== null) exitTour();
         return;
@@ -271,6 +278,7 @@ export function Viewer() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [
+    aboutOpen,
     shortcutsOpen,
     inspect,
     tourIndex,
@@ -511,6 +519,14 @@ export function Viewer() {
           <ShareButton />
           <button
             type="button"
+            onClick={() => setAboutOpen(true)}
+            title="About / credits (press i)"
+            className="pointer-events-auto rounded-lg border border-white/10 bg-space-950/70 px-2.5 py-1.5 font-mono text-xs text-white/60 backdrop-blur transition hover:bg-white/10 hover:text-white"
+          >
+            i
+          </button>
+          <button
+            type="button"
             onClick={() => setShortcutsOpen(true)}
             title="Keyboard shortcuts (press ?)"
             className="pointer-events-auto rounded-lg border border-white/10 bg-space-950/70 px-2.5 py-1.5 font-mono text-xs text-white/60 backdrop-blur transition hover:bg-white/10 hover:text-white"
@@ -686,6 +702,8 @@ export function Viewer() {
       {shortcutsOpen && (
         <ShortcutsOverlay onClose={() => setShortcutsOpen(false)} />
       )}
+
+      {aboutOpen && <AboutOverlay onClose={() => setAboutOpen(false)} />}
 
       {status === "live" && <FirstRunHint />}
     </div>

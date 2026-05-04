@@ -39,6 +39,7 @@ const SHORTCUTS: Array<{ section: string; items: Shortcut[] }> = [
     items: [
       { keys: ["t", ""], label: "Start the Grand Tour" },
       { keys: ["c", ""], label: "Toggle constellation lines" },
+      { keys: ["i", ""], label: "About / credits" },
       { keys: ["?"], label: "Show this overlay" },
     ],
   },
