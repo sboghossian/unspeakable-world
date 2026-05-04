@@ -1,0 +1,12 @@
+# Cloudflare Pages headers — long-cache hashed assets, short-cache the
+# HTML so deploys propagate immediately.
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/data/*
+  Cache-Control: public, max-age=86400
+
+/*
+  Cache-Control: public, max-age=0, must-revalidate
+  X-Frame-Options: SAMEORIGIN

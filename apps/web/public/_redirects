@@ -1,0 +1,5 @@
+# SPA fallback — every non-asset path resolves to index.html so the
+# hash router (#viewer, #solar, #universe, #surface/<p>, #galactic,
+# #guide/...) loads on first visit.
+
+/*    /index.html   200
