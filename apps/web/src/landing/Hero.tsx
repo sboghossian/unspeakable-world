@@ -13,7 +13,7 @@ export function Hero() {
     <section className="mx-auto flex w-full max-w-5xl flex-col items-center px-6 pb-16 pt-24 text-center md:pt-36">
       <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.2em] text-plasma-400/90 backdrop-blur">
         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-plasma-500" />
-        <span>Day 58 · v3 — sky atlas + solar flight + gravity sandbox</span>
+        <span>Day 64 · v4 — one tool, every scale, AU to Gly</span>
       </div>
 
       <h1 className="text-balance font-display text-5xl font-semibold leading-[1.05] glow md:text-7xl">
@@ -31,13 +31,26 @@ export function Hero() {
         flown. In a browser. 60 fps. Open source from commit one.
       </p>
 
-      <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row">
+      <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:flex-wrap sm:justify-center">
+        <button
+          type="button"
+          onClick={() => navigate("universe")}
+          className="group inline-flex items-center gap-2 rounded-lg bg-emerald-400 px-6 py-3 text-base font-semibold text-space-950 transition hover:bg-emerald-300"
+        >
+          🌌 Enter the Universe
+          <span
+            aria-hidden="true"
+            className="transition group-hover:translate-x-0.5"
+          >
+            →
+          </span>
+        </button>
         <button
           type="button"
           onClick={() => navigate("viewer")}
           className="group inline-flex items-center gap-2 rounded-lg bg-plasma-500 px-6 py-3 text-base font-semibold text-space-950 transition hover:bg-plasma-400"
         >
-          Launch the sky atlas
+          Sky atlas
           <span
             aria-hidden="true"
             className="transition group-hover:translate-x-0.5"
@@ -50,7 +63,7 @@ export function Hero() {
           onClick={() => navigate("solar")}
           className="group inline-flex items-center gap-2 rounded-lg border border-cyan-400/40 bg-cyan-400/10 px-6 py-3 text-base font-semibold text-cyan-200 transition hover:bg-cyan-400/20"
         >
-          🚀 Fly the solar system
+          🚀 Solar flight
           <span
             aria-hidden="true"
             className="transition group-hover:translate-x-0.5"
@@ -64,7 +77,7 @@ export function Hero() {
           rel="noreferrer"
           className="rounded-lg border border-white/10 bg-white/5 px-6 py-3 text-base text-white/80 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
         >
-          See it on GitHub
+          GitHub
         </a>
       </div>
 
