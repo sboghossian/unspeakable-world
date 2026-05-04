@@ -7,11 +7,13 @@ import { useSyncExternalStore } from "react";
  * Day 6 will extend this to deep-link camera state and selected objects.
  */
 
-export type Route = "landing" | "viewer";
+export type Route = "landing" | "viewer" | "solar";
 
 function getRoute(): Route {
   const hash = typeof window === "undefined" ? "" : window.location.hash;
-  return hash.startsWith("#viewer") ? "viewer" : "landing";
+  if (hash.startsWith("#solar")) return "solar";
+  if (hash.startsWith("#viewer")) return "viewer";
+  return "landing";
 }
 
 function subscribe(cb: () => void) {
@@ -24,5 +26,6 @@ export function useRoute(): Route {
 }
 
 export function navigate(route: Route): void {
-  window.location.hash = route === "viewer" ? "#viewer" : "";
+  window.location.hash =
+    route === "solar" ? "#solar" : route === "viewer" ? "#viewer" : "";
 }

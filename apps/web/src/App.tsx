@@ -3,7 +3,7 @@ import { Starfield } from "./landing/Starfield";
 import { Hero } from "./landing/Hero";
 import { Roadmap } from "./landing/Roadmap";
 import { Footer } from "./landing/Footer";
-import { useRoute } from "./router";
+import { navigate, useRoute } from "./router";
 
 // Lazy: the viewer pulls in Three.js, AstronomyEngine, and ~500 KB of HiPS /
 // catalog code. The landing page should not pay that cost — most first-time
@@ -12,9 +12,37 @@ import { useRoute } from "./router";
 const Viewer = lazy(() =>
   import("./viewer/Viewer").then((m) => ({ default: m.Viewer })),
 );
+const SolarFlight = lazy(() =>
+  import("./viewer/SolarFlight").then((m) => ({ default: m.SolarFlight })),
+);
 
 export function App() {
   const route = useRoute();
+
+  if (route === "solar") {
+    return (
+      <main className="relative h-full w-full bg-space-950">
+        <Suspense fallback={<ViewerLoadingVeil />}>
+          <SolarFlight
+            onExit={() => navigate("viewer")}
+            onFlyToSky={(dir) => {
+              const params = new URLSearchParams();
+              params.set("ra", "0");
+              params.set("dec", "0");
+              params.set("fov", "30");
+              // We can't easily compute RA/Dec from xyz here without dragging
+              // in math; instead encode the direction as a custom hash hint
+              // that the viewer will pick up.
+              params.set("dx", dir.x.toFixed(4));
+              params.set("dy", dir.y.toFixed(4));
+              params.set("dz", dir.z.toFixed(4));
+              window.location.hash = `#viewer?${params.toString()}`;
+            }}
+          />
+        </Suspense>
+      </main>
+    );
+  }
 
   if (route === "viewer") {
     return (

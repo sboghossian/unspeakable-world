@@ -645,6 +645,15 @@ export function Viewer() {
         </button>
 
         <div className="pointer-events-auto flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
+          <button
+            type="button"
+            onClick={() => navigate("solar")}
+            title="Switch to 3D Solar System Flight Mode"
+            className="rounded-lg border border-cyan-400/40 bg-cyan-400/10 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-cyan-200 backdrop-blur transition hover:bg-cyan-400/20"
+          >
+            <span className="md:hidden">🚀</span>
+            <span className="hidden md:inline">🚀 solar flight</span>
+          </button>
           {tourIndex === null && (
             <button
               type="button"
