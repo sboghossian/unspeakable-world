@@ -49,6 +49,9 @@ const DEFAULT_STATE: UniverseState = {
   pulsarsOn: false,
   exoplanetsOn: false,
   cosmicLandmarksOn: false,
+  asteroidsOn: false,
+  cometsOn: false,
+  interstellarOn: false,
 };
 
 export function Universe({ onExit }: Props) {

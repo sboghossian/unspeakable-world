@@ -9,6 +9,9 @@ type Scene = {
   setPulsars(on: boolean): void;
   setExoplanets(on: boolean): void;
   setCosmicLandmarks(on: boolean): void;
+  setAsteroids(on: boolean): void;
+  setComets(on: boolean): void;
+  setInterstellar(on: boolean): void;
   setOverlay(id: string | null): void;
   setOverlayMix(mix: number): void;
 };
@@ -187,6 +190,15 @@ export function LeftRail({ state, scene, onOpenGuide }: Props) {
           )}
           {layerToggle(state.cosmicLandmarksOn, "◉ Exotic objects", () =>
             scene.setCosmicLandmarks(!state.cosmicLandmarksOn),
+          )}
+          {layerToggle(state.asteroidsOn, "💫 Asteroids (~100k)", () =>
+            scene.setAsteroids(!state.asteroidsOn),
+          )}
+          {layerToggle(state.cometsOn, "☄ Comets", () =>
+            scene.setComets(!state.cometsOn),
+          )}
+          {layerToggle(state.interstellarOn, "🪐 Interstellar", () =>
+            scene.setInterstellar(!state.interstellarOn),
           )}
         </Section>
 

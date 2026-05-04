@@ -34,6 +34,12 @@ import { PulsarField } from "../cosmic/pulsar-field";
 import { ExoplanetField } from "../exoplanets/exoplanet-field";
 import { CosmicLandmarks } from "../cosmic/cosmic-landmarks";
 import { StarLabels } from "../stars/star-labels";
+import {
+  AsteroidField,
+  CometField,
+  InterstellarMarkers,
+  type InterstellarRecord,
+} from "./asteroids";
 
 /**
  * 🌌 Universe Mode — single seamless scene across scales.
@@ -266,6 +272,9 @@ export type UniverseState = {
   pulsarsOn: boolean;
   exoplanetsOn: boolean;
   cosmicLandmarksOn: boolean;
+  asteroidsOn: boolean;
+  cometsOn: boolean;
+  interstellarOn: boolean;
 };
 
 type Listener = (s: UniverseState) => void;
@@ -311,6 +320,11 @@ export class UniverseScene {
   private pulsars: PulsarField;
   private exoplanets: ExoplanetField;
   private cosmicLandmarks: CosmicLandmarks;
+
+  // Solar small-body layers (live in solarGroup, AU units).
+  private asteroids: AsteroidField | null = null;
+  private comets: CometField | null = null;
+  private interstellar: InterstellarMarkers | null = null;
 
   // Solar contents
   private sunMesh: Mesh;
@@ -431,6 +445,7 @@ export class UniverseScene {
     this.solarGroup.add(this.sunGlow);
 
     void this.buildPlanetsAndOrbits();
+    void this.loadSmallBodies();
 
     // ─── Galactic group ────────────────────────────────────────
     const galaxyTex = makeGalaxyTexture();
@@ -560,6 +575,58 @@ export class UniverseScene {
 
   setCosmicLandmarks(on: boolean): void {
     this.cosmicLandmarks.setVisible(on);
+    this.publishState();
+  }
+
+  setAsteroids(on: boolean): void {
+    if (this.asteroids) this.asteroids.visible = on;
+    this.publishState();
+  }
+
+  setComets(on: boolean): void {
+    if (this.comets) this.comets.visible = on;
+    this.publishState();
+  }
+
+  setInterstellar(on: boolean): void {
+    if (this.interstellar) this.interstellar.visible = on;
+    this.publishState();
+  }
+
+  private async loadSmallBodies(): Promise<void> {
+    // Asteroids
+    try {
+      const res = await fetch("/data/asteroids.bin");
+      if (res.ok) {
+        const buf = await res.arrayBuffer();
+        this.asteroids = new AsteroidField(buf, this.simTime);
+        this.solarGroup.add(this.asteroids);
+      }
+    } catch (err) {
+      console.warn("[asteroids] load", err);
+    }
+    // Comets
+    try {
+      const res = await fetch("/data/comets.bin");
+      if (res.ok) {
+        const buf = await res.arrayBuffer();
+        this.comets = new CometField(buf, this.simTime);
+        this.solarGroup.add(this.comets);
+      }
+    } catch (err) {
+      console.warn("[comets] load", err);
+    }
+    // Interstellar
+    try {
+      const res = await fetch("/data/interstellar.json");
+      if (res.ok) {
+        const items = (await res.json()) as InterstellarRecord[];
+        this.interstellar = new InterstellarMarkers(items);
+        this.solarGroup.add(this.interstellar);
+      }
+    } catch (err) {
+      console.warn("[interstellar] load", err);
+    }
     this.publishState();
   }
 
@@ -978,6 +1045,9 @@ export class UniverseScene {
       pulsarsOn: this.pulsars.visible(),
       exoplanetsOn: this.exoplanets.visible(),
       cosmicLandmarksOn: this.cosmicLandmarks.visible(),
+      asteroidsOn: this.asteroids?.visible ?? false,
+      cometsOn: this.comets?.visible ?? false,
+      interstellarOn: this.interstellar?.visible ?? false,
     };
   }
 
@@ -1009,6 +1079,10 @@ export class UniverseScene {
       this.simTime = new Date(this.simTime.getTime() + simElapsedMs);
       this.updatePlanets();
     }
+    // Per-frame sim-time push to small-body shaders (cheap uniform write).
+    this.asteroids?.setSimTime(this.simTime);
+    this.comets?.setSimTime(this.simTime);
+    this.interstellar?.setSimTime(this.simTime);
 
     // WASD movement (in local axes derived from current yaw/pitch).
     if (this.heldKeys.size > 0) {
