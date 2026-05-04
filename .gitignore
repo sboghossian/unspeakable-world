@@ -19,3 +19,5 @@ pkg
 coverage
 .vite
 .gstack/
+.claude/worktrees/
+.claude/scheduled_tasks.lock

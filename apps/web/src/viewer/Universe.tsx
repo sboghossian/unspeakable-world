@@ -52,6 +52,9 @@ const DEFAULT_STATE: UniverseState = {
   cosmicLandmarksOn: false,
   playing: true,
   rate: 86400,
+  asteroidsOn: false,
+  cometsOn: false,
+  interstellarOn: false,
 };
 
 export function Universe({ onExit }: Props) {
