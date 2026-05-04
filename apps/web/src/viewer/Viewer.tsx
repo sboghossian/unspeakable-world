@@ -69,6 +69,7 @@ const DEFAULT_STATE: ViewerState = {
   overlayMix: 0,
   constellations: false,
   coordGrid: false,
+  starLabels: false,
 };
 
 type Inspect = {
@@ -275,6 +276,10 @@ export function Viewer() {
         sceneRef.current?.setCoordGrid(!state.coordGrid);
         return;
       }
+      if (e.key === "n") {
+        sceneRef.current?.setStarLabels(!state.starLabels);
+        return;
+      }
       if (e.key === ".") {
         sceneRef.current?.setTime(new Date());
         return;
@@ -299,6 +304,7 @@ export function Viewer() {
     state.playing,
     state.constellations,
     state.coordGrid,
+    state.starLabels,
     state.time,
     state.timeRate,
   ]);
@@ -345,6 +351,8 @@ export function Viewer() {
       if (initial.overlayMix !== undefined)
         scene.setOverlayMix(initial.overlayMix);
       if (initial.constellations) scene.setConstellations(true);
+      if (initial.coordGrid) scene.setCoordGrid(true);
+      if (initial.starLabels) scene.setStarLabels(true);
     }, 60);
 
     return () => {
@@ -378,6 +386,8 @@ export function Viewer() {
         overlayId: state.overlayId,
         overlayMix: state.overlayMix,
         constellations: state.constellations,
+        coordGrid: state.coordGrid,
+        starLabels: state.starLabels,
       });
       replaceHash(params);
     }, 250);
@@ -390,6 +400,8 @@ export function Viewer() {
     state.overlayId,
     state.overlayMix,
     state.constellations,
+    state.coordGrid,
+    state.starLabels,
   ]);
 
   // Tap on sky: open the SIMBAD info panel for that direction *and* fly camera.
@@ -624,6 +636,10 @@ export function Viewer() {
             coordGridVisible={state.coordGrid}
             onToggleCoordGrid={() =>
               sceneRef.current?.setCoordGrid(!state.coordGrid)
+            }
+            starLabelsVisible={state.starLabels}
+            onToggleStarLabels={() =>
+              sceneRef.current?.setStarLabels(!state.starLabels)
             }
           />
           <TimeStrip

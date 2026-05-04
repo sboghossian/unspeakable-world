@@ -2,6 +2,7 @@ import { PerspectiveCamera, Scene, Vector3, WebGLRenderer } from "three";
 import { SURVEYS } from "../hips/surveys";
 import { HipsSphere } from "./hips-sphere";
 import { StarField } from "../stars/star-field";
+import { StarLabels } from "../stars/star-labels";
 import { SolarSystem } from "../solar/solar-system";
 import { IssTracker, type IssState } from "../iss/iss-tracker";
 import { DsoField } from "../dso/dso-field";
@@ -46,6 +47,8 @@ export type ViewerState = {
   constellations: boolean;
   /** Whether the equatorial / ecliptic / galactic coordinate grid is visible. */
   coordGrid: boolean;
+  /** Whether bright-star name labels are visible. */
+  starLabels: boolean;
 };
 
 type Listener = (s: ViewerState) => void;
@@ -66,6 +69,7 @@ export class ViewerScene {
   private overlaySphere: HipsSphere | null = null;
   private overlayMix = 0;
   private stars: StarField;
+  private starLabels: StarLabels;
   private solar: SolarSystem;
   private iss: IssTracker;
   private dsos: DsoField;
@@ -108,6 +112,14 @@ export class ViewerScene {
 
     this.stars = new StarField();
     this.scene.add(this.stars.group);
+    this.starLabels = new StarLabels();
+    this.scene.add(this.starLabels.group);
+    void this.starLabels
+      .load("/data/hyg-named.json")
+      .then(() => {
+        this.dirty = true;
+      })
+      .catch((err) => console.warn("[star-labels] load failed", err));
     void this.stars
       .load("/data/hyg-bright.bin")
       .then(() => {
@@ -198,6 +210,7 @@ export class ViewerScene {
       overlayMix: 0,
       constellations: false,
       coordGrid: false,
+      starLabels: false,
     };
 
     this.tick();
@@ -261,6 +274,7 @@ export class ViewerScene {
       overlayMix: this.overlayMix,
       constellations: this.constellations?.group.visible ?? false,
       coordGrid: this.coordGrid?.group.visible ?? false,
+      starLabels: this.starLabels?.group.visible ?? false,
     };
     this.emit();
   }
@@ -337,6 +351,12 @@ export class ViewerScene {
 
   setCoordGrid(visible: boolean): void {
     this.coordGrid.setVisible(visible);
+    this.dirty = true;
+    this.publishState();
+  }
+
+  setStarLabels(visible: boolean): void {
+    this.starLabels.setVisible(visible);
     this.dirty = true;
     this.publishState();
   }
@@ -470,6 +490,7 @@ export class ViewerScene {
       this.overlaySphere = null;
     }
     this.stars.dispose();
+    this.starLabels.dispose();
     this.dsos.dispose();
     this.constellations.dispose();
     this.coordGrid.dispose();

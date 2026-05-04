@@ -18,6 +18,8 @@ const LAYERS = [
     accent: "purple",
   },
   { id: "nvss" as const, label: "Radio", sub: "NVSS 1.4 GHz", accent: "teal" },
+  { id: "planck" as const, label: "CMB", sub: "Planck 143 GHz", accent: "indigo" },
+  { id: "fermi" as const, label: "γ-ray", sub: "Fermi LAT 1-300 GeV", accent: "lime" },
 ];
 
 const ACCENT: Record<string, { active: string; idle: string }> = {
@@ -45,6 +47,14 @@ const ACCENT: Record<string, { active: string; idle: string }> = {
     active: "border-teal-400/40 bg-teal-400/15 text-teal-300",
     idle: "border-white/10 bg-white/5 text-white/60 hover:bg-white/10",
   },
+  indigo: {
+    active: "border-indigo-400/40 bg-indigo-400/15 text-indigo-300",
+    idle: "border-white/10 bg-white/5 text-white/60 hover:bg-white/10",
+  },
+  lime: {
+    active: "border-lime-400/40 bg-lime-400/15 text-lime-300",
+    idle: "border-white/10 bg-white/5 text-white/60 hover:bg-white/10",
+  },
 };
 
 type Props = {
@@ -56,6 +66,8 @@ type Props = {
   onToggleConstellations: () => void;
   coordGridVisible: boolean;
   onToggleCoordGrid: () => void;
+  starLabelsVisible: boolean;
+  onToggleStarLabels: () => void;
 };
 
 export function WavelengthBar({
@@ -67,6 +79,8 @@ export function WavelengthBar({
   onToggleConstellations,
   coordGridVisible,
   onToggleCoordGrid,
+  starLabelsVisible,
+  onToggleStarLabels,
 }: Props) {
   return (
     <div className="pointer-events-auto flex flex-col items-center gap-2 rounded-xl border border-white/10 bg-space-950/80 px-3 py-2 backdrop-blur md:flex-row">
@@ -152,6 +166,18 @@ export function WavelengthBar({
           title="Toggle equatorial / ecliptic / galactic grid (g)"
         >
           ⌖ grid
+        </button>
+        <button
+          type="button"
+          onClick={onToggleStarLabels}
+          className={`rounded-md border px-2.5 py-1 font-mono text-xs uppercase tracking-wider transition ${
+            starLabelsVisible
+              ? "border-amber-400/40 bg-amber-400/15 text-amber-200"
+              : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10"
+          }`}
+          title="Toggle bright-star name labels (n)"
+        >
+          ★ names
         </button>
       </div>
     </div>

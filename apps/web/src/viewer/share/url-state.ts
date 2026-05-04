@@ -21,6 +21,10 @@ export type ShareableState = {
   overlayMix: number;
   /** Constellation lines toggle. */
   constellations: boolean;
+  /** Coordinate-grid toggle. */
+  coordGrid: boolean;
+  /** Bright-star name labels toggle. */
+  starLabels: boolean;
 };
 
 /**
@@ -37,6 +41,8 @@ export function serializeState(state: ShareableState): URLSearchParams {
     p.set("mix", state.overlayMix.toFixed(2));
   }
   if (state.constellations) p.set("c", "1");
+  if (state.coordGrid) p.set("g", "1");
+  if (state.starLabels) p.set("n", "1");
   return p;
 }
 
@@ -70,6 +76,10 @@ export function parseHash(): Partial<ShareableState> {
   if (mix !== null) out.overlayMix = Math.max(0, Math.min(1, mix));
   const c = params.get("c");
   if (c === "1") out.constellations = true;
+  const g = params.get("g");
+  if (g === "1") out.coordGrid = true;
+  const n = params.get("n");
+  if (n === "1") out.starLabels = true;
 
   return out;
 }

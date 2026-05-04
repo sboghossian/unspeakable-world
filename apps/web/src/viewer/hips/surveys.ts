@@ -88,6 +88,24 @@ export const SURVEYS: Record<string, Survey> = {
     maxOrder: 5,
     attribution: "NVSS 1.4 GHz · NRAO",
   },
+  planck: {
+    id: "planck",
+    label: "Planck CMB",
+    wavelength: "microwave",
+    baseUrl: "https://alasky.cds.unistra.fr/Planck/HFI143",
+    format: "jpg",
+    maxOrder: 3,
+    attribution: "Planck HFI 143 GHz · ESA",
+  },
+  fermi: {
+    id: "fermi",
+    label: "Fermi LAT 1-300 GeV",
+    wavelength: "x-ray",
+    baseUrl: "https://alasky.cds.unistra.fr/Fermi/Color",
+    format: "jpg",
+    maxOrder: 6,
+    attribution: "Fermi LAT γ-ray · NASA",
+  },
 };
 
 /**
