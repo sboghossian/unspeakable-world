@@ -10,6 +10,7 @@ import { TonightSky } from "./ui/TonightSky";
 import { TourCard } from "./ui/TourCard";
 import { GRAND_TOUR } from "./tour/tour";
 import { FavoritesMenu } from "./ui/FavoritesMenu";
+import { ShortcutsOverlay } from "./ui/ShortcutsOverlay";
 import { SkyTonightPanel } from "./ui/SkyTonightPanel";
 import { SpaceWeatherPanel } from "./ui/SpaceWeatherPanel";
 import { TonightTargetsPanel } from "./ui/TonightTargetsPanel";
@@ -100,6 +101,7 @@ export function Viewer() {
     },
   );
   const [searchIndex, setSearchIndex] = useState<SearchIndex | null>(null);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [favorites, setFavorites] = useState<Favorite[]>(() => readFavorites());
 
   const reloadFavorites = useCallback(() => {
@@ -211,6 +213,68 @@ export function Viewer() {
       .then(() => setSearchIndex(idx))
       .catch((err) => console.warn("[search] index load failed", err));
   }, []);
+
+  // Global keyboard shortcuts. We deliberately keep this list small and
+  // skip handling when the user is typing in an input — pressing "t" in
+  // the search box should not start the tour.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName ?? "";
+      if (tag === "INPUT" || tag === "TEXTAREA" || target?.isContentEditable)
+        return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return; // ⌘K is owned by SearchBar
+
+      if (e.key === "?") {
+        e.preventDefault();
+        setShortcutsOpen((v) => !v);
+        return;
+      }
+      if (e.key === "Escape") {
+        if (shortcutsOpen) setShortcutsOpen(false);
+        else if (inspect) setInspect(null);
+        else if (tourIndex !== null) exitTour();
+        return;
+      }
+      if (e.key === " ") {
+        e.preventDefault();
+        sceneRef.current?.setPlaying(!state.playing);
+        return;
+      }
+      if (e.key === "t") {
+        if (tourIndex === null) startTour();
+        else exitTour();
+        return;
+      }
+      if (e.key === "c") {
+        sceneRef.current?.setConstellations(!state.constellations);
+        return;
+      }
+      if (e.key === ".") {
+        sceneRef.current?.setTime(new Date());
+        return;
+      }
+      if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+        const dir = e.key === "ArrowRight" ? 1 : -1;
+        sceneRef.current?.setTime(
+          new Date(state.time.getTime() + dir * state.timeRate * 1000),
+        );
+        return;
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [
+    shortcutsOpen,
+    inspect,
+    tourIndex,
+    startTour,
+    exitTour,
+    state.playing,
+    state.constellations,
+    state.time,
+    state.timeRate,
+  ]);
 
   useEffect(() => {
     if (!detectWebGL2()) {
@@ -411,6 +475,14 @@ export function Viewer() {
             onSelect={(dir) => sceneRef.current?.flyTo(dir)}
             onChange={reloadFavorites}
           />
+          <button
+            type="button"
+            onClick={() => setShortcutsOpen(true)}
+            title="Keyboard shortcuts (press ?)"
+            className="pointer-events-auto rounded-lg border border-white/10 bg-space-950/70 px-2.5 py-1.5 font-mono text-xs text-white/60 backdrop-blur transition hover:bg-white/10 hover:text-white"
+          >
+            ?
+          </button>
           <SearchBar
             index={searchIndex}
             onSelect={(entry: SearchEntry) =>
@@ -574,6 +646,10 @@ export function Viewer() {
             "A renderer error prevented the sky from loading. Try refreshing or reporting this on GitHub."
           }
         />
+      )}
+
+      {shortcutsOpen && (
+        <ShortcutsOverlay onClose={() => setShortcutsOpen(false)} />
       )}
     </div>
   );

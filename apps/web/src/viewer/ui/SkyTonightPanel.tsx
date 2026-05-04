@@ -1,8 +1,5 @@
 import { useMemo, useState } from "react";
-import {
-  tonightSummary,
-  type TonightSummary,
-} from "../observer/tonight";
+import { tonightSummary, type TonightSummary } from "../observer/tonight";
 
 /**
  * 🌙 Sky-tonight button — the "is tonight worth setting up the scope?"
@@ -41,10 +38,7 @@ export function SkyTonightPanel({ observer }: Props) {
         }`}
       >
         {summary ? (
-          <MoonGlyph
-            phaseAngle={summary.moon.phaseAngle}
-            size={14}
-          />
+          <MoonGlyph phaseAngle={summary.moon.phaseAngle} size={14} />
         ) : (
           <span>🌙</span>
         )}
@@ -149,13 +143,7 @@ function fmtTime(d: Date | null): string {
  * quarter (right half lit), 180=full (no shadow), 270=last quarter
  * (left half lit). Subtle rim highlight for legibility on dark UI.
  */
-function MoonGlyph({
-  phaseAngle,
-  size,
-}: {
-  phaseAngle: number;
-  size: number;
-}) {
+function MoonGlyph({ phaseAngle, size }: { phaseAngle: number; size: number }) {
   const r = size / 2 - 0.5;
   const cx = size / 2;
   const cy = size / 2;
@@ -250,7 +238,7 @@ function buildLitPath(
   // (lit-on-left)  ⊕ (k>0.5 gibbous)   → terminator bulges right → bot→top through right → sweep=1
   // (lit-on-right) ⊕ (k<0.5 crescent)  → terminator bulges right → sweep=1
   // (lit-on-right) ⊕ (k>0.5 gibbous)   → terminator bulges left  → sweep=0
-  const innerSweep = lightedFromLeft === (k < 0.5) ? 0 : 1;
+  const innerSweep = lightedFromLeft === k < 0.5 ? 0 : 1;
 
   return `M ${top} A ${r},${r} 0 0 ${outerSweep} ${bot} A ${ellipseRx},${r} 0 0 ${innerSweep} ${top} Z`;
 }
