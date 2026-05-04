@@ -391,6 +391,9 @@ export function Viewer() {
               <span className="hidden md:inline">▶ tour</span>
             </button>
           )}
+          {/* NEO panel is wired but JPL CAD blocks browser CORS.
+              Re-enable once apps/api ships a CF Worker proxy. */}
+          {/* <NeoPanel /> */}
           <FavoritesMenu
             favorites={favorites}
             onSelect={(dir) => sceneRef.current?.flyTo(dir)}

@@ -66,7 +66,8 @@ export class SolarSystem {
 
   private build(): void {
     for (const spec of BODIES) {
-      const tex = makeGlowTexture(spec.color);
+      const tex =
+        spec.label === "Sun" ? makeSunTexture() : makeGlowTexture(spec.color);
       const mat = new SpriteMaterial({
         map: tex,
         color: 0xffffff,
@@ -197,6 +198,69 @@ function makeGlowTexture(color: number): CanvasTexture {
   grad.addColorStop(0.5, `rgba(${r},${g},${b},0.18)`);
   grad.addColorStop(1.0, `rgba(${r},${g},${b},0.0)`);
   ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, size, size);
+
+  const tex = new CanvasTexture(canvas);
+  tex.minFilter = LinearFilter;
+  tex.magFilter = LinearFilter;
+  return tex;
+}
+
+/**
+ * Multi-layer Sun texture: tight bright disk, hot chromosphere, soft outer
+ * corona, and faint radial spikes. Heavier than the planet glow but worth it
+ * for the hero body in the scene.
+ */
+function makeSunTexture(): CanvasTexture {
+  const size = 256;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("2d context unavailable");
+  const cx = size / 2;
+  const cy = size / 2;
+
+  // Outer corona — soft amber falloff to canvas edge.
+  const corona = ctx.createRadialGradient(cx, cy, 0, cx, cy, size / 2);
+  corona.addColorStop(0.0, "rgba(255, 220, 140, 0.55)");
+  corona.addColorStop(0.25, "rgba(255, 180, 90, 0.32)");
+  corona.addColorStop(0.55, "rgba(255, 130, 50, 0.12)");
+  corona.addColorStop(1.0, "rgba(255, 100, 30, 0.0)");
+  ctx.fillStyle = corona;
+  ctx.fillRect(0, 0, size, size);
+
+  // Faint radial spikes for a touch of "star" character.
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.globalCompositeOperation = "lighter";
+  const spikes = 6;
+  for (let i = 0; i < spikes; i++) {
+    ctx.rotate(Math.PI / spikes);
+    const spike = ctx.createLinearGradient(-size / 2, 0, size / 2, 0);
+    spike.addColorStop(0.0, "rgba(255, 180, 90, 0)");
+    spike.addColorStop(0.5, "rgba(255, 220, 150, 0.25)");
+    spike.addColorStop(1.0, "rgba(255, 180, 90, 0)");
+    ctx.fillStyle = spike;
+    ctx.fillRect(-size / 2, -1.5, size, 3);
+  }
+  ctx.restore();
+
+  // Inner chromosphere — hot orange halo.
+  const chromo = ctx.createRadialGradient(cx, cy, 0, cx, cy, size * 0.28);
+  chromo.addColorStop(0.0, "rgba(255, 240, 200, 1.0)");
+  chromo.addColorStop(0.35, "rgba(255, 200, 110, 0.85)");
+  chromo.addColorStop(0.75, "rgba(255, 150, 70, 0.35)");
+  chromo.addColorStop(1.0, "rgba(255, 130, 50, 0.0)");
+  ctx.fillStyle = chromo;
+  ctx.fillRect(0, 0, size, size);
+
+  // Photosphere — tight bright white-yellow core.
+  const disk = ctx.createRadialGradient(cx, cy, 0, cx, cy, size * 0.12);
+  disk.addColorStop(0.0, "rgba(255, 255, 245, 1.0)");
+  disk.addColorStop(0.6, "rgba(255, 240, 180, 0.95)");
+  disk.addColorStop(1.0, "rgba(255, 220, 140, 0.0)");
+  ctx.fillStyle = disk;
   ctx.fillRect(0, 0, size, size);
 
   const tex = new CanvasTexture(canvas);
