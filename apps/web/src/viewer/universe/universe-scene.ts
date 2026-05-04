@@ -34,7 +34,7 @@ import { PulsarField } from "../cosmic/pulsar-field";
 import { ExoplanetField } from "../exoplanets/exoplanet-field";
 import { CosmicLandmarks } from "../cosmic/cosmic-landmarks";
 import { StarLabels } from "../stars/star-labels";
-import { BODY_INFO, bodyFactsToPayload } from "../data/body-info";
+import { BODY_INFO, bodyFactsToPayload, missionFactsToPayload } from "../data/body-info";
 import type { InfoPayload } from "../ui/InfoPanel";
 import {
   AsteroidField,
@@ -42,6 +42,11 @@ import {
   InterstellarMarkers,
   type InterstellarRecord,
 } from "./asteroids";
+import {
+  MissionField,
+  loadAllMissions,
+  type MissionManifestEntry,
+} from "./missions";
 import { getSettings, onSettingsChange } from "../../lib/settings";
 
 /**
@@ -130,12 +135,14 @@ export type UniverseState = {
   asteroidsOn: boolean;
   cometsOn: boolean;
   interstellarOn: boolean;
+  /** Per-slug mission visibility. */
+  missions: Record<string, boolean>;
 };
 
 type Listener = (s: UniverseState) => void;
 
 export type UniverseHit = {
-  kind: "Sun" | "Planet" | "Landmark" | "Star";
+  kind: "Sun" | "Planet" | "Landmark" | "Star" | "Mission";
   name: string;
   detail: string;
   facts?: Array<{ label: string; value: string }>;
@@ -182,6 +189,8 @@ export class UniverseScene {
   private asteroids: AsteroidField | null = null;
   private comets: CometField | null = null;
   private interstellar: InterstellarMarkers | null = null;
+  private missions: MissionField | null = null;
+  private missionManifest: MissionManifestEntry[] = [];
 
   // Solar contents
   private sunMesh: Mesh;
@@ -485,6 +494,23 @@ export class UniverseScene {
     this.publishState();
   }
 
+  setMission(slug: string, on: boolean): void {
+    this.missions?.setVisible(slug, on);
+    if (this.missions) this.missions.visible = true;
+    this.publishState();
+  }
+
+  setAllMissions(on: boolean): void {
+    this.missions?.setAllVisible(on);
+    if (this.missions) this.missions.visible = true;
+    this.publishState();
+  }
+
+  /** Snapshot of the loaded mission manifest (post-`loadSmallBodies`). */
+  getMissionManifest(): MissionManifestEntry[] {
+    return this.missionManifest;
+  }
+
   private async loadSmallBodies(): Promise<void> {
     // Asteroids
     try {
@@ -518,6 +544,16 @@ export class UniverseScene {
       }
     } catch (err) {
       console.warn("[interstellar] load", err);
+    }
+    // Missions
+    try {
+      const { manifest, files } = await loadAllMissions();
+      this.missionManifest = manifest;
+      this.missions = new MissionField(files);
+      // Group itself stays visible; per-mission visibility is off by default.
+      this.solarGroup.add(this.missions);
+    } catch (err) {
+      console.warn("[missions] load", err);
     }
     this.publishState();
   }
@@ -833,6 +869,36 @@ export class UniverseScene {
     }
     candidates.sort((a, b) => a.distance - b.distance);
     const top = candidates[0];
+    // Missions: ask the field directly; if any mission marker is hit and
+    // closer than the planet/sun candidate, return the mission instead.
+    if (this.missions) {
+      const m = this.missions.getNearest(ndc, this.raycaster, this.camera);
+      if (m) {
+        const manifest = this.missionManifest.find((x) => x.slug === m.slug);
+        if (manifest) {
+          // Convert scene-frame (x, y, z) back to ecliptic AU for display:
+          //   scene = (x, z, -y)  →  ecliptic = (x, -z, y)
+          const ecliptic = { x: m.pos.x, y: -m.pos.z, z: m.pos.y };
+          const payload = missionFactsToPayload(
+            {
+              slug: manifest.slug,
+              name: manifest.name,
+              launch: manifest.launch,
+              agency: manifest.agency,
+              summary: manifest.summary,
+            },
+            m.jd,
+            ecliptic,
+          );
+          return {
+            kind: "Mission",
+            name: m.name,
+            detail: manifest.summary,
+            payload,
+          };
+        }
+      }
+    }
     if (!top) return null;
     const facts = BODY_INFO[top.name];
     const payload: InfoPayload = facts
@@ -976,6 +1042,7 @@ export class UniverseScene {
       asteroidsOn: this.asteroids?.visible ?? false,
       cometsOn: this.comets?.visible ?? false,
       interstellarOn: this.interstellar?.visible ?? false,
+      missions: this.missions?.visibility() ?? {},
     };
   }
 
@@ -1029,6 +1096,13 @@ export class UniverseScene {
     this.asteroids?.setSimTime(this.simTime);
     this.comets?.setSimTime(this.simTime);
     this.interstellar?.setSimTime(this.simTime);
+    if (this.missions) {
+      // Camera lives at world origin; solarGroup is offset so the Sun is at
+      // its position vector. Camera position in solarGroup-local AU is
+      // therefore -solarGroup.position.
+      const camLocal = new Vector3().copy(this.solarGroup.position).negate();
+      this.missions.setSimTimeAndTrack(this.simTime, camLocal);
+    }
 
     // WASD movement (in local axes derived from current yaw/pitch).
     if (this.heldKeys.size > 0) {

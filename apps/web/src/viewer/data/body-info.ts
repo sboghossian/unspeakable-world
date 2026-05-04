@@ -200,6 +200,77 @@ export function bodyFactsToPayload(
   return { kind, name, sections };
 }
 
+/* ───────────────────────── MISSION SUPPORT ───────────────────────── */
+
+const MISSION_WIKI: Record<string, string> = {
+  voyager1: "https://en.wikipedia.org/wiki/Voyager_1",
+  voyager2: "https://en.wikipedia.org/wiki/Voyager_2",
+  jwst: "https://en.wikipedia.org/wiki/James_Webb_Space_Telescope",
+  psp: "https://en.wikipedia.org/wiki/Parker_Solar_Probe",
+  newhorizons: "https://en.wikipedia.org/wiki/New_Horizons",
+  juno: "https://en.wikipedia.org/wiki/Juno_(spacecraft)",
+  lucy: "https://en.wikipedia.org/wiki/Lucy_(spacecraft)",
+  bepicolombo: "https://en.wikipedia.org/wiki/BepiColombo",
+};
+
+export type MissionFacts = {
+  slug: string;
+  name: string;
+  launch: string;
+  agency: string;
+  summary: string;
+};
+
+/**
+ * Convert a mission manifest entry + current state-vector sample into the
+ * unified InfoPanel payload. `currentPos` is in heliocentric AU (ecliptic).
+ */
+export function missionFactsToPayload(
+  manifest: MissionFacts,
+  currentJd: number,
+  currentPos: { x: number; y: number; z: number },
+): InfoPayload {
+  const sections: InfoSection[] = [];
+  const launchYear = manifest.launch.slice(0, 4);
+  sections.push({
+    kind: "identification",
+    rows: [
+      ["Name", manifest.name],
+      ["Agency", manifest.agency],
+      ["Launch", manifest.launch],
+    ],
+  });
+  if (manifest.summary)
+    sections.push({ kind: "overview", text: manifest.summary });
+  const dist = Math.sqrt(
+    currentPos.x * currentPos.x +
+      currentPos.y * currentPos.y +
+      currentPos.z * currentPos.z,
+  );
+  sections.push({
+    kind: "location",
+    rows: [
+      ["Heliocentric X", `${currentPos.x.toFixed(3)} AU`],
+      ["Heliocentric Y", `${currentPos.y.toFixed(3)} AU`],
+      ["Heliocentric Z", `${currentPos.z.toFixed(3)} AU`],
+      ["Distance from Sun", `${dist.toFixed(3)} AU`],
+      ["Sample JD", currentJd.toFixed(2)],
+    ],
+  });
+  const wiki = MISSION_WIKI[manifest.slug];
+  if (wiki)
+    sections.push({
+      kind: "links",
+      items: [{ label: "Wikipedia", href: wiki }],
+    });
+  return {
+    kind: "Mission",
+    name: manifest.name,
+    subtitle: `${manifest.agency} · launched ${launchYear}`,
+    sections,
+  };
+}
+
 /** Convenience: payload for a named body (returns null if unknown). */
 export function payloadForBody(
   name: string,

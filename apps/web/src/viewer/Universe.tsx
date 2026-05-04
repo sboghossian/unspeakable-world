@@ -55,6 +55,7 @@ const DEFAULT_STATE: UniverseState = {
   asteroidsOn: false,
   cometsOn: false,
   interstellarOn: false,
+  missions: {},
 };
 
 export function Universe({ onExit }: Props) {
