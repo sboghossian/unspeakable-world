@@ -1,0 +1,66 @@
+[
+  {
+    "slug": "voyager1",
+    "name": "Voyager 1",
+    "launch": "1977-09-05",
+    "agency": "NASA",
+    "summary": "First spacecraft to enter interstellar space (2012). Carries the Golden Record.",
+    "color": "#ffd28a"
+  },
+  {
+    "slug": "voyager2",
+    "name": "Voyager 2",
+    "launch": "1977-08-20",
+    "agency": "NASA",
+    "summary": "Only spacecraft to have flown by all four giant planets. Crossed the heliopause in 2018.",
+    "color": "#ffb86b"
+  },
+  {
+    "slug": "jwst",
+    "name": "JWST",
+    "launch": "2021-12-25",
+    "agency": "NASA / ESA / CSA",
+    "summary": "James Webb Space Telescope. Halo orbit around Sun-Earth L2; largest infrared observatory ever flown.",
+    "color": "#ffe066"
+  },
+  {
+    "slug": "psp",
+    "name": "Parker Solar Probe",
+    "launch": "2018-08-12",
+    "agency": "NASA",
+    "summary": "First spacecraft to 'touch' the Sun — repeated perihelia inside the corona using Venus gravity assists.",
+    "color": "#ff7a4f"
+  },
+  {
+    "slug": "newhorizons",
+    "name": "New Horizons",
+    "launch": "2006-01-19",
+    "agency": "NASA",
+    "summary": "First flyby of Pluto (2015) and the Kuiper Belt object Arrokoth (2019). Heading out of the solar system.",
+    "color": "#a3e0ff"
+  },
+  {
+    "slug": "juno",
+    "name": "Juno",
+    "launch": "2011-08-05",
+    "agency": "NASA",
+    "summary": "Polar orbiter at Jupiter mapping its gravity, magnetic field, and aurorae.",
+    "color": "#ffc4a8"
+  },
+  {
+    "slug": "lucy",
+    "name": "Lucy",
+    "launch": "2021-10-16",
+    "agency": "NASA",
+    "summary": "First mission to the Jupiter Trojan asteroids — eight targets across a 12-year tour.",
+    "color": "#c8a8ff"
+  },
+  {
+    "slug": "bepicolombo",
+    "name": "BepiColombo",
+    "launch": "2018-10-20",
+    "agency": "ESA / JAXA",
+    "summary": "Joint ESA/JAXA Mercury mission — two orbiters arriving via flybys of Earth, Venus, and Mercury.",
+    "color": "#a8ffd8"
+  }
+]

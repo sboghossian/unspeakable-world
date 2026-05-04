@@ -13,6 +13,14 @@ type Scene = {
   setAsteroids(on: boolean): void;
   setComets(on: boolean): void;
   setInterstellar(on: boolean): void;
+  setMission(slug: string, on: boolean): void;
+  setAllMissions(on: boolean): void;
+  getMissionManifest(): Array<{
+    slug: string;
+    name: string;
+    launch: string;
+    color: string;
+  }>;
   setOverlay(id: string | null): void;
   setOverlayMix(mix: number): void;
 };
@@ -53,9 +61,10 @@ export function LeftRail({ state, scene, onOpenGuide }: Props) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [open, setOpen] = useState<{
     objects: boolean;
+    missions: boolean;
     waves: boolean;
     travel: boolean;
-  }>({ objects: true, waves: false, travel: true });
+  }>({ objects: true, missions: false, waves: false, travel: true });
 
   if (!scene) return null;
 
@@ -219,6 +228,17 @@ export function LeftRail({ state, scene, onOpenGuide }: Props) {
           )}
         </Section>
 
+        <MissionsSection
+          open={open.missions}
+          onToggle={() =>
+            setOpen((o) => ({ ...o, missions: !o.missions }))
+          }
+          manifest={scene.getMissionManifest()}
+          missions={state.missions}
+          onToggleMission={(slug, on) => scene.setMission(slug, on)}
+          onToggleAll={(on) => scene.setAllMissions(on)}
+        />
+
         <Section
           label="Wavelengths"
           open={open.waves}
@@ -320,6 +340,89 @@ export function LeftRail({ state, scene, onOpenGuide }: Props) {
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
       />
+    </div>
+  );
+}
+
+function MissionsSection({
+  open,
+  onToggle,
+  manifest,
+  missions,
+  onToggleMission,
+  onToggleAll,
+}: {
+  open: boolean;
+  onToggle: () => void;
+  manifest: Array<{ slug: string; name: string; launch: string; color: string }>;
+  missions: Record<string, boolean>;
+  onToggleMission: (slug: string, on: boolean) => void;
+  onToggleAll: (on: boolean) => void;
+}) {
+  const items = manifest.slice(0, 8);
+  const allOn = items.length > 0 && items.every((m) => missions[m.slug]);
+  return (
+    <div className="mb-1">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-center justify-between px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.25em] text-white/45 transition hover:text-white/80"
+      >
+        <span>Missions</span>
+        <span className={`transition ${open ? "rotate-90" : ""}`}>›</span>
+      </button>
+      {open && (
+        <div className="flex flex-col gap-0.5 pb-2">
+          <button
+            type="button"
+            onClick={() => onToggleAll(!allOn)}
+            className={`flex w-full items-center justify-between rounded-md px-2.5 py-1.5 font-mono text-[11px] uppercase tracking-widest transition ${
+              allOn
+                ? "bg-orange-400/15 text-orange-200 hover:bg-orange-400/20"
+                : "text-white/65 hover:bg-white/5 hover:text-white"
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <span
+                className={`h-1.5 w-1.5 rounded-full ${allOn ? "bg-orange-300" : "bg-white/25"}`}
+              />
+              All missions
+            </span>
+          </button>
+          {items.map((m) => {
+            const on = !!missions[m.slug];
+            const year = m.launch.slice(0, 4);
+            return (
+              <button
+                key={m.slug}
+                type="button"
+                onClick={() => onToggleMission(m.slug, !on)}
+                className={`flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-left font-mono text-[11px] uppercase tracking-widest transition ${
+                  on
+                    ? "bg-emerald-400/15 text-emerald-200 hover:bg-emerald-400/20"
+                    : "text-white/65 hover:bg-white/5 hover:text-white"
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <span
+                    className="h-2 w-2 rounded-full"
+                    style={{ backgroundColor: m.color }}
+                  />
+                  {m.name}
+                </span>
+                <span className="font-mono text-[9px] tracking-wider text-white/30">
+                  ({year})
+                </span>
+              </button>
+            );
+          })}
+          {items.length === 0 && (
+            <div className="px-2.5 py-1.5 font-mono text-[10px] text-white/35">
+              loading…
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
