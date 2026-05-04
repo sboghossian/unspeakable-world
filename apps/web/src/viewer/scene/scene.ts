@@ -4,6 +4,7 @@ import { HipsSphere } from "./hips-sphere";
 import { StarField } from "../stars/star-field";
 import { StarLabels } from "../stars/star-labels";
 import { SolarSystem } from "../solar/solar-system";
+import { Spacecraft } from "../spacecraft/spacecraft";
 import { IssTracker, type IssState } from "../iss/iss-tracker";
 import { DsoField } from "../dso/dso-field";
 import { ConstellationLines } from "../constellations/constellation-lines";
@@ -50,6 +51,8 @@ export type ViewerState = {
   coordGrid: boolean;
   /** Whether bright-star name labels are visible. */
   starLabels: boolean;
+  /** Whether iconic spacecraft markers (Voyagers, Pioneers, NH, JWST) are visible. */
+  spacecraft: boolean;
 };
 
 type Listener = (s: ViewerState) => void;
@@ -72,6 +75,7 @@ export class ViewerScene {
   private stars: StarField;
   private starLabels: StarLabels;
   private solar: SolarSystem;
+  private spacecraft: Spacecraft;
   private iss: IssTracker;
   private dsos: DsoField;
   private constellations: ConstellationLines;
@@ -138,6 +142,10 @@ export class ViewerScene {
     this.solar = new SolarSystem();
     this.scene.add(this.solar.group);
     this.solar.update(this.simTime);
+
+    this.spacecraft = new Spacecraft();
+    this.scene.add(this.spacecraft.group);
+    this.spacecraft.update(this.simTime);
 
     this.iss = new IssTracker();
     this.scene.add(this.iss.group);
@@ -220,6 +228,7 @@ export class ViewerScene {
       constellations: false,
       coordGrid: false,
       starLabels: false,
+      spacecraft: false,
     };
 
     this.tick();
@@ -284,6 +293,7 @@ export class ViewerScene {
       constellations: this.constellations?.group.visible ?? false,
       coordGrid: this.coordGrid?.group.visible ?? false,
       starLabels: this.starLabels?.group.visible ?? false,
+      spacecraft: this.spacecraft?.visible() ?? false,
     };
     this.emit();
   }
@@ -291,6 +301,7 @@ export class ViewerScene {
   setTime(time: Date): void {
     this.simTime = new Date(time.getTime());
     this.solar.update(this.simTime);
+    this.spacecraft.update(this.simTime);
     this.dirty = true;
     this.publishState();
   }
@@ -371,6 +382,21 @@ export class ViewerScene {
     this.publishState();
   }
 
+  setSpacecraft(visible: boolean): void {
+    this.spacecraft.setVisible(visible);
+    this.dirty = true;
+    this.publishState();
+  }
+
+  /** Iterate the spacecraft layer for tap-to-fly + click resolution. */
+  spacecraftDirection(name: string): { x: number; y: number; z: number } | null {
+    return this.spacecraft.directionOf(name);
+  }
+
+  spacecraftList(): ReturnType<Spacecraft["list"]> {
+    return this.spacecraft.list();
+  }
+
   private applyOverlayMix(): void {
     if (!this.overlaySphere) return;
     this.overlaySphere.setOpacity(this.overlayMix);
@@ -420,6 +446,7 @@ export class ViewerScene {
       const simElapsedMs = elapsedMs * this.timeRate;
       this.simTime = new Date(this.simTime.getTime() + simElapsedMs);
       this.solar.update(this.simTime);
+      this.spacecraft.update(this.simTime);
       this.dirty = true;
       this.publishState();
     }
@@ -516,6 +543,7 @@ export class ViewerScene {
     this.coordGrid.dispose();
     this.landmarks.dispose();
     this.solar.dispose();
+    this.spacecraft.dispose();
     this.iss.dispose();
     this.renderer.dispose();
     this.listeners.clear();

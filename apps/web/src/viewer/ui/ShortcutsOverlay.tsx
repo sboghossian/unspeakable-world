@@ -41,6 +41,7 @@ const SHORTCUTS: Array<{ section: string; items: Shortcut[] }> = [
       { keys: ["c", ""], label: "Toggle constellation lines" },
       { keys: ["g", ""], label: "Toggle coordinate grid" },
       { keys: ["n", ""], label: "Toggle bright-star names" },
+      { keys: ["s", ""], label: "Toggle spacecraft markers" },
       { keys: ["i", ""], label: "About / credits" },
       { keys: ["e", ""], label: "Astronomical events" },
       { keys: ["?"], label: "Show this overlay" },

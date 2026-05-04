@@ -71,6 +71,7 @@ const DEFAULT_STATE: ViewerState = {
   constellations: false,
   coordGrid: false,
   starLabels: false,
+  spacecraft: false,
 };
 
 type Inspect = {
@@ -346,6 +347,10 @@ export function Viewer() {
         sceneRef.current?.setStarLabels(!state.starLabels);
         return;
       }
+      if (e.key === "s") {
+        sceneRef.current?.setSpacecraft(!state.spacecraft);
+        return;
+      }
       if (e.key === ".") {
         sceneRef.current?.setTime(new Date());
         return;
@@ -371,6 +376,7 @@ export function Viewer() {
     state.constellations,
     state.coordGrid,
     state.starLabels,
+    state.spacecraft,
     state.time,
     state.timeRate,
   ]);
@@ -728,6 +734,10 @@ export function Viewer() {
             starLabelsVisible={state.starLabels}
             onToggleStarLabels={() =>
               sceneRef.current?.setStarLabels(!state.starLabels)
+            }
+            spacecraftVisible={state.spacecraft}
+            onToggleSpacecraft={() =>
+              sceneRef.current?.setSpacecraft(!state.spacecraft)
             }
           />
           <TimeStrip
