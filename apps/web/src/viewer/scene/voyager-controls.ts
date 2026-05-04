@@ -13,7 +13,7 @@ import { MathUtils, PerspectiveCamera, Vector2, Vector3 } from "three";
  * Day 3+ TODO: tilt-to-look on mobile (DeviceOrientation), velocity tap-fly.
  */
 
-const MIN_FOV = 6;
+const MIN_FOV = 1;
 const MAX_FOV = 100;
 const ROT_SPEED = 0.0035;
 const ZOOM_SPEED = 0.06;

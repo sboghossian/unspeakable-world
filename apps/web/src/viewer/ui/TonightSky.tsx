@@ -26,6 +26,10 @@ type Status = "idle" | "asking" | "denied" | "unsupported" | "ok";
 export function TonightSky({ onZenith, location, onLocationFix }: Props) {
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<Status>(location ? "ok" : "idle");
+  const [manual, setManual] = useState(false);
+  const [manualLat, setManualLat] = useState("");
+  const [manualLon, setManualLon] = useState("");
+  const [manualError, setManualError] = useState<string | null>(null);
 
   const requestLocation = () => {
     if (!("geolocation" in navigator)) {
@@ -115,6 +119,81 @@ export function TonightSky({ onZenith, location, onLocationFix }: Props) {
               Geolocation isn't available in this browser.
             </p>
           )}
+
+          <div className="mt-3 border-t border-white/5 pt-3">
+            {!manual ? (
+              <button
+                type="button"
+                onClick={() => setManual(true)}
+                className="font-mono text-[10px] uppercase tracking-widest text-white/40 hover:text-violet-300"
+              >
+                or enter coordinates manually →
+              </button>
+            ) : (
+              <div className="space-y-2">
+                <div className="font-mono text-[10px] uppercase tracking-widest text-white/40">
+                  manual coordinates
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={manualLat}
+                    onChange={(e) => setManualLat(e.target.value)}
+                    placeholder="lat (e.g. 48.8566)"
+                    className="w-full rounded-md border border-white/10 bg-white/5 px-2 py-1 font-mono text-xs text-white placeholder:text-white/30 focus:border-violet-400/50 focus:outline-none"
+                  />
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={manualLon}
+                    onChange={(e) => setManualLon(e.target.value)}
+                    placeholder="lon (e.g. 2.3522)"
+                    className="w-full rounded-md border border-white/10 bg-white/5 px-2 py-1 font-mono text-xs text-white placeholder:text-white/30 focus:border-violet-400/50 focus:outline-none"
+                  />
+                </div>
+                {manualError && (
+                  <div className="text-[10px] text-amber-300/80">{manualError}</div>
+                )}
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const lat = parseFloat(manualLat);
+                      const lon = parseFloat(manualLon);
+                      if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
+                        setManualError("Latitude must be between -90 and 90.");
+                        return;
+                      }
+                      if (!Number.isFinite(lon) || lon < -180 || lon > 180) {
+                        setManualError("Longitude must be between -180 and 180.");
+                        return;
+                      }
+                      setManualError(null);
+                      onLocationFix(lat, lon);
+                      onZenith(lat, lon);
+                      setStatus("ok");
+                      setOpen(false);
+                    }}
+                    className="rounded-md bg-violet-500 px-2.5 py-1 text-xs font-semibold text-space-950 hover:bg-violet-400"
+                  >
+                    Set
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setManual(false)}
+                    className="rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-white/60 hover:bg-white/10"
+                  >
+                    Back
+                  </button>
+                </div>
+                <div className="text-[10px] text-white/30">
+                  Decimal degrees · north + east positive · stored only in this
+                  browser's localStorage.
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

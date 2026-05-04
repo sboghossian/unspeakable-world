@@ -2,6 +2,8 @@ import {
   Body,
   EquatorFromVector,
   GeoVector,
+  JupiterMoons,
+  Vector as AstroVectorClass,
   type FlexibleDateTime,
   type Vector as AstroVector,
 } from "astronomy-engine";
@@ -53,15 +55,63 @@ type PlacedBody = {
   labelSprite: Sprite | null;
 };
 
+const GALILEAN_MOONS = ["Io", "Europa", "Ganymede", "Callisto"] as const;
+type GalileanMoonName = (typeof GALILEAN_MOONS)[number];
+
+type PlacedMoon = {
+  name: GalileanMoonName;
+  sprite: Sprite;
+  labelSprite: Sprite;
+};
+
 export class SolarSystem {
   readonly group = new Group();
   private placed: PlacedBody[] = [];
+  private moons: PlacedMoon[] = [];
 
   constructor() {
     this.group.name = "SolarSystem";
     this.group.renderOrder = 1; // in front of HiPS + stars
     this.group.rotation.x = -Math.PI / 2; // Z-up astronomy → Y-up Three.js
     this.build();
+    this.buildMoons();
+  }
+
+  private buildMoons(): void {
+    for (const name of GALILEAN_MOONS) {
+      const tex = makeGlowTexture(0xfafaf2);
+      const mat = new SpriteMaterial({
+        map: tex,
+        color: 0xffffff,
+        transparent: true,
+        depthWrite: false,
+        depthTest: false,
+        blending: AdditiveBlending,
+      });
+      const sprite = new Sprite(mat);
+      // Moons are tiny — sized so they only resolve when zoomed in.
+      sprite.scale.set(0.012, 0.012, 1);
+      sprite.renderOrder = 1.5;
+      sprite.userData.body = name;
+      this.group.add(sprite);
+
+      const labelTex = makeLabelTexture(name);
+      const labelMat = new SpriteMaterial({
+        map: labelTex,
+        transparent: true,
+        depthWrite: false,
+        depthTest: false,
+        opacity: 0.85,
+      });
+      const labelSprite = new Sprite(labelMat);
+      const aspect = labelTex.image.width / labelTex.image.height;
+      const labelHeight = 0.012;
+      labelSprite.scale.set(labelHeight * aspect, labelHeight, 1);
+      labelSprite.renderOrder = 2;
+      this.group.add(labelSprite);
+
+      this.moons.push({ name, sprite, labelSprite });
+    }
   }
 
   private build(): void {
@@ -108,16 +158,46 @@ export class SolarSystem {
       if (p.labelSprite) {
         // Offset label slightly above the sprite (toward +z = north pole),
         // projected back onto the BODY_RADIUS sphere.
-        const offset = new Vector3(x, y, z).normalize();
         const upBias = new Vector3(0, 0, 0.025);
         const labelPos = new Vector3(x, y, z)
           .add(upBias)
           .normalize()
           .multiplyScalar(BODY_RADIUS);
         p.labelSprite.position.copy(labelPos);
-        // Suppress when too close to the sprite center (avoids self-overlap on Sun/Moon).
-        void offset;
       }
+    }
+    // Galilean moons — geocentric position = Jupiter geo + moon-rel-to-Jupiter.
+    try {
+      const jupGeo = GeoVector(Body.Jupiter, time, true);
+      const info = JupiterMoons(time);
+      const lookup = {
+        Io: info.io,
+        Europa: info.europa,
+        Ganymede: info.ganymede,
+        Callisto: info.callisto,
+      } as const;
+      for (const pm of this.moons) {
+        const rel = lookup[pm.name];
+        const t = (jupGeo as unknown as { t: unknown }).t;
+        const sum = new AstroVectorClass(
+          jupGeo.x + rel.x,
+          jupGeo.y + rel.y,
+          jupGeo.z + rel.z,
+          // EquatorFromVector reads .t; reuse Jupiter's so the rotation matches.
+          t as never,
+        );
+        const eq = EquatorFromVector(sum);
+        const [x, y, z] = raDecToVec3(eq.ra * 15, eq.dec, BODY_RADIUS);
+        pm.sprite.position.set(x, y, z);
+        const upBias = new Vector3(0, 0, 0.012);
+        const labelPos = new Vector3(x, y, z)
+          .add(upBias)
+          .normalize()
+          .multiplyScalar(BODY_RADIUS);
+        pm.labelSprite.position.copy(labelPos);
+      }
+    } catch {
+      // ignore; moons are non-critical
     }
   }
 
@@ -158,7 +238,18 @@ export class SolarSystem {
         this.group.remove(p.labelSprite);
       }
     }
+    for (const pm of this.moons) {
+      const mat = pm.sprite.material as SpriteMaterial;
+      mat.map?.dispose();
+      mat.dispose();
+      this.group.remove(pm.sprite);
+      const lm = pm.labelSprite.material as SpriteMaterial;
+      lm.map?.dispose();
+      lm.dispose();
+      this.group.remove(pm.labelSprite);
+    }
     this.placed = [];
+    this.moons = [];
   }
 }
 
