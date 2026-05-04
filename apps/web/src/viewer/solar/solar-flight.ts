@@ -126,6 +126,7 @@ export class SolarFlightScene {
   private planets: PlanetMesh[] = [];
   private orbits: LineLoop[] = [];
   private starPoints: Points | null = null;
+  private backgroundLabels: Sprite[] = [];
 
   // State
   private rafHandle = 0;
@@ -163,6 +164,8 @@ export class SolarFlightScene {
 
     // Background star field on a giant sphere (radius STAR_RADIUS).
     void this.loadStarBackground();
+    // Bright-star + cosmic-landmark labels at the same far radius.
+    void this.loadBackgroundLabels();
 
     // Camera + interaction
     this.applyCamera();
@@ -352,6 +355,82 @@ export class SolarFlightScene {
       } catch {
         // ignore
       }
+    }
+  }
+
+  private async loadBackgroundLabels(): Promise<void> {
+    try {
+      // Top ~50 brightest named stars + every cosmic landmark.
+      const [starsRes, landmarksMod] = await Promise.all([
+        fetch("/data/hyg-named.json"),
+        import("../cosmic/cosmic-landmarks"),
+      ]);
+      const stars = (await starsRes.json()) as Array<{
+        name: string;
+        ra: number;
+        dec: number;
+        mag: number;
+      }>;
+      const topStars = stars
+        .filter((s) => s.name !== "Sol")
+        .sort((a, b) => a.mag - b.mag)
+        .slice(0, 50);
+
+      // Helper: place a label at the celestial direction projected onto
+      // the giant background sphere.
+      const place = (
+        raDeg: number,
+        decDeg: number,
+        text: string,
+        color: string,
+        opacity: number,
+      ) => {
+        const raRad = (raDeg * Math.PI) / 180;
+        const decRad = (decDeg * Math.PI) / 180;
+        const cdec = Math.cos(decRad);
+        const x = STAR_RADIUS * cdec * Math.cos(raRad);
+        const ySc = STAR_RADIUS * Math.sin(decRad);
+        const z = -STAR_RADIUS * cdec * Math.sin(raRad);
+        const tex = makeColoredLabel(text, color);
+        const mat = new SpriteMaterial({
+          map: tex,
+          transparent: true,
+          depthWrite: false,
+          depthTest: false,
+          opacity,
+        });
+        const sprite = new Sprite(mat);
+        const aspect = tex.image.width / tex.image.height;
+        // World-space sprite scale at distance STAR_RADIUS (5000) needs
+        // ~70 units tall to read as ~0.8° angular size — same visual
+        // weight as the star labels in the celestial-sphere view.
+        const h = 70;
+        sprite.scale.set(h * aspect, h, 1);
+        sprite.position.set(x, ySc, z);
+        this.scene.add(sprite);
+        this.backgroundLabels.push(sprite);
+      };
+
+      for (const s of topStars) {
+        place(s.ra, s.dec, s.name, "rgba(245, 240, 220, 0.95)", 0.7);
+      }
+      for (const lm of landmarksMod.COSMIC_LANDMARKS) {
+        const color =
+          lm.kind === "black-hole"
+            ? "rgba(255, 130, 130, 0.95)"
+            : lm.kind === "pulsar"
+              ? "rgba(255, 200, 90, 0.95)"
+              : lm.kind === "supernova-remnant"
+                ? "rgba(255, 110, 200, 0.95)"
+                : lm.kind === "quasar"
+                  ? "rgba(190, 220, 255, 0.95)"
+                  : lm.kind === "agn"
+                    ? "rgba(120, 220, 255, 0.95)"
+                    : "rgba(220, 180, 255, 0.95)";
+        place(lm.raDeg, lm.decDeg, lm.name, color, 0.85);
+      }
+    } catch {
+      // ignore — labels are nice-to-have
     }
   }
 
@@ -573,6 +652,13 @@ export class SolarFlightScene {
       this.starPoints.geometry.dispose();
       (this.starPoints.material as ShaderMaterial).dispose();
     }
+    for (const s of this.backgroundLabels) {
+      const m = s.material as SpriteMaterial;
+      m.map?.dispose();
+      m.dispose();
+      this.scene.remove(s);
+    }
+    this.backgroundLabels = [];
     this.renderer.dispose();
     this.listeners.clear();
   }
@@ -635,6 +721,35 @@ function makeRingTexture(): CanvasTexture {
       ctx.fillRect(x, 0, 1, h);
     }
   }
+  const tex = new CanvasTexture(canvas);
+  tex.minFilter = LinearFilter;
+  tex.magFilter = LinearFilter;
+  return tex;
+}
+
+function makeColoredLabel(text: string, color: string): CanvasTexture {
+  const dpr = Math.min(window.devicePixelRatio, 2);
+  const padX = 5;
+  const padY = 2;
+  const fontSize = 11 * dpr;
+  const measure = document.createElement("canvas").getContext("2d");
+  if (!measure) throw new Error("2d context unavailable");
+  measure.font = `${fontSize}px "Space Grotesk", system-ui, sans-serif`;
+  const metrics = measure.measureText(text);
+  const width = Math.ceil(metrics.width + padX * 2 * dpr);
+  const height = Math.ceil(fontSize + padY * 2 * dpr);
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("2d context unavailable");
+  ctx.font = `${fontSize}px "Space Grotesk", system-ui, sans-serif`;
+  ctx.textBaseline = "middle";
+  ctx.textAlign = "center";
+  ctx.shadowColor = "rgba(0,0,0,0.9)";
+  ctx.shadowBlur = 4 * dpr;
+  ctx.fillStyle = color;
+  ctx.fillText(text, width / 2, height / 2);
   const tex = new CanvasTexture(canvas);
   tex.minFilter = LinearFilter;
   tex.magFilter = LinearFilter;
