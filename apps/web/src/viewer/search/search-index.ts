@@ -168,12 +168,13 @@ export class SearchIndex {
   }
 
   /**
-   * All loaded static entries (stars + DSOs + constellations). Excludes the
-   * runtime planet/ISS provider since those move and don't carry stable
-   * raDeg/decDeg.
+   * All entries — static (stars + DSOs + constellations) plus whatever the
+   * dynamic provider returns at this instant (planets, ISS). The dynamic
+   * entries are recomputed on each call so callers always see "now".
    */
   allEntries(): SearchEntry[] {
-    return this.entries;
+    const dynamic = this.dynamicProvider ? this.dynamicProvider() : [];
+    return [...dynamic, ...this.entries];
   }
 
   /**

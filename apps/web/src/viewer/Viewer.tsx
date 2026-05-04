@@ -222,6 +222,71 @@ export function Viewer() {
   // Build the local search index once on mount.
   useEffect(() => {
     const idx = new SearchIndex();
+    // Dynamic entries: planets / Sun / Moon move with sim time, ISS moves
+    // every few seconds. Resolve direction from the live scene each call so
+    // search and the "tonight's targets" panel always reflect current sky.
+    idx.setDynamicProvider(() => {
+      const scene = sceneRef.current;
+      if (!scene) return [];
+      const out: SearchEntry[] = [];
+      const PLANETS: Array<{ name: string; mag: number; detail: string }> = [
+        { name: "Sun", mag: -26.7, detail: "G2V star" },
+        { name: "Moon", mag: -12.7, detail: "Earth's natural satellite" },
+        { name: "Mercury", mag: 0.5, detail: "innermost planet" },
+        { name: "Venus", mag: -4, detail: "morning / evening star" },
+        { name: "Mars", mag: 0, detail: "the red planet" },
+        { name: "Jupiter", mag: -2.5, detail: "gas giant · 4 visible moons" },
+        { name: "Saturn", mag: 0.5, detail: "ringed planet" },
+        { name: "Uranus", mag: 5.7, detail: "ice giant" },
+        { name: "Neptune", mag: 7.8, detail: "outermost planet" },
+      ];
+      for (const p of PLANETS) {
+        const dir = scene.bodyDirection(p.name);
+        if (!dir) continue;
+        // Convert world-Y-up direction back to celestial RA/Dec for the
+        // tonight-targets altitude math.
+        const xCel = dir.x;
+        const yCel = -dir.z;
+        const zCel = dir.y;
+        const len = Math.hypot(xCel, yCel, zCel) || 1;
+        const dec =
+          (Math.asin(Math.max(-1, Math.min(1, zCel / len))) * 180) / Math.PI;
+        let ra = (Math.atan2(yCel, xCel) * 180) / Math.PI;
+        if (ra < 0) ra += 360;
+        out.push({
+          id: `planet:${p.name}`,
+          label: p.name,
+          kind: "planet",
+          detail: `mag ${p.mag.toFixed(1)} · ${p.detail}`,
+          direction: dir,
+          mag: p.mag,
+          raDeg: ra,
+          decDeg: dec,
+        });
+      }
+      const iss = scene.bodyDirection("ISS");
+      if (iss) {
+        const xCel = iss.x;
+        const yCel = -iss.z;
+        const zCel = iss.y;
+        const len = Math.hypot(xCel, yCel, zCel) || 1;
+        const dec =
+          (Math.asin(Math.max(-1, Math.min(1, zCel / len))) * 180) / Math.PI;
+        let ra = (Math.atan2(yCel, xCel) * 180) / Math.PI;
+        if (ra < 0) ra += 360;
+        out.push({
+          id: "planet:ISS",
+          label: "ISS",
+          kind: "planet",
+          detail: "International Space Station · live ground track",
+          direction: iss,
+          mag: -2,
+          raDeg: ra,
+          decDeg: dec,
+        });
+      }
+      return out;
+    });
     void idx
       .loadStaticCatalogs()
       .then(() => setSearchIndex(idx))
