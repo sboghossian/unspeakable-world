@@ -89,7 +89,8 @@ export function SearchBar({ index, onSelect }: Props) {
         className="pointer-events-auto rounded-lg border border-white/10 bg-space-950/70 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-white/60 backdrop-blur transition hover:bg-white/10 hover:text-white"
         title="Search the sky · ⌘K"
       >
-        🔍 search · ⌘K
+        🔍
+        <span className="hidden md:ml-2 md:inline">search · ⌘K</span>
       </button>
     );
   }

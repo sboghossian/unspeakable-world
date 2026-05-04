@@ -210,7 +210,7 @@ export function Viewer() {
             hasIssFix={state.iss !== null}
             onTarget={(t) => sceneRef.current?.flyToTarget(t)}
           />
-          <div className="rounded-lg border border-white/10 bg-space-950/70 px-3 py-1.5 font-mono text-xs text-white/60 backdrop-blur">
+          <div className="hidden rounded-lg border border-white/10 bg-space-950/70 px-3 py-1.5 font-mono text-xs text-white/60 backdrop-blur lg:block">
             DSS2 color · CDS / STScI
           </div>
         </div>
@@ -242,8 +242,8 @@ export function Viewer() {
           )}
         </div>
 
-        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 font-mono text-xs text-amber-300/90 backdrop-blur">
-          ⚠ polar seam crack at lat ±41.81° — Day 3+ work
+        <div className="hidden rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 font-mono text-xs text-amber-300/90 backdrop-blur md:block">
+          ⚠ polar seam crack at lat ±41.81° — known issue
         </div>
       </div>
 
@@ -271,9 +271,9 @@ export function Viewer() {
         </div>
       )}
 
-      {/* Hint (top-center) */}
+      {/* Hint (top-center) — desktop only; mobile users discover by tapping */}
       {status === "live" && (
-        <div className="pointer-events-none absolute inset-x-0 top-16 z-10 flex justify-center">
+        <div className="pointer-events-none absolute inset-x-0 top-16 z-10 hidden justify-center md:flex">
           <div className="rounded-full border border-white/5 bg-space-950/60 px-4 py-1 font-mono text-[11px] uppercase tracking-widest text-white/40 backdrop-blur">
             drag · pinch · wheel · tap
           </div>

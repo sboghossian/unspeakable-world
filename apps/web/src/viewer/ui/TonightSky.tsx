@@ -70,7 +70,8 @@ export function TonightSky({ onZenith, location, onLocationFix }: Props) {
             : "See the sky from your location right now"
         }
       >
-        ↑ tonight's sky
+        <span className="md:hidden">↑</span>
+        <span className="hidden md:inline">↑ tonight's sky</span>
       </button>
 
       {open && (

@@ -36,7 +36,17 @@ export function QuickTargets({ onTarget, hasIssFix }: Props) {
         onClick={() => setOpen((v) => !v)}
         className="rounded-lg border border-white/10 bg-space-950/70 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-white/70 backdrop-blur transition hover:bg-white/10 hover:text-white"
       >
-        {open ? "targets ✕" : "targets ⌖"}
+        {open ? (
+          <>
+            <span className="md:hidden">✕</span>
+            <span className="hidden md:inline">targets ✕</span>
+          </>
+        ) : (
+          <>
+            <span className="md:hidden">⌖</span>
+            <span className="hidden md:inline">targets ⌖</span>
+          </>
+        )}
       </button>
 
       {open && (
