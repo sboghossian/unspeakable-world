@@ -6,8 +6,8 @@ import {
   NormalBlending,
   Points,
   ShaderMaterial,
-} from 'three';
-import { raDecToVec3 } from '../stars/coords';
+} from "three";
+import { raDecToVec3 } from "../stars/coords";
 
 /**
  * Deep-sky-objects overlay: Messier + bright NGC/IC as colored markers.
@@ -44,7 +44,7 @@ export class DsoField {
   private items: DsoEntry[] = [];
 
   constructor() {
-    this.group.name = 'DsoField';
+    this.group.name = "DsoField";
     this.group.renderOrder = -3;
     this.group.rotation.x = -Math.PI / 2;
   }
@@ -91,9 +91,9 @@ export class DsoField {
     }
 
     const geom = new BufferGeometry();
-    geom.setAttribute('position', new BufferAttribute(positions, 3));
-    geom.setAttribute('color', new BufferAttribute(colors, 3));
-    geom.setAttribute('aSize', new BufferAttribute(sizes, 1));
+    geom.setAttribute("position", new BufferAttribute(positions, 3));
+    geom.setAttribute("color", new BufferAttribute(colors, 3));
+    geom.setAttribute("aSize", new BufferAttribute(sizes, 1));
     geom.computeBoundingSphere();
 
     const material = new ShaderMaterial({
@@ -130,7 +130,7 @@ export class DsoField {
 
 function colorForType(type: string): [number, number, number] {
   // Galaxy
-  if (/^G/.test(type) && !type.startsWith('GC')) return [0.45, 0.7, 1.0];
+  if (/^G/.test(type) && !type.startsWith("GC")) return [0.45, 0.7, 1.0];
   // Globular / Open cluster, Cl*
   if (/^G?Cl|^OCl|^GCl|^\*Ass/.test(type)) return [1.0, 0.86, 0.45];
   // Nebula categories

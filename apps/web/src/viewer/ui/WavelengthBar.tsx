@@ -29,6 +29,8 @@ type Props = {
   overlayMix: number;
   onSetOverlay: (id: string | null) => void;
   onSetMix: (mix: number) => void;
+  constellationsVisible: boolean;
+  onToggleConstellations: () => void;
 };
 
 export function WavelengthBar({
@@ -36,6 +38,8 @@ export function WavelengthBar({
   overlayMix,
   onSetOverlay,
   onSetMix,
+  constellationsVisible,
+  onToggleConstellations,
 }: Props) {
   return (
     <div className="pointer-events-auto flex flex-col items-center gap-2 rounded-xl border border-white/10 bg-space-950/80 px-3 py-2 backdrop-blur md:flex-row">
@@ -94,6 +98,21 @@ export function WavelengthBar({
           </span>
         </div>
       )}
+
+      <div className="hidden md:block h-4 w-px bg-white/10" />
+
+      <button
+        type="button"
+        onClick={onToggleConstellations}
+        className={`rounded-md border px-2.5 py-1 font-mono text-xs uppercase tracking-wider transition ${
+          constellationsVisible
+            ? "border-violet-500/40 bg-violet-500/15 text-violet-300"
+            : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10"
+        }`}
+        title="Toggle 88 IAU constellation lines"
+      >
+        ✦ lines
+      </button>
     </div>
   );
 }

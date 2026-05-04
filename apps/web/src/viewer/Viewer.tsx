@@ -38,6 +38,7 @@ const DEFAULT_STATE: ViewerState = {
   iss: null,
   overlayId: null,
   overlayMix: 0,
+  constellations: false,
 };
 
 type Inspect = {
@@ -236,6 +237,10 @@ export function Viewer() {
             overlayMix={state.overlayMix}
             onSetOverlay={(id) => sceneRef.current?.setOverlay(id)}
             onSetMix={(mix) => sceneRef.current?.setOverlayMix(mix)}
+            constellationsVisible={state.constellations}
+            onToggleConstellations={() =>
+              sceneRef.current?.setConstellations(!state.constellations)
+            }
           />
           <TimeStrip
             time={state.time}

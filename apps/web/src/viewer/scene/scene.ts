@@ -3,10 +3,11 @@ import { SURVEYS } from "../hips/surveys";
 import { HipsSphere } from "./hips-sphere";
 import { StarField } from "../stars/star-field";
 import { SolarSystem } from "../solar/solar-system";
-import { IssTracker, type IssState } from '../iss/iss-tracker';
-import { DsoField } from '../dso/dso-field';
-import { zenithWorldDirection } from '../observer/zenith';
-import { VoyagerControls } from './voyager-controls';
+import { IssTracker, type IssState } from "../iss/iss-tracker";
+import { DsoField } from "../dso/dso-field";
+import { ConstellationLines } from "../constellations/constellation-lines";
+import { zenithWorldDirection } from "../observer/zenith";
+import { VoyagerControls } from "./voyager-controls";
 
 /**
  * Observable view-state the UI can subscribe to (loading veil, log-scale chip,
@@ -40,6 +41,8 @@ export type ViewerState = {
   overlayId: string | null;
   /** Cross-fade [0..1] of the overlay against the base. */
   overlayMix: number;
+  /** Whether constellation lines are visible. */
+  constellations: boolean;
 };
 
 type Listener = (s: ViewerState) => void;
@@ -63,6 +66,7 @@ export class ViewerScene {
   private solar: SolarSystem;
   private iss: IssTracker;
   private dsos: DsoField;
+  private constellations: ConstellationLines;
   private controls: VoyagerControls;
 
   private dirty = true;
@@ -125,13 +129,22 @@ export class ViewerScene {
     this.dsos = new DsoField();
     this.scene.add(this.dsos.group);
     void this.dsos
-      .load('/data/dso.json')
+      .load("/data/dso.json")
       .then(() => {
         this.dirty = true;
         this.state = { ...this.state, dsoCount: this.dsos.count() };
         this.emit();
       })
-      .catch((err) => console.warn('[dso] catalog load failed', err));
+      .catch((err) => console.warn("[dso] catalog load failed", err));
+
+    this.constellations = new ConstellationLines();
+    this.scene.add(this.constellations.group);
+    void this.constellations
+      .load("/data/constellations.lines.json")
+      .then(() => {
+        this.dirty = true;
+      })
+      .catch((err) => console.warn("[constellations] load failed", err));
 
     this.controls = new VoyagerControls(this.camera, canvas);
     this.controls.onChange = () => {
@@ -176,6 +189,7 @@ export class ViewerScene {
       iss: null,
       overlayId: null,
       overlayMix: 0,
+      constellations: false,
     };
 
     this.tick();
@@ -237,6 +251,7 @@ export class ViewerScene {
       timeRate: this.timeRate,
       overlayId: this.overlaySphere?.survey().id ?? null,
       overlayMix: this.overlayMix,
+      constellations: this.constellations?.group.visible ?? false,
     };
     this.emit();
   }
@@ -301,6 +316,12 @@ export class ViewerScene {
   setOverlayMix(mix: number): void {
     this.overlayMix = Math.max(0, Math.min(1, mix));
     this.applyOverlayMix();
+    this.dirty = true;
+    this.publishState();
+  }
+
+  setConstellations(visible: boolean): void {
+    this.constellations.setVisible(visible);
     this.dirty = true;
     this.publishState();
   }
@@ -419,6 +440,7 @@ export class ViewerScene {
     }
     this.stars.dispose();
     this.dsos.dispose();
+    this.constellations.dispose();
     this.solar.dispose();
     this.iss.dispose();
     this.renderer.dispose();
