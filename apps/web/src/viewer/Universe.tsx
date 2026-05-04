@@ -59,6 +59,7 @@ const DEFAULT_STATE: UniverseState = {
   asteroidsOn: false,
   cometsOn: false,
   interstellarOn: false,
+  moonsOn: false,
   missions: {},
   zones: {
     habitable: false,

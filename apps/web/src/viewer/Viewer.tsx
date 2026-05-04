@@ -35,6 +35,8 @@ import {
 } from "./favorites/favorites-store";
 import { parseHash, replaceHash, serializeState } from "./share/url-state";
 import { WavelengthBar } from "./ui/WavelengthBar";
+import { getSettings, updateSettings } from "../lib/settings";
+import type { SkyProjection } from "./sky-atlas/projection-shader";
 import { SkyInfoPanel } from "./ui/SkyInfoPanel";
 import {
   candidatesFromSimbad,
@@ -158,6 +160,9 @@ export function Viewer() {
     reloadFavorites();
   }, [inspect, reloadFavorites]);
   const [tourIndex, setTourIndex] = useState<number | null>(null);
+  const [skyProjection, setSkyProjection] = useState<SkyProjection>(
+    () => getSettings().skyProjection,
+  );
 
   const runTourStep = useCallback((idx: number) => {
     const scene = sceneRef.current;
@@ -472,6 +477,9 @@ export function Viewer() {
     sceneRef.current = scene;
     setStatus("live");
     const unsubscribe = scene.subscribe(setState);
+    // Re-apply persisted projection mode so the user's previous choice is
+    // honoured on subsequent visits.
+    scene.setProjection(skyProjection);
 
     // Apply hash → scene state once the scene is ready. Wait a tick so the
     // initial Sun-aimed setForward + base-tile loads land first.
@@ -840,6 +848,13 @@ export function Viewer() {
             onTogglePulsars={() =>
               sceneRef.current?.setPulsars(!state.pulsars)
             }
+            projection={skyProjection}
+            onToggleProjection={() => {
+              const next = skyProjection === "aitoff" ? "3d" : "aitoff";
+              setSkyProjection(next);
+              updateSettings({ skyProjection: next });
+              sceneRef.current?.setProjection(next);
+            }}
           />
           <TimeStrip
             time={state.time}
