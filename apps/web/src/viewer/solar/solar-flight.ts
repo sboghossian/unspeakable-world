@@ -25,6 +25,7 @@ import {
   WebGLRenderer,
 } from "three";
 import { Body, HelioVector, GeoVector, JupiterMoons } from "astronomy-engine";
+import { SatelliteField } from "../satellites/satellite-field";
 
 /**
  * 🚀 Solar System Flight Mode.
@@ -148,6 +149,7 @@ export class SolarFlightScene {
   private solarZones: LineLoop[] = [];
   private starPoints: Points | null = null;
   private backgroundLabels: Sprite[] = [];
+  private satellites: SatelliteField | null = null;
 
   // State
   private rafHandle = 0;
@@ -190,6 +192,12 @@ export class SolarFlightScene {
     void this.loadStarBackground();
     // Bright-star + cosmic-landmark labels at the same far radius.
     void this.loadBackgroundLabels();
+    // Real satellite catalog — TLE + SGP4 propagation, draped around Earth.
+    this.satellites = new SatelliteField();
+    this.scene.add(this.satellites.group);
+    void this.satellites.load("/data/satellites.json").catch(() => {
+      // optional layer
+    });
 
     // Camera + interaction
     this.applyCamera();
@@ -529,6 +537,29 @@ export class SolarFlightScene {
 
   setSolarZones(visible: boolean): void {
     for (const z of this.solarZones) z.visible = visible;
+  }
+
+  setSatellites(visible: boolean): void {
+    this.satellites?.setVisible(visible);
+    if (visible) this.refreshSatellites();
+  }
+
+  /** Re-propagate every TLE for the current sim time and update positions
+   *  relative to Earth's scene location. Cheap-ish (935 TLEs ≈ 1-2 ms). */
+  private refreshSatellites(): void {
+    if (!this.satellites || !this.satellites.visible()) return;
+    const earthEntry = this.planets.find((p) => p.name === "Earth");
+    if (!earthEntry) return;
+    const earth = earthEntry.group.position;
+    // Cosmetic km-to-scene-units conversion: pick a factor that puts LEO
+    // (~6800 km from Earth center) at ~1.5 × Earth's drawn radius (0.045
+    // AU). 0.045 × 1.5 / 6800 = 9.9e-6 scene units per km.
+    const SCALE = 1.0e-5;
+    this.satellites.update(this.simTime, earth, SCALE);
+  }
+
+  satelliteCount(): number {
+    return this.satellites?.count() ?? 0;
   }
 
   private buildMarsMoons(): void {
@@ -871,6 +902,7 @@ export class SolarFlightScene {
         this.simTime.getTime() + elapsedMs * this.timeRate,
       );
       this.updatePlanets();
+      this.refreshSatellites();
       this.publishState();
     }
     // Tracking mode keeps the camera glued to the moving focus body each
@@ -955,6 +987,11 @@ export class SolarFlightScene {
     if (this.starPoints) {
       this.starPoints.geometry.dispose();
       (this.starPoints.material as ShaderMaterial).dispose();
+    }
+    if (this.satellites) {
+      this.satellites.dispose();
+      this.scene.remove(this.satellites.group);
+      this.satellites = null;
     }
     for (const s of this.backgroundLabels) {
       const m = s.material as SpriteMaterial;

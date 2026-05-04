@@ -66,11 +66,8 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
     "Uranus",
     "Neptune",
   ];
-  const [zonesOn, setZonesOn] = (() => {
-    // Local-state replacement using useState — but to keep this small we
-    // hold the bit on a ref-attached state. Importing useState explicitly:
-    return useState(false);
-  })();
+  const [zonesOn, setZonesOn] = useState(false);
+  const [satellitesOn, setSatellitesOn] = useState(false);
 
   return (
     <div className="relative h-full w-full bg-[#000208]">
@@ -160,6 +157,22 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
             }`}
           >
             ◉ zones
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const next = !satellitesOn;
+              setSatellitesOn(next);
+              sceneRef.current?.setSatellites(next);
+            }}
+            title="Toggle real satellites around Earth — TLE-driven, propagated live (SGP4)"
+            className={`rounded-lg border px-3 py-1.5 font-mono text-xs uppercase tracking-widest backdrop-blur transition ${
+              satellitesOn
+                ? "border-cyan-400/50 bg-cyan-400/15 text-cyan-200"
+                : "border-white/10 bg-space-950/70 text-white/65 hover:bg-white/10"
+            }`}
+          >
+            🛰 sats
           </button>
           <button
             type="button"
