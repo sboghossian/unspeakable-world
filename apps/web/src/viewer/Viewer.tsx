@@ -11,6 +11,7 @@ import { TourCard } from "./ui/TourCard";
 import { GRAND_TOUR } from "./tour/tour";
 import { FavoritesMenu } from "./ui/FavoritesMenu";
 import { SpaceWeatherPanel } from "./ui/SpaceWeatherPanel";
+import { TonightTargetsPanel } from "./ui/TonightTargetsPanel";
 import {
   type Favorite,
   isFavorited,
@@ -396,6 +397,13 @@ export function Viewer() {
               Re-enable once apps/api ships a CF Worker proxy. */}
           {/* <NeoPanel /> */}
           <SpaceWeatherPanel />
+          {searchIndex && (
+            <TonightTargetsPanel
+              entries={searchIndex.allEntries()}
+              observer={observer}
+              onSelect={(dir) => sceneRef.current?.flyTo(dir)}
+            />
+          )}
           <FavoritesMenu
             favorites={favorites}
             onSelect={(dir) => sceneRef.current?.flyTo(dir)}

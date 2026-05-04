@@ -24,6 +24,9 @@ export type SearchEntry = {
   direction: Vector3;
   /** Optional: tuck additional info for the result row. */
   mag?: number | null;
+  /** Equatorial coordinates (degrees, J2000). Static entries only. */
+  raDeg?: number;
+  decDeg?: number;
 };
 
 type NamedStar = { name: string; ra: number; dec: number; mag: number };
@@ -90,6 +93,8 @@ export class SearchIndex {
         detail: `mag ${s.mag.toFixed(1)} · star`,
         direction: celestialToWorld(s.ra, s.dec),
         mag: s.mag,
+        raDeg: s.ra,
+        decDeg: s.dec,
       });
     }
 
@@ -109,6 +114,8 @@ export class SearchIndex {
         detail,
         direction: celestialToWorld(d.ra, d.dec),
         mag: d.mag,
+        raDeg: d.ra,
+        decDeg: d.dec,
       });
       // Common-name alias (e.g. "Andromeda Galaxy" → M31)
       if (d.common && d.common !== d.name) {
@@ -158,6 +165,15 @@ export class SearchIndex {
         direction: celestialToWorld(ra, dec),
       });
     }
+  }
+
+  /**
+   * All loaded static entries (stars + DSOs + constellations). Excludes the
+   * runtime planet/ISS provider since those move and don't carry stable
+   * raDeg/decDeg.
+   */
+  allEntries(): SearchEntry[] {
+    return this.entries;
   }
 
   search(query: string, limit = 8): SearchEntry[] {
