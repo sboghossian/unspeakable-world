@@ -72,6 +72,9 @@ const DEFAULT_STATE: ViewerState = {
   coordGrid: false,
   starLabels: false,
   spacecraft: false,
+  exoplanets: false,
+  cosmicLandmarks: false,
+  exoplanetCount: 0,
 };
 
 type Inspect = {
@@ -351,6 +354,16 @@ export function Viewer() {
         sceneRef.current?.setSpacecraft(!state.spacecraft);
         return;
       }
+      if (e.key === "x") {
+        // x = "extrasolar"
+        sceneRef.current?.setExoplanets(!state.exoplanets);
+        return;
+      }
+      if (e.key === "z") {
+        // z = "exotic"
+        sceneRef.current?.setCosmicLandmarks(!state.cosmicLandmarks);
+        return;
+      }
       if (e.key === ".") {
         sceneRef.current?.setTime(new Date());
         return;
@@ -377,6 +390,8 @@ export function Viewer() {
     state.coordGrid,
     state.starLabels,
     state.spacecraft,
+    state.exoplanets,
+    state.cosmicLandmarks,
     state.time,
     state.timeRate,
   ]);
@@ -738,6 +753,14 @@ export function Viewer() {
             spacecraftVisible={state.spacecraft}
             onToggleSpacecraft={() =>
               sceneRef.current?.setSpacecraft(!state.spacecraft)
+            }
+            exoplanetsVisible={state.exoplanets}
+            onToggleExoplanets={() =>
+              sceneRef.current?.setExoplanets(!state.exoplanets)
+            }
+            cosmicLandmarksVisible={state.cosmicLandmarks}
+            onToggleCosmicLandmarks={() =>
+              sceneRef.current?.setCosmicLandmarks(!state.cosmicLandmarks)
             }
           />
           <TimeStrip

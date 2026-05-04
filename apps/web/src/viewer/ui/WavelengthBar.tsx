@@ -65,6 +65,10 @@ type Props = {
   onToggleStarLabels: () => void;
   spacecraftVisible: boolean;
   onToggleSpacecraft: () => void;
+  exoplanetsVisible: boolean;
+  onToggleExoplanets: () => void;
+  cosmicLandmarksVisible: boolean;
+  onToggleCosmicLandmarks: () => void;
 };
 
 export function WavelengthBar({
@@ -80,6 +84,10 @@ export function WavelengthBar({
   onToggleStarLabels,
   spacecraftVisible,
   onToggleSpacecraft,
+  exoplanetsVisible,
+  onToggleExoplanets,
+  cosmicLandmarksVisible,
+  onToggleCosmicLandmarks,
 }: Props) {
   return (
     <div className="pointer-events-auto flex flex-col items-center gap-2 rounded-xl border border-white/10 bg-space-950/80 px-3 py-2 backdrop-blur md:flex-row">
@@ -189,6 +197,30 @@ export function WavelengthBar({
           title="Toggle spacecraft markers — Voyager 1/2, Pioneers, NH, JWST (s)"
         >
           ◇ craft
+        </button>
+        <button
+          type="button"
+          onClick={onToggleExoplanets}
+          className={`rounded-md border px-2.5 py-1 font-mono text-xs uppercase tracking-wider transition ${
+            exoplanetsVisible
+              ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
+              : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10"
+          }`}
+          title="Toggle 6,278 confirmed exoplanet host systems (x)"
+        >
+          ⊙ exo
+        </button>
+        <button
+          type="button"
+          onClick={onToggleCosmicLandmarks}
+          className={`rounded-md border px-2.5 py-1 font-mono text-xs uppercase tracking-wider transition ${
+            cosmicLandmarksVisible
+              ? "border-rose-400/40 bg-rose-400/15 text-rose-200"
+              : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10"
+          }`}
+          title="Toggle named exotic objects — Sgr A*, M87*, Crab Pulsar, GW170817 etc (z)"
+        >
+          ◉ exotic
         </button>
       </div>
     </div>

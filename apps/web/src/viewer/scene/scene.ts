@@ -9,6 +9,8 @@ import { IssTracker, type IssState } from "../iss/iss-tracker";
 import { DsoField } from "../dso/dso-field";
 import { ConstellationLines } from "../constellations/constellation-lines";
 import { CoordGrid } from "./coord-grid";
+import { CosmicLandmarks } from "../cosmic/cosmic-landmarks";
+import { ExoplanetField } from "../exoplanets/exoplanet-field";
 import { Landmarks } from "./landmarks";
 import { zenithWorldDirection } from "../observer/zenith";
 import { VoyagerControls } from "./voyager-controls";
@@ -53,6 +55,12 @@ export type ViewerState = {
   starLabels: boolean;
   /** Whether iconic spacecraft markers (Voyagers, Pioneers, NH, JWST) are visible. */
   spacecraft: boolean;
+  /** Whether the 6,278-entry confirmed-exoplanet field is visible. */
+  exoplanets: boolean;
+  /** Whether named exotic objects (Sgr A*, M87*, Crab Pulsar, GW170817 …) are visible. */
+  cosmicLandmarks: boolean;
+  /** Loaded exoplanet count (0 until catalog arrives). */
+  exoplanetCount: number;
 };
 
 type Listener = (s: ViewerState) => void;
@@ -76,6 +84,8 @@ export class ViewerScene {
   private starLabels: StarLabels;
   private solar: SolarSystem;
   private spacecraft: Spacecraft;
+  private exoplanets: ExoplanetField;
+  private cosmicLandmarks: CosmicLandmarks;
   private iss: IssTracker;
   private dsos: DsoField;
   private constellations: ConstellationLines;
@@ -146,6 +156,23 @@ export class ViewerScene {
     this.spacecraft = new Spacecraft();
     this.scene.add(this.spacecraft.group);
     this.spacecraft.update(this.simTime);
+
+    this.exoplanets = new ExoplanetField();
+    this.scene.add(this.exoplanets.group);
+    void this.exoplanets
+      .load("/data/exoplanets.json")
+      .then(() => {
+        this.dirty = true;
+        this.state = {
+          ...this.state,
+          exoplanetCount: this.exoplanets.count(),
+        };
+        this.emit();
+      })
+      .catch((err) => console.warn("[exoplanets] load failed", err));
+
+    this.cosmicLandmarks = new CosmicLandmarks();
+    this.scene.add(this.cosmicLandmarks.group);
 
     this.iss = new IssTracker();
     this.scene.add(this.iss.group);
@@ -229,6 +256,9 @@ export class ViewerScene {
       coordGrid: false,
       starLabels: false,
       spacecraft: false,
+      exoplanets: false,
+      cosmicLandmarks: false,
+      exoplanetCount: 0,
     };
 
     this.tick();
@@ -294,6 +324,9 @@ export class ViewerScene {
       coordGrid: this.coordGrid?.group.visible ?? false,
       starLabels: this.starLabels?.group.visible ?? false,
       spacecraft: this.spacecraft?.visible() ?? false,
+      exoplanets: this.exoplanets?.visible() ?? false,
+      cosmicLandmarks: this.cosmicLandmarks?.visible() ?? false,
+      exoplanetCount: this.exoplanets?.count() ?? 0,
     };
     this.emit();
   }
@@ -386,6 +419,26 @@ export class ViewerScene {
     this.spacecraft.setVisible(visible);
     this.dirty = true;
     this.publishState();
+  }
+
+  setExoplanets(visible: boolean): void {
+    this.exoplanets.setVisible(visible);
+    this.dirty = true;
+    this.publishState();
+  }
+
+  setCosmicLandmarks(visible: boolean): void {
+    this.cosmicLandmarks.setVisible(visible);
+    this.dirty = true;
+    this.publishState();
+  }
+
+  exoplanetList(): ReturnType<ExoplanetField["list"]> {
+    return this.exoplanets.list();
+  }
+
+  cosmicLandmarkList(): ReturnType<CosmicLandmarks["list"]> {
+    return this.cosmicLandmarks.list();
   }
 
   /** Iterate the spacecraft layer for tap-to-fly + click resolution. */
@@ -548,6 +601,8 @@ export class ViewerScene {
     this.landmarks.dispose();
     this.solar.dispose();
     this.spacecraft.dispose();
+    this.exoplanets.dispose();
+    this.cosmicLandmarks.dispose();
     this.iss.dispose();
     this.renderer.dispose();
     this.listeners.clear();
