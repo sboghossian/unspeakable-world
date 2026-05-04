@@ -1,4 +1,6 @@
-import { useState, type ReactElement } from "react";
+import { useEffect, useState, type ReactElement } from "react";
+
+import { fetchGroundedSummary, type GroundedSummary } from "../info/grounded-summary";
 
 /**
  * Unified inspector card. Shared between Universe Mode, Solar Flight, and
@@ -25,6 +27,11 @@ export type InfoSection =
       thumbUrl?: string;
       credit: string;
       caption?: string;
+    }
+  | {
+      kind: "grounded";
+      /** Lookup name(s) for Wikipedia REST. */
+      candidates: string[];
     };
 
 export type InfoPayload = {
@@ -59,6 +66,7 @@ const SECTION_TITLE: Record<InfoSection["kind"], string> = {
   facts: "facts",
   links: "links",
   image: "image",
+  grounded: "✨ ai summary",
 };
 
 const KIND_TONE: Record<InfoPayload["kind"], string> = {
@@ -221,7 +229,85 @@ function renderBody(section: InfoSection): ReactElement {
       );
     case "image":
       return <ImageHero section={section} />;
+    case "grounded":
+      return <GroundedBody candidates={section.candidates} />;
   }
+}
+
+function GroundedBody({
+  candidates,
+}: {
+  candidates: string[];
+}): ReactElement {
+  const [state, setState] = useState<
+    | { status: "loading" }
+    | { status: "ready"; data: GroundedSummary }
+    | { status: "empty" }
+  >({ status: "loading" });
+  useEffect(() => {
+    let cancelled = false;
+    const primary = candidates[0] ?? "";
+    fetchGroundedSummary(primary, candidates)
+      .then((data) => {
+        if (cancelled) return;
+        if (!data) return setState({ status: "empty" });
+        setState({ status: "ready", data });
+      })
+      .catch(() => {
+        if (!cancelled) setState({ status: "empty" });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [candidates]);
+  if (state.status === "loading") {
+    return (
+      <div className="space-y-1.5">
+        <div className="h-2 w-full animate-pulse rounded bg-white/10" />
+        <div className="h-2 w-[92%] animate-pulse rounded bg-white/10" />
+        <div className="h-2 w-[78%] animate-pulse rounded bg-white/10" />
+        <div className="mt-2 font-mono text-[10px] text-white/40">
+          Fetching summary…
+        </div>
+      </div>
+    );
+  }
+  if (state.status === "empty") {
+    return (
+      <div className="font-mono text-[11px] text-white/40">
+        No public archive entry found.
+      </div>
+    );
+  }
+  const { summary, sources } = state.data;
+  return (
+    <div className="space-y-2">
+      <p className="whitespace-pre-line text-sm leading-relaxed text-white/75">
+        {summary}
+      </p>
+      <div>
+        <div className="mb-1 font-mono text-[9px] uppercase tracking-widest text-white/35">
+          sources
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {sources.map((s) => (
+            <a
+              key={s.url}
+              href={s.url}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 rounded border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[10px] text-cyan-300 hover:bg-white/10"
+            >
+              {s.label} ↗
+            </a>
+          ))}
+        </div>
+      </div>
+      <div className="font-mono text-[9px] text-white/30">
+        Aggregated from public archives. May be outdated.
+      </div>
+    </div>
+  );
 }
 
 function ImageHero({

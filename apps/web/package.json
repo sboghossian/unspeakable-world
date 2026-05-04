@@ -11,7 +11,8 @@
     "lint": "echo 'lint: TODO'",
     "bake:asteroids": "node --experimental-strip-types --no-warnings ../../scripts/bake-asteroids.ts",
     "bake:missions": "node --experimental-strip-types --no-warnings ../../scripts/bake-missions.ts",
-    "bake:eclipses": "node --experimental-strip-types --no-warnings ../../scripts/bake-eclipses.ts"
+    "bake:eclipses": "node --experimental-strip-types --no-warnings ../../scripts/bake-eclipses.ts",
+    "verify:imagery": "node --experimental-strip-types --no-warnings ../../scripts/verify-imagery.ts"
   },
   "dependencies": {
     "@hscmap/healpix": "^1.4.12",

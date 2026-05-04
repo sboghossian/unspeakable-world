@@ -27,7 +27,10 @@ export type SimbadHit = {
   raw: string;
 };
 
+import { idb } from "../../lib/idb-cache";
+
 const ENDPOINT = "https://simbad.cds.unistra.fr/simbad/sim-coo";
+const SIMBAD_TTL_SEC = 24 * 60 * 60; // 24 hours
 
 /**
  * Cone search at (raDeg, decDeg). Returns the closest object SIMBAD knows
@@ -45,10 +48,16 @@ export async function simbadConeSearch(
     "output.format": "ASCII",
   });
   const url = `${ENDPOINT}?${params.toString()}`;
+  const cacheKey = `cone:${raDeg.toFixed(4)}:${decDeg.toFixed(4)}:${radiusArcmin}`;
+  const cached = await idb.get<SimbadHit | "miss">("simbad", cacheKey);
+  if (cached === "miss") return null;
+  if (cached) return cached;
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error(`SIMBAD HTTP ${res.status}`);
   const text = await res.text();
-  return parseSimbadAscii(text);
+  const hit = parseSimbadAscii(text);
+  await idb.put("simbad", cacheKey, hit ?? "miss", SIMBAD_TTL_SEC);
+  return hit;
 }
 
 /**

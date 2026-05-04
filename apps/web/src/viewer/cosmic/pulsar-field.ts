@@ -6,6 +6,7 @@ import {
   Points,
   ShaderMaterial,
 } from "three";
+import { fetchCatalogJson } from "../../lib/idb-cache";
 import { raDecToVec3 } from "../stars/coords";
 
 /**
@@ -50,9 +51,7 @@ export class PulsarField {
   }
 
   async load(url: string): Promise<void> {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`pulsars HTTP ${res.status}`);
-    this.items = (await res.json()) as PulsarEntry[];
+    this.items = await fetchCatalogJson<PulsarEntry[]>("pulsars", url);
     this.build();
   }
 

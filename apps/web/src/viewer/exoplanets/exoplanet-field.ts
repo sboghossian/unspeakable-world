@@ -6,6 +6,7 @@ import {
   Points,
   ShaderMaterial,
 } from "three";
+import { fetchCatalogJson } from "../../lib/idb-cache";
 import { raDecToVec3 } from "../stars/coords";
 
 /**
@@ -61,9 +62,7 @@ export class ExoplanetField {
   }
 
   async load(url: string): Promise<void> {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`exoplanets HTTP ${res.status}`);
-    this.items = (await res.json()) as ExoplanetEntry[];
+    this.items = await fetchCatalogJson<ExoplanetEntry[]>("exoplanets", url);
     this.build();
   }
 

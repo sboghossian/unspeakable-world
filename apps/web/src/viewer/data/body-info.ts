@@ -196,12 +196,37 @@ export function bodyFactsToPayload(
   if (facts.detail) sections.push({ kind: "overview", text: facts.detail });
   if (physical.length > 0) sections.push({ kind: "physical", rows: physical });
   if (orbit.length > 0) sections.push({ kind: "orbit", rows: orbit });
+  // Grounded section streams the Wikipedia lead in after first render.
+  sections.push({ kind: "grounded", candidates: groundedCandidates(name) });
   if (facts.wikipedia)
     sections.push({
       kind: "links",
       items: [{ label: "Wikipedia", href: facts.wikipedia }],
     });
   return enrichWithImagery({ kind, name, sections });
+}
+
+/**
+ * Build Wikipedia title candidates for a body. Planets need disambiguation
+ * (`Mercury (planet)`); the Sun / Moon / star names map cleanly.
+ */
+function groundedCandidates(name: string): string[] {
+  const candidates = [name];
+  if (
+    [
+      "Mercury",
+      "Venus",
+      "Earth",
+      "Mars",
+      "Jupiter",
+      "Saturn",
+      "Uranus",
+      "Neptune",
+    ].includes(name)
+  ) {
+    candidates.push(`${name} (planet)`);
+  }
+  return candidates;
 }
 
 /** Re-export for callers (Universe pick path, etc.). */
@@ -211,8 +236,6 @@ export { lookupObjectImagery as lookupImagery };
 export function enrichWithImagery(payload: InfoPayload): InfoPayload {
   const entry: ImageEntry | null = lookupObjectImagery(payload.name);
   if (!entry) return payload;
-  // Skip placeholder entries — keeps the panel layout clean for TODOs.
-  if (entry.url.startsWith("https://placeholder.invalid")) return payload;
   const imageSection: InfoSection = {
     kind: "image",
     url: entry.url,
@@ -232,6 +255,7 @@ export function cosmicLandmarkFactsToPayload(
   const sections: InfoSection[] = [];
   sections.push({ kind: "identification", rows: [["Type", type]] });
   if (detail) sections.push({ kind: "overview", text: detail });
+  sections.push({ kind: "grounded", candidates: [name] });
   sections.push({
     kind: "links",
     items: [
