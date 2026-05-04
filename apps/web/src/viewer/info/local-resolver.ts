@@ -1,4 +1,4 @@
-import type { Vector3 } from "three";
+import { Vector3 } from "three";
 import type { ViewerScene } from "../scene/scene";
 import { type SimbadHit, worldDirectionToRaDec } from "./simbad";
 
@@ -24,6 +24,20 @@ const SOLAR_LABELS = [
   "Uranus",
   "Neptune",
 ];
+
+const SPACECRAFT_DETAIL: Record<string, string> = {
+  "Voyager 1":
+    "Spacecraft · launched 1977-09-05 · ~166 AU · interstellar (since 2012)",
+  "Voyager 2":
+    "Spacecraft · launched 1977-08-20 · ~138 AU · interstellar (since 2018)",
+  "Pioneer 10":
+    "Spacecraft · launched 1972-03-03 · last signal 2003 · → Aldebaran",
+  "Pioneer 11":
+    "Spacecraft · launched 1973-04-06 · last signal 1995 · → Aquila",
+  "New Horizons":
+    "Spacecraft · launched 2006-01-19 · post-Pluto · KBO survey",
+  JWST: "Spacecraft · James Webb Space Telescope · Earth-Sun L2 · 1.5M km anti-solar",
+};
 
 /** Tap-tolerance in degrees, scaled by current FOV. */
 function hitRadiusDeg(fov: number): number {
@@ -55,6 +69,19 @@ export function resolveLocalHit(
       (Math.acos(Math.max(-1, Math.min(1, iss.dot(clickDir)))) * 180) / Math.PI;
     cands.push({ label: "ISS", angle: a, dir: iss });
   }
+  // Spacecraft markers — only when the layer is visible. We skip them when
+  // hidden so a click in empty sky doesn't accidentally match a Voyager
+  // sitting in the background.
+  const list = scene.spacecraftList();
+  if (list.length > 0 && scene.spacecraftLayerVisible()) {
+    for (const c of list) {
+      const dir = new Vector3(c.direction.x, c.direction.y, c.direction.z);
+      const a =
+        (Math.acos(Math.max(-1, Math.min(1, dir.dot(clickDir)))) * 180) /
+        Math.PI;
+      cands.push({ label: c.name, angle: a, dir });
+    }
+  }
   cands.sort((a, b) => a.angle - b.angle);
   const best = cands[0];
   if (!best || best.angle > tol) return null;
@@ -71,14 +98,25 @@ function synthesizeHit(
   const isSun = label === "Sun";
   const isMoon = label === "Moon";
   const isIss = label === "ISS";
-  const type = isSun ? "*" : isIss ? "Sat" : isMoon ? "Moo" : "Pl";
-  const description = isIss
-    ? "Spacecraft (Earth orbit)"
+  const isCraft = label in SPACECRAFT_DETAIL;
+  const type = isCraft
+    ? "Sat"
     : isSun
-      ? "G-type main-sequence star"
-      : isMoon
-        ? "Earth's natural satellite"
-        : "Solar System planet";
+      ? "*"
+      : isIss
+        ? "Sat"
+        : isMoon
+          ? "Moo"
+          : "Pl";
+  const description = isCraft
+    ? SPACECRAFT_DETAIL[label]!
+    : isIss
+      ? "Spacecraft · International Space Station · Earth orbit"
+      : isSun
+        ? "G-type main-sequence star"
+        : isMoon
+          ? "Earth's natural satellite"
+          : "Solar System planet";
   return {
     name: label,
     type,

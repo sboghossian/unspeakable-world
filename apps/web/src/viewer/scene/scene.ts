@@ -397,6 +397,10 @@ export class ViewerScene {
     return this.spacecraft.list();
   }
 
+  spacecraftLayerVisible(): boolean {
+    return this.spacecraft.visible();
+  }
+
   private applyOverlayMix(): void {
     if (!this.overlaySphere) return;
     this.overlaySphere.setOpacity(this.overlayMix);
