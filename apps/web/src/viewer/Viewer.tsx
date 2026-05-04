@@ -10,6 +10,8 @@ import { TonightSky } from "./ui/TonightSky";
 import { TourCard } from "./ui/TourCard";
 import { GRAND_TOUR } from "./tour/tour";
 import { FavoritesMenu } from "./ui/FavoritesMenu";
+import { FirstRunHint } from "./ui/FirstRunHint";
+import { ShareButton } from "./ui/ShareButton";
 import { ShortcutsOverlay } from "./ui/ShortcutsOverlay";
 import { SkyTonightPanel } from "./ui/SkyTonightPanel";
 import { SpaceWeatherPanel } from "./ui/SpaceWeatherPanel";
@@ -475,6 +477,7 @@ export function Viewer() {
             onSelect={(dir) => sceneRef.current?.flyTo(dir)}
             onChange={reloadFavorites}
           />
+          <ShareButton />
           <button
             type="button"
             onClick={() => setShortcutsOpen(true)}
@@ -651,6 +654,8 @@ export function Viewer() {
       {shortcutsOpen && (
         <ShortcutsOverlay onClose={() => setShortcutsOpen(false)} />
       )}
+
+      {status === "live" && <FirstRunHint />}
     </div>
   );
 }
