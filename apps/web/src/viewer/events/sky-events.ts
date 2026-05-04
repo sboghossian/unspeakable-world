@@ -242,20 +242,16 @@ function bodyName(b: Body): string {
   return Body[b] ?? String(b);
 }
 
-/** Cheap approximate-constellation lookup for the meteor radiant blurb.
- *  Just hard-coded per shower since the radiants don't move year-to-year. */
+/** Approximate-constellation lookup for the meteor radiant blurb. The
+ *  classical radiants are stable so a few RA/Dec rectangles are enough. */
 function approxConstellation(raDeg: number, decDeg: number): string {
-  void raDeg;
-  void decDeg;
-  // For each shower above the constellation is well-known and stable; the
-  // detail string is built once when the table is read.
   if (raDeg >= 220 && raDeg <= 245 && decDeg > 40) return "Boötes";
   if (raDeg >= 260 && raDeg <= 290 && decDeg > 25) return "Lyra";
   if (raDeg >= 320 && raDeg <= 345 && decDeg < 5) return "Aquarius";
   if (raDeg >= 30 && raDeg <= 60 && decDeg > 50) return "Perseus";
   if (raDeg >= 80 && raDeg <= 105 && decDeg > 8) return "Orion / Gemini";
-  if (raDeg >= 145 && raDeg <= 165) return "Leo";
   if (raDeg >= 100 && raDeg <= 120 && decDeg > 25) return "Gemini";
+  if (raDeg >= 145 && raDeg <= 165) return "Leo";
   if (decDeg >= 70) return "Ursa Minor";
   return "the sky";
 }
