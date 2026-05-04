@@ -1,9 +1,11 @@
 import {
   AdditiveBlending,
+  BackSide,
   BufferAttribute,
   BufferGeometry,
   CanvasTexture,
   Color,
+  DoubleSide,
   Group,
   LinearFilter,
   LineBasicMaterial,
@@ -12,6 +14,7 @@ import {
   MeshBasicMaterial,
   PerspectiveCamera,
   Points,
+  RingGeometry,
   Scene,
   ShaderMaterial,
   SphereGeometry,
@@ -231,6 +234,42 @@ export class SolarFlightScene {
       const mat = new MeshBasicMaterial({ color: spec.color });
       const sphere = new Mesh(geom, mat);
       group.add(sphere);
+
+      // Earth: subtle atmosphere glow halo (back-side hemisphere with
+      // additive blending — reads as a faint blue rim).
+      if (spec.name === "Earth") {
+        const atmoGeom = new SphereGeometry(spec.drawSize * 1.18, 24, 24);
+        const atmoMat = new MeshBasicMaterial({
+          color: 0x6ea4ff,
+          transparent: true,
+          opacity: 0.25,
+          side: BackSide,
+          depthWrite: false,
+          blending: AdditiveBlending,
+        });
+        const atmo = new Mesh(atmoGeom, atmoMat);
+        group.add(atmo);
+      }
+
+      // Saturn: textured ring system. RingGeometry is a flat disk; we tilt
+      // it around the X axis so it reads at the body's actual ~26.7°
+      // axial inclination (close enough for visualization).
+      if (spec.name === "Saturn") {
+        const ringInner = spec.drawSize * 1.4;
+        const ringOuter = spec.drawSize * 2.4;
+        const ringGeom = new RingGeometry(ringInner, ringOuter, 96);
+        const ringMat = new MeshBasicMaterial({
+          map: makeRingTexture(),
+          color: 0xffe1a3,
+          transparent: true,
+          opacity: 0.85,
+          side: DoubleSide,
+          depthWrite: false,
+        });
+        const ring = new Mesh(ringGeom, ringMat);
+        ring.rotation.x = Math.PI / 2 - 0.466; // ~26.7° tilt
+        group.add(ring);
+      }
 
       const labelTex = makeLabelTexture(spec.name);
       const labelMat = new SpriteMaterial({
@@ -562,6 +601,40 @@ function makeLabelTexture(text: string): CanvasTexture {
   ctx.shadowBlur = 4 * dpr;
   ctx.fillStyle = "rgba(245, 240, 220, 0.95)";
   ctx.fillText(text, width / 2, height / 2);
+  const tex = new CanvasTexture(canvas);
+  tex.minFilter = LinearFilter;
+  tex.magFilter = LinearFilter;
+  return tex;
+}
+
+/** Procedural Saturn-ring texture: a horizontal stripe of warm bands
+ *  with a couple of darker gaps (Cassini Division at ~70%). */
+function makeRingTexture(): CanvasTexture {
+  const w = 512;
+  const h = 32;
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("2d context unavailable");
+  // Base gradient: dark inner, bright middle, fading outer
+  const grad = ctx.createLinearGradient(0, 0, w, 0);
+  grad.addColorStop(0, "rgba(120, 100, 70, 0.0)"); // inner edge transparent
+  grad.addColorStop(0.05, "rgba(180, 150, 100, 0.7)");
+  grad.addColorStop(0.45, "rgba(255, 220, 160, 0.95)");
+  grad.addColorStop(0.65, "rgba(0, 0, 0, 0.0)"); // Cassini Division
+  grad.addColorStop(0.7, "rgba(255, 220, 160, 0.95)");
+  grad.addColorStop(0.95, "rgba(180, 150, 100, 0.5)");
+  grad.addColorStop(1, "rgba(120, 100, 70, 0.0)");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+  // Add fine banding noise
+  for (let x = 0; x < w; x += 2) {
+    if (Math.random() < 0.18) {
+      ctx.fillStyle = `rgba(255, 235, 200, ${Math.random() * 0.18})`;
+      ctx.fillRect(x, 0, 1, h);
+    }
+  }
   const tex = new CanvasTexture(canvas);
   tex.minFilter = LinearFilter;
   tex.magFilter = LinearFilter;
