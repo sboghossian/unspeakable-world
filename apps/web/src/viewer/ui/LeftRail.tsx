@@ -2,6 +2,8 @@ import { useState } from "react";
 import type { UniverseState } from "../universe/universe-scene";
 import { SettingsPanel } from "./SettingsPanel";
 
+type ZoneId = "habitable" | "asteroid" | "frost" | "kuiper" | "oort";
+
 type Scene = {
   flyTo(name: string): void;
   setConstellations(on: boolean): void;
@@ -15,6 +17,8 @@ type Scene = {
   setInterstellar(on: boolean): void;
   setOverlay(id: string | null): void;
   setOverlayMix(mix: number): void;
+  setSolarZone(zone: ZoneId, on: boolean): void;
+  toggleAllSolarZones(): void;
 };
 
 type Props = {
@@ -53,9 +57,10 @@ export function LeftRail({ state, scene, onOpenGuide }: Props) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [open, setOpen] = useState<{
     objects: boolean;
+    zones: boolean;
     waves: boolean;
     travel: boolean;
-  }>({ objects: true, waves: false, travel: true });
+  }>({ objects: true, zones: false, waves: false, travel: true });
 
   if (!scene) return null;
 
@@ -220,6 +225,29 @@ export function LeftRail({ state, scene, onOpenGuide }: Props) {
         </Section>
 
         <Section
+          label="Solar System zones"
+          hint="K"
+          open={open.zones}
+          onToggle={() => setOpen((o) => ({ ...o, zones: !o.zones }))}
+        >
+          {layerToggle(state.zones.habitable, "🌱 Habitable zone", () =>
+            scene.setSolarZone("habitable", !state.zones.habitable),
+          )}
+          {layerToggle(state.zones.asteroid, "💫 Asteroid belt", () =>
+            scene.setSolarZone("asteroid", !state.zones.asteroid),
+          )}
+          {layerToggle(state.zones.frost, "❄ Frost line", () =>
+            scene.setSolarZone("frost", !state.zones.frost),
+          )}
+          {layerToggle(state.zones.kuiper, "🪨 Kuiper belt", () =>
+            scene.setSolarZone("kuiper", !state.zones.kuiper),
+          )}
+          {layerToggle(state.zones.oort, "☁ Oort cloud", () =>
+            scene.setSolarZone("oort", !state.zones.oort),
+          )}
+        </Section>
+
+        <Section
           label="Wavelengths"
           open={open.waves}
           onToggle={() => setOpen((o) => ({ ...o, waves: !o.waves }))}
@@ -329,11 +357,13 @@ function Section({
   open,
   onToggle,
   children,
+  hint,
 }: {
   label: string;
   open: boolean;
   onToggle: () => void;
   children: React.ReactNode;
+  hint?: string;
 }) {
   return (
     <div className="mb-1">
@@ -342,7 +372,14 @@ function Section({
         onClick={onToggle}
         className="flex w-full items-center justify-between px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.25em] text-white/45 transition hover:text-white/80"
       >
-        <span>{label}</span>
+        <span className="flex items-center gap-2">
+          <span>{label}</span>
+          {hint && (
+            <span className="font-mono text-[9px] tracking-wider text-white/30">
+              {hint}
+            </span>
+          )}
+        </span>
         <span className={`transition ${open ? "rotate-90" : ""}`}>›</span>
       </button>
       {open && <div className="flex flex-col gap-0.5 pb-2">{children}</div>}

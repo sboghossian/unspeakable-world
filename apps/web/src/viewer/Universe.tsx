@@ -55,6 +55,13 @@ const DEFAULT_STATE: UniverseState = {
   asteroidsOn: false,
   cometsOn: false,
   interstellarOn: false,
+  zones: {
+    habitable: false,
+    asteroid: false,
+    frost: false,
+    kuiper: false,
+    oort: false,
+  },
 };
 
 export function Universe({ onExit }: Props) {
@@ -92,6 +99,19 @@ export function Universe({ onExit }: Props) {
       scene.dispose();
       sceneRef.current = null;
     };
+  }, []);
+
+  // Hotkey: `K` toggles all Solar System zone overlays at once. We listen
+  // on window so it works regardless of focus, but bail out for inputs.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "k" && e.key !== "K") return;
+      const t = e.target as HTMLElement | null;
+      if (t?.tagName === "INPUT" || t?.tagName === "TEXTAREA") return;
+      sceneRef.current?.toggleAllSolarZones();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, []);
 
   // Build the search index once mounted.
