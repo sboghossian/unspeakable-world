@@ -10,6 +10,7 @@ import { TonightSky } from "./ui/TonightSky";
 import { TourCard } from "./ui/TourCard";
 import { GRAND_TOUR } from "./tour/tour";
 import { FavoritesMenu } from "./ui/FavoritesMenu";
+import { SkyTonightPanel } from "./ui/SkyTonightPanel";
 import { SpaceWeatherPanel } from "./ui/SpaceWeatherPanel";
 import { TonightTargetsPanel } from "./ui/TonightTargetsPanel";
 import {
@@ -396,6 +397,7 @@ export function Viewer() {
           {/* NEO panel is wired but JPL CAD blocks browser CORS.
               Re-enable once apps/api ships a CF Worker proxy. */}
           {/* <NeoPanel /> */}
+          <SkyTonightPanel observer={observer} />
           <SpaceWeatherPanel />
           {searchIndex && (
             <TonightTargetsPanel
