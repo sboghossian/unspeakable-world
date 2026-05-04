@@ -3,7 +3,7 @@ import { Starfield } from "./landing/Starfield";
 import { Hero } from "./landing/Hero";
 import { Roadmap } from "./landing/Roadmap";
 import { Footer } from "./landing/Footer";
-import { navigate, useRoute } from "./router";
+import { navigate, surfacePlanet, useRoute } from "./router";
 
 // Lazy: the viewer pulls in Three.js, AstronomyEngine, and ~500 KB of HiPS /
 // catalog code. The landing page should not pay that cost — most first-time
@@ -15,9 +15,25 @@ const Viewer = lazy(() =>
 const SolarFlight = lazy(() =>
   import("./viewer/SolarFlight").then((m) => ({ default: m.SolarFlight })),
 );
+const PlanetSurface = lazy(() =>
+  import("./viewer/PlanetSurface").then((m) => ({ default: m.PlanetSurface })),
+);
 
 export function App() {
   const route = useRoute();
+
+  if (route === "surface") {
+    return (
+      <main className="relative h-full w-full bg-space-950">
+        <Suspense fallback={<ViewerLoadingVeil />}>
+          <PlanetSurface
+            planet={surfacePlanet()}
+            onExit={() => navigate("solar")}
+          />
+        </Suspense>
+      </main>
+    );
+  }
 
   if (route === "solar") {
     return (

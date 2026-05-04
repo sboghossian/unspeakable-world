@@ -191,6 +191,19 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
           >
             🛰 sats
           </button>
+          {(state.focus === "Earth" ||
+            state.focus === "Mars" ||
+            // Moon isn't in the focus targets but the chip still surfaces in
+            // sky view; only enable for the real solar-flight focus list.
+            state.focus === "Moon") && (
+            <a
+              href={`#surface/${state.focus.toLowerCase()}`}
+              title={`Open the surface of ${state.focus} — high-detail textured 3D body`}
+              className="rounded-lg border border-amber-400/50 bg-amber-400/15 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-amber-200 backdrop-blur transition hover:bg-amber-400/25"
+            >
+              🪐 land on {state.focus}
+            </a>
+          )}
           <button
             type="button"
             onClick={() => {
