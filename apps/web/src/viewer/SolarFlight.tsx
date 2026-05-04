@@ -73,6 +73,43 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
   const [satellitesOn, setSatellitesOn] = useState(false);
   const [sandboxOpen, setSandboxOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [focusMode, setFocusMode] = useState(false);
+
+  // AstroGrid-style keyboard shortcuts: ` home, 1-8 planet jump, F focus.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName ?? "";
+      if (tag === "INPUT" || tag === "TEXTAREA" || target?.isContentEditable)
+        return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      if (e.key === "`") {
+        sceneRef.current?.setFocus("Sun");
+        return;
+      }
+      if (e.key === "f" || e.key === "F") {
+        setFocusMode((v) => !v);
+        return;
+      }
+      const n = parseInt(e.key, 10);
+      if (!isNaN(n) && n >= 1 && n <= 8) {
+        const planets = [
+          "Mercury",
+          "Venus",
+          "Earth",
+          "Mars",
+          "Jupiter",
+          "Saturn",
+          "Uranus",
+          "Neptune",
+        ];
+        sceneRef.current?.setFocus(planets[n - 1]!);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
   const [sandboxKind, setSandboxKind] = useState<
     "Comet" | "Earth-class" | "Jupiter-class" | "Brown Dwarf" | "White Dwarf" | "Neutron Star" | "Black Hole"
   >("Comet");
@@ -82,8 +119,12 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
     <div className="relative h-full w-full bg-[#000208]">
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
 
-      {/* Top bar — back button + focus picker */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-2 p-3">
+      {/* Top bar — back button + focus picker (hidden in focus mode) */}
+      <div
+        className={`pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-2 p-3 transition-opacity ${
+          focusMode ? "opacity-0" : "opacity-100"
+        }`}
+      >
         <div className="pointer-events-auto flex items-center gap-2">
           <button
             type="button"
@@ -125,8 +166,12 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
         </div>
       </div>
 
-      {/* Bottom bar — chips + time strip */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex flex-col items-center gap-2 px-3">
+      {/* Bottom bar — chips + time strip (hidden in focus mode) */}
+      <div
+        className={`pointer-events-none absolute inset-x-0 bottom-3 z-10 flex flex-col items-center gap-2 px-3 transition-opacity ${
+          focusMode ? "opacity-0" : "opacity-100"
+        }`}
+      >
         <div className="pointer-events-auto flex flex-wrap items-center gap-2">
           <Chip label="focus" value={state.focus} accent />
           <Chip label="vicinity" value={state.vicinity} />
