@@ -33,7 +33,7 @@ export function InfoPanel({
   onToggleFavorite,
 }: Props) {
   return (
-    <aside className="pointer-events-auto absolute right-4 top-20 z-20 w-[300px] max-w-[90vw] rounded-xl border border-white/10 bg-space-950/85 p-4 backdrop-blur md:w-[340px]">
+    <aside className="pointer-events-auto absolute right-2 top-32 z-20 w-[300px] max-w-[calc(100vw-1rem)] rounded-xl border border-white/10 bg-space-950/85 p-4 backdrop-blur sm:right-4 sm:top-20 md:w-[340px]">
       <header className="mb-3 flex items-start justify-between gap-3">
         <div>
           <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/40">

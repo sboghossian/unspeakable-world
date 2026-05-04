@@ -439,16 +439,18 @@ export function Viewer() {
       />
 
       {/* Top bar */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-2 p-4">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-2 p-2 sm:p-4">
         <button
           type="button"
           onClick={() => navigate("landing")}
-          className="pointer-events-auto rounded-lg border border-white/10 bg-space-950/70 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-white/60 backdrop-blur transition hover:bg-white/10 hover:text-white"
+          title="Back to landing"
+          className="pointer-events-auto shrink-0 rounded-lg border border-white/10 bg-space-950/70 px-2.5 py-1.5 font-mono text-xs uppercase tracking-widest text-white/60 backdrop-blur transition hover:bg-white/10 hover:text-white sm:px-3"
         >
-          ← The Unspeakable World
+          <span className="sm:hidden">←</span>
+          <span className="hidden sm:inline">← The Unspeakable World</span>
         </button>
 
-        <div className="pointer-events-auto flex items-center gap-2">
+        <div className="pointer-events-auto flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
           {tourIndex === null && (
             <button
               type="button"
