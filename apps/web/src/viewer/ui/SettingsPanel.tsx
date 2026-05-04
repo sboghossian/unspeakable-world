@@ -128,6 +128,23 @@ export function SettingsPanel({ open, onClose, anchor = "left-rail" }: Props) {
         />
       </Section>
 
+      <Section label="Sonification">
+        <Toggle
+          label="🔊 sonification"
+          hint="enable pulsar 'listen' button in inspector"
+          on={s.sonificationOn}
+          onChange={(v) => update({ sonificationOn: v })}
+        />
+        <Slider
+          label="volume"
+          value={s.sonificationVolume}
+          min={0}
+          max={1}
+          step={0.05}
+          onChange={(v) => update({ sonificationVolume: v })}
+        />
+      </Section>
+
       <Section label="Data">
         <button
           type="button"

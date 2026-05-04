@@ -95,6 +95,7 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
   ];
   const [zonesOn, setZonesOn] = useState(false);
   const [satellitesOn, setSatellitesOn] = useState(false);
+  const [auroraOn, setAuroraOn] = useState(false);
   const [sandboxOpen, setSandboxOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
@@ -282,6 +283,22 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
             }`}
           >
             🛰 sats
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const next = !auroraOn;
+              setAuroraOn(next);
+              sceneRef.current?.setAurora(next);
+            }}
+            title="Toggle the aurora oval over Earth — live from NOAA SWPC OVATION"
+            className={`rounded-lg border px-3 py-1.5 font-mono text-xs uppercase tracking-widest backdrop-blur transition ${
+              auroraOn
+                ? "border-emerald-400/50 bg-emerald-400/15 text-emerald-200"
+                : "border-white/10 bg-space-950/70 text-white/65 hover:bg-white/10"
+            }`}
+          >
+            🌌 aurora
           </button>
           {(state.focus === "Earth" ||
             state.focus === "Mars" ||

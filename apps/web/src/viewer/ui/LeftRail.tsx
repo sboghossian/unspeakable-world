@@ -16,6 +16,7 @@ type Scene = {
   setComets(on: boolean): void;
   setInterstellar(on: boolean): void;
   setMoons(on: boolean): void;
+  setAurora(on: boolean): void;
   setMission(slug: string, on: boolean): void;
   setAllMissions(on: boolean): void;
   getMissionManifest(): Array<{
@@ -243,6 +244,12 @@ export function LeftRail({ state, scene, onOpenGuide, onOpenTimeMachine }: Props
           )}
           {layerToggle(state.moonsOn, "🌙 Moons", () =>
             scene.setMoons(!state.moonsOn),
+          )}
+          {layerToggle(
+            state.auroraOn,
+            "🌌 Aurora",
+            () => scene.setAurora(!state.auroraOn),
+            "Y",
           )}
         </Section>
 

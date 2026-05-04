@@ -23,6 +23,10 @@ export type AppSettings = {
   showNames: boolean;
   /** Sky Atlas projection mode. 3D = celestial sphere; aitoff = 2D oval. */
   skyProjection: "3d" | "aitoff";
+  /** Master switch for pulsar sonification + aurora overlay sound cues. */
+  sonificationOn: boolean;
+  /** Master volume for sonification UI (0-1). */
+  sonificationVolume: number;
 };
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -36,6 +40,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   realColor: false,
   showNames: true,
   skyProjection: "3d",
+  sonificationOn: true,
+  sonificationVolume: 0.4,
 };
 
 const STORAGE_KEY = "uw.settings.v1";
@@ -59,6 +65,15 @@ function sanitize(raw: unknown): AppSettings {
     showNames: typeof partial.showNames === "boolean" ? partial.showNames : DEFAULT_SETTINGS.showNames,
     skyProjection:
       partial.skyProjection === "aitoff" ? "aitoff" : DEFAULT_SETTINGS.skyProjection,
+    sonificationOn:
+      typeof partial.sonificationOn === "boolean"
+        ? partial.sonificationOn
+        : DEFAULT_SETTINGS.sonificationOn,
+    sonificationVolume: clamp(
+      Number(partial.sonificationVolume ?? DEFAULT_SETTINGS.sonificationVolume),
+      0,
+      1,
+    ),
   };
 }
 

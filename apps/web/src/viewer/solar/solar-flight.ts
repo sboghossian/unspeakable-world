@@ -29,6 +29,7 @@ import {
 } from "three";
 import { Body, HelioVector, GeoVector, JupiterMoons } from "astronomy-engine";
 import { SatelliteField } from "../satellites/satellite-field";
+import { AuroraOverlay } from "../space-weather/aurora-overlay";
 import { payloadForBody } from "../data/body-info";
 import type { InfoPayload } from "../ui/InfoPanel";
 import { getSettings } from "../../lib/settings";
@@ -175,6 +176,7 @@ export class SolarFlightScene {
   private starPoints: Points | null = null;
   private backgroundLabels: Sprite[] = [];
   private satellites: SatelliteField | null = null;
+  private auroraOverlay: AuroraOverlay | null = null;
 
   // Gravity sandbox — light n-body projectiles pulled by Sun + planets.
   private projectiles: Projectile[] = [];
@@ -401,6 +403,11 @@ export class SolarFlightScene {
         });
         const atmo = new Mesh(atmoGeom, atmoMat);
         group.add(atmo);
+
+        // Aurora oval overlay — fetched lazily when first toggled on.
+        const aurora = new AuroraOverlay({ earthRadius: spec.drawSize });
+        group.add(aurora);
+        this.auroraOverlay = aurora;
       }
 
       // Saturn: textured ring system. RingGeometry is a flat disk; we tilt
@@ -617,6 +624,10 @@ export class SolarFlightScene {
   setSatellites(visible: boolean): void {
     this.satellites?.setVisible(visible);
     if (visible) this.refreshSatellites();
+  }
+
+  setAurora(visible: boolean): void {
+    this.auroraOverlay?.setVisible(visible);
   }
 
   /** Re-propagate every TLE for the current sim time and update positions
