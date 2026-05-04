@@ -13,6 +13,11 @@ import { parseHash, replaceHash, serializeState } from "./share/url-state";
 import { WavelengthBar } from "./ui/WavelengthBar";
 import { InfoPanel } from "./ui/InfoPanel";
 import {
+  candidatesFromSimbad,
+  wikipediaSummary,
+  type WikiSummary,
+} from "./info/wikipedia";
+import {
   simbadConeSearch,
   worldDirectionToRaDec,
   type SimbadHit,
@@ -55,6 +60,8 @@ type Inspect = {
   loading: boolean;
   hit: SimbadHit | null;
   error: string | null;
+  wiki: WikiSummary | null;
+  wikiLoading: boolean;
 };
 
 export function Viewer() {
@@ -279,6 +286,8 @@ export function Viewer() {
         loading: true,
         hit: null,
         error: null,
+        wiki: null,
+        wikiLoading: false,
       });
       // FOV-scaled radius — when zoomed out, search a wider cone, so the user
       // hits *something* even with imprecise clicks.
@@ -289,8 +298,19 @@ export function Viewer() {
         .then((hit) => {
           if (inspectGenRef.current !== myGen) return;
           setInspect((prev) =>
-            prev ? { ...prev, loading: false, hit } : prev,
+            prev
+              ? { ...prev, loading: false, hit, wikiLoading: hit !== null }
+              : prev,
           );
+          if (!hit) return;
+          // Chain Wikipedia lookup — best effort.
+          const candidates = candidatesFromSimbad(hit.name, hit.identifiers);
+          void wikipediaSummary(candidates).then((wiki) => {
+            if (inspectGenRef.current !== myGen) return;
+            setInspect((prev) =>
+              prev ? { ...prev, wiki, wikiLoading: false } : prev,
+            );
+          });
         })
         .catch((err: unknown) => {
           if (inspectGenRef.current !== myGen) return;
@@ -449,6 +469,8 @@ export function Viewer() {
           loading={inspect.loading}
           error={inspect.error}
           hit={inspect.hit}
+          wiki={inspect.wiki}
+          wikiLoading={inspect.wikiLoading}
           onClose={() => setInspect(null)}
           onFlyTo={() => sceneRef.current?.flyTo(inspect.dir)}
         />

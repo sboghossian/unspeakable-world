@@ -1,5 +1,6 @@
 import type { SimbadHit } from "../info/simbad";
 import { describeType } from "../info/simbad";
+import type { WikiSummary } from "../info/wikipedia";
 
 type Props = {
   raDeg: number;
@@ -7,6 +8,8 @@ type Props = {
   loading: boolean;
   error: string | null;
   hit: SimbadHit | null;
+  wiki?: WikiSummary | null;
+  wikiLoading?: boolean;
   onClose: () => void;
   onFlyTo: () => void;
 };
@@ -17,6 +20,8 @@ export function InfoPanel({
   loading,
   error,
   hit,
+  wiki,
+  wikiLoading,
   onClose,
   onFlyTo,
 }: Props) {
@@ -99,6 +104,45 @@ export function InfoPanel({
             </div>
           )}
 
+          {(wikiLoading || wiki) && (
+            <div className="mt-4 rounded-lg border border-white/10 bg-white/[0.02] p-3">
+              <div className="mb-1 flex items-center justify-between">
+                <span className="font-mono text-[10px] uppercase tracking-widest text-white/40">
+                  Wikipedia
+                </span>
+                {wiki && (
+                  <a
+                    href={wiki.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-mono text-[10px] text-white/50 hover:text-plasma-400"
+                  >
+                    open ↗
+                  </a>
+                )}
+              </div>
+              {wikiLoading && !wiki && (
+                <div className="font-mono text-xs text-white/40">
+                  looking up…
+                </div>
+              )}
+              {wiki && (
+                <div className="flex gap-3">
+                  {wiki.thumbnail && (
+                    <img
+                      src={wiki.thumbnail.source}
+                      alt=""
+                      className="h-16 w-16 shrink-0 rounded border border-white/10 object-cover"
+                    />
+                  )}
+                  <p className="line-clamp-6 text-xs leading-relaxed text-white/75">
+                    {wiki.extract}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
           <button
             type="button"
             onClick={onFlyTo}
@@ -108,7 +152,7 @@ export function InfoPanel({
           </button>
 
           <div className="mt-3 text-[10px] text-white/30">
-            via SIMBAD · CDS Strasbourg
+            via SIMBAD · CDS Strasbourg{wiki ? " · Wikipedia (CC BY-SA)" : ""}
           </div>
         </>
       )}
