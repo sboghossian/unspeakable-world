@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * Build a small deep-sky-objects catalog from OpenNGC.
+ * Build a deep-sky-objects catalog from OpenNGC.
  *
  * Source:  https://github.com/mattiaverga/OpenNGC  (CC BY-SA 4.0)
- * Filter:  always include all 110 Messier objects, plus any NGC/IC with
- *          V-mag ≤ 11 (so the field stays manageable for a DSO label
- *          overlay on top of HiPS imagery).
+ * Filter:  every NGC/IC entry with usable RA/Dec — ~13.9K objects total,
+ *          including all 110 Messier. Renderer caps drawing density per
+ *          tile so the screen doesn't fill at wide FOV.
  * Output:  apps/web/public/data/dso.json
- *          [{ name, ra, dec, type, mag, common }]
+ *          [{ name, ra, dec, type, mag, common, messier }]
  *
  * Run:     node apps/etl/dso.mjs
  */
@@ -20,7 +20,9 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DATA = resolve(HERE, "..", "web", "public", "data");
 const NGC_URL =
   "https://raw.githubusercontent.com/mattiaverga/OpenNGC/master/database_files/NGC.csv";
-const MAG_LIMIT = 11;
+// Keep all NGC/IC rows that parse — magnitude is missing on many entries
+// and excluding those discards real objects (e.g. faint dwarf galaxies).
+const MAG_LIMIT = Infinity;
 
 function parseHmsToDeg(hms) {
   // "00:42:44.330" → degrees
@@ -81,9 +83,9 @@ function parse(csv) {
     const vRaw = (cols[colVMag] ?? "").trim();
     const v = vRaw ? parseFloat(vRaw) : NaN;
     const isMessier = messier.length > 0;
-    const isBright = Number.isFinite(v) && v <= MAG_LIMIT;
-
-    if (!isMessier && !isBright) continue;
+    // Keep every NGC/IC with valid coords; we no longer cut by magnitude.
+    void isMessier;
+    void MAG_LIMIT;
 
     const name = isMessier
       ? `M${messier.padStart(1, "")}`

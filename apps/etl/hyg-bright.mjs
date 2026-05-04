@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * Build a tiny binary star catalog from the HYG database.
+ * Build a binary star catalog from the HYG database.
  *
  * Source:  https://github.com/astronexus/HYG-Database  (CC BY-SA 2.5)
- * Filter:  mag <= 6.5 (naked-eye limit)
+ * Filter:  mag <= 12 (covers the entire telescopic sky — ~119K stars).
  * Output:  apps/web/public/data/hyg-bright.bin
  *          binary layout = uint32 count, then [f32 ra_deg, f32 dec_deg, f32 mag, f32 bv] * count
  *          plus apps/web/public/data/hyg-named.json
- *          (the ~300 stars with proper names — for hover/search later)
+ *          (the ~300 stars with proper names — for hover/search)
  *
  * Run with: pnpm --filter @unspeakable/etl build:hyg
  */
@@ -21,7 +21,9 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DATA = resolve(HERE, "..", "web", "public", "data");
 const HYG_URL =
   "https://raw.githubusercontent.com/astronexus/HYG-Database/main/hyg/CURRENT/hygdata_v40.csv.gz";
-const MAG_LIMIT = 6.5;
+// HYG v4 reaches ~mag 11.5; clamp at 12 to capture every entry that has
+// usable astrometry. Drops the on-disk size to ~1.9 MB binary.
+const MAG_LIMIT = 12;
 
 const PROPER_NAME_MAG_LIMIT = 5.0;
 

@@ -83,10 +83,11 @@ export class DsoField {
       colors[i * 3 + 1] = g;
       colors[i * 3 + 2] = b;
 
-      // Size: Messier objects are pulled larger so they always read,
-      // others scale gently with magnitude.
-      const baseSize = d.messier ? 14 : 8;
-      const magBoost = d.mag !== null ? Math.max(0, 12 - d.mag) * 0.6 : 0;
+      // Size: Messier objects pull large so they always read; the
+      // ~14K NGC/IC stay small (≥4 px) so the field doesn't look like
+      // a chickenpox screen at wide FOV.
+      const baseSize = d.messier ? 14 : 4;
+      const magBoost = d.mag !== null ? Math.max(0, 12 - d.mag) * 0.5 : 0;
       sizes[i] = baseSize + magBoost;
     }
 
