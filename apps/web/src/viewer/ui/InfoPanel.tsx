@@ -18,7 +18,14 @@ export type InfoSection =
   | { kind: "location"; rows: Array<[string, string]> }
   | { kind: "overview"; text: string }
   | { kind: "facts"; items: string[] }
-  | { kind: "links"; items: Array<{ label: string; href: string }> };
+  | { kind: "links"; items: Array<{ label: string; href: string }> }
+  | {
+      kind: "image";
+      url: string;
+      thumbUrl?: string;
+      credit: string;
+      caption?: string;
+    };
 
 export type InfoPayload = {
   kind:
@@ -51,6 +58,7 @@ const SECTION_TITLE: Record<InfoSection["kind"], string> = {
   overview: "overview",
   facts: "facts",
   links: "links",
+  image: "image",
 };
 
 const KIND_TONE: Record<InfoPayload["kind"], string> = {
@@ -102,13 +110,17 @@ export function InfoPanel({
       </header>
 
       <div className="flex-1 overflow-y-auto px-4 py-3">
-        {payload.sections.map((section, i) => (
-          <Section
-            key={`${section.kind}-${i}`}
-            title={SECTION_TITLE[section.kind]}
-            section={section}
-          />
-        ))}
+        {payload.sections.map((section, i) =>
+          section.kind === "image" ? (
+            <ImageHero key={`image-${i}`} section={section} />
+          ) : (
+            <Section
+              key={`${section.kind}-${i}`}
+              title={SECTION_TITLE[section.kind]}
+              section={section}
+            />
+          ),
+        )}
       </div>
 
       {(onFlyHere || onSurface) && (
@@ -207,5 +219,42 @@ function renderBody(section: InfoSection): ReactElement {
           ))}
         </div>
       );
+    case "image":
+      return <ImageHero section={section} />;
   }
+}
+
+function ImageHero({
+  section,
+}: {
+  section: Extract<InfoSection, { kind: "image" }>;
+}): ReactElement | null {
+  const [broken, setBroken] = useState(false);
+  if (broken) return null;
+  const src = section.thumbUrl ?? section.url;
+  return (
+    <a
+      href={section.url}
+      target="_blank"
+      rel="noreferrer"
+      className="mb-3 block overflow-hidden rounded-md border border-white/10 bg-black/40"
+      title={section.caption ?? "Open full image"}
+    >
+      <div className="relative">
+        <img
+          src={src}
+          alt={section.caption ?? "Object imagery"}
+          loading="lazy"
+          onError={() => setBroken(true)}
+          className="h-48 w-full object-cover"
+        />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-2 py-1 font-mono text-[10px] leading-snug text-white/85">
+          {section.caption && (
+            <div className="truncate text-white/95">{section.caption}</div>
+          )}
+          <div className="truncate text-white/70">{section.credit}</div>
+        </div>
+      </div>
+    </a>
+  );
 }

@@ -573,7 +573,7 @@ export const COSMIC_LANDMARKS: CosmicLandmark[] = [
   },
 ];
 
-type Placed = {
+export type Placed = {
   data: CosmicLandmark;
   sprite: Sprite;
 };
@@ -609,6 +609,11 @@ export class CosmicLandmarks {
 
   list(): CosmicLandmark[] {
     return COSMIC_LANDMARKS;
+  }
+
+  /** Sprites + their backing data, for raycaster picking. */
+  pickables(): ReadonlyArray<Placed> {
+    return this.placed;
   }
 
   private build(): void {
