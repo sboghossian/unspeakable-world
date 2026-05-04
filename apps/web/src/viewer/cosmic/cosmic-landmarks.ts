@@ -402,6 +402,175 @@ export const COSMIC_LANDMARKS: CosmicLandmark[] = [
     decDeg: -27.7917,
     detail: "2003 UDF · ~10,000 galaxies · earliest galaxies known until JWST",
   },
+  {
+    name: "JWST eXtreme Deep Field (XDF)",
+    kind: "exotic",
+    raDeg: 53.1574,
+    decDeg: -27.7873,
+    detail: "Webb-era successor to HUDF · z up to ~14 · 2022+",
+  },
+  {
+    name: "JWST CEERS Field",
+    kind: "exotic",
+    raDeg: 215.0,
+    decDeg: 53.0,
+    detail: "Cosmic Evolution Early Release Science · early Webb survey",
+  },
+
+  // ─── Galaxy clusters (rich, named) ─────────────────────────────────
+  {
+    name: "Virgo Cluster (M87)",
+    kind: "agn",
+    raDeg: 187.7059,
+    decDeg: 12.3911,
+    detail: "Galaxy cluster · ~1,300 members · 53 Mly · centered on M87",
+  },
+  {
+    name: "Coma Cluster",
+    kind: "agn",
+    raDeg: 194.953,
+    decDeg: 27.981,
+    detail: "Galaxy cluster · ~1,000 members · 320 Mly · NGC 4889 + 4874",
+  },
+  {
+    name: "Perseus Cluster (Abell 426)",
+    kind: "agn",
+    raDeg: 49.945,
+    decDeg: 41.514,
+    detail: "Galaxy cluster · X-ray brightest cluster · 240 Mly",
+  },
+  {
+    name: "Hercules Cluster (Abell 2151)",
+    kind: "agn",
+    raDeg: 241.3,
+    decDeg: 17.75,
+    detail: "Galaxy cluster · 500 Mly · part of Hercules Supercluster",
+  },
+  {
+    name: "Norma Cluster (Abell 3627)",
+    kind: "agn",
+    raDeg: 243.55,
+    decDeg: -60.91,
+    detail: "Galaxy cluster · core of the Great Attractor · 220 Mly",
+  },
+  {
+    name: "Bullet Cluster (1E 0657-558)",
+    kind: "agn",
+    raDeg: 104.6583,
+    decDeg: -55.9436,
+    detail: "Merging galaxy cluster · direct evidence of dark matter · 3.7 Gly",
+  },
+
+  // ─── Superclusters / large-scale structure ────────────────────────
+  {
+    name: "Laniakea Supercluster",
+    kind: "exotic",
+    raDeg: 158.0,
+    decDeg: -46.0,
+    detail: "Our home supercluster · 100,000 galaxies · 520 Mly across",
+  },
+  {
+    name: "Great Attractor",
+    kind: "exotic",
+    raDeg: 244.5,
+    decDeg: -62.0,
+    detail: "Gravitational anomaly · 250 Mly · pulls Local Group toward Norma",
+  },
+  {
+    name: "Shapley Supercluster",
+    kind: "exotic",
+    raDeg: 202.0,
+    decDeg: -31.5,
+    detail: "Largest known concentration of galaxies · 650 Mly",
+  },
+  {
+    name: "Sloan Great Wall",
+    kind: "exotic",
+    raDeg: 199.0,
+    decDeg: 10.0,
+    detail: "Galaxy filament · 1.37 Gly long · one of the largest structures",
+  },
+  {
+    name: "Boötes Void",
+    kind: "exotic",
+    raDeg: 222.0,
+    decDeg: 26.0,
+    detail: "Cosmic void · 330 Mly diameter · ~700 Mly distant",
+  },
+  {
+    name: "Local Group barycenter",
+    kind: "exotic",
+    raDeg: 11.0,
+    decDeg: 41.0,
+    detail: "~30 galaxies · centered between Milky Way & Andromeda",
+  },
+
+  // ─── More gravitational-wave events (LIGO/Virgo, well-localized) ──
+  {
+    name: "GW190521",
+    kind: "exotic",
+    raDeg: 86.16,
+    decDeg: 27.46,
+    detail: "Most massive BH-BH merger · 142 M☉ remnant · z=0.82",
+  },
+  {
+    name: "GW190425",
+    kind: "exotic",
+    raDeg: 245.0,
+    decDeg: 0.0,
+    detail: "Binary neutron-star merger candidate · 159 Mpc",
+  },
+  {
+    name: "GW230529",
+    kind: "exotic",
+    raDeg: 181.0,
+    decDeg: 6.0,
+    detail: "Lower-mass-gap BH + NS merger · 197 Mpc · 2023",
+  },
+
+  // ─── Famous emission / planetary nebulae ──────────────────────────
+  {
+    name: "Eagle Nebula (M16) · Pillars of Creation",
+    kind: "supernova-remnant",
+    raDeg: 274.7,
+    decDeg: -13.78,
+    detail: "Star-forming region · 7,000 ly · iconic Hubble image",
+  },
+  {
+    name: "Carina Nebula (NGC 3372)",
+    kind: "supernova-remnant",
+    raDeg: 161.265,
+    decDeg: -59.867,
+    detail: "Massive star-forming region · 8,500 ly · η Carinae host",
+  },
+  {
+    name: "Ring Nebula (M57)",
+    kind: "supernova-remnant",
+    raDeg: 283.396,
+    decDeg: 33.029,
+    detail: "Planetary nebula · 2,300 ly · classic amateur target",
+  },
+  {
+    name: "Helix Nebula (NGC 7293)",
+    kind: "supernova-remnant",
+    raDeg: 337.411,
+    decDeg: -20.838,
+    detail: "Planetary nebula · 700 ly · nearest known PN",
+  },
+  {
+    name: "Cat's Eye Nebula (NGC 6543)",
+    kind: "supernova-remnant",
+    raDeg: 269.639,
+    decDeg: 66.633,
+    detail: "Planetary nebula · 3,000 ly · complex shell structure",
+  },
+  {
+    name: "Dumbbell Nebula (M27)",
+    kind: "supernova-remnant",
+    raDeg: 299.901,
+    decDeg: 22.721,
+    detail: "Planetary nebula · 1,360 ly · first PN ever discovered (1764)",
+  },
 ];
 
 type Placed = {

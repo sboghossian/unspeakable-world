@@ -13,6 +13,10 @@ import { FavoritesMenu } from "./ui/FavoritesMenu";
 import { AboutOverlay } from "./ui/AboutOverlay";
 import { FirstRunHint } from "./ui/FirstRunHint";
 import { CenterHud } from "./ui/CenterHud";
+import {
+  TutorialOverlay,
+  shouldShowTutorial,
+} from "./ui/TutorialOverlay";
 import { EventsPanel } from "./ui/EventsPanel";
 import { NeoPanel } from "./ui/NeoPanel";
 import { ShareButton } from "./ui/ShareButton";
@@ -122,6 +126,7 @@ export function Viewer() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [eventsOpen, setEventsOpen] = useState(false);
+  const [tutorialOpen, setTutorialOpen] = useState(() => shouldShowTutorial());
   const [favorites, setFavorites] = useState<Favorite[]>(() => readFavorites());
 
   const reloadFavorites = useCallback(() => {
@@ -722,6 +727,14 @@ export function Viewer() {
           </button>
           <button
             type="button"
+            onClick={() => setTutorialOpen(true)}
+            title="Re-open the interactive tutorial"
+            className="pointer-events-auto rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1.5 font-mono text-xs text-emerald-200 backdrop-blur transition hover:bg-emerald-400/20"
+          >
+            🎓
+          </button>
+          <button
+            type="button"
             onClick={() => setShortcutsOpen(true)}
             title="Keyboard shortcuts (press ?)"
             className="pointer-events-auto rounded-lg border border-white/10 bg-space-950/70 px-2.5 py-1.5 font-mono text-xs text-white/60 backdrop-blur transition hover:bg-white/10 hover:text-white"
@@ -937,6 +950,10 @@ export function Viewer() {
       )}
 
       {aboutOpen && <AboutOverlay onClose={() => setAboutOpen(false)} />}
+
+      {tutorialOpen && (
+        <TutorialOverlay onClose={() => setTutorialOpen(false)} />
+      )}
 
       {status === "live" && <FirstRunHint />}
     </div>
