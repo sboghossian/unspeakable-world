@@ -64,6 +64,14 @@
 
 **ℹ Credits panel.** Press `i` to see every data source, API, and library the viewer depends on, with licenses — required by CC-BY-SA attribution for HYG and OpenNGC; required by basic decency for everyone else.
 
+**🪐 Galilean moons.** Zoom in past 6° FOV near Jupiter and Io / Europa / Ganymede / Callisto resolve from the planet sprite, with their geocentric positions computed live from `JupiterMoons()` ephemerides.
+
+**🛰 Iconic spacecraft markers.** Toggle ◇ CRAFT (or press `s`) and Voyager 1, Voyager 2, Pioneer 10, Pioneer 11, New Horizons, and JWST appear as cyan markers in the sky — at their current sky direction. Click any marker to read the launch date + mission status. JWST tracks the anti-solar direction (Earth-Sun L2) live as the Sun moves.
+
+**☀ Solar activity.** The space-weather panel now also surfaces the latest sunspot number, F10.7 cm radio flux, and ACE/DSCOVR solar wind proton speed alongside Kp / G / S / R scales and the aurora outlook.
+
+**🚀 Lazy-loaded viewer.** Landing-page bundle is 67 KB gzipped — the Three.js + AstronomyEngine + HiPS streaming code only downloads when you click "Launch the viewer."
+
 ---
 
 The full plan lives in [`tasks/todo.md`](./tasks/todo.md). Every commit lands on `main` and pushes here. **No private branches, no stealth — every dragon is a public issue.**
