@@ -20,6 +20,7 @@ import {
   SphereGeometry,
   Sprite,
   SpriteMaterial,
+  TextureLoader,
   Vector3,
   WebGLRenderer,
 } from "three";
@@ -96,6 +97,10 @@ export type SolarFlightState = {
   yaw: number;
   /** Camera pitch in radians. */
   pitch: number;
+  /** "Tracking Mode" — keeps the camera glued to a moving body. Default on. */
+  tracking: boolean;
+  /** Auto-detected scale region the camera is currently in. */
+  vicinity: string;
 };
 
 type Listener = (s: SolarFlightState) => void;
@@ -113,6 +118,7 @@ export class SolarFlightScene {
   private dragging = false;
   private lastX = 0;
   private lastY = 0;
+  private tracking = true;
 
   // Time
   private simTime = new Date();
@@ -189,6 +195,8 @@ export class SolarFlightScene {
       cameraDistance: this.cameraDistance,
       yaw: this.yaw,
       pitch: this.pitch,
+      tracking: this.tracking,
+      vicinity: "Inner Solar System",
     };
 
     this.tick();
@@ -214,6 +222,19 @@ export class SolarFlightScene {
 
   setTimeRate(r: number): void {
     this.timeRate = r;
+    this.publishState();
+  }
+
+  setTracking(tracking: boolean): void {
+    this.tracking = tracking;
+    this.publishState();
+  }
+
+  /** Reset simulation time to wall-clock now. */
+  resetNow(): void {
+    this.simTime = new Date();
+    this.lastWallClock = performance.now();
+    this.updatePlanets();
     this.publishState();
   }
 
@@ -244,14 +265,41 @@ export class SolarFlightScene {
       const sphere = new Mesh(geom, mat);
       group.add(sphere);
 
-      // Earth: subtle atmosphere glow halo (back-side hemisphere with
-      // additive blending — reads as a faint blue rim).
+      // Earth: real Blue Marble texture + subtle atmosphere glow halo.
+      // The texture is a procedural canvas that reads as continents over
+      // ocean (no external assets required); the front-side glow goes on
+      // top of it to read on the night side. We could swap to NASA's
+      // public-domain Blue Marble JPG via TextureLoader if we want photo
+      // realism, but procedural keeps us federation-friendly.
       if (spec.name === "Earth") {
-        const atmoGeom = new SphereGeometry(spec.drawSize * 1.18, 24, 24);
+        const earthTex = makeEarthTexture();
+        (sphere.material as MeshBasicMaterial).map = earthTex;
+        (sphere.material as MeshBasicMaterial).color = new Color(0xffffff);
+        (sphere.material as MeshBasicMaterial).needsUpdate = true;
+
+        // Try to upgrade to a real Blue Marble photo asynchronously. If it
+        // loads, swap the texture; if it fails (CORS / offline), keep the
+        // procedural one.
+        const loader = new TextureLoader();
+        loader.setCrossOrigin("anonymous");
+        loader.load(
+          "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Land_ocean_ice_cloud_2048.jpg/1024px-Land_ocean_ice_cloud_2048.jpg",
+          (tex) => {
+            (sphere.material as MeshBasicMaterial).map = tex;
+            (sphere.material as MeshBasicMaterial).needsUpdate = true;
+          },
+          undefined,
+          () => {
+            // Silent fail — procedural texture is already in place.
+          },
+        );
+
+        // Atmosphere — back-side hemisphere with additive blending.
+        const atmoGeom = new SphereGeometry(spec.drawSize * 1.22, 32, 32);
         const atmoMat = new MeshBasicMaterial({
           color: 0x6ea4ff,
           transparent: true,
-          opacity: 0.25,
+          opacity: 0.32,
           side: BackSide,
           depthWrite: false,
           blending: AdditiveBlending,
@@ -649,8 +697,29 @@ export class SolarFlightScene {
       cameraDistance: this.cameraDistance,
       yaw: this.yaw,
       pitch: this.pitch,
+      tracking: this.tracking,
+      vicinity: this.detectVicinity(),
     };
     for (const l of this.listeners) l(this.state);
+  }
+
+  /** Camera-distance-from-Sun → name for the scale region we're sitting
+   *  in. Mirrors AstroGrid's "EARTH VICINITY" / "INNER SYSTEM" auto-label. */
+  private detectVicinity(): string {
+    // Use camera position from the Sun, in AU.
+    const camWorld = this.camera.position;
+    const r = Math.hypot(camWorld.x, camWorld.y, camWorld.z);
+    if (r < 0.6) return "Inner Sun";
+    if (r < 1.3) return "Earth Vicinity";
+    if (r < 2.5) return "Inner Solar System";
+    if (r < 6) return "Asteroid Belt Region";
+    if (r < 12) return "Jupiter Region";
+    if (r < 22) return "Saturn Region";
+    if (r < 35) return "Uranus / Neptune Region";
+    if (r < 80) return "Outer Solar System";
+    if (r < 1500) return "Inner Heliosphere";
+    if (r < 50000) return "Heliopause / Local Bubble";
+    return "Interstellar Backdrop";
   }
 
   private handleResize(): void {
@@ -674,8 +743,10 @@ export class SolarFlightScene {
       this.updatePlanets();
       this.publishState();
     }
-    // If we're focused on a moving target, keep the camera glued.
-    if (this.focusName !== "Sun") this.applyCamera();
+    // Tracking mode keeps the camera glued to the moving focus body each
+    // frame; turning it off lets the planet drift through the view as it
+    // orbits.
+    if (this.tracking && this.focusName !== "Sun") this.applyCamera();
     this.renderer.render(this.scene, this.camera);
     this.rafHandle = requestAnimationFrame(this.tick);
   };
@@ -774,6 +845,73 @@ function makeLabelTexture(text: string): CanvasTexture {
   ctx.shadowBlur = 4 * dpr;
   ctx.fillStyle = "rgba(245, 240, 220, 0.95)";
   ctx.fillText(text, width / 2, height / 2);
+  const tex = new CanvasTexture(canvas);
+  tex.minFilter = LinearFilter;
+  tex.magFilter = LinearFilter;
+  return tex;
+}
+
+/** Procedural Earth texture: blue ocean base with continent-shaped land
+ *  blobs sketched into the canvas. Reads as Earth-from-orbit at a glance
+ *  even before the (optional) NASA Blue Marble photo loads. */
+function makeEarthTexture(): CanvasTexture {
+  const w = 1024;
+  const h = 512;
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("2d context unavailable");
+  // Ocean
+  const ocean = ctx.createLinearGradient(0, 0, 0, h);
+  ocean.addColorStop(0, "#0a3a6e");
+  ocean.addColorStop(0.5, "#1859a0");
+  ocean.addColorStop(1, "#0e2c5a");
+  ctx.fillStyle = ocean;
+  ctx.fillRect(0, 0, w, h);
+
+  // Stylized continents (rough silhouettes by lon/lat → x/y).
+  // These are not surveyors' coastlines; just enough mass that "continents"
+  // read on the globe before the real Blue Marble texture lands.
+  const land = "#1d6f3a";
+  const landDark = "#155a2c";
+
+  const drawBlob = (lon: number, lat: number, scale: number, color: string) => {
+    const cx = ((lon + 180) / 360) * w;
+    const cy = ((90 - lat) / 180) * h;
+    const sx = scale * (w / 360);
+    const sy = scale * (h / 180);
+    ctx.beginPath();
+    ctx.moveTo(cx + sx, cy);
+    for (let a = 0; a < Math.PI * 2; a += 0.3) {
+      const r = 1 + Math.sin(a * 3) * 0.18 + Math.cos(a * 2) * 0.1;
+      ctx.lineTo(cx + Math.cos(a) * sx * r, cy + Math.sin(a) * sy * r);
+    }
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+  };
+  // Africa
+  drawBlob(20, 0, 25, land);
+  drawBlob(25, -20, 18, landDark);
+  // Eurasia
+  drawBlob(55, 50, 50, land);
+  drawBlob(100, 45, 30, landDark);
+  // Americas
+  drawBlob(-95, 40, 28, land);
+  drawBlob(-65, -15, 22, landDark);
+  drawBlob(-110, 55, 22, land);
+  // Australia
+  drawBlob(135, -25, 18, land);
+  // Antarctica
+  ctx.fillStyle = "#e9eef5";
+  ctx.fillRect(0, h - 32, w, 32);
+  // Greenland / Arctic ice cap
+  ctx.fillStyle = "#dde6ee";
+  ctx.beginPath();
+  ctx.ellipse(w * 0.32, h * 0.07, w * 0.04, h * 0.05, 0, 0, Math.PI * 2);
+  ctx.fill();
+
   const tex = new CanvasTexture(canvas);
   tex.minFilter = LinearFilter;
   tex.magFilter = LinearFilter;

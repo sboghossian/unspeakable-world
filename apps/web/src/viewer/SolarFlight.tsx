@@ -32,6 +32,8 @@ const DEFAULT_STATE: SolarFlightState = {
   cameraDistance: 4,
   yaw: 0,
   pitch: 0.4,
+  tracking: true,
+  vicinity: "Inner Solar System",
 };
 
 export function SolarFlight({ onExit, onFlyToSky }: Props) {
@@ -108,6 +110,7 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
       <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex flex-col items-center gap-2 px-3">
         <div className="pointer-events-auto flex flex-wrap items-center gap-2">
           <Chip label="focus" value={state.focus} accent />
+          <Chip label="vicinity" value={state.vicinity} />
           <Chip
             label="distance"
             value={
@@ -116,6 +119,26 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
                 : `${(state.cameraDistance * 149.6).toFixed(2)} M km`
             }
           />
+          <button
+            type="button"
+            onClick={() => sceneRef.current?.setTracking(!state.tracking)}
+            title="Tracking — keep camera glued to the focus body as time advances"
+            className={`rounded-lg border px-3 py-1.5 font-mono text-xs uppercase tracking-widest backdrop-blur transition ${
+              state.tracking
+                ? "border-emerald-400/50 bg-emerald-400/15 text-emerald-200"
+                : "border-white/10 bg-space-950/70 text-white/65 hover:bg-white/10"
+            }`}
+          >
+            ⊙ tracking {state.tracking ? "on" : "off"}
+          </button>
+          <button
+            type="button"
+            onClick={() => sceneRef.current?.resetNow()}
+            title="Reset simulation time to the current wall-clock moment"
+            className="rounded-lg border border-white/10 bg-space-950/70 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-white/75 backdrop-blur transition hover:bg-white/10"
+          >
+            ⟲ now
+          </button>
           <button
             type="button"
             onClick={() => {
