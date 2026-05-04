@@ -13,6 +13,8 @@ type Props = {
   wikiLoading?: boolean;
   isFavorited?: boolean;
   observer?: { lat: number; lon: number } | null;
+  /** IAU 3-letter ID of the constellation the click landed in. */
+  constellation?: string | null;
   onClose: () => void;
   onFlyTo: () => void;
   onToggleFavorite?: () => void;
@@ -28,6 +30,7 @@ export function InfoPanel({
   wikiLoading,
   isFavorited,
   observer,
+  constellation,
   onClose,
   onFlyTo,
   onToggleFavorite,
@@ -69,9 +72,23 @@ export function InfoPanel({
       {!loading && !error && !hit && (
         <div className="rounded-md border border-white/10 bg-white/5 p-3 text-sm text-white/60">
           Nothing in SIMBAD's catalog within 10 arcmin of this point.
+          {constellation && (
+            <div className="mt-2 font-mono text-xs text-white/55">
+              You're looking near{" "}
+              <span className="text-amber-300">{constellation}</span> ·{" "}
+              {fullConstellationName(constellation)}.
+            </div>
+          )}
           <div className="mt-2 text-xs text-white/40">
-            Try clicking closer to a bright object.
+            Try clicking closer to a bright object, or zoom in.
           </div>
+        </div>
+      )}
+
+      {hit && constellation && constellation !== "—" && (
+        <div className="mt-2 font-mono text-[10px] text-white/40">
+          in <span className="text-amber-300/80">{constellation}</span> ·{" "}
+          {fullConstellationName(constellation)}
         </div>
       )}
 
@@ -225,6 +242,102 @@ function formatDec(decDeg: number): string {
 
 function pad2(n: number): string {
   return n.toString().padStart(2, "0");
+}
+
+/** IAU 3-letter constellation code → English name. */
+const CONSTELLATION_NAMES: Record<string, string> = {
+  And: "Andromeda",
+  Ant: "Antlia",
+  Aps: "Apus",
+  Aql: "Aquila",
+  Aqr: "Aquarius",
+  Ara: "Ara",
+  Ari: "Aries",
+  Aur: "Auriga",
+  Boo: "Boötes",
+  Cae: "Caelum",
+  Cam: "Camelopardalis",
+  Cap: "Capricornus",
+  Car: "Carina",
+  Cas: "Cassiopeia",
+  Cen: "Centaurus",
+  Cep: "Cepheus",
+  Cet: "Cetus",
+  Cha: "Chamaeleon",
+  Cir: "Circinus",
+  CMa: "Canis Major",
+  CMi: "Canis Minor",
+  Cnc: "Cancer",
+  Col: "Columba",
+  Com: "Coma Berenices",
+  CrA: "Corona Australis",
+  CrB: "Corona Borealis",
+  Crt: "Crater",
+  Cru: "Crux",
+  Crv: "Corvus",
+  CVn: "Canes Venatici",
+  Cyg: "Cygnus",
+  Del: "Delphinus",
+  Dor: "Dorado",
+  Dra: "Draco",
+  Equ: "Equuleus",
+  Eri: "Eridanus",
+  For: "Fornax",
+  Gem: "Gemini",
+  Gru: "Grus",
+  Her: "Hercules",
+  Hor: "Horologium",
+  Hya: "Hydra",
+  Hyi: "Hydrus",
+  Ind: "Indus",
+  Lac: "Lacerta",
+  Leo: "Leo",
+  Lep: "Lepus",
+  Lib: "Libra",
+  LMi: "Leo Minor",
+  Lup: "Lupus",
+  Lyn: "Lynx",
+  Lyr: "Lyra",
+  Men: "Mensa",
+  Mic: "Microscopium",
+  Mon: "Monoceros",
+  Mus: "Musca",
+  Nor: "Norma",
+  Oct: "Octans",
+  Oph: "Ophiuchus",
+  Ori: "Orion",
+  Pav: "Pavo",
+  Peg: "Pegasus",
+  Per: "Perseus",
+  Phe: "Phoenix",
+  Pic: "Pictor",
+  PsA: "Piscis Austrinus",
+  Psc: "Pisces",
+  Pup: "Puppis",
+  Pyx: "Pyxis",
+  Ret: "Reticulum",
+  Scl: "Sculptor",
+  Sco: "Scorpius",
+  Sct: "Scutum",
+  Ser: "Serpens",
+  Sex: "Sextans",
+  Sge: "Sagitta",
+  Sgr: "Sagittarius",
+  Tau: "Taurus",
+  Tel: "Telescopium",
+  TrA: "Triangulum Australe",
+  Tri: "Triangulum",
+  Tuc: "Tucana",
+  UMa: "Ursa Major",
+  UMi: "Ursa Minor",
+  Vel: "Vela",
+  Vir: "Virgo",
+  Vol: "Volans",
+  Vul: "Vulpecula",
+};
+
+function fullConstellationName(code: string): string {
+  return CONSTELLATION_NAMES[code] ?? code;
 }
 
 /**

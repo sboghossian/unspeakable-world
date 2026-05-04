@@ -176,6 +176,23 @@ export class SearchIndex {
     return this.entries;
   }
 
+  /**
+   * IAU 3-letter ID of the constellation whose centroid is closest to
+   * `worldDir`. Centroids aren't true IAU boundaries — adjacent
+   * constellations can win on edge cases — but for "you're looking in
+   * Orion" it's plenty accurate.
+   */
+  nearestConstellation(worldDir: Vector3): string | null {
+    let best: { id: string; angle: number } | null = null;
+    for (const e of this.entries) {
+      if (e.kind !== "constellation") continue;
+      const dot = Math.max(-1, Math.min(1, e.direction.dot(worldDir)));
+      const angle = Math.acos(dot);
+      if (!best || angle < best.angle) best = { id: e.label, angle };
+    }
+    return best?.id ?? null;
+  }
+
   search(query: string, limit = 8): SearchEntry[] {
     const q = query.trim().toLowerCase();
     if (!q) return [];

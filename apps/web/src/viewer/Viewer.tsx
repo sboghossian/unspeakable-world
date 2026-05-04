@@ -78,6 +78,8 @@ type Inspect = {
   error: string | null;
   wiki: WikiSummary | null;
   wikiLoading: boolean;
+  /** IAU 3-letter constellation the click landed in (centroid heuristic). */
+  constellation: string | null;
 };
 
 export function Viewer() {
@@ -391,6 +393,7 @@ export function Viewer() {
       // Local-first: solar bodies + ISS aren't in SIMBAD. Short-circuit
       // when the click landed on one of them (FOV-scaled tolerance).
       const localHit = resolveLocalHit(scene, dir, state.fov);
+      const constellation = searchIndex?.nearestConstellation(dir) ?? null;
       if (localHit) {
         setInspect({
           raDeg: localHit.raDeg,
@@ -401,6 +404,7 @@ export function Viewer() {
           error: null,
           wiki: null,
           wikiLoading: true,
+          constellation,
         });
         void wikipediaSummary([localHit.name]).then((wiki) => {
           if (inspectGenRef.current !== myGen) return;
@@ -420,6 +424,7 @@ export function Viewer() {
         error: null,
         wiki: null,
         wikiLoading: false,
+        constellation,
       });
       // FOV-scaled radius — when zoomed out, search a wider cone, so the user
       // hits *something* even with imprecise clicks.
@@ -452,7 +457,7 @@ export function Viewer() {
           );
         });
     },
-    [state],
+    [state, searchIndex],
   );
 
   return (
@@ -640,6 +645,7 @@ export function Viewer() {
               : false
           }
           observer={observer}
+          constellation={inspect.constellation}
           onClose={() => setInspect(null)}
           onFlyTo={() => sceneRef.current?.flyTo(inspect.dir)}
           onToggleFavorite={onToggleFavorite}
