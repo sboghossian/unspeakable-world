@@ -47,6 +47,7 @@ import {
   loadAllMissions,
   type MissionManifestEntry,
 } from "./missions";
+import { SolarZones, type ZoneId } from "./solar-zones";
 import { getSettings, onSettingsChange } from "../../lib/settings";
 
 /**
@@ -137,6 +138,14 @@ export type UniverseState = {
   interstellarOn: boolean;
   /** Per-slug mission visibility. */
   missions: Record<string, boolean>;
+  /** Solar System zone overlays (rings drawn in the ecliptic plane). */
+  zones: {
+    habitable: boolean;
+    asteroid: boolean;
+    frost: boolean;
+    kuiper: boolean;
+    oort: boolean;
+  };
 };
 
 type Listener = (s: UniverseState) => void;
@@ -191,6 +200,7 @@ export class UniverseScene {
   private interstellar: InterstellarMarkers | null = null;
   private missions: MissionField | null = null;
   private missionManifest: MissionManifestEntry[] = [];
+  private solarZones!: SolarZones;
 
   // Solar contents
   private sunMesh: Mesh;
@@ -257,6 +267,23 @@ export class UniverseScene {
   // Standby idle tracking.
   private lastInteractionMs = performance.now();
   private settingsUnsub: () => void = () => {};
+  // FPS-cap throttling: skip renderer.render when next frame would arrive
+  // sooner than 1000/fpsCap ms after the last actual render.
+  private lastRenderMs = 0;
+  // Cosmetic vs realistic planet colors. Cosmetic = the per-spec PLANETS
+  // table; realistic = approximate true color of the body (Earth blue,
+  // Mars red, etc.). Toggled via settings.realColor.
+  private cosmeticPlanetColors: number[] = PLANETS.map((p) => p.color);
+  private realPlanetColors: Record<string, number> = {
+    Mercury: 0x8c7853,
+    Venus: 0xe8d8a8,
+    Earth: 0x4870b8,
+    Mars: 0xb04030,
+    Jupiter: 0xc8a878,
+    Saturn: 0xd8c098,
+    Uranus: 0x9be0d8,
+    Neptune: 0x4070c0,
+  };
 
   constructor(readonly canvas: HTMLCanvasElement) {
     this.renderer = new WebGLRenderer({
@@ -330,6 +357,11 @@ export class UniverseScene {
     void this.buildPlanetsAndOrbits();
     void this.loadSmallBodies();
 
+    // Solar System zone overlays — five ecliptic-plane rings, all OFF by
+    // default. Lives in solarGroup so it shares AU coordinates.
+    this.solarZones = new SolarZones();
+    this.solarGroup.add(this.solarZones);
+
     // ─── Galactic group ────────────────────────────────────────
     const galaxyTex = makeGalaxyTexture();
     const diskMat = new MeshBasicMaterial({
@@ -391,6 +423,21 @@ export class UniverseScene {
     // Star labels follow `showNames`. Constellation grid opacity reuses
     // gridOpacity. Both are visible only when their toggle is on.
     this.starLabels.setVisible(s.showNames);
+    // Coordinate-grid line opacity follows gridOpacity. The visibility
+    // toggle (setCoordGrid) is independent — opacity only affects
+    // brightness when the grid is on.
+    this.coordGrid.setOpacity(s.gridOpacity);
+    // Recolor planet spheres based on realColor toggle.
+    for (let i = 0; i < this.planets.length; i++) {
+      const p = this.planets[i];
+      if (!p) continue;
+      const real = this.realPlanetColors[p.name];
+      const cosmetic = this.cosmeticPlanetColors[i];
+      const target = s.realColor && real !== undefined ? real : cosmetic;
+      if (target !== undefined) {
+        (p.sphere.material as MeshBasicMaterial).color.setHex(target);
+      }
+    }
     // Orbit opacity acts as a multiplier on the per-frame ramp in tick().
   }
 
@@ -509,6 +556,24 @@ export class UniverseScene {
   /** Snapshot of the loaded mission manifest (post-`loadSmallBodies`). */
   getMissionManifest(): MissionManifestEntry[] {
     return this.missionManifest;
+  }
+
+  setSolarZone(zone: ZoneId, on: boolean): void {
+    this.solarZones.setVisible(zone, on);
+    this.publishState();
+  }
+
+  setAllSolarZones(on: boolean): void {
+    this.solarZones.setAllVisible(on);
+    this.publishState();
+  }
+
+  /** Toggle every zone at once based on whether *any* are currently on. */
+  toggleAllSolarZones(): void {
+    const s = this.solarZones.state();
+    const anyOn = s.habitable || s.asteroid || s.frost || s.kuiper || s.oort;
+    this.solarZones.setAllVisible(!anyOn);
+    this.publishState();
   }
 
   private async loadSmallBodies(): Promise<void> {
@@ -1043,6 +1108,7 @@ export class UniverseScene {
       cometsOn: this.comets?.visible ?? false,
       interstellarOn: this.interstellar?.visible ?? false,
       missions: this.missions?.visibility() ?? {},
+      zones: this.solarZones.state(),
     };
   }
 
@@ -1198,8 +1264,20 @@ export class UniverseScene {
     const hidden = typeof document !== "undefined" && document.hidden;
     const idle = idleMs > 60_000 && !this.flyTween && this.heldKeys.size === 0;
     const standby = settings.standby && (hidden || idle);
-    if (!standby) {
+    // FPS cap: skip rendering when the next frame would arrive sooner than
+    // 1000/fpsCap ms after the last actual render. rAF still fires so
+    // input + tween updates remain crisp.
+    const minFrameMs = 1000 / settings.fpsCap;
+    const dueForRender = now - this.lastRenderMs >= minFrameMs - 0.5;
+    if (!standby && dueForRender) {
       this.renderer.render(this.scene, this.camera);
+      this.lastRenderMs = now;
+      if (typeof window !== "undefined" && window.location.search.includes("fpsdebug=1")) {
+        // Lightweight rAF-rate observer for verification only.
+        // Counter is attached to window to be queryable from devtools.
+        const w = window as unknown as { __uwFpsCount?: number };
+        w.__uwFpsCount = (w.__uwFpsCount ?? 0) + 1;
+      }
     }
     this.publishState();
     this.rafHandle = requestAnimationFrame(this.tick);

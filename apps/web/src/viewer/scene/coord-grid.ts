@@ -88,6 +88,17 @@ export class CoordGrid {
     this.group.visible = v;
   }
 
+  /** Apply a scalar opacity multiplier to all four line layers. The
+   *  per-layer base opacities (0.28 / 0.7 / 0.55 / 0.55) are scaled by
+   *  `v ∈ [0,1]`, so v=1 keeps the design intent and v=0 hides everything. */
+  setOpacity(v: number): void {
+    const k = Math.max(0, Math.min(1, v));
+    this.gridMat.opacity = 0.28 * k;
+    this.equatorMat.opacity = 0.7 * k;
+    this.eclipticMat.opacity = 0.55 * k;
+    this.galacticMat.opacity = 0.55 * k;
+  }
+
   private build(): void {
     // Equatorial grid: 24 meridians (every 15° RA) + 17 parallels (every 10°).
     const gridPos: number[] = [];

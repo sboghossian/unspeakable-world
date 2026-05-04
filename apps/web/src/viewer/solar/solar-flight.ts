@@ -31,6 +31,7 @@ import { Body, HelioVector, GeoVector, JupiterMoons } from "astronomy-engine";
 import { SatelliteField } from "../satellites/satellite-field";
 import { payloadForBody } from "../data/body-info";
 import type { InfoPayload } from "../ui/InfoPanel";
+import { getSettings } from "../../lib/settings";
 
 export type SolarFlightHit = {
   kind: "Sun" | "Planet";
@@ -179,6 +180,11 @@ export class SolarFlightScene {
   private projectiles: Projectile[] = [];
   private projectileGroup = new Group();
   private projectileTrails: LineLoop[] = [];
+
+  // Standby idle tracking (mirrors UniverseScene): skip renderer.render
+  // when the tab is hidden or the camera has been idle > 60s. rAF stays
+  // alive so the next pointer/key/touch wakes us back up.
+  private lastInteractionMs = performance.now();
 
   // State
   private rafHandle = 0;
@@ -932,9 +938,16 @@ export class SolarFlightScene {
     c.addEventListener("pointerup", this.onPointerUp);
     c.addEventListener("pointercancel", this.onPointerUp);
     c.addEventListener("wheel", this.onWheel, { passive: false });
+    window.addEventListener("keydown", this.wake);
+    c.addEventListener("touchstart", this.wake, { passive: true });
   }
 
+  private wake = (): void => {
+    this.lastInteractionMs = performance.now();
+  };
+
   private onPointerDown = (e: PointerEvent) => {
+    this.lastInteractionMs = performance.now();
     this.dragging = true;
     this.lastX = e.clientX;
     this.lastY = e.clientY;
@@ -945,6 +958,7 @@ export class SolarFlightScene {
   };
   private onPointerMove = (e: PointerEvent) => {
     if (!this.dragging) return;
+    this.lastInteractionMs = performance.now();
     const dx = e.clientX - this.lastX;
     const dy = e.clientY - this.lastY;
     this.lastX = e.clientX;
@@ -1020,6 +1034,7 @@ export class SolarFlightScene {
   }
   private onWheel = (e: WheelEvent) => {
     e.preventDefault();
+    this.lastInteractionMs = performance.now();
     // Logarithmic zoom: 1 wheel notch ~10% distance change.
     const factor = Math.exp(e.deltaY * 0.0008);
     this.cameraDistance = Math.max(
@@ -1115,7 +1130,15 @@ export class SolarFlightScene {
     // frame; turning it off lets the planet drift through the view as it
     // orbits.
     if (this.tracking && this.focusName !== "Sun") this.applyCamera();
-    this.renderer.render(this.scene, this.camera);
+    // Standby: pause renderer.render when the tab is hidden or the user
+    // has been idle for >60s. rAF keeps spinning so the next interaction
+    // wakes us back up immediately.
+    const settings = getSettings();
+    const hidden = typeof document !== "undefined" && document.hidden;
+    const idleMs = performance.now() - this.lastInteractionMs;
+    const idle = idleMs > 60_000 && !this.dragging;
+    const standby = settings.standby && (hidden || idle);
+    if (!standby) this.renderer.render(this.scene, this.camera);
     this.rafHandle = requestAnimationFrame(this.tick);
   };
 
@@ -1151,6 +1174,8 @@ export class SolarFlightScene {
     this.canvas.removeEventListener("pointerup", this.onPointerUp);
     this.canvas.removeEventListener("pointercancel", this.onPointerUp);
     this.canvas.removeEventListener("wheel", this.onWheel);
+    window.removeEventListener("keydown", this.wake);
+    this.canvas.removeEventListener("touchstart", this.wake);
     for (const o of this.orbits) {
       o.geometry.dispose();
       (o.material as LineBasicMaterial).dispose();
