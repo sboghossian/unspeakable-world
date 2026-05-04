@@ -3,6 +3,7 @@ import { Vector3 } from "three";
 import {
   UniverseScene,
   type UniverseState,
+  type UniverseHit,
 } from "./universe/universe-scene";
 import { TimeStrip } from "./ui/TimeStrip";
 import { EventsPanel } from "./ui/EventsPanel";
@@ -70,6 +71,7 @@ export function Universe({ onExit }: Props) {
   const [state, setState] = useState<UniverseState>(DEFAULT_STATE);
   const [eventsOpen, setEventsOpen] = useState(false);
   const [searchIndex, setSearchIndex] = useState<SearchIndex | null>(null);
+  const [inspect, setInspect] = useState<UniverseHit | null>(null);
   const [observer, setObserver] = useState<{ lat: number; lon: number } | null>(
     () => {
       try {
@@ -91,6 +93,7 @@ export function Universe({ onExit }: Props) {
     if (!canvas) return;
     const scene = new UniverseScene(canvas);
     sceneRef.current = scene;
+    scene.setOnClick((hit) => setInspect(hit));
     const unsubscribe = scene.subscribe(setState);
     return () => {
       unsubscribe();
@@ -364,6 +367,58 @@ export function Universe({ onExit }: Props) {
           ` home · B galactic center · N M31 · Q/E · up/down
         </div>
       </div>
+
+      {/* Inspector card */}
+      {inspect && (
+        <aside className="pointer-events-auto absolute right-3 top-32 z-30 w-[min(340px,92vw)] rounded-xl border border-white/10 bg-space-950/92 p-4 backdrop-blur shadow-2xl">
+          <header className="mb-2 flex items-start justify-between gap-3">
+            <div>
+              <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-emerald-300/80">
+                {inspect.kind}
+              </div>
+              <div className="font-display text-lg text-white">
+                {inspect.name}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setInspect(null)}
+              aria-label="Close"
+              className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 font-mono text-xs text-white/60 hover:bg-white/10 hover:text-white"
+            >
+              ✕
+            </button>
+          </header>
+          <p className="mb-3 text-sm leading-relaxed text-white/80">
+            {inspect.detail}
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                sceneRef.current?.flyTo(inspect.name);
+                setInspect(null);
+              }}
+              className="flex-1 rounded-md border border-emerald-400/40 bg-emerald-400/10 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-emerald-200 hover:bg-emerald-400/25"
+            >
+              ↗ fly here
+            </button>
+            {(inspect.name === "Earth" ||
+              inspect.name === "Mars" ||
+              inspect.name === "Moon") && (
+              <a
+                href={`#surface/${inspect.name.toLowerCase()}`}
+                className="rounded-md border border-amber-400/40 bg-amber-400/10 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-amber-200 hover:bg-amber-400/25"
+              >
+                🪐 surface
+              </a>
+            )}
+          </div>
+          <div className="mt-3 border-t border-white/5 pt-2 font-mono text-[10px] text-white/40">
+            click sky to inspect · esc to close
+          </div>
+        </aside>
+      )}
 
       {/* Color legend (bottom-left) */}
       <ColorLegend />

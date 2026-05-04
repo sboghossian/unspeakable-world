@@ -25,6 +25,7 @@ import {
   WebGLRenderer,
 } from "three";
 import { Body, HelioVector } from "astronomy-engine";
+import { Raycaster, Vector2 } from "three";
 import { HipsSphere } from "../scene/hips-sphere";
 import { SURVEYS, type Survey } from "../hips/surveys";
 import { ConstellationLines } from "../constellations/constellation-lines";
@@ -116,6 +117,12 @@ export type UniverseState = {
 
 type Listener = (s: UniverseState) => void;
 
+export type UniverseHit = {
+  kind: "Sun" | "Planet" | "Landmark" | "Star";
+  name: string;
+  detail: string;
+};
+
 type PlanetMesh = {
   name: string;
   body: Body;
@@ -172,8 +179,11 @@ export class UniverseScene {
   private speed = 1e-5; // LY/s — start slow (~ AU scale)
   private heldKeys = new Set<string>();
   private dragging = false;
+  private dragStart = { x: 0, y: 0 };
+  private dragMaxDist = 0;
   private lastX = 0;
   private lastY = 0;
+  private raycaster = new Raycaster();
 
   // Time
   private simTime = new Date();
@@ -584,6 +594,8 @@ export class UniverseScene {
     this.dragging = true;
     this.lastX = e.clientX;
     this.lastY = e.clientY;
+    this.dragStart = { x: e.clientX, y: e.clientY };
+    this.dragMaxDist = 0;
     this.canvas.setPointerCapture(e.pointerId);
     this.canvas.style.cursor = "grabbing";
   };
@@ -593,6 +605,11 @@ export class UniverseScene {
     const dy = e.clientY - this.lastY;
     this.lastX = e.clientX;
     this.lastY = e.clientY;
+    const total = Math.hypot(
+      e.clientX - this.dragStart.x,
+      e.clientY - this.dragStart.y,
+    );
+    if (total > this.dragMaxDist) this.dragMaxDist = total;
     this.yaw -= dx * 0.005;
     this.pitch = Math.max(
       -Math.PI / 2 + 0.05,
@@ -608,7 +625,80 @@ export class UniverseScene {
       /* ignore */
     }
     this.canvas.style.cursor = "grab";
+    // True click (not a drag) → pick.
+    if (this.dragMaxDist < 4 && this.onClickCb) {
+      const rect = this.canvas.getBoundingClientRect();
+      const ndc = new Vector2(
+        ((e.clientX - rect.left) / rect.width) * 2 - 1,
+        -((e.clientY - rect.top) / rect.height) * 2 + 1,
+      );
+      const hit = this.pick(ndc);
+      if (hit) this.onClickCb(hit);
+    }
   };
+
+  private onClickCb: ((hit: UniverseHit) => void) | null = null;
+  setOnClick(cb: (hit: UniverseHit) => void): void {
+    this.onClickCb = cb;
+  }
+
+  /** Raycast against planets, sun, and labelled landmarks. Returns the
+   *  closest hit + its inspectable metadata, or null. */
+  private pick(ndc: Vector2): UniverseHit | null {
+    this.raycaster.setFromCamera(ndc, this.camera);
+
+    const candidates: Array<{
+      kind: UniverseHit["kind"];
+      name: string;
+      distance: number;
+      detail: string;
+    }> = [];
+
+    // Sun
+    const sunHits = this.raycaster.intersectObject(this.sunMesh, false);
+    if (sunHits[0]) {
+      candidates.push({
+        kind: "Sun",
+        name: "Sun",
+        distance: sunHits[0].distance,
+        detail: "G2V star · 1 AU = us → here · 4.6 Gyr old",
+      });
+    }
+    // Planets
+    for (const p of this.planets) {
+      const hits = this.raycaster.intersectObject(p.sphere, false);
+      if (hits[0]) {
+        candidates.push({
+          kind: "Planet",
+          name: p.name,
+          distance: hits[0].distance,
+          detail: this.planetDetail(p.name),
+        });
+      }
+    }
+    candidates.sort((a, b) => a.distance - b.distance);
+    return candidates[0]
+      ? {
+          kind: candidates[0].kind,
+          name: candidates[0].name,
+          detail: candidates[0].detail,
+        }
+      : null;
+  }
+
+  private planetDetail(name: string): string {
+    const facts: Record<string, string> = {
+      Mercury: "Innermost planet · 0.39 AU · 88-day year · no atmosphere",
+      Venus: "Cloud-cloaked twin · 0.72 AU · 96 % CO₂ atmosphere · 462 °C surface",
+      Earth: "Home · 1.00 AU · 71 % ocean · 1 moon · 8B humans",
+      Mars: "Red planet · 1.52 AU · Olympus Mons (21.9 km) · 2 potato moons",
+      Jupiter: "Gas giant · 5.20 AU · 79 moons · Great Red Spot · 4 Galilean moons visible",
+      Saturn: "Ringed giant · 9.58 AU · 83 moons · prominent rings + Cassini Division",
+      Uranus: "Ice giant · 19.2 AU · tipped 98° · 27 moons",
+      Neptune: "Outermost planet · 30.1 AU · 14 moons · supersonic winds",
+    };
+    return facts[name] ?? `${name} · solar-system body`;
+  }
   private onWheel = (e: WheelEvent) => {
     e.preventDefault();
     const factor = Math.exp(-e.deltaY * 0.0008);
