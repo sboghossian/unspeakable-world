@@ -13,6 +13,7 @@ import { FavoritesMenu } from "./ui/FavoritesMenu";
 import { AboutOverlay } from "./ui/AboutOverlay";
 import { FirstRunHint } from "./ui/FirstRunHint";
 import { CenterHud } from "./ui/CenterHud";
+import { ColorLegend } from "./ui/ColorLegend";
 import {
   TutorialOverlay,
   shouldShowTutorial,
@@ -956,6 +957,8 @@ export function Viewer() {
       )}
 
       {status === "live" && <FirstRunHint />}
+
+      {status === "live" && <ColorLegend />}
     </div>
   );
 }
