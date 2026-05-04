@@ -2,10 +2,10 @@ import { EmailCapture } from "./EmailCapture";
 import { navigate } from "../router";
 
 const COUNTERS = [
-  { value: "8,921", label: "bright stars" },
-  { value: "879", label: "deep-sky objects" },
+  { value: "117,931", label: "stars" },
+  { value: "13,962", label: "deep-sky objects" },
+  { value: "6,278", label: "exoplanets" },
   { value: "8", label: "wavelengths" },
-  { value: "MIT", label: "forever free" },
 ];
 
 export function Hero() {
@@ -13,7 +13,7 @@ export function Hero() {
     <section className="mx-auto flex w-full max-w-5xl flex-col items-center px-6 pb-16 pt-24 text-center md:pt-36">
       <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.2em] text-plasma-400/90 backdrop-blur">
         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-plasma-500" />
-        <span>Day 41 · v3 — eight wavelengths, every sky event</span>
+        <span>Day 49 · v3 — every star you can see, every wavelength</span>
       </div>
 
       <h1 className="text-balance font-display text-5xl font-semibold leading-[1.05] glow md:text-7xl">
@@ -57,12 +57,13 @@ export function Hero() {
 
       <p className="mt-3 max-w-xl text-xs text-white/50">
         DSS2 · Hα · 2MASS · AllWISE · GALEX UV · INTEGRAL X-ray · NVSS radio ·
-        Fermi γ-ray sky tiles federated from CDS & ESA · 8,921 bright stars
-        labelled by name · 879 deep-sky objects · 88 IAU constellations · Sun
-        + 8 planets + 4 Galilean moons + Moon · live ISS · 90-day events
-        calendar · click-to-fly meteor radiants · SIMBAD + Wikipedia
-        inspector · aurora outlook · coordinate grid + galactic landmarks ·
-        snapshot button · shareable URLs · installable PWA.
+        Fermi γ-ray sky tiles federated from CDS & ESA · 117,931 HYG stars ·
+        13,962 OpenNGC deep-sky objects · 6,278 confirmed exoplanets · Sgr
+        A*, M87*, Crab Pulsar, GW170817 + 13 other named exotic objects · 88
+        IAU constellations · Sun + 8 planets + 4 Galilean moons + Moon · live
+        ISS · Voyager 1/2 · Pioneers · New Horizons · JWST · 90-day sky
+        events · SIMBAD + Wikipedia inspector · aurora outlook · NOAA SWPC ·
+        snapshot · shareable URLs · installable PWA.
       </p>
 
       <EmailCapture />
