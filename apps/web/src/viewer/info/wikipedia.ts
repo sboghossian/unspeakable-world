@@ -5,6 +5,7 @@
  * and returns a clean JSON shape — no scraping required.
  */
 
+import { idb } from "../../lib/idb-cache";
 import { aliasesInText } from "./aliases";
 
 export type WikiSummary = {
@@ -15,6 +16,7 @@ export type WikiSummary = {
 };
 
 const ENDPOINT = "https://en.wikipedia.org/api/rest_v1/page/summary";
+const TTL_SEC = 7 * 24 * 60 * 60; // 7 days
 
 /**
  * Try a list of candidate titles; return the first 200 OK with a usable
@@ -28,11 +30,18 @@ export async function wikipediaSummary(
   for (const raw of candidates) {
     if (!raw) continue;
     const title = encodeURIComponent(raw.replace(/\s+/g, "_"));
+    const cacheKey = title;
+    const cached = await idb.get<WikiSummary | "miss">("wikipedia", cacheKey);
+    if (cached === "miss") continue;
+    if (cached) return cached;
     try {
       const res = await fetch(`${ENDPOINT}/${title}`, {
         headers: { Accept: "application/json" },
       });
-      if (!res.ok) continue;
+      if (!res.ok) {
+        await idb.put("wikipedia", cacheKey, "miss", TTL_SEC);
+        continue;
+      }
       const json = (await res.json()) as {
         type?: string;
         title?: string;
@@ -40,9 +49,15 @@ export async function wikipediaSummary(
         thumbnail?: { source: string; width: number; height: number };
         content_urls?: { desktop?: { page?: string } };
       };
-      if (json.type === "disambiguation") continue;
-      if (!json.extract || json.extract.length < 30) continue;
-      return {
+      if (json.type === "disambiguation") {
+        await idb.put("wikipedia", cacheKey, "miss", TTL_SEC);
+        continue;
+      }
+      if (!json.extract || json.extract.length < 30) {
+        await idb.put("wikipedia", cacheKey, "miss", TTL_SEC);
+        continue;
+      }
+      const summary: WikiSummary = {
         title: json.title ?? raw,
         extract: json.extract,
         thumbnail: json.thumbnail ?? null,
@@ -50,6 +65,8 @@ export async function wikipediaSummary(
           json.content_urls?.desktop?.page ??
           `https://en.wikipedia.org/wiki/${title}`,
       };
+      await idb.put("wikipedia", cacheKey, summary, TTL_SEC);
+      return summary;
     } catch {
       // Try the next candidate
     }

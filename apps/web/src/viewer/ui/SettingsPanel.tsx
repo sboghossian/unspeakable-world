@@ -1,3 +1,4 @@
+import { idb } from "../../lib/idb-cache";
 import { useSettings, type AppSettings } from "../../lib/settings";
 
 /**
@@ -150,23 +151,7 @@ async function clearLocalCache(): Promise<void> {
     /* ignore */
   }
   try {
-    if (typeof indexedDB !== "undefined" && "databases" in indexedDB) {
-      const dbs = await (indexedDB as IDBFactory & {
-        databases: () => Promise<Array<{ name?: string }>>;
-      }).databases();
-      await Promise.all(
-        dbs.map(
-          (db) =>
-            new Promise<void>((resolve) => {
-              if (!db.name) return resolve();
-              const req = indexedDB.deleteDatabase(db.name);
-              req.onsuccess = () => resolve();
-              req.onerror = () => resolve();
-              req.onblocked = () => resolve();
-            }),
-        ),
-      );
-    }
+    await idb.clearAll();
   } catch {
     /* ignore */
   }
