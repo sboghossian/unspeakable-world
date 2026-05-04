@@ -13,7 +13,7 @@ export function Hero() {
     <section className="mx-auto flex w-full max-w-5xl flex-col items-center px-6 pb-16 pt-24 text-center md:pt-36">
       <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.2em] text-plasma-400/90 backdrop-blur">
         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-plasma-500" />
-        <span>Day 49 · v3 — every star you can see, every wavelength</span>
+        <span>Day 53 · v3 — sky atlas + solar system flight</span>
       </div>
 
       <h1 className="text-balance font-display text-5xl font-semibold leading-[1.05] glow md:text-7xl">
@@ -37,7 +37,20 @@ export function Hero() {
           onClick={() => navigate("viewer")}
           className="group inline-flex items-center gap-2 rounded-lg bg-plasma-500 px-6 py-3 text-base font-semibold text-space-950 transition hover:bg-plasma-400"
         >
-          Launch the viewer
+          Launch the sky atlas
+          <span
+            aria-hidden="true"
+            className="transition group-hover:translate-x-0.5"
+          >
+            →
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate("solar")}
+          className="group inline-flex items-center gap-2 rounded-lg border border-cyan-400/40 bg-cyan-400/10 px-6 py-3 text-base font-semibold text-cyan-200 transition hover:bg-cyan-400/20"
+        >
+          🚀 Fly the solar system
           <span
             aria-hidden="true"
             className="transition group-hover:translate-x-0.5"
@@ -56,14 +69,22 @@ export function Hero() {
       </div>
 
       <p className="mt-3 max-w-xl text-xs text-white/50">
-        DSS2 · Hα · 2MASS · AllWISE · GALEX UV · INTEGRAL X-ray · NVSS radio ·
-        Fermi γ-ray sky tiles federated from CDS & ESA · 117,931 HYG stars ·
-        13,962 OpenNGC deep-sky objects · 6,278 confirmed exoplanets · Sgr
-        A*, M87*, Crab Pulsar, GW170817 + 13 other named exotic objects · 88
-        IAU constellations · Sun + 8 planets + 4 Galilean moons + Moon · live
-        ISS · Voyager 1/2 · Pioneers · New Horizons · JWST · 90-day sky
-        events · SIMBAD + Wikipedia inspector · aurora outlook · NOAA SWPC ·
-        snapshot · shareable URLs · installable PWA.
+        Two views, same universe.
+        <br />
+        <strong className="text-white/75">Sky atlas:</strong> DSS2 · Hα ·
+        2MASS · AllWISE · GALEX UV · INTEGRAL X-ray · NVSS radio · Fermi
+        γ-ray sky tiles federated from CDS & ESA · 117,931 HYG stars ·
+        13,962 OpenNGC deep-sky objects · 6,278 confirmed exoplanets · 50
+        named exotic objects (Sgr A*, M87*, Crab Pulsar, GW170817…) · 88 IAU
+        constellations · live ISS · Voyager 1/2 · Pioneers · New Horizons ·
+        JWST · 90-day sky events · SIMBAD + Wikipedia inspector · aurora
+        outlook · NOAA SWPC live.
+        <br />
+        <strong className="text-white/75">Solar system flight:</strong> 3D
+        heliocentric view · drawn orbital paths · Earth + atmosphere · Saturn
+        + rings · Jupiter + 4 Galilean moons in 3D · 30K background stars ·
+        bright-star labels · cosmic-landmark labels visible from anywhere in
+        the system · time scrubbing animates the planets actually orbiting.
       </p>
 
       <EmailCapture />
