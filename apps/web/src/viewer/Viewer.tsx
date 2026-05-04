@@ -11,6 +11,7 @@ import { TourCard } from "./ui/TourCard";
 import { GRAND_TOUR } from "./tour/tour";
 import { FavoritesMenu } from "./ui/FavoritesMenu";
 import { FirstRunHint } from "./ui/FirstRunHint";
+import { NeoPanel } from "./ui/NeoPanel";
 import { ShareButton } from "./ui/ShareButton";
 import { ShortcutsOverlay } from "./ui/ShortcutsOverlay";
 import { SkyTonightPanel } from "./ui/SkyTonightPanel";
@@ -462,9 +463,7 @@ export function Viewer() {
               <span className="hidden md:inline">▶ tour</span>
             </button>
           )}
-          {/* NEO panel is wired but JPL CAD blocks browser CORS.
-              Re-enable once apps/api ships a CF Worker proxy. */}
-          {/* <NeoPanel /> */}
+          <NeoPanel />
           <SkyTonightPanel observer={observer} />
           <SpaceWeatherPanel />
           {searchIndex && (

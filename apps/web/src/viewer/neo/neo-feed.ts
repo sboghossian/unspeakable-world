@@ -3,12 +3,15 @@
  *
  *   https://ssd-api.jpl.nasa.gov/cad.api
  *
- * The endpoint is CORS-open for browsers and free of usage restrictions
- * beyond NASA fair-use. We pull the next ~14 days of approaches within a
- * generous distance bound (0.1 AU ≈ 38× lunar distance).
+ * JPL's CAD endpoint does NOT send Access-Control-Allow-Origin, so we
+ * route through our own proxy. Same path in dev (Vite proxy) and prod
+ * (Cloudflare Pages Function at apps/web/functions/api/cad.ts).
+ *
+ * We pull the next ~14 days of approaches within a generous distance
+ * bound (0.1 AU ≈ 38× lunar distance).
  */
 
-const ENDPOINT = "https://ssd-api.jpl.nasa.gov/cad.api";
+const ENDPOINT = "/api/cad";
 
 export type NeoApproach = {
   designation: string;
