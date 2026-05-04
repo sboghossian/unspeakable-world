@@ -315,6 +315,57 @@ export function missionFactsToPayload(
   };
 }
 
+/* ───────────────────────── MOON SUPPORT ─────────────────────────── */
+
+/**
+ * Build an InfoPanel payload for a planetary moon. Mirrors the structure
+ * of `bodyFactsToPayload` so the unified inspector can render moons in
+ * the same layout as planets.
+ */
+export function moonFactsToPayload(
+  moon: import("./moons").MoonElements,
+): InfoPayload {
+  const physical: Array<[string, string]> = [
+    ["Radius", `${moon.radius_km.toLocaleString()} km`],
+  ];
+  if (moon.mass_kg !== undefined) {
+    physical.push(["Mass", `${moon.mass_kg.toExponential(3)} kg`]);
+  }
+  const orbit: Array<[string, string]> = [
+    ["Semi-major axis", `${moon.a_km.toLocaleString()} km`],
+    ["Period", `${moon.period_days.toFixed(3)} d`],
+    ["Eccentricity", moon.e.toFixed(4)],
+    ["Inclination", `${moon.i_deg.toFixed(2)}°`],
+  ];
+  const sections: InfoSection[] = [
+    {
+      kind: "identification",
+      rows: [
+        ["Name", moon.name],
+        ["Parent", moon.parent],
+        ["Type", "Natural satellite"],
+      ],
+    },
+    { kind: "physical", rows: physical },
+    { kind: "orbit", rows: orbit },
+    {
+      kind: "links",
+      items: [
+        {
+          label: "Wikipedia",
+          href: `https://en.wikipedia.org/wiki/${encodeURIComponent(moon.name)}_(moon)`,
+        },
+      ],
+    },
+  ];
+  return enrichWithImagery({
+    kind: "Moon",
+    name: moon.name,
+    subtitle: `Moon of ${moon.parent}`,
+    sections,
+  });
+}
+
 /** Convenience: payload for a named body (returns null if unknown). */
 export function payloadForBody(
   name: string,

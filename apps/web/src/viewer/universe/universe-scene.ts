@@ -40,7 +40,10 @@ import {
   cosmicLandmarkFactsToPayload,
   enrichWithImagery,
   missionFactsToPayload,
+  moonFactsToPayload,
 } from "../data/body-info";
+import { MoonField } from "./moons";
+import type { MoonElements } from "../data/moons";
 import type { InfoPayload } from "../ui/InfoPanel";
 import {
   AsteroidField,
@@ -142,6 +145,8 @@ export type UniverseState = {
   asteroidsOn: boolean;
   cometsOn: boolean;
   interstellarOn: boolean;
+  /** Moons of Mars / Saturn / Uranus / Neptune visible? */
+  moonsOn: boolean;
   /** Per-slug mission visibility. */
   missions: Record<string, boolean>;
   /** Solar System zone overlays (rings drawn in the ecliptic plane). */
@@ -157,7 +162,7 @@ export type UniverseState = {
 type Listener = (s: UniverseState) => void;
 
 export type UniverseHit = {
-  kind: "Sun" | "Planet" | "Landmark" | "Star" | "Mission";
+  kind: "Sun" | "Planet" | "Landmark" | "Star" | "Mission" | "Moon";
   name: string;
   detail: string;
   facts?: Array<{ label: string; value: string }>;
@@ -204,6 +209,7 @@ export class UniverseScene {
   private asteroids: AsteroidField | null = null;
   private comets: CometField | null = null;
   private interstellar: InterstellarMarkers | null = null;
+  private moons!: MoonField;
   private missions: MissionField | null = null;
   private missionManifest: MissionManifestEntry[] = [];
   private solarZones!: SolarZones;
@@ -367,6 +373,11 @@ export class UniverseScene {
     // default. Lives in solarGroup so it shares AU coordinates.
     this.solarZones = new SolarZones();
     this.solarGroup.add(this.solarZones);
+
+    // Planetary moons (Mars + Saturn + Uranus + Neptune set; Jupiter
+    // Galileans handled by AstronomyEngine elsewhere). Default OFF.
+    this.moons = new MoonField();
+    this.solarGroup.add(this.moons);
 
     // ─── Galactic group ────────────────────────────────────────
     const galaxyTex = makeGalaxyTexture();
@@ -544,6 +555,11 @@ export class UniverseScene {
 
   setInterstellar(on: boolean): void {
     if (this.interstellar) this.interstellar.visible = on;
+    this.publishState();
+  }
+
+  setMoons(on: boolean): void {
+    this.moons.visible = on;
     this.publishState();
   }
 
@@ -956,6 +972,19 @@ export class UniverseScene {
 
     candidates.sort((a, b) => a.distance - b.distance);
     const top = candidates[0];
+    // Moons: take precedence over planet hits when the layer is on and the
+    // camera is close enough that a moon's label is visible (≈0.05 AU).
+    if (this.moons.visible) {
+      const m = this.moons.pick(ndc, this.raycaster, this.camera);
+      if (m) {
+        return {
+          kind: "Moon",
+          name: m.spec.name,
+          detail: `Moon of ${m.spec.parent} · period ${m.spec.period_days.toFixed(2)} d`,
+          payload: moonFactsToPayload(m.spec),
+        };
+      }
+    }
     // Missions: ask the field directly; if any mission marker is hit and
     // closer than the planet/sun candidate, return the mission instead.
     if (this.missions) {
@@ -1134,6 +1163,7 @@ export class UniverseScene {
       asteroidsOn: this.asteroids?.visible ?? false,
       cometsOn: this.comets?.visible ?? false,
       interstellarOn: this.interstellar?.visible ?? false,
+      moonsOn: this.moons?.visible ?? false,
       missions: this.missions?.visibility() ?? {},
       zones: this.solarZones.state(),
     };
@@ -1189,6 +1219,27 @@ export class UniverseScene {
     this.asteroids?.setSimTime(this.simTime);
     this.comets?.setSimTime(this.simTime);
     this.interstellar?.setSimTime(this.simTime);
+    if (this.moons.visible) {
+      const parentPositions = new Map<MoonElements["parent"], Vector3>();
+      for (const p of this.planets) {
+        if (
+          p.name === "Mars" ||
+          p.name === "Jupiter" ||
+          p.name === "Saturn" ||
+          p.name === "Uranus" ||
+          p.name === "Neptune"
+        ) {
+          parentPositions.set(
+            p.name as MoonElements["parent"],
+            p.group.position.clone(),
+          );
+        }
+      }
+      this.moons.setParentPositions(parentPositions);
+      const camLocalMoons = new Vector3().copy(this.solarGroup.position).negate();
+      this.moons.setCameraAU(camLocalMoons);
+      this.moons.setSimTime(this.simTime);
+    }
     if (this.missions) {
       // Camera lives at world origin; solarGroup is offset so the Sun is at
       // its position vector. Camera position in solarGroup-local AU is

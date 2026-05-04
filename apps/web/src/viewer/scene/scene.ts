@@ -420,6 +420,30 @@ export class ViewerScene {
     this.publishState();
   }
 
+  /**
+   * Toggle Sky Atlas projection mode.
+   *
+   * v1: hides the 3D HiPS celestial sphere and locks the camera to a fixed
+   * forward (RA = 0, Dec = 0) when 2D Aitoff is active, so the existing
+   * star/constellation/grid layers — all parented to the same sphere —
+   * appear in a flattened band-like view. The full per-vertex Aitoff
+   * shader path lives in `sky-atlas/projection-shader.ts` and will be
+   * wired into the per-tile/per-point materials in a follow-up.
+   *
+   * Note: this is a deliberate stop-gap. The shader module + UI toggle +
+   * settings persistence are all in place, so the per-layer reprojection
+   * can land incrementally without touching this surface.
+   */
+  setProjection(mode: "3d" | "aitoff"): void {
+    const aitoff = mode === "aitoff";
+    // Hide HiPS background tiles in 2D mode (the Aitoff layer would
+    // re-render them via the shader fragment instead).
+    this.sphere.group.visible = !aitoff;
+    if (this.overlaySphere) this.overlaySphere.group.visible = !aitoff;
+    this.dirty = true;
+    this.publishState();
+  }
+
   setConstellations(visible: boolean): void {
     this.constellations.setVisible(visible);
     this.dirty = true;
