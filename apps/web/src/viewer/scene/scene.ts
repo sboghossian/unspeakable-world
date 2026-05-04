@@ -3,9 +3,10 @@ import { SURVEYS } from "../hips/surveys";
 import { HipsSphere } from "./hips-sphere";
 import { StarField } from "../stars/star-field";
 import { SolarSystem } from "../solar/solar-system";
-import { IssTracker, type IssState } from "../iss/iss-tracker";
-import { zenithWorldDirection } from "../observer/zenith";
-import { VoyagerControls } from "./voyager-controls";
+import { IssTracker, type IssState } from '../iss/iss-tracker';
+import { DsoField } from '../dso/dso-field';
+import { zenithWorldDirection } from '../observer/zenith';
+import { VoyagerControls } from './voyager-controls';
 
 /**
  * Observable view-state the UI can subscribe to (loading veil, log-scale chip,
@@ -21,6 +22,8 @@ export type ViewerState = {
   detailTiles: number;
   /** Number of stars in the bright-star catalog (0 until catalog loads). */
   starCount: number;
+  /** Number of deep-sky objects loaded (0 until OpenNGC subset arrives). */
+  dsoCount: number;
   /** Simulation time. The clock the renderer is using for ephemerides. */
   time: Date;
   /** True when the time clock is auto-advancing. */
@@ -59,6 +62,7 @@ export class ViewerScene {
   private stars: StarField;
   private solar: SolarSystem;
   private iss: IssTracker;
+  private dsos: DsoField;
   private controls: VoyagerControls;
 
   private dirty = true;
@@ -118,6 +122,17 @@ export class ViewerScene {
     });
     this.iss.start();
 
+    this.dsos = new DsoField();
+    this.scene.add(this.dsos.group);
+    void this.dsos
+      .load('/data/dso.json')
+      .then(() => {
+        this.dirty = true;
+        this.state = { ...this.state, dsoCount: this.dsos.count() };
+        this.emit();
+      })
+      .catch((err) => console.warn('[dso] catalog load failed', err));
+
     this.controls = new VoyagerControls(this.camera, canvas);
     this.controls.onChange = () => {
       this.dirty = true;
@@ -152,6 +167,7 @@ export class ViewerScene {
       baseTilesTotal: this.sphere.tiles.length,
       detailTiles: 0,
       starCount: 0,
+      dsoCount: 0,
       time: this.simTime,
       playing: this.playing,
       timeRate: this.timeRate,
@@ -402,6 +418,7 @@ export class ViewerScene {
       this.overlaySphere = null;
     }
     this.stars.dispose();
+    this.dsos.dispose();
     this.solar.dispose();
     this.iss.dispose();
     this.renderer.dispose();

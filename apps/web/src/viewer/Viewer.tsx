@@ -29,6 +29,7 @@ const DEFAULT_STATE: ViewerState = {
   baseTilesTotal: 12,
   detailTiles: 0,
   starCount: 0,
+  dsoCount: 0,
   time: new Date(),
   playing: false,
   timeRate: 1,
@@ -209,6 +210,9 @@ export function Viewer() {
               label="HYG"
               value={`${state.starCount.toLocaleString()} stars`}
             />
+          )}
+          {state.dsoCount > 0 && (
+            <Chip label="OpenNGC" value={`${state.dsoCount} deep-sky`} />
           )}
           {state.iss && (
             <Chip
