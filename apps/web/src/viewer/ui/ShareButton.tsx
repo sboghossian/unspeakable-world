@@ -10,10 +10,29 @@ import { useState } from "react";
  * browsers or insecure contexts) so the user can still copy manually.
  */
 
-export function ShareButton() {
+type Props = {
+  /** Optional hook to write the current camera/scene state into the URL
+   *  hash before copying. Returns the new hash (with or without leading #). */
+  onPrepare?: () => string | null;
+};
+
+export function ShareButton({ onPrepare }: Props = {}) {
   const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
 
   const onClick = async () => {
+    if (onPrepare) {
+      try {
+        const hash = onPrepare();
+        if (hash) {
+          const h = hash.startsWith("#") ? hash : `#${hash}`;
+          if (window.location.hash !== h) {
+            window.history.replaceState(null, "", h);
+          }
+        }
+      } catch {
+        /* ignore — fall back to copying current href */
+      }
+    }
     const url = window.location.href;
     try {
       if (navigator.clipboard?.writeText) {

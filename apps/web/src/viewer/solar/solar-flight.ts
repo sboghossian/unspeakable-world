@@ -333,6 +333,15 @@ export class SolarFlightScene {
     this.publishState();
   }
 
+  /** Restore camera state from saved hash params. */
+  setCameraState(yaw: number, pitch: number, dist: number): void {
+    if (Number.isFinite(yaw)) this.yaw = yaw;
+    if (Number.isFinite(pitch)) this.pitch = pitch;
+    if (Number.isFinite(dist) && dist > 0) this.cameraDistance = dist;
+    this.applyCamera();
+    this.publishState();
+  }
+
   setFocus(name: string): void {
     if (name === this.focusName) return;
     this.focusName = name;

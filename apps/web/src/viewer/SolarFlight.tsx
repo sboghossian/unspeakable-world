@@ -8,6 +8,10 @@ import {
 import { TimeStrip } from "./ui/TimeStrip";
 import { InfoPanel } from "./ui/InfoPanel";
 import { SettingsPanel } from "./ui/SettingsPanel";
+import { SnapshotButton } from "./ui/SnapshotButton";
+import { ShareButton } from "./ui/ShareButton";
+import { BookmarksPanel } from "./ui/BookmarksPanel";
+import { addBookmark } from "../lib/bookmarks";
 import { getSettings, useSettings } from "../lib/settings";
 
 /**
@@ -64,6 +68,22 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
     scene.setRealScale(init.realScale);
     scene.setOrbitOpacity(init.orbitOpacity);
     scene.setStarBrightness(init.starBrightness);
+    // Restore from #solar hash params if present.
+    const params = parseSolarHash(window.location.hash);
+    if (params.focus) scene.setFocus(params.focus);
+    if (params.dist !== null || params.yaw !== null || params.pitch !== null) {
+      scene.setCameraState(
+        params.yaw ?? NaN,
+        params.pitch ?? NaN,
+        params.dist ?? NaN,
+      );
+    }
+    if (params.track !== null) scene.setTracking(params.track);
+    if (params.t) {
+      const d = new Date(params.t);
+      if (!Number.isNaN(d.getTime())) scene.setTime(d);
+    }
+    if (params.rate !== null) scene.setTimeRate(params.rate);
     const unsubscribe = scene.subscribe(setState);
     return () => {
       unsubscribe();
@@ -71,6 +91,17 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
       sceneRef.current = null;
     };
   }, []);
+
+  // Write camera state to hash on change (debounced).
+  useEffect(() => {
+    const handle = window.setTimeout(() => {
+      const hash = buildSolarHash(state);
+      if (window.location.hash !== `#${hash}`) {
+        window.history.replaceState(null, "", `#${hash}`);
+      }
+    }, 500);
+    return () => window.clearTimeout(handle);
+  }, [state]);
 
   // Push global settings into the scene whenever they change.
   const [settings] = useSettings();
@@ -167,6 +198,30 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
           >
             🌌 galactic →
           </a>
+          <SnapshotButton
+            onCapture={() => {
+              const c = canvasRef.current;
+              return c ? c.toDataURL("image/png") : null;
+            }}
+          />
+          <ShareButton onPrepare={() => buildSolarHash(state)} />
+          <BookmarksPanel />
+          <button
+            type="button"
+            onClick={() => {
+              const hash = buildSolarHash(state);
+              window.history.replaceState(null, "", `#${hash}`);
+              addBookmark({
+                title: `${state.focus} · ${state.vicinity}`,
+                url: window.location.href,
+                mode: "solar",
+              });
+            }}
+            title="Save the current view as a bookmark"
+            className="rounded-lg border border-white/10 bg-space-950/70 px-2.5 py-1.5 font-mono text-xs text-white/70 backdrop-blur transition hover:bg-white/10 hover:text-white"
+          >
+            ★ save
+          </button>
         </div>
 
         <div className="pointer-events-auto flex flex-wrap items-center justify-end gap-1">
@@ -441,6 +496,59 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
       )}
     </div>
   );
+}
+
+type SolarHashParams = {
+  focus: string | null;
+  yaw: number | null;
+  pitch: number | null;
+  dist: number | null;
+  track: boolean | null;
+  t: string | null;
+  rate: number | null;
+};
+
+function parseSolarHash(hash: string): SolarHashParams {
+  const empty: SolarHashParams = {
+    focus: null,
+    yaw: null,
+    pitch: null,
+    dist: null,
+    track: null,
+    t: null,
+    rate: null,
+  };
+  const m = hash.match(/^#solar\?(.+)$/);
+  if (!m || !m[1]) return empty;
+  const p = new URLSearchParams(m[1]);
+  const num = (k: string): number | null => {
+    const v = p.get(k);
+    if (v === null) return null;
+    const n = parseFloat(v);
+    return Number.isFinite(n) ? n : null;
+  };
+  const trackRaw = p.get("track");
+  return {
+    focus: p.get("focus"),
+    yaw: num("yaw"),
+    pitch: num("pitch"),
+    dist: num("dist"),
+    track: trackRaw === "true" ? true : trackRaw === "false" ? false : null,
+    t: p.get("t"),
+    rate: num("rate"),
+  };
+}
+
+function buildSolarHash(state: SolarFlightState): string {
+  const p = new URLSearchParams();
+  p.set("focus", state.focus);
+  p.set("yaw", state.yaw.toFixed(4));
+  p.set("pitch", state.pitch.toFixed(4));
+  p.set("dist", state.cameraDistance.toPrecision(6));
+  p.set("track", String(state.tracking));
+  p.set("t", state.time.toISOString());
+  p.set("rate", String(state.timeRate));
+  return `solar?${p.toString()}`;
 }
 
 function Chip({

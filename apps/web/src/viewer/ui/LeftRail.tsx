@@ -27,6 +27,7 @@ type Scene = {
   setOverlayMix(mix: number): void;
   setSolarZone(zone: ZoneId, on: boolean): void;
   toggleAllSolarZones(): void;
+  setTrackingTarget(name: string | null): void;
 };
 
 type Props = {
@@ -35,6 +36,17 @@ type Props = {
   onOpenGuide: () => void;
   onOpenTimeMachine: () => void;
 };
+
+const PLANET_KEYS = new Set([
+  "Mercury",
+  "Venus",
+  "Earth",
+  "Mars",
+  "Jupiter",
+  "Saturn",
+  "Uranus",
+  "Neptune",
+]);
 
 const TRAVEL: Array<{ label: string; key: string; tone: string }> = [
   { label: "Sun", key: "Sun", tone: "text-amber-200" },
@@ -337,16 +349,37 @@ export function LeftRail({ state, scene, onOpenGuide, onOpenTimeMachine }: Props
           }
         >
           <div className="grid grid-cols-2 gap-1">
-            {TRAVEL.map((t) => (
-              <button
-                key={t.key}
-                type="button"
-                onClick={() => scene.flyTo(t.key)}
-                className={`rounded-md px-2 py-1 text-left font-mono text-[10.5px] uppercase tracking-wider transition hover:bg-white/5 ${t.tone}`}
-              >
-                {t.label}
-              </button>
-            ))}
+            {TRAVEL.map((t) => {
+              const tracking = state.trackingTarget === t.key;
+              return (
+                <div key={t.key} className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => scene.flyTo(t.key)}
+                    className={`flex-1 rounded-md px-2 py-1 text-left font-mono text-[10.5px] uppercase tracking-wider transition hover:bg-white/5 ${t.tone}`}
+                  >
+                    {t.label}
+                  </button>
+                  {PLANET_KEYS.has(t.key) && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        scene.setTrackingTarget(tracking ? null : t.key)
+                      }
+                      title={tracking ? "Stop following" : `Follow ${t.label}`}
+                      aria-label={`Follow ${t.label}`}
+                      className={`rounded-md border px-1.5 py-0.5 font-mono text-[10px] transition ${
+                        tracking
+                          ? "border-emerald-400/60 bg-emerald-400/15 text-emerald-200"
+                          : "border-white/10 bg-white/5 text-white/45 hover:bg-white/10 hover:text-white"
+                      }`}
+                    >
+                      {tracking ? "◉" : "·"}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </Section>
       </div>

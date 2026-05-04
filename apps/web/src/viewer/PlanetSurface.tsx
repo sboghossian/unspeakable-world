@@ -4,6 +4,8 @@ import {
   type SurfacePlanet,
   type SurfaceState,
 } from "./surface/planet-surface";
+import { ShareButton } from "./ui/ShareButton";
+import { BookmarksPanel } from "./ui/BookmarksPanel";
 
 /**
  * 🪐 Planetary Surface Mode component.
@@ -96,6 +98,10 @@ export function PlanetSurface({ planet, onExit }: Props) {
           <div className="rounded-lg border border-white/10 bg-space-950/70 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.25em] text-amber-200/80 backdrop-blur">
             🪐 surface — {planet}
           </div>
+          <ShareButton
+            onPrepare={() => `surface/${planet.toLowerCase()}`}
+          />
+          <BookmarksPanel />
         </div>
 
         <div className="pointer-events-auto flex flex-wrap items-center justify-end gap-1">
