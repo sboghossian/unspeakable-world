@@ -32,6 +32,7 @@ import {
   wikipediaSummary,
   type WikiSummary,
 } from "./info/wikipedia";
+import { resolveLocalHit } from "./info/local-resolver";
 import {
   simbadConeSearch,
   worldDirectionToRaDec,
@@ -386,6 +387,30 @@ export function Viewer() {
       // Open the inspector with a SIMBAD cone search at this sky point.
       const { ra, dec } = worldDirectionToRaDec(dir);
       const myGen = ++inspectGenRef.current;
+
+      // Local-first: solar bodies + ISS aren't in SIMBAD. Short-circuit
+      // when the click landed on one of them (FOV-scaled tolerance).
+      const localHit = resolveLocalHit(scene, dir, state.fov);
+      if (localHit) {
+        setInspect({
+          raDeg: localHit.raDeg,
+          decDeg: localHit.decDeg,
+          dir: dir.clone(),
+          loading: false,
+          hit: localHit,
+          error: null,
+          wiki: null,
+          wikiLoading: true,
+        });
+        void wikipediaSummary([localHit.name]).then((wiki) => {
+          if (inspectGenRef.current !== myGen) return;
+          setInspect((prev) =>
+            prev ? { ...prev, wiki, wikiLoading: false } : prev,
+          );
+        });
+        return;
+      }
+
       setInspect({
         raDeg: ra,
         decDeg: dec,

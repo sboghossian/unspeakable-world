@@ -274,6 +274,8 @@ export function describeType(code: string): string {
     SN: "Supernova",
     No: "Nova",
     Pl: "Planet",
+    Moo: "Moon",
+    Sat: "Spacecraft",
     As: "Asteroid",
     Cm: "Comet",
     LM: "Low-mass star",
