@@ -41,6 +41,12 @@ const DEFAULT_STATE: UniverseState = {
   skyTilesVisible: true,
   overlayId: null,
   overlayMix: 0,
+  constellationsOn: false,
+  coordGridOn: false,
+  starLabelsOn: false,
+  pulsarsOn: false,
+  exoplanetsOn: false,
+  cosmicLandmarksOn: false,
 };
 
 const FLY_TARGETS = [
@@ -310,6 +316,30 @@ export function Universe({ onExit }: Props) {
                 aria-label="Wavelength cross-fade"
               />
             )}
+            <div className="mx-2 h-4 w-px bg-white/10" />
+            {(
+              [
+                ["constellations", state.constellationsOn, "✦ lines", () => sceneRef.current?.setConstellations(!state.constellationsOn)],
+                ["grid", state.coordGridOn, "⌖ grid", () => sceneRef.current?.setCoordGrid(!state.coordGridOn)],
+                ["names", state.starLabelsOn, "★ names", () => sceneRef.current?.setStarLabels(!state.starLabelsOn)],
+                ["pulsars", state.pulsarsOn, "⚡ pulsars", () => sceneRef.current?.setPulsars(!state.pulsarsOn)],
+                ["exo", state.exoplanetsOn, "⊙ exo", () => sceneRef.current?.setExoplanets(!state.exoplanetsOn)],
+                ["exotic", state.cosmicLandmarksOn, "◉ exotic", () => sceneRef.current?.setCosmicLandmarks(!state.cosmicLandmarksOn)],
+              ] as const
+            ).map(([key, on, label, onClick]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={onClick}
+                className={`rounded-md border px-2 py-1 font-mono text-[11px] uppercase tracking-wider transition ${
+                  on
+                    ? "border-emerald-400/50 bg-emerald-400/15 text-emerald-200"
+                    : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </div>
       )}

@@ -27,6 +27,12 @@ import {
 import { Body, HelioVector } from "astronomy-engine";
 import { HipsSphere } from "../scene/hips-sphere";
 import { SURVEYS, type Survey } from "../hips/surveys";
+import { ConstellationLines } from "../constellations/constellation-lines";
+import { CoordGrid } from "../scene/coord-grid";
+import { PulsarField } from "../cosmic/pulsar-field";
+import { ExoplanetField } from "../exoplanets/exoplanet-field";
+import { CosmicLandmarks } from "../cosmic/cosmic-landmarks";
+import { StarLabels } from "../stars/star-labels";
 
 /**
  * 🌌 Universe Mode — single seamless scene across scales.
@@ -99,6 +105,13 @@ export type UniverseState = {
   overlayId: string | null;
   /** HiPS overlay cross-fade [0..1]. */
   overlayMix: number;
+  /** Sky-layer toggles (visible only in Solar tier). */
+  constellationsOn: boolean;
+  coordGridOn: boolean;
+  starLabelsOn: boolean;
+  pulsarsOn: boolean;
+  exoplanetsOn: boolean;
+  cosmicLandmarksOn: boolean;
 };
 
 type Listener = (s: UniverseState) => void;
@@ -127,6 +140,15 @@ export class UniverseScene {
   private hipsOverlay: HipsSphere | null = null;
   private hipsOverlayId: string | null = null;
   private hipsOverlayMix = 0;
+
+  // Sky-overlay layers — all live in hipsGroup so they share the
+  // skybox-follows-camera transform and scale together.
+  private constellations: ConstellationLines;
+  private coordGrid: CoordGrid;
+  private starLabels: StarLabels;
+  private pulsars: PulsarField;
+  private exoplanets: ExoplanetField;
+  private cosmicLandmarks: CosmicLandmarks;
 
   // Solar contents
   private sunMesh: Mesh;
@@ -192,6 +214,38 @@ export class UniverseScene {
     // inside the camera far plane. logDepthBuffer keeps z-precision.
     this.hipsSphere = new HipsSphere(SURVEYS.dss2!);
     this.hipsGroup.add(this.hipsSphere.group);
+
+    // Sky-overlay layers — same skybox transform.
+    this.constellations = new ConstellationLines();
+    this.hipsGroup.add(this.constellations.group);
+    void this.constellations
+      .load("/data/constellations.lines.json")
+      .catch((err) => console.warn("[constellations] load", err));
+
+    this.coordGrid = new CoordGrid();
+    this.hipsGroup.add(this.coordGrid.group);
+
+    this.starLabels = new StarLabels();
+    this.hipsGroup.add(this.starLabels.group);
+    void this.starLabels
+      .load("/data/hyg-named.json")
+      .catch((err) => console.warn("[star-labels] load", err));
+
+    this.pulsars = new PulsarField();
+    this.hipsGroup.add(this.pulsars.group);
+    void this.pulsars
+      .load("/data/pulsars.json")
+      .catch((err) => console.warn("[pulsars] load", err));
+
+    this.exoplanets = new ExoplanetField();
+    this.hipsGroup.add(this.exoplanets.group);
+    void this.exoplanets
+      .load("/data/exoplanets.json")
+      .catch((err) => console.warn("[exoplanets] load", err));
+
+    this.cosmicLandmarks = new CosmicLandmarks();
+    this.hipsGroup.add(this.cosmicLandmarks.group);
+
     this.hipsGroup.scale.setScalar(2000); // 2000 scene-unit radius
     this.scene.add(this.hipsGroup);
 
@@ -304,6 +358,36 @@ export class UniverseScene {
   setOverlayMix(mix: number): void {
     this.hipsOverlayMix = Math.max(0, Math.min(1, mix));
     if (this.hipsOverlay) this.hipsOverlay.setOpacity(this.hipsOverlayMix);
+    this.publishState();
+  }
+
+  setConstellations(on: boolean): void {
+    this.constellations.setVisible(on);
+    this.publishState();
+  }
+
+  setCoordGrid(on: boolean): void {
+    this.coordGrid.setVisible(on);
+    this.publishState();
+  }
+
+  setStarLabels(on: boolean): void {
+    this.starLabels.setVisible(on);
+    this.publishState();
+  }
+
+  setPulsars(on: boolean): void {
+    this.pulsars.setVisible(on);
+    this.publishState();
+  }
+
+  setExoplanets(on: boolean): void {
+    this.exoplanets.setVisible(on);
+    this.publishState();
+  }
+
+  setCosmicLandmarks(on: boolean): void {
+    this.cosmicLandmarks.setVisible(on);
     this.publishState();
   }
 
@@ -608,6 +692,12 @@ export class UniverseScene {
       skyTilesVisible: this.hipsGroup.visible,
       overlayId: this.hipsOverlayId,
       overlayMix: this.hipsOverlayMix,
+      constellationsOn: this.constellations.group.visible,
+      coordGridOn: this.coordGrid.group.visible,
+      starLabelsOn: this.starLabels.group.visible,
+      pulsarsOn: this.pulsars.visible(),
+      exoplanetsOn: this.exoplanets.visible(),
+      cosmicLandmarksOn: this.cosmicLandmarks.visible(),
     };
   }
 
