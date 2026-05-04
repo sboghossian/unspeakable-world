@@ -1,9 +1,15 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Vector3 } from "three";
 import {
   UniverseScene,
   type UniverseState,
 } from "./universe/universe-scene";
 import { TimeStrip } from "./ui/TimeStrip";
+import { EventsPanel } from "./ui/EventsPanel";
+import { SkyTonightPanel } from "./ui/SkyTonightPanel";
+import { SpaceWeatherPanel } from "./ui/SpaceWeatherPanel";
+import { NeoPanel } from "./ui/NeoPanel";
+import { TonightSky } from "./ui/TonightSky";
 
 /**
  * 🌌 Universe Mode — single seamless scene from Earth to the Cosmic Web.
@@ -52,6 +58,22 @@ export function Universe({ onExit }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const sceneRef = useRef<UniverseScene | null>(null);
   const [state, setState] = useState<UniverseState>(DEFAULT_STATE);
+  const [eventsOpen, setEventsOpen] = useState(false);
+  const [observer, setObserver] = useState<{ lat: number; lon: number } | null>(
+    () => {
+      try {
+        const raw = localStorage.getItem("uw:observer");
+        if (raw) {
+          const parsed = JSON.parse(raw) as { lat: number; lon: number };
+          if (Number.isFinite(parsed.lat) && Number.isFinite(parsed.lon))
+            return parsed;
+        }
+      } catch {
+        /* ignore */
+      }
+      return null;
+    },
+  );
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -65,6 +87,10 @@ export function Universe({ onExit }: Props) {
       sceneRef.current = null;
     };
   }, []);
+
+  // Suppress unused-import warnings until we wire panels into all tiers.
+  void Vector3;
+  void useMemo;
 
   return (
     <div className="relative h-full w-full bg-[#020415]">
@@ -89,9 +115,32 @@ export function Universe({ onExit }: Props) {
           </div>
         </div>
 
-        <div className="pointer-events-auto flex max-w-[60vw] flex-wrap items-center justify-end gap-1">
+        <div className="pointer-events-auto flex max-w-[60vw] flex-wrap items-center justify-end gap-1.5">
+          <EventsPanel
+            open={eventsOpen}
+            onOpenChange={setEventsOpen}
+            onFlyToBody={(name) => sceneRef.current?.flyTo(name)}
+          />
+          <NeoPanel />
+          <SkyTonightPanel observer={observer} />
+          <SpaceWeatherPanel observer={observer} />
+          <TonightSky
+            location={observer}
+            onLocationFix={(lat, lon) => {
+              setObserver({ lat, lon });
+              try {
+                localStorage.setItem(
+                  "uw:observer",
+                  JSON.stringify({ lat, lon }),
+                );
+              } catch {
+                /* ignore */
+              }
+            }}
+            onZenith={() => sceneRef.current?.flyTo("Sun")}
+          />
           <span className="font-mono text-[10px] uppercase tracking-widest text-white/40">
-            fly to
+            fly
           </span>
           {FLY_TARGETS.map((t) => (
             <button
