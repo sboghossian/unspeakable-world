@@ -100,7 +100,7 @@ const PHASES: Phase[] = [
     day: "Day 15",
     title: "Grand Tour",
     detail:
-      "8-step guided walkthrough: Sun → Andromeda → Pleiades → Orion → Sgr A* → Crab → LMC → Jupiter, each with the right wavelength.",
+      "9-step guided walkthrough: Sun → Andromeda → Pleiades → Orion → Sgr A* → Crab → LMC → Jupiter + Galilean moons → Voyager 1, each with the right wavelength.",
     status: "shipped",
   },
   {

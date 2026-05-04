@@ -2,7 +2,7 @@ import { Vector3 } from "three";
 import { raDecToVec3 } from "../stars/coords";
 
 /**
- * Scripted "Grand Tour" — 8 highlights of the sky, narrated.
+ * Scripted "Grand Tour" — 9 highlights of the sky, narrated.
  *
  * Each step pins:
  *   - a sky direction (RA/Dec or a body name resolved at runtime)
@@ -111,9 +111,17 @@ export const GRAND_TOUR: TourStep[] = [
   {
     id: "jupiter",
     target: { kind: "body", name: "Jupiter" },
-    fov: 35,
-    title: "Jupiter",
-    body: "Largest planet in our solar system. Its position changes through the year — scrub the time slider after the tour to watch it move.",
-    dwellMs: 6000,
+    fov: 6,
+    title: "Jupiter + the Galilean Moons",
+    body: "Largest planet in our solar system. Zoom in past 6° FOV after the tour and you'll see Io, Europa, Ganymede, and Callisto — the four moons Galileo found in 1610.",
+    dwellMs: 7500,
+  },
+  {
+    id: "voyager-1",
+    target: { kind: "radec", ra: 269.4, dec: 12.4 },
+    fov: 30,
+    title: "Voyager 1 — interstellar space",
+    body: "Toggle the ◇ CRAFT layer (or press s) and the cyan marker shows where Voyager 1 is in the sky right now — ~166 AU away, near Rasalhague in Ophiuchus, the most distant human-made object in history.",
+    dwellMs: 8500,
   },
 ];

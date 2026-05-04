@@ -592,7 +592,7 @@ export function Viewer() {
               type="button"
               onClick={startTour}
               className="rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-violet-300 backdrop-blur transition hover:bg-violet-500/20"
-              title="Take a guided tour through 8 highlights of the sky"
+              title="Take a guided tour through 9 highlights of the sky"
             >
               <span className="md:hidden">▶</span>
               <span className="hidden md:inline">▶ tour</span>
