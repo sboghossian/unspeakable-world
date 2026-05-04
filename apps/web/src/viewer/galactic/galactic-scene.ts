@@ -68,17 +68,46 @@ const SPIRAL_ARMS: Array<{
 ];
 
 const NAMED_LANDMARKS: Array<{ name: string; pos: Vector3; tone: string }> = [
-  { name: "Sgr A* (Galactic Center)", pos: new Vector3(0, 0, 0), tone: "rgba(255, 130, 130, 0.95)" },
-  { name: "Galactic Bulge", pos: new Vector3(0, 1, 0), tone: "rgba(255, 220, 160, 0.95)" },
-  { name: "Solar System", pos: SUN_POS, tone: "rgba(255, 235, 145, 0.95)" },
-  { name: "Stellar Halo", pos: new Vector3(0, 30, -40), tone: "rgba(220, 220, 240, 0.85)" },
-  { name: "Thick Disk", pos: new Vector3(15, -3, 25), tone: "rgba(180, 200, 255, 0.85)" },
+  // Galactic features
+  { name: "Sgr A*", pos: new Vector3(0, 0, 0), tone: "rgba(255, 130, 130, 0.95)" },
+  { name: "Galactic Bulge", pos: new Vector3(0, 2.5, 0), tone: "rgba(255, 220, 160, 0.95)" },
+  { name: "Stellar Halo", pos: new Vector3(0, 35, -50), tone: "rgba(220, 220, 240, 0.85)" },
+  { name: "Thick Disk", pos: new Vector3(20, -4, 30), tone: "rgba(180, 200, 255, 0.85)" },
+  { name: "Orion Spur (you are here)", pos: new Vector3(SUN_POS.x, 1.5, 0), tone: "rgba(255, 235, 145, 0.95)" },
+
+  // Local Group (Mly-scale; 1 kly = 1 unit so 1 Mly = 1000 units)
   { name: "Andromeda Galaxy (M31)", pos: new Vector3(2540, 0, 0), tone: "rgba(220, 200, 255, 0.95)" },
-  { name: "Triangulum Galaxy (M33)", pos: new Vector3(2700, -300, 100), tone: "rgba(220, 200, 255, 0.95)" },
+  { name: "Triangulum (M33)", pos: new Vector3(2700, -300, 100), tone: "rgba(220, 200, 255, 0.95)" },
   { name: "Large Magellanic Cloud", pos: new Vector3(-160, 0, 30), tone: "rgba(220, 200, 255, 0.95)" },
   { name: "Small Magellanic Cloud", pos: new Vector3(-200, 0, 60), tone: "rgba(220, 200, 255, 0.95)" },
+
+  // Nearby galaxies (Mly)
   { name: "Centaurus A (NGC 5128)", pos: new Vector3(13000, 1200, -2000), tone: "rgba(120, 220, 255, 0.95)" },
-  { name: "Sombrero Galaxy (M104)", pos: new Vector3(31000, 5000, 0), tone: "rgba(220, 220, 220, 0.95)" },
+  { name: "M81 Group", pos: new Vector3(11700, 5000, 1000), tone: "rgba(220, 220, 220, 0.85)" },
+  { name: "Sombrero (M104)", pos: new Vector3(31000, 5000, 0), tone: "rgba(220, 220, 220, 0.95)" },
+  { name: "Whirlpool (M51)", pos: new Vector3(-23000, 3000, 8000), tone: "rgba(220, 220, 220, 0.95)" },
+
+  // Galaxy clusters (Mly–Gly)
+  { name: "Virgo Cluster", pos: new Vector3(53000, 12000, 0), tone: "rgba(120, 220, 255, 0.85)" },
+  { name: "Coma Cluster", pos: new Vector3(320000, 50000, 100000), tone: "rgba(120, 220, 255, 0.85)" },
+  { name: "Perseus Cluster", pos: new Vector3(-240000, 100000, -50000), tone: "rgba(120, 220, 255, 0.85)" },
+
+  // Superclusters / large-scale structure
+  { name: "Local Group", pos: new Vector3(1000, 0, 0), tone: "rgba(180, 220, 255, 0.85)" },
+  { name: "Virgo Supercluster", pos: new Vector3(60000, 0, 0), tone: "rgba(180, 220, 255, 0.95)" },
+  { name: "Laniakea Supercluster", pos: new Vector3(220000, 50000, 0), tone: "rgba(180, 220, 255, 0.95)" },
+  { name: "Great Attractor", pos: new Vector3(250000, 0, 0), tone: "rgba(255, 200, 130, 0.95)" },
+  { name: "Shapley Supercluster", pos: new Vector3(650000, 100000, 0), tone: "rgba(255, 200, 130, 0.95)" },
+  { name: "Sloan Great Wall", pos: new Vector3(1370000, 200000, 0), tone: "rgba(255, 200, 130, 0.95)" },
+  { name: "Boötes Void", pos: new Vector3(700000, 0, 0), tone: "rgba(180, 180, 180, 0.6)" },
+
+  // Famous nearby stars (within 30 ly, kly = 1 unit means these sit ON the Sun)
+  // Drawn at slightly offset positions for legibility.
+  { name: "Alpha Centauri", pos: new Vector3(SUN_POS.x - 0.0043, 0.05, 0), tone: "rgba(255, 240, 200, 0.85)" },
+  { name: "Sirius", pos: new Vector3(SUN_POS.x + 0.0086, 0.04, 0.005), tone: "rgba(220, 240, 255, 0.85)" },
+  { name: "Vega", pos: new Vector3(SUN_POS.x, 0.02, -0.025), tone: "rgba(220, 240, 255, 0.85)" },
+  { name: "Betelgeuse", pos: new Vector3(SUN_POS.x - 0.7, 0.05, 0.1), tone: "rgba(255, 200, 130, 0.85)" },
+  { name: "Polaris", pos: new Vector3(SUN_POS.x, 0.43, 0), tone: "rgba(220, 240, 255, 0.85)" },
 ];
 
 export class GalacticScene {
@@ -91,6 +120,7 @@ export class GalacticScene {
   private disk: Mesh;
   private halo: Mesh;
   private armPoints: Points;
+  private cosmicWebPoints: Points | null = null;
   private armLabels: Sprite[] = [];
   private landmarkLabels: Sprite[] = [];
   private sunMarker: Mesh;
@@ -175,12 +205,38 @@ export class GalacticScene {
     this.armPoints = makeArmPoints();
     this.galaxyGroup.add(this.armPoints);
 
-    // Sun marker — small bright sprite at SUN_POS.
-    const sunGeom = new SphereGeometry(0.4, 16, 16);
-    const sunMat = new MeshBasicMaterial({ color: 0xfff0a0 });
+    // Cosmic-web particle layer — extends out to ~2 Gly, with filaments
+    // and voids approximated by clustered random samples.
+    this.cosmicWebPoints = makeCosmicWebPoints();
+    this.scene.add(this.cosmicWebPoints);
+
+    // Sun marker — bright pulsing sphere at SUN_POS plus a glow halo.
+    const sunGeom = new SphereGeometry(0.6, 16, 16);
+    const sunMat = new MeshBasicMaterial({
+      color: 0xfff0a0,
+      transparent: false,
+    });
     this.sunMarker = new Mesh(sunGeom, sunMat);
     this.sunMarker.position.copy(SUN_POS);
     this.galaxyGroup.add(this.sunMarker);
+    // Halo so it's visible from far away.
+    const sunHaloGeom = new SphereGeometry(2.5, 16, 16);
+    const sunHaloMat = new MeshBasicMaterial({
+      color: 0xffd060,
+      transparent: true,
+      opacity: 0.35,
+      depthWrite: false,
+    });
+    const sunHalo = new Mesh(sunHaloGeom, sunHaloMat);
+    sunHalo.position.copy(SUN_POS);
+    this.galaxyGroup.add(sunHalo);
+    // "You Are Here" arrow — a cone-ish tetrahedron tilted up
+    const arrowGeom = new SphereGeometry(0.3, 8, 8);
+    const arrowMat = new MeshBasicMaterial({ color: 0x00ff88 });
+    const arrow = new Mesh(arrowGeom, arrowMat);
+    arrow.position.copy(SUN_POS);
+    arrow.position.y += 1.5;
+    this.galaxyGroup.add(arrow);
 
     // Spiral-arm labels (sprites positioned along arms).
     for (const a of SPIRAL_ARMS) {
@@ -247,11 +303,13 @@ export class GalacticScene {
       dest = SUN_POS.clone();
       dist = 5;
     }
-    // Place camera behind dest along (-1, 0.5, -1)
+    // Place camera behind dest along (-1, 0.4, -1).
     const dir = new Vector3(-1, 0.4, -1).normalize();
-    this.camPos = dest.clone().add(dir.multiplyScalar(dist));
-    this.camYaw = Math.atan2(-dir.x, -dir.z);
-    this.camPitch = -Math.asin(dir.y);
+    this.camPos = dest.clone().add(dir.clone().multiplyScalar(dist));
+    // Camera looks along -dir (back toward dest).
+    const fwd = dir.clone().negate();
+    this.camYaw = Math.atan2(fwd.x, fwd.z);
+    this.camPitch = Math.asin(Math.max(-1, Math.min(1, fwd.y)));
     this.applyCamera();
     this.publishState();
   }
@@ -391,9 +449,8 @@ export class GalacticScene {
       this.publishState();
     }
 
-    // Slowly rotate the galaxy disk for life — galactic year ~225 Myr;
-    // we rotate fast for visual sugar.
-    this.galaxyGroup.rotation.y += dt * 0.005;
+    // No galaxy rotation — fly-to coordinates would drift out from under us.
+    void dt;
 
     // Make sun marker pulse slightly.
     const t = now / 1000;
@@ -424,6 +481,10 @@ export class GalacticScene {
     (this.halo.material as MeshBasicMaterial).dispose();
     this.armPoints.geometry.dispose();
     (this.armPoints.material as ShaderMaterial).dispose();
+    if (this.cosmicWebPoints) {
+      this.cosmicWebPoints.geometry.dispose();
+      (this.cosmicWebPoints.material as ShaderMaterial).dispose();
+    }
     for (const s of [...this.armLabels, ...this.landmarkLabels]) {
       const m = s.material as SpriteMaterial;
       m.map?.dispose();
@@ -544,6 +605,90 @@ function makeArmPoints(): Points {
   points.frustumCulled = false;
   return points;
 }
+
+/** Cosmic-web particle field. Sample-clustered voronoi-like structure to
+ *  approximate filaments, walls, and voids out to ~2 Gly. */
+function makeCosmicWebPoints(): Points {
+  const N = 30000;
+  const positions = new Float32Array(N * 3);
+  const colors = new Float32Array(N * 3);
+  const sizes = new Float32Array(N);
+  // Generate ~80 cluster centers in a 2 Gly box, then scatter 99% of the
+  // points near these centers to imitate filaments + voids.
+  const N_CLUSTERS = 80;
+  const RANGE = 1_500_000;
+  const centers: Vector3[] = [];
+  for (let i = 0; i < N_CLUSTERS; i++) {
+    centers.push(
+      new Vector3(
+        (Math.random() - 0.5) * 2 * RANGE,
+        (Math.random() - 0.5) * 2 * RANGE * 0.6,
+        (Math.random() - 0.5) * 2 * RANGE,
+      ),
+    );
+  }
+  for (let i = 0; i < N; i++) {
+    const cluster =
+      Math.random() < 0.85
+        ? centers[Math.floor(Math.random() * N_CLUSTERS)]!
+        : new Vector3(0, 0, 0);
+    // Filament-like spread: anisotropic scatter — narrow in z, wide in xy.
+    const r = Math.pow(Math.random(), 2) * 200000;
+    const t = Math.random() * Math.PI * 2;
+    positions[i * 3] = cluster.x + r * Math.cos(t);
+    positions[i * 3 + 1] = cluster.y + (Math.random() - 0.5) * r * 0.4;
+    positions[i * 3 + 2] = cluster.z + r * Math.sin(t);
+    // Slight color variation: most galaxies are red/orange-ish, a few blue.
+    if (Math.random() < 0.7) {
+      colors[i * 3] = 1.0;
+      colors[i * 3 + 1] = 0.85 + Math.random() * 0.15;
+      colors[i * 3 + 2] = 0.7 + Math.random() * 0.2;
+    } else {
+      colors[i * 3] = 0.7 + Math.random() * 0.2;
+      colors[i * 3 + 1] = 0.85 + Math.random() * 0.15;
+      colors[i * 3 + 2] = 1.0;
+    }
+    sizes[i] = 1 + Math.random() * 3;
+  }
+  const geom = new BufferGeometry();
+  geom.setAttribute("position", new BufferAttribute(positions, 3));
+  geom.setAttribute("color", new BufferAttribute(colors, 3));
+  geom.setAttribute("aSize", new BufferAttribute(sizes, 1));
+  const mat = new ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    blending: AdditiveBlending,
+    uniforms: { uPixelRatio: { value: window.devicePixelRatio || 1 } },
+    vertexShader: COSMIC_VERT,
+    fragmentShader: COSMIC_FRAG,
+  });
+  const points = new Points(geom, mat);
+  points.frustumCulled = false;
+  return points;
+}
+
+const COSMIC_VERT = /* glsl */ `
+  attribute float aSize;
+  attribute vec3 color;
+  varying vec3 vColor;
+  uniform float uPixelRatio;
+  void main() {
+    vColor = color;
+    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+    gl_Position = projectionMatrix * mvPosition;
+    gl_PointSize = aSize * uPixelRatio * (50000.0 / -mvPosition.z);
+  }
+`;
+const COSMIC_FRAG = /* glsl */ `
+  varying vec3 vColor;
+  void main() {
+    vec2 c = gl_PointCoord - 0.5;
+    float r2 = dot(c, c);
+    if (r2 > 0.25) discard;
+    float a = 1.0 - smoothstep(0.0, 0.25, r2);
+    gl_FragColor = vec4(vColor, a * 0.5);
+  }
+`;
 
 function makeArmLabel(text: string, color: number): Sprite {
   const c = new Color(color);
