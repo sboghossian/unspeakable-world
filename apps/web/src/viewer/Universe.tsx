@@ -15,6 +15,7 @@ import { SearchBar } from "./ui/SearchBar";
 import { SnapshotButton } from "./ui/SnapshotButton";
 import { ColorLegend } from "./ui/ColorLegend";
 import { LeftRail } from "./ui/LeftRail";
+import { InfoPanel } from "./ui/InfoPanel";
 import { SearchIndex, type SearchEntry } from "./search/search-index";
 
 /**
@@ -49,6 +50,8 @@ const DEFAULT_STATE: UniverseState = {
   pulsarsOn: false,
   exoplanetsOn: false,
   cosmicLandmarksOn: false,
+  playing: true,
+  rate: 86400,
 };
 
 export function Universe({ onExit }: Props) {
@@ -250,9 +253,9 @@ export function Universe({ onExit }: Props) {
         </div>
         <TimeStrip
           time={state.time}
-          playing={true}
-          rate={86400}
-          onPlayToggle={() => sceneRef.current?.setPlaying(false)}
+          playing={state.playing}
+          rate={state.rate}
+          onPlayToggle={() => sceneRef.current?.setPlaying(!state.playing)}
           onRateChange={(r) => sceneRef.current?.setTimeRate(r)}
           onTimeChange={(t) => sceneRef.current?.setTime(t)}
         />
@@ -262,76 +265,22 @@ export function Universe({ onExit }: Props) {
         </div>
       </div>
 
-      {/* Inspector card */}
+      {/* Inspector card — unified InfoPanel */}
       {inspect && (
-        <aside className="pointer-events-auto absolute right-3 top-20 z-30 flex max-h-[calc(100vh-9rem)] w-[min(360px,92vw)] flex-col rounded-xl border border-white/10 bg-space-950/95 backdrop-blur shadow-2xl">
-          <header className="flex items-start justify-between gap-3 border-b border-white/5 px-4 py-3">
-            <div>
-              <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-emerald-300/80">
-                {inspect.kind}
-              </div>
-              <div className="font-display text-xl text-white">
-                {inspect.name}
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setInspect(null)}
-              aria-label="Close"
-              className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 font-mono text-xs text-white/60 hover:bg-white/10 hover:text-white"
-            >
-              ✕
-            </button>
-          </header>
-          <div className="flex-1 overflow-y-auto px-4 py-3">
-            <p className="text-sm leading-relaxed text-white/75">
-              {inspect.detail}
-            </p>
-            {inspect.facts && inspect.facts.length > 0 && (
-              <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-[12.5px]">
-                {inspect.facts.map((f) => (
-                  <div key={f.label} className="contents">
-                    <dt className="font-mono text-[10px] uppercase tracking-wider text-white/40">
-                      {f.label}
-                    </dt>
-                    <dd className="text-white/85">{f.value}</dd>
-                  </div>
-                ))}
-              </dl>
-            )}
-            {inspect.wikipedia && (
-              <a
-                href={inspect.wikipedia}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-4 inline-flex items-center gap-1 font-mono text-[11px] uppercase tracking-widest text-cyan-300 hover:text-cyan-200"
-              >
-                Wikipedia ↗
-              </a>
-            )}
-          </div>
-          <div className="flex gap-2 border-t border-white/5 px-4 py-3">
-            <button
-              type="button"
-              onClick={() => {
-                sceneRef.current?.flyTo(inspect.name);
-              }}
-              className="flex-1 rounded-md border border-emerald-400/40 bg-emerald-400/10 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-emerald-200 hover:bg-emerald-400/25"
-            >
-              ↗ fly here
-            </button>
-            {(inspect.name === "Earth" ||
-              inspect.name === "Mars" ||
-              inspect.name === "Moon") && (
-              <a
-                href={`#surface/${inspect.name.toLowerCase()}`}
-                className="rounded-md border border-amber-400/40 bg-amber-400/10 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-amber-200 hover:bg-amber-400/25"
-              >
-                🪐 surface
-              </a>
-            )}
-          </div>
-        </aside>
+        <InfoPanel
+          payload={inspect.payload}
+          onClose={() => setInspect(null)}
+          onFlyHere={() => sceneRef.current?.flyTo(inspect.name)}
+          onSurface={
+            inspect.name === "Earth" ||
+            inspect.name === "Mars" ||
+            inspect.name === "Moon"
+              ? () => {
+                  window.location.hash = `#surface/${inspect.name.toLowerCase()}`;
+                }
+              : undefined
+          }
+        />
       )}
 
       {/* Color legend (bottom-left) */}

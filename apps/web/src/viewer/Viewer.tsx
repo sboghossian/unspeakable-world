@@ -35,7 +35,7 @@ import {
 } from "./favorites/favorites-store";
 import { parseHash, replaceHash, serializeState } from "./share/url-state";
 import { WavelengthBar } from "./ui/WavelengthBar";
-import { InfoPanel } from "./ui/InfoPanel";
+import { SkyInfoPanel } from "./ui/SkyInfoPanel";
 import {
   candidatesFromSimbad,
   wikipediaSummary,
@@ -889,7 +889,7 @@ export function Viewer() {
 
       {/* SIMBAD info panel (click on sky) */}
       {status === "live" && inspect && (
-        <InfoPanel
+        <SkyInfoPanel
           raDeg={inspect.raDeg}
           decDeg={inspect.decDeg}
           loading={inspect.loading}

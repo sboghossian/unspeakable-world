@@ -76,6 +76,23 @@ export function Galactic({ onExit }: Props) {
         </div>
       </div>
 
+      {/* Layer toggles (top-left, below the back button row) */}
+      <div className="pointer-events-auto absolute left-3 top-16 z-10 flex flex-col gap-1.5 rounded-xl border border-white/10 bg-space-950/70 p-2 backdrop-blur">
+        <div className="px-1 font-mono text-[10px] uppercase tracking-[0.25em] text-white/45">
+          layers
+        </div>
+        <Toggle
+          label="Spiral arms"
+          on={state.arms}
+          onClick={() => sceneRef.current?.setArmsVisible(!state.arms)}
+        />
+        <Toggle
+          label="Star halo"
+          on={state.starHalo}
+          onClick={() => sceneRef.current?.setHaloVisible(!state.starHalo)}
+        />
+      </div>
+
       {/* Bottom bar */}
       <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex flex-col items-center gap-2 px-3">
         <div className="pointer-events-auto flex flex-wrap items-center gap-2">
@@ -94,6 +111,30 @@ export function Galactic({ onExit }: Props) {
         </div>
       </div>
     </div>
+  );
+}
+
+function Toggle({
+  label,
+  on,
+  onClick,
+}: {
+  label: string;
+  on: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-md border px-2 py-1 text-left font-mono text-[11px] transition ${
+        on
+          ? "border-violet-400/50 bg-violet-400/15 text-violet-200"
+          : "border-white/10 bg-white/5 text-white/65 hover:bg-white/10"
+      }`}
+    >
+      {on ? "◉" : "○"} {label}
+    </button>
   );
 }
 

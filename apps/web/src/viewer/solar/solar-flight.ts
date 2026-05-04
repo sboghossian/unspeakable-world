@@ -15,8 +15,10 @@ import {
   MeshBasicMaterial,
   PerspectiveCamera,
   Points,
+  Raycaster,
   RingGeometry,
   Scene,
+  Vector2,
   ShaderMaterial,
   SphereGeometry,
   Sprite,
@@ -27,6 +29,14 @@ import {
 } from "three";
 import { Body, HelioVector, GeoVector, JupiterMoons } from "astronomy-engine";
 import { SatelliteField } from "../satellites/satellite-field";
+import { payloadForBody } from "../data/body-info";
+import type { InfoPayload } from "../ui/InfoPanel";
+
+export type SolarFlightHit = {
+  kind: "Sun" | "Planet";
+  name: string;
+  payload: InfoPayload;
+};
 
 /**
  * 🚀 Solar System Flight Mode.
@@ -126,6 +136,10 @@ export class SolarFlightScene {
   private dragging = false;
   private lastX = 0;
   private lastY = 0;
+  private dragStart = { x: 0, y: 0 };
+  private dragMaxDist = 0;
+  private raycaster = new Raycaster();
+  private onClickCb: ((hit: SolarFlightHit) => void) | null = null;
   private tracking = true;
   private realScale = false;
   private orbitOpacity = 0.45;
@@ -924,6 +938,8 @@ export class SolarFlightScene {
     this.dragging = true;
     this.lastX = e.clientX;
     this.lastY = e.clientY;
+    this.dragStart = { x: e.clientX, y: e.clientY };
+    this.dragMaxDist = 0;
     this.canvas.setPointerCapture(e.pointerId);
     this.canvas.style.cursor = "grabbing";
   };
@@ -933,6 +949,11 @@ export class SolarFlightScene {
     const dy = e.clientY - this.lastY;
     this.lastX = e.clientX;
     this.lastY = e.clientY;
+    const total = Math.hypot(
+      e.clientX - this.dragStart.x,
+      e.clientY - this.dragStart.y,
+    );
+    if (total > this.dragMaxDist) this.dragMaxDist = total;
     this.yaw -= dx * 0.005;
     this.pitch = Math.max(
       -Math.PI / 2 + 0.05,
@@ -949,7 +970,54 @@ export class SolarFlightScene {
       /* ignore */
     }
     this.canvas.style.cursor = "grab";
+    if (this.dragMaxDist < 4 && this.onClickCb) {
+      const rect = this.canvas.getBoundingClientRect();
+      const ndc = new Vector2(
+        ((e.clientX - rect.left) / rect.width) * 2 - 1,
+        -((e.clientY - rect.top) / rect.height) * 2 + 1,
+      );
+      const hit = this.pick(ndc);
+      if (hit) this.onClickCb(hit);
+    }
   };
+
+  setOnClick(cb: (hit: SolarFlightHit) => void): void {
+    this.onClickCb = cb;
+  }
+
+  /** Raycast against the Sun + planets. Returns the closest hit or null. */
+  pick(ndc: Vector2): SolarFlightHit | null {
+    this.raycaster.setFromCamera(ndc, this.camera);
+    const candidates: Array<{
+      kind: SolarFlightHit["kind"];
+      name: string;
+      distance: number;
+    }> = [];
+    const sunHits = this.raycaster.intersectObject(this.sun, false);
+    if (sunHits[0]) {
+      candidates.push({ kind: "Sun", name: "Sun", distance: sunHits[0].distance });
+    }
+    for (const p of this.planets) {
+      const hits = this.raycaster.intersectObject(p.sphere, false);
+      if (hits[0]) {
+        candidates.push({
+          kind: "Planet",
+          name: p.name,
+          distance: hits[0].distance,
+        });
+      }
+    }
+    candidates.sort((a, b) => a.distance - b.distance);
+    const top = candidates[0];
+    if (!top) return null;
+    const payload =
+      payloadForBody(top.name, top.kind === "Sun" ? "Sun" : "Planet") ?? {
+        kind: top.kind === "Sun" ? ("Sun" as const) : ("Planet" as const),
+        name: top.name,
+        sections: [],
+      };
+    return { kind: top.kind, name: top.name, payload };
+  }
   private onWheel = (e: WheelEvent) => {
     e.preventDefault();
     // Logarithmic zoom: 1 wheel notch ~10% distance change.
