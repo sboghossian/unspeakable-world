@@ -1,5 +1,6 @@
 import { Vector3 } from "three";
 import { raDecToVec3 } from "../stars/coords";
+import { aliasForMessier } from "../info/aliases";
 
 /**
  * Local search index for the viewer's known objects:
@@ -114,6 +115,18 @@ export class SearchIndex {
         this.entries.push({
           id: `dso:${d.name}:common`,
           label: d.common,
+          kind: "dso",
+          detail: `${d.name} · ${d.type}`,
+          direction: celestialToWorld(d.ra, d.dec),
+          mag: d.mag,
+        });
+      }
+      // Curated famous-name alias (e.g. "Crab Nebula" → M1, "Pleiades" → M45)
+      const famous = aliasForMessier(d.name);
+      if (famous && famous !== d.name && famous !== d.common) {
+        this.entries.push({
+          id: `dso:${d.name}:alias`,
+          label: famous,
           kind: "dso",
           detail: `${d.name} · ${d.type}`,
           direction: celestialToWorld(d.ra, d.dec),

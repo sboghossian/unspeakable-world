@@ -5,6 +5,8 @@
  * and returns a clean JSON shape — no scraping required.
  */
 
+import { aliasesInText } from "./aliases";
+
 export type WikiSummary = {
   title: string;
   extract: string;
@@ -70,9 +72,11 @@ export function candidatesFromSimbad(
     list.push(id);
     list.push(id.replace(/\s+/g, "_"));
   }
-  // Sub-objects of famous parents (e.g. "Ford M 31 332" → also try "M 31"
-  // and "M31" so the user gets the parent galaxy's article).
+  // Sub-objects of famous parents (e.g. "Ford M 31 332" → also try the
+  // famous parent name like "Andromeda Galaxy" via our alias map, then
+  // fall back to "M 31" / "M31" raw codes if needed).
   const allText = [name, ...identifiers].join(" ");
+  for (const alias of aliasesInText(allText)) list.push(alias);
   const messierMatches = allText.match(/M\s*\d+/g);
   if (messierMatches) {
     for (const m of messierMatches) {
