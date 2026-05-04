@@ -13,6 +13,8 @@ import { NeoPanel } from "./ui/NeoPanel";
 import { TonightSky } from "./ui/TonightSky";
 import { SearchBar } from "./ui/SearchBar";
 import { SnapshotButton } from "./ui/SnapshotButton";
+import { ShareButton } from "./ui/ShareButton";
+import { BookmarksPanel } from "./ui/BookmarksPanel";
 import { ColorLegend } from "./ui/ColorLegend";
 import { LeftRail } from "./ui/LeftRail";
 import { InfoPanel } from "./ui/InfoPanel";
@@ -21,6 +23,7 @@ import {
   type LightConePreset,
 } from "./ui/LightConeControls";
 import { SearchIndex, type SearchEntry } from "./search/search-index";
+import { addBookmark } from "../lib/bookmarks";
 
 const TimeMachinePanel = lazy(() =>
   import("./ui/TimeMachinePanel").then((m) => ({ default: m.TimeMachinePanel })),
@@ -41,6 +44,7 @@ type Props = {
 };
 
 const DEFAULT_STATE: UniverseState = {
+  trackingTarget: null,
   cameraLogicalPos: { x: 26000, y: 7.9e-5, z: 7.9e-5 },
   distFromSunLY: 1.1e-4,
   speedLY: 4e-6,
@@ -118,9 +122,7 @@ export function Universe({ onExit }: Props) {
     };
   }, []);
 
-  // Hotkey: `K` toggles all Solar System zone overlays at once; `Y`
-  // toggles the aurora overlay. We listen on window so the keys work
-  // regardless of focus, but bail out for inputs.
+  // Hotkeys: `K` zone overlays, `Y` aurora, `T` tracking on last target.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
@@ -132,11 +134,42 @@ export function Universe({ onExit }: Props) {
       if (e.key === "y" || e.key === "Y") {
         const on = sceneRef.current && !state.auroraOn;
         sceneRef.current?.setAurora(!!on);
+        return;
+      }
+      if (e.key === "t" || e.key === "T") {
+        sceneRef.current?.toggleTrackingOnFocus();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [state.auroraOn]);
+
+  // Hash camera state — read on mount, write debounced on change.
+  useEffect(() => {
+    const scene = sceneRef.current;
+    if (!scene) return;
+    const params = parseUniverseHash(window.location.hash);
+    if (params.cx !== null && params.cy !== null && params.cz !== null) {
+      scene.setCameraLogical(params.cx, params.cy, params.cz, params.yaw, params.pitch);
+    }
+    if (params.zones) scene.setZonesFromCsv(params.zones);
+    if (params.missions) scene.setMissionsFromCsv(params.missions);
+    if (params.track) scene.setTrackingTarget(params.track);
+  }, []);
+
+  useEffect(() => {
+    let timer = 0;
+    const handle = window.setInterval(() => {
+      // Debounce-style: only write at most every 500 ms by checking elapsed.
+      if (timer && Date.now() - timer < 500) return;
+      timer = Date.now();
+      const hash = buildUniverseHash(state);
+      if (window.location.hash !== `#${hash}`) {
+        window.history.replaceState(null, "", `#${hash}`);
+      }
+    }, 500);
+    return () => window.clearInterval(handle);
+  }, [state]);
 
   // Build the search index once mounted.
   useEffect(() => {
@@ -242,6 +275,24 @@ export function Universe({ onExit }: Props) {
               return c ? c.toDataURL("image/png") : null;
             }}
           />
+          <ShareButton onPrepare={() => buildUniverseHash(state)} />
+          <BookmarksPanel />
+          <button
+            type="button"
+            onClick={() => {
+              const hash = buildUniverseHash(state);
+              window.history.replaceState(null, "", `#${hash}`);
+              addBookmark({
+                title: state.scaleLabel,
+                url: window.location.href,
+                mode: "universe",
+              });
+            }}
+            title="Save the current view as a bookmark"
+            className="pointer-events-auto rounded-lg border border-white/10 bg-space-950/70 px-2.5 py-1.5 font-mono text-xs text-white/70 backdrop-blur transition hover:bg-white/10 hover:text-white"
+          >
+            ★ save
+          </button>
           {state.tier === "Solar" &&
             (state.scaleLabel === "Earth Vicinity" ||
               state.scaleLabel === "Inner Solar System") && (
@@ -371,6 +422,73 @@ export function Universe({ onExit }: Props) {
       <ColorLegend />
     </div>
   );
+}
+
+type UniverseHashParams = {
+  cx: number | null;
+  cy: number | null;
+  cz: number | null;
+  yaw: number;
+  pitch: number;
+  zones: string | null;
+  missions: string | null;
+  track: string | null;
+};
+
+function parseUniverseHash(hash: string): UniverseHashParams {
+  const empty: UniverseHashParams = {
+    cx: null,
+    cy: null,
+    cz: null,
+    yaw: NaN,
+    pitch: NaN,
+    zones: null,
+    missions: null,
+    track: null,
+  };
+  const m = hash.match(/^#universe\?(.+)$/);
+  if (!m || !m[1]) return empty;
+  const params = new URLSearchParams(m[1]);
+  const num = (k: string): number => {
+    const v = params.get(k);
+    if (v === null) return NaN;
+    const n = parseFloat(v);
+    return Number.isFinite(n) ? n : NaN;
+  };
+  const cx = num("cx");
+  const cy = num("cy");
+  const cz = num("cz");
+  return {
+    cx: Number.isFinite(cx) ? cx : null,
+    cy: Number.isFinite(cy) ? cy : null,
+    cz: Number.isFinite(cz) ? cz : null,
+    yaw: num("yaw"),
+    pitch: num("pitch"),
+    zones: params.get("zones"),
+    missions: params.get("missions"),
+    track: params.get("track"),
+  };
+}
+
+function buildUniverseHash(state: UniverseState): string {
+  const p = new URLSearchParams();
+  p.set("cx", state.cameraLogicalPos.x.toPrecision(8));
+  p.set("cy", state.cameraLogicalPos.y.toPrecision(8));
+  p.set("cz", state.cameraLogicalPos.z.toPrecision(8));
+  p.set("yaw", state.yaw.toFixed(4));
+  p.set("pitch", state.pitch.toFixed(4));
+  const zones = Object.entries(state.zones)
+    .filter(([, v]) => v)
+    .map(([k]) => k)
+    .join(",");
+  if (zones) p.set("zones", zones);
+  const missions = Object.entries(state.missions)
+    .filter(([, v]) => v)
+    .map(([k]) => k)
+    .join(",");
+  if (missions) p.set("missions", missions);
+  if (state.trackingTarget) p.set("track", state.trackingTarget);
+  return `universe?${p.toString()}`;
 }
 
 function fmtDist(distLY: number): string {

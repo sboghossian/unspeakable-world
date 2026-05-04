@@ -302,6 +302,19 @@ export class GalacticScene {
     this.publishState();
   }
 
+  /** Restore camera distance from a saved hash (kly from Sun, along the
+   *  default fly-to direction). */
+  setCameraDistance(distKly: number): void {
+    if (!Number.isFinite(distKly) || distKly <= 0) return;
+    const dir = new Vector3(-1, 0.4, -1).normalize();
+    this.camPos = SUN_POS.clone().add(dir.clone().multiplyScalar(distKly));
+    const fwd = dir.clone().negate();
+    this.camYaw = Math.atan2(fwd.x, fwd.z);
+    this.camPitch = Math.asin(Math.max(-1, Math.min(1, fwd.y)));
+    this.applyCamera();
+    this.publishState();
+  }
+
   flyTo(target: "Sun" | "Galactic Center" | "M31" | "Local Group"): void {
     let dest: Vector3;
     let dist: number;

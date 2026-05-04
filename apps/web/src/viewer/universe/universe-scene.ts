@@ -172,6 +172,8 @@ export type UniverseState = {
     kuiper: boolean;
     oort: boolean;
   };
+  /** Tracking target — planet name when locked, else null. */
+  trackingTarget: string | null;
 };
 
 type Listener = (s: UniverseState) => void;
@@ -284,6 +286,14 @@ export class UniverseScene {
   private lastTickMs = performance.now();
   private listeners = new Set<Listener>();
   private state: UniverseState;
+
+  // Tracking — when set to a planet name, the camera's logicalPos is
+  // re-anchored each frame to (planetPosLY + trackOffset) so the body
+  // stays glued to the view as time advances. The offset updates from
+  // pan/zoom so tracking doesn't fight user input.
+  private trackingTarget: string | null = null;
+  private trackOffset = new Vector3();
+  private lastFocusName = "Sun";
 
   // Fly-to camera lerp.
   private flyTween: {
@@ -719,6 +729,12 @@ export class UniverseScene {
 
   /** Jump to a named target, choosing a sensible camera offset. */
   flyTo(target: string): void {
+    // Remember last destination for the T-key tracking shortcut.
+    this.lastFocusName = target;
+    // Release any existing tracking so the fly-to tween doesn't fight it.
+    if (this.trackingTarget && this.trackingTarget !== target) {
+      this.trackingTarget = null;
+    }
     let pos: Vector3;
     let speed: number;
     switch (target) {
@@ -1294,7 +1310,87 @@ export class UniverseScene {
       lightConeYears: this.lightConeYears,
       lightConeOpacity: this.lightConeOpacity,
       lightConeTargetName: this.lightConeTargetName,
+      trackingTarget: this.trackingTarget,
     };
+  }
+
+  /** Compute the current heliocentric position of a tracked planet in LY. */
+  private planetPosLY(name: string): Vector3 | null {
+    const spec = PLANETS.find((p) => p.name === name);
+    if (!spec) return null;
+    try {
+      const v = HelioVector(spec.body, this.simTime);
+      // PLANETS data uses (x, z, -y) convention to match the solar group.
+      return SUN_LY
+        .clone()
+        .add(new Vector3(v.x, v.z, -v.y).multiplyScalar(1 / AU_PER_LY));
+    } catch {
+      return null;
+    }
+  }
+
+  /** Lock the camera to a target planet (null to release). The current
+   *  offset between camera and planet is captured at the moment of lock,
+   *  so the view stays where the user has it. */
+  setTrackingTarget(name: string | null): void {
+    if (!name) {
+      this.trackingTarget = null;
+      this.publishState();
+      return;
+    }
+    const pos = this.planetPosLY(name);
+    if (!pos) {
+      this.trackingTarget = null;
+      this.publishState();
+      return;
+    }
+    this.trackingTarget = name;
+    this.trackOffset.copy(this.logicalPos).sub(pos);
+    this.lastInteractionMs = performance.now();
+    this.publishState();
+  }
+
+  /** Restore camera position + orientation from saved hash params. */
+  setCameraLogical(x: number, y: number, z: number, yaw: number, pitch: number): void {
+    if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) return;
+    this.logicalPos.set(x, y, z);
+    if (Number.isFinite(yaw)) this.yaw = yaw;
+    if (Number.isFinite(pitch)) this.pitch = pitch;
+    this.flyTween = null;
+    this.lastInteractionMs = performance.now();
+    this.publishState();
+  }
+
+  setZonesFromCsv(csv: string): void {
+    const set = new Set(csv.split(",").filter(Boolean));
+    const zones: Array<"habitable" | "asteroid" | "frost" | "kuiper" | "oort"> = [
+      "habitable",
+      "asteroid",
+      "frost",
+      "kuiper",
+      "oort",
+    ];
+    for (const z of zones) this.solarZones.setVisible(z, set.has(z));
+    this.publishState();
+  }
+
+  setMissionsFromCsv(csv: string): void {
+    if (!this.missions) return;
+    const set = new Set(csv.split(",").filter(Boolean));
+    for (const m of this.missionManifest) {
+      this.missions.setVisible(m.slug, set.has(m.slug));
+    }
+    this.missions.visible = true;
+    this.publishState();
+  }
+
+  /** Toggle tracking on the most-recently-flown-to planet (T hotkey). */
+  toggleTrackingOnFocus(): void {
+    if (this.trackingTarget) {
+      this.setTrackingTarget(null);
+      return;
+    }
+    this.setTrackingTarget(this.lastFocusName);
   }
 
   private publishState(): void {
@@ -1376,6 +1472,15 @@ export class UniverseScene {
       this.missions.setSimTimeAndTrack(this.simTime, camLocal);
     }
 
+    // Tracking: snap logicalPos to (planetPos + offset) BEFORE WASD so
+    // movement edits the offset and survives across frames.
+    if (this.trackingTarget && !this.flyTween) {
+      const pp = this.planetPosLY(this.trackingTarget);
+      if (pp) {
+        this.logicalPos.copy(pp).add(this.trackOffset);
+      }
+    }
+
     // WASD movement (in local axes derived from current yaw/pitch).
     if (this.heldKeys.size > 0) {
       this.lastInteractionMs = now;
@@ -1389,6 +1494,12 @@ export class UniverseScene {
       if (this.heldKeys.has("d")) this.logicalPos.add(right.clone().multiplyScalar(stepLY));
       if (this.heldKeys.has("q")) this.logicalPos.y -= stepLY;
       if (this.heldKeys.has("e")) this.logicalPos.y += stepLY;
+      // Update tracking offset so the new camera position sticks across
+      // subsequent ticks instead of being snapped back.
+      if (this.trackingTarget) {
+        const pp = this.planetPosLY(this.trackingTarget);
+        if (pp) this.trackOffset.copy(this.logicalPos).sub(pp);
+      }
     }
 
     // Apply camera rotation (camera stays at world origin).
