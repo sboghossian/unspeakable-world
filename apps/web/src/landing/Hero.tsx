@@ -5,7 +5,7 @@ const COUNTERS = [
   { value: "117,931", label: "stars" },
   { value: "13,962", label: "deep-sky objects" },
   { value: "6,278", label: "exoplanets" },
-  { value: "8", label: "wavelengths" },
+  { value: "3,927", label: "pulsars" },
 ];
 
 export function Hero() {
@@ -13,7 +13,7 @@ export function Hero() {
     <section className="mx-auto flex w-full max-w-5xl flex-col items-center px-6 pb-16 pt-24 text-center md:pt-36">
       <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.2em] text-plasma-400/90 backdrop-blur">
         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-plasma-500" />
-        <span>Day 53 · v3 — sky atlas + solar system flight</span>
+        <span>Day 58 · v3 — sky atlas + solar flight + gravity sandbox</span>
       </div>
 
       <h1 className="text-balance font-display text-5xl font-semibold leading-[1.05] glow md:text-7xl">
@@ -74,17 +74,26 @@ export function Hero() {
         <strong className="text-white/75">Sky atlas:</strong> DSS2 · Hα ·
         2MASS · AllWISE · GALEX UV · INTEGRAL X-ray · NVSS radio · Fermi
         γ-ray sky tiles federated from CDS & ESA · 117,931 HYG stars ·
-        13,962 OpenNGC deep-sky objects · 6,278 confirmed exoplanets · 50
-        named exotic objects (Sgr A*, M87*, Crab Pulsar, GW170817…) · 88 IAU
-        constellations · live ISS · Voyager 1/2 · Pioneers · New Horizons ·
-        JWST · 90-day sky events · SIMBAD + Wikipedia inspector · aurora
-        outlook · NOAA SWPC live.
+        13,962 OpenNGC deep-sky objects · 6,278 confirmed exoplanets ·
+        3,927 SIMBAD pulsars · 73 named exotic objects (Sgr A*, M87*,
+        Crab Pulsar, GW170817, Laniakea, Bullet Cluster, Pillars of
+        Creation…) · 88 IAU constellations · live ISS · Voyager 1/2 ·
+        Pioneers · New Horizons · JWST · 90-day sky events · SIMBAD +
+        Wikipedia inspector · aurora outlook · NOAA SWPC live · 8-step
+        interactive tutorial.
         <br />
-        <strong className="text-white/75">Solar system flight:</strong> 3D
-        heliocentric view · drawn orbital paths · Earth + atmosphere · Saturn
-        + rings · Jupiter + 4 Galilean moons in 3D · 30K background stars ·
-        bright-star labels · cosmic-landmark labels visible from anywhere in
-        the system · time scrubbing animates the planets actually orbiting.
+        <strong className="text-white/75">Solar System Flight:</strong>{" "}
+        textured 3-D Earth · drawn orbital paths · Saturn + rings · Jupiter
+        + 4 Galilean moons · Mars + Phobos + Deimos · solar zones (habitable
+        zone, frost line, asteroid belt, Kuiper belt) · 935 real satellites
+        with live SGP4 propagation · auto-tracking camera · vicinity
+        readouts · NOW button · time scrubbing animates everything orbiting.
+        <br />
+        <strong className="text-white/75">Gravity Sandbox:</strong> launch
+        comets / Earth-class / Jupiter-class / brown dwarfs / white dwarfs /
+        neutron stars / black holes under leapfrog n-body integration with
+        the Sun + four gas giants. Up to 15 simultaneous projectiles, with
+        400-point trails.
       </p>
 
       <EmailCapture />

@@ -74,6 +74,24 @@
 
 ---
 
+## v3 — Solar System Flight + Gravity Sandbox
+
+**🚀 [/#solar — Solar System Flight Mode](https://space.dashable.dev/#solar).** A separate 3-D heliocentric view where the camera flies around the Sun in true heliocentric coordinates (1 AU = 1 unit). Each planet sits at its real `HelioVector()` position, with a one-period sampled elliptical orbit drawn behind it. **Textured Earth** with continents + atmosphere glow. **Saturn with rings** (Cassini Division included). **Jupiter with all four Galilean moons** orbiting in 3D. **Mars with Phobos + Deimos**. **30K background stars** with full constellation context (50 brightest stars labelled, 73 cosmic landmarks visible). **Solar zones** overlay: habitable zone, frost line, asteroid belt, Kuiper belt as colour-coded ring loops.
+
+**🛰 935 real satellites** with live SGP4 propagation. Sourced from Celestrak's TLE feeds (stations + GPS + Galileo + GEO + Intelsat + Iridium NEXT + science + amateur — Starlink intentionally excluded as visual noise). Each frame's tick re-propagates every TLE for the current sim time, draping a halo of cyan dots around Earth that actually move as time scrubs.
+
+**⚛ Gravity Sandbox.** Open the orange ⚛ SANDBOX panel in solar flight, pick a projectile (Comet · Earth-class · Jupiter-class · Brown Dwarf · White Dwarf · Neutron Star · Black Hole), set launch speed (5–200 km/s), hit ▶ LAUNCH, and watch it leapfrog under n-body integration with the Sun + four gas giants. Up to 15 simultaneous projectiles, each with a 400-point trail.
+
+**⊙ Tracking Mode + Vicinity Auto-Label.** Camera glues to the focused body as it orbits (toggleable). The bottom bar reads out which named scale region you're in: Inner Sun · Earth Vicinity · Inner Solar System · Asteroid Belt Region · Jupiter Region · Saturn Region · Outer Solar System · Inner Heliosphere · Heliopause / Local Bubble · Interstellar Backdrop.
+
+**⟲ Now button.** One click resets simulation time to wall-clock now.
+
+**🎓 Interactive tutorial.** 8-step overlay that walks first-time visitors through the gestures, the 8 wavelengths, the layer toggles, Solar Flight, the Gravity Sandbox, and Tonight's Sky.
+
+**⚡ 3,927 SIMBAD pulsars** as a toggleable amber field on the celestial sphere.
+
+---
+
 The full plan lives in [`tasks/todo.md`](./tasks/todo.md). Every commit lands on `main` and pushes here. **No private branches, no stealth — every dragon is a public issue.**
 
 ---
