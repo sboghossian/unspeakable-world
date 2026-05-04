@@ -1,4 +1,8 @@
 import type { InfoPayload, InfoSection } from "../ui/InfoPanel";
+import {
+  lookupObjectImagery,
+  type ImageEntry,
+} from "./object-imagery";
 
 /**
  * Shared static facts for solar-system bodies. Both Universe Mode and
@@ -197,7 +201,47 @@ export function bodyFactsToPayload(
       kind: "links",
       items: [{ label: "Wikipedia", href: facts.wikipedia }],
     });
-  return { kind, name, sections };
+  return enrichWithImagery({ kind, name, sections });
+}
+
+/** Re-export for callers (Universe pick path, etc.). */
+export { lookupObjectImagery as lookupImagery };
+
+/** Prepend an `image` section to a payload if curated imagery exists. */
+export function enrichWithImagery(payload: InfoPayload): InfoPayload {
+  const entry: ImageEntry | null = lookupObjectImagery(payload.name);
+  if (!entry) return payload;
+  // Skip placeholder entries — keeps the panel layout clean for TODOs.
+  if (entry.url.startsWith("https://placeholder.invalid")) return payload;
+  const imageSection: InfoSection = {
+    kind: "image",
+    url: entry.url,
+    ...(entry.thumbUrl !== undefined ? { thumbUrl: entry.thumbUrl } : {}),
+    credit: entry.credit,
+    ...(entry.caption !== undefined ? { caption: entry.caption } : {}),
+  };
+  return { ...payload, sections: [imageSection, ...payload.sections] };
+}
+
+/** Build a minimal payload for a cosmic landmark (DSO / exotic object). */
+export function cosmicLandmarkFactsToPayload(
+  name: string,
+  type: string,
+  detail?: string,
+): InfoPayload {
+  const sections: InfoSection[] = [];
+  sections.push({ kind: "identification", rows: [["Type", type]] });
+  if (detail) sections.push({ kind: "overview", text: detail });
+  sections.push({
+    kind: "links",
+    items: [
+      {
+        label: "Wikipedia",
+        href: `https://en.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(name)}`,
+      },
+    ],
+  });
+  return enrichWithImagery({ kind: "Landmark", name, sections });
 }
 
 /* ───────────────────────── MISSION SUPPORT ───────────────────────── */

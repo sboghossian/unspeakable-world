@@ -34,7 +34,13 @@ import { PulsarField } from "../cosmic/pulsar-field";
 import { ExoplanetField } from "../exoplanets/exoplanet-field";
 import { CosmicLandmarks } from "../cosmic/cosmic-landmarks";
 import { StarLabels } from "../stars/star-labels";
-import { BODY_INFO, bodyFactsToPayload, missionFactsToPayload } from "../data/body-info";
+import {
+  BODY_INFO,
+  bodyFactsToPayload,
+  cosmicLandmarkFactsToPayload,
+  enrichWithImagery,
+  missionFactsToPayload,
+} from "../data/body-info";
 import type { InfoPayload } from "../ui/InfoPanel";
 import {
   AsteroidField,
@@ -932,6 +938,22 @@ export class UniverseScene {
         });
       }
     }
+    // Cosmic landmarks (sprite labels on the celestial sphere). Only
+    // pickable when the layer is on, so we don't steal solar-system clicks.
+    if (this.cosmicLandmarks.visible()) {
+      for (const p of this.cosmicLandmarks.pickables()) {
+        const hits = this.raycaster.intersectObject(p.sprite, false);
+        if (hits[0]) {
+          candidates.push({
+            kind: "Landmark",
+            name: p.data.name,
+            distance: hits[0].distance,
+            detail: p.data.detail,
+          });
+        }
+      }
+    }
+
     candidates.sort((a, b) => a.distance - b.distance);
     const top = candidates[0];
     // Missions: ask the field directly; if any mission marker is hit and
@@ -965,14 +987,19 @@ export class UniverseScene {
       }
     }
     if (!top) return null;
-    const facts = BODY_INFO[top.name];
-    const payload: InfoPayload = facts
-      ? bodyFactsToPayload(top.name, top.kind === "Sun" ? "Sun" : "Planet", facts)
-      : {
-          kind: top.kind === "Sun" ? "Sun" : "Planet",
-          name: top.name,
-          sections: [{ kind: "overview", text: top.detail }],
-        };
+    let payload: InfoPayload;
+    if (top.kind === "Landmark") {
+      payload = cosmicLandmarkFactsToPayload(top.name, "Cosmic landmark", top.detail);
+    } else {
+      const facts = BODY_INFO[top.name];
+      payload = facts
+        ? bodyFactsToPayload(top.name, top.kind === "Sun" ? "Sun" : "Planet", facts)
+        : enrichWithImagery({
+            kind: top.kind === "Sun" ? "Sun" : "Planet",
+            name: top.name,
+            sections: [{ kind: "overview", text: top.detail }],
+          });
+    }
     return {
       kind: top.kind,
       name: top.name,
