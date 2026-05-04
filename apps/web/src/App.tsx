@@ -21,9 +21,22 @@ const PlanetSurface = lazy(() =>
 const Galactic = lazy(() =>
   import("./viewer/Galactic").then((m) => ({ default: m.Galactic })),
 );
+const Universe = lazy(() =>
+  import("./viewer/Universe").then((m) => ({ default: m.Universe })),
+);
 
 export function App() {
   const route = useRoute();
+
+  if (route === "universe") {
+    return (
+      <main className="relative h-full w-full bg-space-950">
+        <Suspense fallback={<ViewerLoadingVeil />}>
+          <Universe onExit={() => navigate("landing")} />
+        </Suspense>
+      </main>
+    );
+  }
 
   if (route === "galactic") {
     return (

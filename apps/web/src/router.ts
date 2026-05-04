@@ -7,10 +7,17 @@ import { useSyncExternalStore } from "react";
  * Day 6 will extend this to deep-link camera state and selected objects.
  */
 
-export type Route = "landing" | "viewer" | "solar" | "surface" | "galactic";
+export type Route =
+  | "landing"
+  | "viewer"
+  | "solar"
+  | "surface"
+  | "galactic"
+  | "universe";
 
 function getRoute(): Route {
   const hash = typeof window === "undefined" ? "" : window.location.hash;
+  if (hash.startsWith("#universe")) return "universe";
   if (hash.startsWith("#galactic")) return "galactic";
   if (hash.startsWith("#surface")) return "surface";
   if (hash.startsWith("#solar")) return "solar";
@@ -46,6 +53,10 @@ export function navigate(route: Route, planet?: "Earth" | "Mars" | "Moon"): void
   }
   if (route === "galactic") {
     window.location.hash = "#galactic";
+    return;
+  }
+  if (route === "universe") {
+    window.location.hash = "#universe";
     return;
   }
   window.location.hash =
