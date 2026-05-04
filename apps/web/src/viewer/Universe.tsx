@@ -32,12 +32,12 @@ type Props = {
 };
 
 const DEFAULT_STATE: UniverseState = {
-  cameraLogicalPos: { x: 26000, y: 0.0001, z: 0.0002 },
-  distFromSunLY: 0.0001,
-  speedLY: 1e-5,
+  cameraLogicalPos: { x: 26000, y: 7.9e-5, z: 7.9e-5 },
+  distFromSunLY: 1.1e-4,
+  speedLY: 4e-6,
   yaw: Math.PI,
-  pitch: -0.05,
-  scaleLabel: "Earth Vicinity",
+  pitch: -0.55,
+  scaleLabel: "Inner Solar System",
   time: new Date(),
   tier: "Solar",
   skyTilesVisible: true,
@@ -257,20 +257,20 @@ export function Universe({ onExit }: Props) {
           onTimeChange={(t) => sceneRef.current?.setTime(t)}
         />
         <div className="rounded-full border border-white/5 bg-space-950/60 px-4 py-1 font-mono text-[10px] uppercase tracking-[0.25em] text-white/40 backdrop-blur">
-          W A S D · move · drag · look · wheel · adjust speed · 1-8 · planet ·
-          ` home · B galactic center · N M31 · Q/E · up/down
+          drag · look · wheel · zoom (shift = fine, ⌘/ctrl = WASD speed) ·
+          W A S D · move · 1-8 · planet · ` home · B GC · N M31 · Q/E · up/down
         </div>
       </div>
 
       {/* Inspector card */}
       {inspect && (
-        <aside className="pointer-events-auto absolute right-3 top-32 z-30 w-[min(340px,92vw)] rounded-xl border border-white/10 bg-space-950/92 p-4 backdrop-blur shadow-2xl">
-          <header className="mb-2 flex items-start justify-between gap-3">
+        <aside className="pointer-events-auto absolute right-3 top-20 z-30 flex max-h-[calc(100vh-9rem)] w-[min(360px,92vw)] flex-col rounded-xl border border-white/10 bg-space-950/95 backdrop-blur shadow-2xl">
+          <header className="flex items-start justify-between gap-3 border-b border-white/5 px-4 py-3">
             <div>
               <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-emerald-300/80">
                 {inspect.kind}
               </div>
-              <div className="font-display text-lg text-white">
+              <div className="font-display text-xl text-white">
                 {inspect.name}
               </div>
             </div>
@@ -283,15 +283,38 @@ export function Universe({ onExit }: Props) {
               ✕
             </button>
           </header>
-          <p className="mb-3 text-sm leading-relaxed text-white/80">
-            {inspect.detail}
-          </p>
-          <div className="flex gap-2">
+          <div className="flex-1 overflow-y-auto px-4 py-3">
+            <p className="text-sm leading-relaxed text-white/75">
+              {inspect.detail}
+            </p>
+            {inspect.facts && inspect.facts.length > 0 && (
+              <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-[12.5px]">
+                {inspect.facts.map((f) => (
+                  <div key={f.label} className="contents">
+                    <dt className="font-mono text-[10px] uppercase tracking-wider text-white/40">
+                      {f.label}
+                    </dt>
+                    <dd className="text-white/85">{f.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+            {inspect.wikipedia && (
+              <a
+                href={inspect.wikipedia}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-4 inline-flex items-center gap-1 font-mono text-[11px] uppercase tracking-widest text-cyan-300 hover:text-cyan-200"
+              >
+                Wikipedia ↗
+              </a>
+            )}
+          </div>
+          <div className="flex gap-2 border-t border-white/5 px-4 py-3">
             <button
               type="button"
               onClick={() => {
                 sceneRef.current?.flyTo(inspect.name);
-                setInspect(null);
               }}
               className="flex-1 rounded-md border border-emerald-400/40 bg-emerald-400/10 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-emerald-200 hover:bg-emerald-400/25"
             >
@@ -307,9 +330,6 @@ export function Universe({ onExit }: Props) {
                 🪐 surface
               </a>
             )}
-          </div>
-          <div className="mt-3 border-t border-white/5 pt-2 font-mono text-[10px] text-white/40">
-            click sky to inspect · esc to close
           </div>
         </aside>
       )}

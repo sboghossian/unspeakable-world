@@ -59,6 +59,159 @@ import { StarLabels } from "../stars/star-labels";
 const AU_PER_LY = 63241.077;
 const SUN_LY = new Vector3(26000, 0, 0);
 
+type BodyFacts = {
+  detail: string;
+  wikipedia: string;
+  facts: Array<{ label: string; value: string }>;
+};
+
+const BODY_INFO: Record<string, BodyFacts> = {
+  Sun: {
+    detail:
+      "Yellow-dwarf G2V main-sequence star at the centre of the solar system. Holds 99.86% of the system's mass and powers life on Earth via fusion of hydrogen into helium.",
+    wikipedia: "https://en.wikipedia.org/wiki/Sun",
+    facts: [
+      { label: "Type", value: "G2V main-sequence star" },
+      { label: "Mass", value: "1.989 × 10³⁰ kg (333,000 ⊕)" },
+      { label: "Radius", value: "695,700 km (109 ⊕)" },
+      { label: "Surface temp.", value: "5,778 K" },
+      { label: "Core temp.", value: "15.7 million K" },
+      { label: "Luminosity", value: "3.828 × 10²⁶ W" },
+      { label: "Age", value: "4.6 billion years" },
+      { label: "Composition", value: "73% H · 25% He · 2% heavier" },
+      { label: "Rotation", value: "25.4 d (equator) · 35 d (poles)" },
+    ],
+  },
+  Mercury: {
+    detail:
+      "Smallest and innermost planet. No moons, almost no atmosphere, and the most extreme day-night temperature swing in the solar system.",
+    wikipedia: "https://en.wikipedia.org/wiki/Mercury_(planet)",
+    facts: [
+      { label: "Distance from Sun", value: "0.39 AU (57.9 M km)" },
+      { label: "Year", value: "88 Earth days" },
+      { label: "Day (solar)", value: "176 Earth days" },
+      { label: "Radius", value: "2,440 km (0.38 ⊕)" },
+      { label: "Mass", value: "0.055 ⊕" },
+      { label: "Gravity", value: "3.7 m/s² (0.38 g)" },
+      { label: "Temp. range", value: "−173 °C to +427 °C" },
+      { label: "Moons", value: "0" },
+      { label: "Atmosphere", value: "Trace exosphere (Na, K, O₂, H₂)" },
+    ],
+  },
+  Venus: {
+    detail:
+      "Earth's twin in size but a runaway-greenhouse hellscape. Hottest planet in the solar system thanks to a 96% CO₂ atmosphere and 92-bar surface pressure.",
+    wikipedia: "https://en.wikipedia.org/wiki/Venus",
+    facts: [
+      { label: "Distance from Sun", value: "0.72 AU (108.2 M km)" },
+      { label: "Year", value: "224.7 Earth days" },
+      { label: "Day (sidereal)", value: "243 Earth days (retrograde)" },
+      { label: "Radius", value: "6,051 km (0.95 ⊕)" },
+      { label: "Mass", value: "0.815 ⊕" },
+      { label: "Gravity", value: "8.87 m/s² (0.90 g)" },
+      { label: "Surface temp.", value: "+462 °C" },
+      { label: "Surface pressure", value: "92 bar (≈ 900 m underwater)" },
+      { label: "Moons", value: "0" },
+    ],
+  },
+  Earth: {
+    detail:
+      "Only known planet harbouring life. 71% ocean cover, a magnetic field that shields the surface from solar wind, and a single large moon that stabilises the axial tilt.",
+    wikipedia: "https://en.wikipedia.org/wiki/Earth",
+    facts: [
+      { label: "Distance from Sun", value: "1.00 AU (149.6 M km)" },
+      { label: "Year", value: "365.25 days" },
+      { label: "Day", value: "23 h 56 min (sidereal)" },
+      { label: "Radius", value: "6,371 km" },
+      { label: "Mass", value: "5.972 × 10²⁴ kg" },
+      { label: "Gravity", value: "9.81 m/s² (1 g)" },
+      { label: "Surface temp.", value: "−88 °C to +58 °C (avg +15 °C)" },
+      { label: "Atmosphere", value: "78% N₂ · 21% O₂ · 1% Ar/CO₂/…" },
+      { label: "Moons", value: "1 (Luna)" },
+    ],
+  },
+  Mars: {
+    detail:
+      "Cold desert world with the largest volcano (Olympus Mons, 21.9 km) and longest canyon (Valles Marineris, 4,000 km) in the solar system. Active rovers + ancient riverbeds.",
+    wikipedia: "https://en.wikipedia.org/wiki/Mars",
+    facts: [
+      { label: "Distance from Sun", value: "1.52 AU (227.9 M km)" },
+      { label: "Year", value: "687 Earth days (1.88 yr)" },
+      { label: "Day (sol)", value: "24 h 37 min" },
+      { label: "Radius", value: "3,390 km (0.53 ⊕)" },
+      { label: "Mass", value: "0.107 ⊕" },
+      { label: "Gravity", value: "3.71 m/s² (0.38 g)" },
+      { label: "Surface temp.", value: "−143 °C to +35 °C" },
+      { label: "Atmosphere", value: "95% CO₂ · 6 mbar (very thin)" },
+      { label: "Moons", value: "2 (Phobos, Deimos)" },
+    ],
+  },
+  Jupiter: {
+    detail:
+      "Largest planet — a gas giant 2.5× the mass of all other planets combined. Great Red Spot is a 350-year-old storm wider than Earth. Four Galilean moons visible in binoculars.",
+    wikipedia: "https://en.wikipedia.org/wiki/Jupiter",
+    facts: [
+      { label: "Distance from Sun", value: "5.20 AU (778.5 M km)" },
+      { label: "Year", value: "11.86 Earth years" },
+      { label: "Day", value: "9 h 56 min" },
+      { label: "Radius", value: "69,911 km (11 ⊕)" },
+      { label: "Mass", value: "318 ⊕ (1/1047 ☉)" },
+      { label: "Gravity", value: "24.79 m/s² (2.53 g)" },
+      { label: "Composition", value: "90% H · 10% He · trace methane" },
+      { label: "Magnetic field", value: "20,000× Earth's strength" },
+      { label: "Moons", value: "95 (Io, Europa, Ganymede, Callisto…)" },
+    ],
+  },
+  Saturn: {
+    detail:
+      "Iconic ringed gas giant. The rings span 282,000 km but are < 1 km thick. Titan, its largest moon, has a thick nitrogen atmosphere and methane lakes.",
+    wikipedia: "https://en.wikipedia.org/wiki/Saturn",
+    facts: [
+      { label: "Distance from Sun", value: "9.58 AU (1.43 B km)" },
+      { label: "Year", value: "29.45 Earth years" },
+      { label: "Day", value: "10 h 42 min" },
+      { label: "Radius", value: "58,232 km (9.13 ⊕)" },
+      { label: "Mass", value: "95.2 ⊕" },
+      { label: "Gravity", value: "10.44 m/s² (1.06 g)" },
+      { label: "Density", value: "0.687 g/cm³ (less dense than water)" },
+      { label: "Rings", value: "282,000 km wide · ~1 km thick" },
+      { label: "Moons", value: "146 (Titan, Enceladus, Mimas…)" },
+    ],
+  },
+  Uranus: {
+    detail:
+      "Pale-cyan ice giant tipped on its side (98° axial tilt) — likely from a primordial collision. Coldest minimum temperature of any planet (−224 °C).",
+    wikipedia: "https://en.wikipedia.org/wiki/Uranus",
+    facts: [
+      { label: "Distance from Sun", value: "19.2 AU (2.87 B km)" },
+      { label: "Year", value: "84 Earth years" },
+      { label: "Day", value: "17 h 14 min (retrograde)" },
+      { label: "Radius", value: "25,362 km (4.0 ⊕)" },
+      { label: "Mass", value: "14.5 ⊕" },
+      { label: "Axial tilt", value: "97.77° (rolls along orbit)" },
+      { label: "Min. temp.", value: "−224 °C (coldest planet)" },
+      { label: "Composition", value: "Water/methane/ammonia ices + H/He" },
+      { label: "Moons", value: "27 (Titania, Oberon, Miranda…)" },
+    ],
+  },
+  Neptune: {
+    detail:
+      "Outermost planet. Strongest sustained winds in the solar system (up to 2,100 km/h). Discovered in 1846 from mathematical predictions of Uranus's orbit.",
+    wikipedia: "https://en.wikipedia.org/wiki/Neptune",
+    facts: [
+      { label: "Distance from Sun", value: "30.1 AU (4.50 B km)" },
+      { label: "Year", value: "164.8 Earth years" },
+      { label: "Day", value: "16 h 6 min" },
+      { label: "Radius", value: "24,622 km (3.88 ⊕)" },
+      { label: "Mass", value: "17.1 ⊕" },
+      { label: "Gravity", value: "11.15 m/s² (1.14 g)" },
+      { label: "Avg. temp.", value: "−214 °C" },
+      { label: "Wind speeds", value: "Up to 2,100 km/h" },
+      { label: "Moons", value: "16 (Triton…)" },
+    ],
+  },
+};
+
 const PLANETS: Array<{
   body: Body;
   name: string;
@@ -121,6 +274,8 @@ export type UniverseHit = {
   kind: "Sun" | "Planet" | "Landmark" | "Star";
   name: string;
   detail: string;
+  facts?: Array<{ label: string; value: string }>;
+  wikipedia?: string;
 };
 
 type PlanetMesh = {
@@ -172,11 +327,18 @@ export class UniverseScene {
   private galacticLabels: Sprite[] = [];
   private armLabels: Sprite[] = [];
 
-  // Camera state — logicalPos in LY (galactic-unit absolute).
-  private logicalPos = new Vector3(SUN_LY.x, 0.0001, SUN_LY.z + 0.0002);
+  // Camera state — logicalPos in LY (galactic-unit absolute). Default view
+  // is a tilted overhead of the inner solar system (~5 AU above the
+  // ecliptic, looking down at the Sun) so that Mercury → Saturn and their
+  // drawn orbits are all visible on first paint.
+  private logicalPos = new Vector3(
+    SUN_LY.x + 0.5 / AU_PER_LY, // ~0.5 AU offset to give the Sun some parallax
+    5 / AU_PER_LY, // 5 AU above the plane
+    SUN_LY.z + 5 / AU_PER_LY, // 5 AU back along z
+  );
   private yaw = Math.PI;
-  private pitch = -0.05;
-  private speed = 1e-5; // LY/s — start slow (~ AU scale)
+  private pitch = -0.55; // tilt down toward the ecliptic (~31°)
+  private speed = 0.25 / AU_PER_LY; // ~0.25 AU/s — comfortable for inner SS
   private heldKeys = new Set<string>();
   private dragging = false;
   private dragStart = { x: 0, y: 0 };
@@ -407,8 +569,11 @@ export class UniverseScene {
     let speed: number;
     switch (target) {
       case "Sun":
-        pos = SUN_LY.clone().add(new Vector3(0.00005, 0.00002, 0.00005));
-        speed = 1e-5;
+        // Overhead inner-solar-system view, like AstroGrid's default.
+        pos = SUN_LY.clone().add(
+          new Vector3(0.5 / AU_PER_LY, 5 / AU_PER_LY, 5 / AU_PER_LY),
+        );
+        speed = 0.25 / AU_PER_LY;
         break;
       case "Galactic Center":
         pos = new Vector3(8, 4, 8); // 8 LY from GC, slightly above plane
@@ -652,27 +817,35 @@ export class UniverseScene {
       name: string;
       distance: number;
       detail: string;
+      facts?: UniverseHit["facts"];
+      wikipedia?: string;
     }> = [];
 
     // Sun
     const sunHits = this.raycaster.intersectObject(this.sunMesh, false);
     if (sunHits[0]) {
+      const info = BODY_INFO["Sun"]!;
       candidates.push({
         kind: "Sun",
         name: "Sun",
         distance: sunHits[0].distance,
-        detail: "G2V star · 1 AU = us → here · 4.6 Gyr old",
+        detail: info.detail,
+        facts: info.facts,
+        wikipedia: info.wikipedia,
       });
     }
     // Planets
     for (const p of this.planets) {
       const hits = this.raycaster.intersectObject(p.sphere, false);
       if (hits[0]) {
+        const info = BODY_INFO[p.name];
         candidates.push({
           kind: "Planet",
           name: p.name,
           distance: hits[0].distance,
-          detail: this.planetDetail(p.name),
+          detail: info?.detail ?? `${p.name} · solar-system body`,
+          facts: info?.facts,
+          wikipedia: info?.wikipedia,
         });
       }
     }
@@ -682,27 +855,44 @@ export class UniverseScene {
           kind: candidates[0].kind,
           name: candidates[0].name,
           detail: candidates[0].detail,
+          facts: candidates[0].facts,
+          wikipedia: candidates[0].wikipedia,
         }
       : null;
   }
-
-  private planetDetail(name: string): string {
-    const facts: Record<string, string> = {
-      Mercury: "Innermost planet · 0.39 AU · 88-day year · no atmosphere",
-      Venus: "Cloud-cloaked twin · 0.72 AU · 96 % CO₂ atmosphere · 462 °C surface",
-      Earth: "Home · 1.00 AU · 71 % ocean · 1 moon · 8B humans",
-      Mars: "Red planet · 1.52 AU · Olympus Mons (21.9 km) · 2 potato moons",
-      Jupiter: "Gas giant · 5.20 AU · 79 moons · Great Red Spot · 4 Galilean moons visible",
-      Saturn: "Ringed giant · 9.58 AU · 83 moons · prominent rings + Cassini Division",
-      Uranus: "Ice giant · 19.2 AU · tipped 98° · 27 moons",
-      Neptune: "Outermost planet · 30.1 AU · 14 moons · supersonic winds",
-    };
-    return facts[name] ?? `${name} · solar-system body`;
-  }
   private onWheel = (e: WheelEvent) => {
     e.preventDefault();
-    const factor = Math.exp(-e.deltaY * 0.0008);
-    this.speed = Math.max(1e-9, Math.min(1e6, this.speed * factor));
+    // Dolly toward / away from the Sun (or galactic origin if outside the
+    // solar system) by a fraction of the current radial distance. Step is
+    // scale-invariant so the same wheel notch feels right at every zoom
+    // level. Shift = fine zoom (10× slower); Ctrl/Cmd = adjust WASD speed.
+    if (e.ctrlKey || e.metaKey) {
+      const factor = Math.exp(-e.deltaY * 0.0008);
+      this.speed = Math.max(1e-9, Math.min(1e6, this.speed * factor));
+      this.publishState();
+      return;
+    }
+    const distLY = this.logicalPos.distanceTo(SUN_LY);
+    const anchor = distLY < 1 ? SUN_LY : new Vector3(0, 0, 0);
+    const dir = this.logicalPos.clone().sub(anchor);
+    const r = dir.length();
+    if (r < 1e-12) return;
+    const fine = e.shiftKey ? 0.15 : 1;
+    // ≈ 8 % per natural wheel notch (deltaY 100); shift = ~1.2 %.
+    const factor = Math.exp(e.deltaY * 0.0008 * fine);
+    // Don't let the user dolly inside the anchor body.
+    const minR = anchor === SUN_LY ? 0.005 / AU_PER_LY : 1e-6;
+    const maxR = 5e10;
+    const newR = Math.max(minR, Math.min(maxR, r * factor));
+    dir.multiplyScalar(newR / r);
+    this.logicalPos.copy(anchor).add(dir);
+    // Aim the camera at the anchor so dolly always feels like an orbit-zoom.
+    const fwd = anchor.clone().sub(this.logicalPos).normalize();
+    this.yaw = Math.atan2(fwd.x, fwd.z);
+    this.pitch = Math.asin(Math.max(-1, Math.min(1, fwd.y)));
+    // Keep WASD speed roughly proportional to the distance from anchor so
+    // the user can fly comfortably without manually adjusting.
+    this.speed = Math.max(1e-9, newR * 0.05);
     this.publishState();
   };
   private onKeyDown = (e: KeyboardEvent) => {
