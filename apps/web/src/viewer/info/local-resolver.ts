@@ -25,6 +25,10 @@ const SOLAR_LABELS = [
   "Neptune",
 ];
 
+/** Side map populated lazily as cosmic landmarks land in the candidate
+ *  list. Keeps the synthesizeHit signature stable. */
+const LANDMARK_DETAILS: Record<string, string> = {};
+
 const SPACECRAFT_DETAIL: Record<string, string> = {
   "Voyager 1":
     "Spacecraft · launched 1977-09-05 · ~166 AU · interstellar (since 2012)",
@@ -82,6 +86,26 @@ export function resolveLocalHit(
       cands.push({ label: c.name, angle: a, dir });
     }
   }
+  // Cosmic landmarks — always considered. They're rare (17 entries) so they
+  // don't crowd planet hits, and they're high-information clicks.
+  for (const lm of scene.cosmicLandmarkList()) {
+    const cdec = Math.cos((lm.decDeg * Math.PI) / 180);
+    const raRad = (lm.raDeg * Math.PI) / 180;
+    const decRad = (lm.decDeg * Math.PI) / 180;
+    const dir = new Vector3(
+      cdec * Math.cos(raRad),
+      Math.sin(decRad),
+      -cdec * Math.sin(raRad),
+    ).normalize();
+    const a =
+      (Math.acos(Math.max(-1, Math.min(1, dir.dot(clickDir)))) * 180) /
+      Math.PI;
+    if (a < tol * 1.5) {
+      cands.push({ label: lm.name, angle: a, dir });
+      // Cache the detail string for synthesizeHit by stuffing into a side map
+      LANDMARK_DETAILS[lm.name] = lm.detail;
+    }
+  }
   cands.sort((a, b) => a.angle - b.angle);
   const best = cands[0];
   if (!best || best.angle > tol) return null;
@@ -99,24 +123,29 @@ function synthesizeHit(
   const isMoon = label === "Moon";
   const isIss = label === "ISS";
   const isCraft = label in SPACECRAFT_DETAIL;
-  const type = isCraft
-    ? "Sat"
-    : isSun
-      ? "*"
-      : isIss
-        ? "Sat"
-        : isMoon
-          ? "Moo"
-          : "Pl";
-  const description = isCraft
-    ? SPACECRAFT_DETAIL[label]!
-    : isIss
-      ? "Spacecraft · International Space Station · Earth orbit"
+  const isLandmark = label in LANDMARK_DETAILS;
+  const type = isLandmark
+    ? "Cos" // cosmic landmark
+    : isCraft
+      ? "Sat"
       : isSun
-        ? "G-type main-sequence star"
-        : isMoon
-          ? "Earth's natural satellite"
-          : "Solar System planet";
+        ? "*"
+        : isIss
+          ? "Sat"
+          : isMoon
+            ? "Moo"
+            : "Pl";
+  const description = isLandmark
+    ? LANDMARK_DETAILS[label]!
+    : isCraft
+      ? SPACECRAFT_DETAIL[label]!
+      : isIss
+        ? "Spacecraft · International Space Station · Earth orbit"
+        : isSun
+          ? "G-type main-sequence star"
+          : isMoon
+            ? "Earth's natural satellite"
+            : "Solar System planet";
   return {
     name: label,
     type,

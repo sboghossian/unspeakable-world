@@ -289,6 +289,49 @@ export function Viewer() {
           decDeg: dec,
         });
       }
+      // Cosmic landmarks (Sgr A*, M87*, Crab Pulsar, GW170817, …) — short
+      // hand-curated list; always available regardless of layer toggle.
+      for (const lm of scene.cosmicLandmarkList()) {
+        const cdec = Math.cos((lm.decDeg * Math.PI) / 180);
+        const raRad = (lm.raDeg * Math.PI) / 180;
+        const decRad = (lm.decDeg * Math.PI) / 180;
+        const dirX = cdec * Math.cos(raRad);
+        const dirZ = Math.sin(decRad);
+        const dirY = -cdec * Math.sin(raRad);
+        out.push({
+          id: `cosmic:${lm.name}`,
+          label: lm.name,
+          kind: "dso",
+          detail: lm.detail,
+          direction: new Vector3(dirX, dirZ, dirY).normalize(),
+          raDeg: lm.raDeg,
+          decDeg: lm.decDeg,
+        });
+      }
+      // Exoplanets — only the ones with stable host names so search isn't
+      // dominated by 6,278 "Kepler-NNN b" rows. We index named planets +
+      // every TRAPPIST/Proxima/etc. entry.
+      const NAMED_PATTERNS = /^(Proxima|TRAPPIST|TOI|HR|55 Cnc|GJ|HD|HIP|WASP|HAT|K2)/i;
+      for (const exo of scene.exoplanetList()) {
+        if (!NAMED_PATTERNS.test(exo.name)) continue;
+        const cdec = Math.cos((exo.dec * Math.PI) / 180);
+        const raRad = (exo.ra * Math.PI) / 180;
+        const decRad = (exo.dec * Math.PI) / 180;
+        const dirX = cdec * Math.cos(raRad);
+        const dirZ = Math.sin(decRad);
+        const dirY = -cdec * Math.sin(raRad);
+        const distStr = exo.distPc ? ` · ${exo.distPc.toFixed(0)} pc` : "";
+        const yearStr = exo.year ? ` · disc ${exo.year}` : "";
+        out.push({
+          id: `exo:${exo.name}`,
+          label: exo.name,
+          kind: "dso",
+          detail: `Exoplanet${distStr}${yearStr} · ${exo.method ?? "Transit"}`,
+          direction: new Vector3(dirX, dirZ, dirY).normalize(),
+          raDeg: exo.ra,
+          decDeg: exo.dec,
+        });
+      }
       return out;
     });
     void idx

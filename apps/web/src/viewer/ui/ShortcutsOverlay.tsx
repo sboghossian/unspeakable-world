@@ -42,6 +42,8 @@ const SHORTCUTS: Array<{ section: string; items: Shortcut[] }> = [
       { keys: ["g", ""], label: "Toggle coordinate grid" },
       { keys: ["n", ""], label: "Toggle bright-star names" },
       { keys: ["s", ""], label: "Toggle spacecraft markers" },
+      { keys: ["x", ""], label: "Toggle 6,278 exoplanet hosts" },
+      { keys: ["z", ""], label: "Toggle exotic objects (BH, pulsars, SNR)" },
       { keys: ["i", ""], label: "About / credits" },
       { keys: ["e", ""], label: "Astronomical events" },
       { keys: ["?"], label: "Show this overlay" },
