@@ -36,6 +36,16 @@
 
 ---
 
+**★ Favorites.** Click any sky object → tap ☆ in the inspector to save it. The ★ menu in the top bar holds your saved targets, persists in `localStorage`, and one-click flies to any of them. 50-target cap, newest-first.
+
+**🔭 Tonight's targets.** The 🔭 button ranks the catalog (named stars + Messier + bright NGC/IC) by what's currently above 15° at your location, weighted by brightness and altitude. One click to fly. Auto-refreshes every 60 s as the sky rotates.
+
+**☀ Live space weather.** A live Kp badge in the top bar polls NOAA SWPC every 5 minutes — even when closed — and goes amber / red the moment a geomagnetic storm hits. Open it for the current planetary K-index, the R / S / G NOAA scales, and the latest ALERT / WATCH / WARNING messages.
+
+**🌅 Tonight's window per target.** Click any sky object and the inspector shows when it rises, transits, and sets at your latitude — plus a 24-hour altitude sparkline so you can see at a glance whether the target's worth chasing tonight, when it peaks, and how high it'll get. Pure analytical hour-angle math, no API.
+
+---
+
 The full plan lives in [`tasks/todo.md`](./tasks/todo.md). Every commit lands on `main` and pushes here. **No private branches, no stealth — every dragon is a public issue.**
 
 ---
