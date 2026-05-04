@@ -35,6 +35,9 @@ const DEFAULT_STATE: SolarFlightState = {
   pitch: 0.4,
   tracking: true,
   vicinity: "Inner Solar System",
+  realScale: false,
+  orbitOpacity: 0.45,
+  starBrightness: 1.0,
 };
 
 export function SolarFlight({ onExit, onFlyToSky }: Props) {
@@ -69,6 +72,7 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
   const [zonesOn, setZonesOn] = useState(false);
   const [satellitesOn, setSatellitesOn] = useState(false);
   const [sandboxOpen, setSandboxOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [sandboxKind, setSandboxKind] = useState<
     "Comet" | "Earth-class" | "Jupiter-class" | "Brown Dwarf" | "White Dwarf" | "Neutron Star" | "Black Hole"
   >("Comet");
@@ -165,6 +169,18 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
           </button>
           <button
             type="button"
+            onClick={() => setSettingsOpen((v) => !v)}
+            title="Settings: real-scale toggle, opacity sliders, star brightness"
+            className={`rounded-lg border px-3 py-1.5 font-mono text-xs uppercase tracking-widest backdrop-blur transition ${
+              settingsOpen
+                ? "border-white/30 bg-white/15 text-white"
+                : "border-white/10 bg-space-950/70 text-white/65 hover:bg-white/10"
+            }`}
+          >
+            ⚙ settings
+          </button>
+          <button
+            type="button"
             onClick={() => setSandboxOpen((v) => !v)}
             title="Open the Gravity Sandbox — launch projectiles and watch them interact with the Sun + giants"
             className={`rounded-lg border px-3 py-1.5 font-mono text-xs uppercase tracking-widest backdrop-blur transition ${
@@ -234,6 +250,62 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
           drag to orbit · wheel to zoom · pick a focus body above
         </div>
       </div>
+
+      {/* Settings panel — Real Scale + sliders */}
+      {settingsOpen && (
+        <div className="pointer-events-auto absolute bottom-44 right-3 z-20 w-[min(320px,90vw)] rounded-xl border border-white/15 bg-space-950/90 p-3 backdrop-blur">
+          <div className="mb-2 flex items-baseline justify-between">
+            <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/60">
+              ⚙ settings
+            </div>
+            <button
+              type="button"
+              onClick={() => setSettingsOpen(false)}
+              aria-label="Close"
+              className="rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[10px] text-white/60 hover:bg-white/10 hover:text-white"
+            >
+              ✕
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={() => sceneRef.current?.setRealScale(!state.realScale)}
+            className={`mb-3 w-full rounded-md border px-2.5 py-1.5 text-left font-mono text-[11px] transition ${
+              state.realScale
+                ? "border-amber-400/50 bg-amber-400/10 text-amber-200"
+                : "border-white/10 bg-white/5 text-white/65 hover:bg-white/10"
+            }`}
+            title="Real Scale — shrink planets to ~6% of cosmetic size, the educational 'planets are pinpricks' mode"
+          >
+            ◉ real-scale planets {state.realScale ? "on" : "off"}
+            <div className="mt-0.5 font-mono text-[9px] text-white/35">
+              {state.realScale
+                ? "planets shown at physical proportion vs Sun"
+                : "cosmetic sizing — easier to see + click"}
+            </div>
+          </button>
+
+          <Slider
+            label="orbit opacity"
+            value={state.orbitOpacity}
+            min={0}
+            max={1}
+            step={0.05}
+            onChange={(v) => sceneRef.current?.setOrbitOpacity(v)}
+          />
+          <Slider
+            label="star brightness"
+            value={state.starBrightness}
+            min={0}
+            max={2}
+            step={0.1}
+            onChange={(v) => sceneRef.current?.setStarBrightness(v)}
+          />
+          <div className="mt-2 font-mono text-[10px] text-white/35">
+            applies live · settings persist for this session only
+          </div>
+        </div>
+      )}
 
       {/* Gravity Sandbox panel */}
       {sandboxOpen && (
@@ -321,6 +393,44 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function Slider({
+  label,
+  value,
+  min,
+  max,
+  step,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <div className="mb-2">
+      <div className="mb-1 flex items-baseline justify-between">
+        <div className="font-mono text-[10px] uppercase tracking-widest text-white/40">
+          {label}
+        </div>
+        <div className="font-mono text-[10px] text-white/65">
+          {value.toFixed(2)}
+        </div>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(parseFloat(e.target.value))}
+        className="h-1 w-full accent-white/70"
+      />
     </div>
   );
 }

@@ -103,6 +103,12 @@ export type SolarFlightState = {
   tracking: boolean;
   /** Auto-detected scale region the camera is currently in. */
   vicinity: string;
+  /** Real-Scale toggle: planets at physically-proportional size (off = cosmetic). */
+  realScale: boolean;
+  /** Orbital path opacity (0-1). */
+  orbitOpacity: number;
+  /** Background star brightness (0-1). */
+  starBrightness: number;
 };
 
 type Listener = (s: SolarFlightState) => void;
@@ -121,6 +127,9 @@ export class SolarFlightScene {
   private lastX = 0;
   private lastY = 0;
   private tracking = true;
+  private realScale = false;
+  private orbitOpacity = 0.45;
+  private starBrightness = 1.0;
 
   // Time
   private simTime = new Date();
@@ -226,6 +235,9 @@ export class SolarFlightScene {
       pitch: this.pitch,
       tracking: this.tracking,
       vicinity: "Inner Solar System",
+      realScale: this.realScale,
+      orbitOpacity: this.orbitOpacity,
+      starBrightness: this.starBrightness,
     };
 
     this.tick();
@@ -256,6 +268,40 @@ export class SolarFlightScene {
 
   setTracking(tracking: boolean): void {
     this.tracking = tracking;
+    this.publishState();
+  }
+
+  /** Real-scale: shrink planet draw sizes to physically-proportional values
+   *  vs the Sun. The cosmetic sizes are nicer to see; real-scale is the
+   *  educational "yeah, planets are pinpricks" mode. */
+  setRealScale(real: boolean): void {
+    this.realScale = real;
+    for (const p of this.planets) {
+      const factor = real ? 0.06 : 1.0; // 6% of cosmetic size
+      p.sphere.scale.setScalar(factor);
+    }
+    this.publishState();
+  }
+
+  setOrbitOpacity(opacity: number): void {
+    this.orbitOpacity = Math.max(0, Math.min(1, opacity));
+    for (const o of this.orbits) {
+      (o.material as LineBasicMaterial).opacity = this.orbitOpacity;
+      (o.material as LineBasicMaterial).visible = this.orbitOpacity > 0.01;
+    }
+    this.publishState();
+  }
+
+  setStarBrightness(brightness: number): void {
+    this.starBrightness = Math.max(0, Math.min(2, brightness));
+    if (this.starPoints) {
+      const mat = this.starPoints.material as ShaderMaterial;
+      // multiply opacity uniform on shader; we don't have one, so scale via
+      // material.opacity (additive blend) — simplest path.
+      mat.opacity = this.starBrightness;
+      mat.transparent = true;
+      mat.needsUpdate = true;
+    }
     this.publishState();
   }
 
@@ -946,6 +992,9 @@ export class SolarFlightScene {
       pitch: this.pitch,
       tracking: this.tracking,
       vicinity: this.detectVicinity(),
+      realScale: this.realScale,
+      orbitOpacity: this.orbitOpacity,
+      starBrightness: this.starBrightness,
     };
     for (const l of this.listeners) l(this.state);
   }
