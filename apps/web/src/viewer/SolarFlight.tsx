@@ -2,9 +2,11 @@ import { useEffect, useRef, useState } from "react";
 // Using useState below.
 import {
   SolarFlightScene,
+  type SolarFlightHit,
   type SolarFlightState,
 } from "./solar/solar-flight";
 import { TimeStrip } from "./ui/TimeStrip";
+import { InfoPanel } from "./ui/InfoPanel";
 
 /**
  * 🚀 Solar System Flight Mode component.
@@ -44,12 +46,14 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const sceneRef = useRef<SolarFlightScene | null>(null);
   const [state, setState] = useState<SolarFlightState>(DEFAULT_STATE);
+  const [inspect, setInspect] = useState<SolarFlightHit | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const scene = new SolarFlightScene(canvas);
     sceneRef.current = scene;
+    scene.setOnClick((hit) => setInspect(hit));
     const unsubscribe = scene.subscribe(setState);
     return () => {
       unsubscribe();
@@ -444,6 +448,25 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
             projectiles at a time.
           </div>
         </div>
+      )}
+
+      {/* Inspector card — unified InfoPanel */}
+      {inspect && (
+        <InfoPanel
+          payload={inspect.payload}
+          onClose={() => setInspect(null)}
+          onFlyHere={() => {
+            sceneRef.current?.setFocus(inspect.name);
+            setInspect(null);
+          }}
+          onSurface={
+            inspect.name === "Earth" || inspect.name === "Mars"
+              ? () => {
+                  window.location.hash = `#surface/${inspect.name.toLowerCase()}`;
+                }
+              : undefined
+          }
+        />
       )}
     </div>
   );

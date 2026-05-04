@@ -147,6 +147,8 @@ export class GalacticScene {
   private listeners = new Set<Listener>();
   private state: GalacticState;
   private lastTickMs = performance.now();
+  private armsVisible = true;
+  private haloVisible = true;
 
   constructor(readonly canvas: HTMLCanvasElement) {
     this.renderer = new WebGLRenderer({
@@ -274,8 +276,8 @@ export class GalacticScene {
     this.state = {
       cameraDistance: this.camPos.distanceTo(SUN_POS),
       scaleLabel: this.scaleLabel(),
-      arms: true,
-      starHalo: true,
+      arms: this.armsVisible,
+      starHalo: this.haloVisible,
     };
 
     this.tick();
@@ -285,6 +287,19 @@ export class GalacticScene {
     this.listeners.add(listener);
     listener(this.state);
     return () => this.listeners.delete(listener);
+  }
+
+  setArmsVisible(on: boolean): void {
+    this.armsVisible = on;
+    this.armPoints.visible = on;
+    for (const s of this.armLabels) s.visible = on;
+    this.publishState();
+  }
+
+  setHaloVisible(on: boolean): void {
+    this.haloVisible = on;
+    this.halo.visible = on;
+    this.publishState();
   }
 
   flyTo(target: "Sun" | "Galactic Center" | "M31" | "Local Group"): void {
@@ -398,8 +413,8 @@ export class GalacticScene {
     this.state = {
       cameraDistance: this.camPos.distanceTo(SUN_POS),
       scaleLabel: this.scaleLabel(),
-      arms: true,
-      starHalo: true,
+      arms: this.armsVisible,
+      starHalo: this.haloVisible,
     };
     for (const l of this.listeners) l(this.state);
   }
