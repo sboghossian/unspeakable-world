@@ -10,6 +10,10 @@ import { SkyTonightPanel } from "./ui/SkyTonightPanel";
 import { SpaceWeatherPanel } from "./ui/SpaceWeatherPanel";
 import { NeoPanel } from "./ui/NeoPanel";
 import { TonightSky } from "./ui/TonightSky";
+import { SearchBar } from "./ui/SearchBar";
+import { SnapshotButton } from "./ui/SnapshotButton";
+import { ColorLegend } from "./ui/ColorLegend";
+import { SearchIndex, type SearchEntry } from "./search/search-index";
 
 /**
  * 🌌 Universe Mode — single seamless scene from Earth to the Cosmic Web.
@@ -59,6 +63,7 @@ export function Universe({ onExit }: Props) {
   const sceneRef = useRef<UniverseScene | null>(null);
   const [state, setState] = useState<UniverseState>(DEFAULT_STATE);
   const [eventsOpen, setEventsOpen] = useState(false);
+  const [searchIndex, setSearchIndex] = useState<SearchIndex | null>(null);
   const [observer, setObserver] = useState<{ lat: number; lon: number } | null>(
     () => {
       try {
@@ -88,8 +93,70 @@ export function Universe({ onExit }: Props) {
     };
   }, []);
 
-  // Suppress unused-import warnings until we wire panels into all tiers.
-  void Vector3;
+  // Build the search index once mounted.
+  useEffect(() => {
+    const idx = new SearchIndex();
+    idx.setDynamicProvider(() => {
+      const PLANETS: Array<{ name: string; mag: number; detail: string }> = [
+        { name: "Sun", mag: -26.7, detail: "G2V star" },
+        { name: "Moon", mag: -12.7, detail: "Earth's moon" },
+        { name: "Mercury", mag: 0.5, detail: "innermost planet" },
+        { name: "Venus", mag: -4, detail: "morning / evening star" },
+        { name: "Earth", mag: -3.86, detail: "home" },
+        { name: "Mars", mag: 0, detail: "the red planet" },
+        { name: "Jupiter", mag: -2.5, detail: "gas giant + Galilean moons" },
+        { name: "Saturn", mag: 0.5, detail: "ringed planet" },
+        { name: "Uranus", mag: 5.7, detail: "ice giant" },
+        { name: "Neptune", mag: 7.8, detail: "outermost planet" },
+      ];
+      const out: SearchEntry[] = PLANETS.map((p) => ({
+        id: `planet:${p.name}`,
+        label: p.name,
+        kind: "planet",
+        detail: `mag ${p.mag.toFixed(1)} · ${p.detail}`,
+        // direction vector unused in Universe Mode — flyTo uses name string.
+        direction: new Vector3(0, 0, 1),
+        mag: p.mag,
+      }));
+      // Plus a few galactic targets that flyTo recognises.
+      out.push(
+        {
+          id: "galactic:Sgr A*",
+          label: "Sgr A*",
+          kind: "dso",
+          detail: "supermassive black hole · galactic center",
+          direction: new Vector3(0, 0, 1),
+        },
+        {
+          id: "galactic:Galactic Center",
+          label: "Galactic Center",
+          kind: "dso",
+          detail: "fly to the heart of the Milky Way",
+          direction: new Vector3(0, 0, 1),
+        },
+        {
+          id: "galactic:M31",
+          label: "M31 (Andromeda)",
+          kind: "dso",
+          detail: "nearest large galaxy · 2.54 Mly",
+          direction: new Vector3(0, 0, 1),
+        },
+        {
+          id: "galactic:Local Group",
+          label: "Local Group",
+          kind: "dso",
+          detail: "Milky Way + Andromeda + 50+ galaxies",
+          direction: new Vector3(0, 0, 1),
+        },
+      );
+      return out;
+    });
+    void idx
+      .loadStaticCatalogs()
+      .then(() => setSearchIndex(idx))
+      .catch((err) => console.warn("[universe-search] load failed", err));
+  }, []);
+
   void useMemo;
 
   return (
@@ -113,6 +180,34 @@ export function Universe({ onExit }: Props) {
           <div className="rounded-lg border border-white/10 bg-space-950/70 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.25em] text-emerald-200/80 backdrop-blur">
             🌌 universe — {state.tier}
           </div>
+          <SearchBar
+            index={searchIndex}
+            onSelect={(entry: SearchEntry) => {
+              const m = entry.id.match(/^(planet|galactic):(.+)$/);
+              if (m && m[2]) sceneRef.current?.flyTo(m[2]);
+              else if (entry.label) {
+                // Fallback: try name as fly target.
+                sceneRef.current?.flyTo(entry.label);
+              }
+            }}
+          />
+          <SnapshotButton
+            onCapture={() => {
+              const c = canvasRef.current;
+              return c ? c.toDataURL("image/png") : null;
+            }}
+          />
+          {state.tier === "Solar" &&
+            (state.scaleLabel === "Earth Vicinity" ||
+              state.scaleLabel === "Inner Solar System") && (
+              <a
+                href="#surface/earth"
+                title="Land on Earth — high-detail textured 3D surface"
+                className="rounded-lg border border-amber-400/50 bg-amber-400/15 px-3 py-1.5 font-mono text-[11px] uppercase tracking-widest text-amber-200 backdrop-blur transition hover:bg-amber-400/25"
+              >
+                🪐 surfaces
+              </a>
+            )}
         </div>
 
         <div className="pointer-events-auto flex max-w-[60vw] flex-wrap items-center justify-end gap-1.5">
@@ -239,6 +334,9 @@ export function Universe({ onExit }: Props) {
           ` home · B galactic center · N M31 · Q/E · up/down
         </div>
       </div>
+
+      {/* Color legend (bottom-left) */}
+      <ColorLegend />
     </div>
   );
 }
