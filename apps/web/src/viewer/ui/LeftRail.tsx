@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { UniverseState } from "../universe/universe-scene";
+import { SettingsPanel } from "./SettingsPanel";
 
 type Scene = {
   flyTo(name: string): void;
@@ -46,6 +47,7 @@ const WAVES: Array<{ id: string; label: string }> = [
 
 export function LeftRail({ state, scene, onOpenGuide }: Props) {
   const [collapsed, setCollapsed] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [open, setOpen] = useState<{
     objects: boolean;
     waves: boolean;
@@ -136,6 +138,21 @@ export function LeftRail({ state, scene, onOpenGuide }: Props) {
         >
           📖
         </button>
+        <button
+          type="button"
+          onClick={() => {
+            setCollapsed(false);
+            setSettingsOpen(true);
+          }}
+          title="Settings"
+          className="flex h-9 w-9 items-center justify-center rounded-md text-white/70 hover:bg-white/5 hover:text-white"
+        >
+          ⚙
+        </button>
+        <SettingsPanel
+          open={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
+        />
       </div>
     );
   }
@@ -274,7 +291,23 @@ export function LeftRail({ state, scene, onOpenGuide }: Props) {
           <span>📖 User Guide</span>
           <span className="text-white/30">↗</span>
         </button>
+        <button
+          type="button"
+          onClick={() => setSettingsOpen((v) => !v)}
+          className={`flex w-full items-center justify-between rounded-md px-2.5 py-1.5 font-mono text-[11px] uppercase tracking-widest transition ${
+            settingsOpen
+              ? "bg-white/10 text-white"
+              : "text-white/65 hover:bg-white/5 hover:text-white"
+          }`}
+        >
+          <span>⚙ Settings</span>
+          <span className="text-white/30">{settingsOpen ? "✕" : "›"}</span>
+        </button>
       </div>
+      <SettingsPanel
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+      />
     </div>
   );
 }

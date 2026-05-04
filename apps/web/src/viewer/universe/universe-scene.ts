@@ -34,6 +34,7 @@ import { PulsarField } from "../cosmic/pulsar-field";
 import { ExoplanetField } from "../exoplanets/exoplanet-field";
 import { CosmicLandmarks } from "../cosmic/cosmic-landmarks";
 import { StarLabels } from "../stars/star-labels";
+import { getSettings, onSettingsChange } from "../../lib/settings";
 
 /**
  * 🌌 Universe Mode — single seamless scene across scales.
@@ -361,6 +362,23 @@ export class UniverseScene {
   private listeners = new Set<Listener>();
   private state: UniverseState;
 
+  // Fly-to camera lerp.
+  private flyTween: {
+    fromPos: Vector3;
+    toPos: Vector3;
+    fromYaw: number;
+    toYaw: number;
+    fromPitch: number;
+    toPitch: number;
+    startMs: number;
+    durationMs: number;
+    targetSpeed: number;
+  } | null = null;
+
+  // Standby idle tracking.
+  private lastInteractionMs = performance.now();
+  private settingsUnsub: () => void = () => {};
+
   constructor(readonly canvas: HTMLCanvasElement) {
     this.renderer = new WebGLRenderer({
       canvas,
@@ -475,7 +493,25 @@ export class UniverseScene {
     this.handleResize();
 
     this.state = this.computeState();
+    this.applyDisplaySettings();
+    this.settingsUnsub = onSettingsChange(() => this.applyDisplaySettings());
     this.tick();
+  }
+
+  /** Read global settings + push them onto solar materials. Idempotent. */
+  private applyDisplaySettings(): void {
+    const s = getSettings();
+    for (const o of this.orbitLoops) {
+      const mat = o.material as LineBasicMaterial;
+      mat.opacity = s.orbitOpacity;
+      mat.transparent = true;
+      mat.visible = s.orbitOpacity > 0.01;
+      mat.needsUpdate = true;
+    }
+    // Star labels follow `showNames`. Constellation grid opacity reuses
+    // gridOpacity. Both are visible only when their toggle is on.
+    this.starLabels.setVisible(s.showNames);
+    // Orbit opacity acts as a multiplier on the per-frame ramp in tick().
   }
 
   subscribe(listener: Listener): () => void {
@@ -626,15 +662,36 @@ export class UniverseScene {
         pos = SUN_LY.clone();
         speed = 1e-5;
     }
-    this.logicalPos.copy(pos);
-    this.speed = speed;
     // Aim camera back toward Sun (or origin for galactic targets).
     const aimAt = target === "Sun" || target.startsWith("M") || target === "Galactic Center" || target === "Local Group"
       ? (target === "Galactic Center" ? new Vector3(0, 0, 0) : SUN_LY.clone())
       : SUN_LY.clone();
     const fwd = aimAt.clone().sub(pos).normalize();
-    this.yaw = Math.atan2(fwd.x, fwd.z);
-    this.pitch = Math.asin(Math.max(-1, Math.min(1, fwd.y)));
+    const targetYaw = Math.atan2(fwd.x, fwd.z);
+    const targetPitch = Math.asin(Math.max(-1, Math.min(1, fwd.y)));
+
+    const durationMs = Math.max(0, getSettings().flyToDurationSec * 1000);
+    if (durationMs < 16) {
+      // Effectively instant.
+      this.logicalPos.copy(pos);
+      this.yaw = targetYaw;
+      this.pitch = targetPitch;
+      this.speed = speed;
+      this.flyTween = null;
+    } else {
+      this.flyTween = {
+        fromPos: this.logicalPos.clone(),
+        toPos: pos.clone(),
+        fromYaw: this.yaw,
+        toYaw: targetYaw,
+        fromPitch: this.pitch,
+        toPitch: targetPitch,
+        startMs: performance.now(),
+        durationMs,
+        targetSpeed: speed,
+      };
+    }
+    this.lastInteractionMs = performance.now();
     this.publishState();
   }
 
@@ -756,6 +813,7 @@ export class UniverseScene {
   }
 
   private onPointerDown = (e: PointerEvent) => {
+    this.lastInteractionMs = performance.now();
     this.dragging = true;
     this.lastX = e.clientX;
     this.lastY = e.clientY;
@@ -766,6 +824,7 @@ export class UniverseScene {
   };
   private onPointerMove = (e: PointerEvent) => {
     if (!this.dragging) return;
+    this.lastInteractionMs = performance.now();
     const dx = e.clientX - this.lastX;
     const dy = e.clientY - this.lastY;
     this.lastX = e.clientX;
@@ -862,6 +921,7 @@ export class UniverseScene {
   }
   private onWheel = (e: WheelEvent) => {
     e.preventDefault();
+    this.lastInteractionMs = performance.now();
     // Dolly toward / away from the Sun (or galactic origin if outside the
     // solar system) by a fraction of the current radial distance. Step is
     // scale-invariant so the same wheel notch feels right at every zoom
@@ -898,6 +958,7 @@ export class UniverseScene {
   private onKeyDown = (e: KeyboardEvent) => {
     const target = e.target as HTMLElement | null;
     if (target?.tagName === "INPUT" || target?.tagName === "TEXTAREA") return;
+    this.lastInteractionMs = performance.now();
     this.heldKeys.add(e.key.toLowerCase());
     if (e.key === "`") {
       this.flyTo("Sun");
@@ -1001,6 +1062,24 @@ export class UniverseScene {
     const dt = (now - this.lastTickMs) / 1000;
     this.lastTickMs = now;
 
+    // Fly-to tween (smoothstep easing).
+    if (this.flyTween) {
+      const t = (now - this.flyTween.startMs) / this.flyTween.durationMs;
+      if (t >= 1) {
+        this.logicalPos.copy(this.flyTween.toPos);
+        this.yaw = this.flyTween.toYaw;
+        this.pitch = this.flyTween.toPitch;
+        this.speed = this.flyTween.targetSpeed;
+        this.flyTween = null;
+      } else {
+        const e = t * t * (3 - 2 * t); // smoothstep
+        this.logicalPos.lerpVectors(this.flyTween.fromPos, this.flyTween.toPos, e);
+        this.yaw = this.flyTween.fromYaw + (this.flyTween.toYaw - this.flyTween.fromYaw) * e;
+        this.pitch = this.flyTween.fromPitch + (this.flyTween.toPitch - this.flyTween.fromPitch) * e;
+      }
+      this.lastInteractionMs = now;
+    }
+
     // Time advance
     if (this.playing) {
       const elapsedMs = now - this.lastWallClock;
@@ -1012,6 +1091,7 @@ export class UniverseScene {
 
     // WASD movement (in local axes derived from current yaw/pitch).
     if (this.heldKeys.size > 0) {
+      this.lastInteractionMs = now;
       const fwd = this.forwardVec();
       const right = this.rightVec(fwd);
       const boost = this.heldKeys.has("shift") ? 8 : 1;
@@ -1060,9 +1140,11 @@ export class UniverseScene {
       (p.sphere.material as MeshBasicMaterial).visible = solarOpacity > 0.1;
       (p.label.material as SpriteMaterial).opacity = solarOpacity * 0.9;
     }
+    const settings = getSettings();
     for (const o of this.orbitLoops) {
-      (o.material as LineBasicMaterial).opacity = solarOpacity * 0.45;
-      (o.material as LineBasicMaterial).visible = solarOpacity > 0.05;
+      (o.material as LineBasicMaterial).opacity = solarOpacity * settings.orbitOpacity;
+      (o.material as LineBasicMaterial).visible =
+        solarOpacity > 0.05 && settings.orbitOpacity > 0.01;
     }
     // HiPS skybox: brightest at very-near-Earth scales (< 0.001 LY), fully
     // hidden when we're far enough out that the actual galaxy + cosmic web
@@ -1095,13 +1177,22 @@ export class UniverseScene {
     }
 
     void dt;
-    this.renderer.render(this.scene, this.camera);
+    // Standby: skip rendering when tab is hidden or camera idle > 60 s. RAF
+    // stays alive so input wakes it back up immediately.
+    const idleMs = now - this.lastInteractionMs;
+    const hidden = typeof document !== "undefined" && document.hidden;
+    const idle = idleMs > 60_000 && !this.flyTween && this.heldKeys.size === 0;
+    const standby = settings.standby && (hidden || idle);
+    if (!standby) {
+      this.renderer.render(this.scene, this.camera);
+    }
     this.publishState();
     this.rafHandle = requestAnimationFrame(this.tick);
   };
 
   dispose(): void {
     this.disposed = true;
+    this.settingsUnsub();
     cancelAnimationFrame(this.rafHandle);
     this.resizeObs?.disconnect();
     this.canvas.removeEventListener("pointerdown", this.onPointerDown);
