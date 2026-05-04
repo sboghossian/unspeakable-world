@@ -10,6 +10,7 @@ import { TonightSky } from "./ui/TonightSky";
 import { TourCard } from "./ui/TourCard";
 import { GRAND_TOUR } from "./tour/tour";
 import { FavoritesMenu } from "./ui/FavoritesMenu";
+import { SpaceWeatherPanel } from "./ui/SpaceWeatherPanel";
 import {
   type Favorite,
   isFavorited,
@@ -394,6 +395,7 @@ export function Viewer() {
           {/* NEO panel is wired but JPL CAD blocks browser CORS.
               Re-enable once apps/api ships a CF Worker proxy. */}
           {/* <NeoPanel /> */}
+          <SpaceWeatherPanel />
           <FavoritesMenu
             favorites={favorites}
             onSelect={(dir) => sceneRef.current?.flyTo(dir)}
