@@ -9,6 +9,14 @@ import { SearchIndex, type SearchEntry } from "./search/search-index";
 import { TonightSky } from "./ui/TonightSky";
 import { TourCard } from "./ui/TourCard";
 import { GRAND_TOUR } from "./tour/tour";
+import { FavoritesMenu } from "./ui/FavoritesMenu";
+import {
+  type Favorite,
+  isFavorited,
+  readFavorites,
+  removeFavorite,
+  saveFavorite,
+} from "./favorites/favorites-store";
 import { parseHash, replaceHash, serializeState } from "./share/url-state";
 import { WavelengthBar } from "./ui/WavelengthBar";
 import { InfoPanel } from "./ui/InfoPanel";
@@ -89,6 +97,35 @@ export function Viewer() {
     },
   );
   const [searchIndex, setSearchIndex] = useState<SearchIndex | null>(null);
+  const [favorites, setFavorites] = useState<Favorite[]>(() => readFavorites());
+
+  const reloadFavorites = useCallback(() => {
+    setFavorites(readFavorites());
+  }, []);
+
+  const onToggleFavorite = useCallback(() => {
+    if (!inspect?.hit) return;
+    const h = inspect.hit;
+    if (isFavorited(h.name, h.raDeg, h.decDeg)) {
+      // Look up by id; the store uses (name+ra+dec) hashing
+      const all = readFavorites();
+      const match = all.find(
+        (f) =>
+          f.name === h.name &&
+          Math.abs(f.raDeg - h.raDeg) < 0.01 &&
+          Math.abs(f.decDeg - h.decDeg) < 0.01,
+      );
+      if (match) removeFavorite(match.id);
+    } else {
+      saveFavorite({
+        name: h.name,
+        type: h.type,
+        raDeg: h.raDeg,
+        decDeg: h.decDeg,
+      });
+    }
+    reloadFavorites();
+  }, [inspect, reloadFavorites]);
   const [tourIndex, setTourIndex] = useState<number | null>(null);
 
   const runTourStep = useCallback((idx: number) => {
@@ -354,6 +391,11 @@ export function Viewer() {
               <span className="hidden md:inline">▶ tour</span>
             </button>
           )}
+          <FavoritesMenu
+            favorites={favorites}
+            onSelect={(dir) => sceneRef.current?.flyTo(dir)}
+            onChange={reloadFavorites}
+          />
           <SearchBar
             index={searchIndex}
             onSelect={(entry: SearchEntry) =>
@@ -471,8 +513,19 @@ export function Viewer() {
           hit={inspect.hit}
           wiki={inspect.wiki}
           wikiLoading={inspect.wikiLoading}
+          isFavorited={
+            inspect.hit
+              ? favorites.some(
+                  (f) =>
+                    f.name === inspect.hit!.name &&
+                    Math.abs(f.raDeg - inspect.hit!.raDeg) < 0.01 &&
+                    Math.abs(f.decDeg - inspect.hit!.decDeg) < 0.01,
+                )
+              : false
+          }
           onClose={() => setInspect(null)}
           onFlyTo={() => sceneRef.current?.flyTo(inspect.dir)}
+          onToggleFavorite={onToggleFavorite}
         />
       )}
 

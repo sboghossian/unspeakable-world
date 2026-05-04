@@ -121,29 +121,29 @@ tasks/
 
 ## Build in public — daily commits
 
-| Day | Commit  | What shipped                                                              |
-| --- | ------- | ------------------------------------------------------------------------- |
-| 1   | a03d0e2 | Bootstrap monorepo + landing page + Cloudflare tunnel                     |
-| 2   | 82e8eb2 | HEALPix toy + DSS2 streaming + Voyager camera                             |
-| 3   | 83b5439 | LOD switching + touch + inertia + chips + tap-to-fly                      |
-| 4   | c3177f5 | HYG bright stars + AstronomyEngine + time strip                           |
-| 5   | 5234e10 | Multi-pointer + Y-up coords + ISS tracker + Quick Targets                 |
-| 6.A | a6fa461 | Multi-wavelength toggle (Visible / 2MASS / WISE) with cross-fade          |
-| 6.B | 3ad41d3 | SIMBAD info panel — click sky, ask "what am I looking at"                 |
-| 7   | 777de83 | v1 public launch · README · OG card · landing polish                      |
-| 8   | 9d6c7f6 | Tonight's sky — geolocation → fly to your zenith                          |
-| 9   | 2bafb13 | Polar Collignon seam tightened (SUB 16→32)                                |
-| 10  | 934cfae | Messier + bright NGC overlay (879 deep-sky rings)                         |
-| 11  | 240fe83 | 88 IAU constellation lines (toggleable)                                   |
-| 12  | 28f8307 | INTEGRAL hard X-ray as 4th wavelength layer                               |
-| 13  | 7602ed4 | Top-bar search across stars / DSO / planets / constellations              |
-| 14  | bd9511a | Mobile UX — top bar collapses to icons; engineering chrome hides          |
-| 15  | 2cea894 | Grand Tour — 8-step guided sky walkthrough with auto-wavelength           |
-| 16  | 3c4b052 | URL deep-linking — every view is a shareable hash                         |
-| 17  | e8c1b4c | Wikipedia summary in the SIMBAD inspector                                 |
-| 18  | f1d0f27 | Famous-object alias map ("Crab" → M1, "Pleiades" → M45)                   |
-| 19  | 56eebf0 | 88 constellation labels at line centroids                                 |
-| 20  | (this)  | v2 ship — refreshed README · OG card · landing roadmap update             |
+| Day | Commit  | What shipped                                                     |
+| --- | ------- | ---------------------------------------------------------------- |
+| 1   | a03d0e2 | Bootstrap monorepo + landing page + Cloudflare tunnel            |
+| 2   | 82e8eb2 | HEALPix toy + DSS2 streaming + Voyager camera                    |
+| 3   | 83b5439 | LOD switching + touch + inertia + chips + tap-to-fly             |
+| 4   | c3177f5 | HYG bright stars + AstronomyEngine + time strip                  |
+| 5   | 5234e10 | Multi-pointer + Y-up coords + ISS tracker + Quick Targets        |
+| 6.A | a6fa461 | Multi-wavelength toggle (Visible / 2MASS / WISE) with cross-fade |
+| 6.B | 3ad41d3 | SIMBAD info panel — click sky, ask "what am I looking at"        |
+| 7   | 777de83 | v1 public launch · README · OG card · landing polish             |
+| 8   | 9d6c7f6 | Tonight's sky — geolocation → fly to your zenith                 |
+| 9   | 2bafb13 | Polar Collignon seam tightened (SUB 16→32)                       |
+| 10  | 934cfae | Messier + bright NGC overlay (879 deep-sky rings)                |
+| 11  | 240fe83 | 88 IAU constellation lines (toggleable)                          |
+| 12  | 28f8307 | INTEGRAL hard X-ray as 4th wavelength layer                      |
+| 13  | 7602ed4 | Top-bar search across stars / DSO / planets / constellations     |
+| 14  | bd9511a | Mobile UX — top bar collapses to icons; engineering chrome hides |
+| 15  | 2cea894 | Grand Tour — 8-step guided sky walkthrough with auto-wavelength  |
+| 16  | 3c4b052 | URL deep-linking — every view is a shareable hash                |
+| 17  | e8c1b4c | Wikipedia summary in the SIMBAD inspector                        |
+| 18  | f1d0f27 | Famous-object alias map ("Crab" → M1, "Pleiades" → M45)          |
+| 19  | 56eebf0 | 88 constellation labels at line centroids                        |
+| 20  | (this)  | v2 ship — refreshed README · OG card · landing roadmap update    |
 
 ---
 

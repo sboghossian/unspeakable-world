@@ -10,8 +10,10 @@ type Props = {
   hit: SimbadHit | null;
   wiki?: WikiSummary | null;
   wikiLoading?: boolean;
+  isFavorited?: boolean;
   onClose: () => void;
   onFlyTo: () => void;
+  onToggleFavorite?: () => void;
 };
 
 export function InfoPanel({
@@ -22,8 +24,10 @@ export function InfoPanel({
   hit,
   wiki,
   wikiLoading,
+  isFavorited,
   onClose,
   onFlyTo,
+  onToggleFavorite,
 }: Props) {
   return (
     <aside className="pointer-events-auto absolute right-4 top-20 z-20 w-[300px] max-w-[90vw] rounded-xl border border-white/10 bg-space-950/85 p-4 backdrop-blur md:w-[340px]">
@@ -143,13 +147,31 @@ export function InfoPanel({
             </div>
           )}
 
-          <button
-            type="button"
-            onClick={onFlyTo}
-            className="mt-5 w-full rounded-lg border border-plasma-500/40 bg-plasma-500/10 px-3 py-2 font-mono text-xs uppercase tracking-wider text-plasma-300 transition hover:bg-plasma-500/20"
-          >
-            Fly here →
-          </button>
+          <div className="mt-5 flex gap-2">
+            <button
+              type="button"
+              onClick={onFlyTo}
+              className="flex-1 rounded-lg border border-plasma-500/40 bg-plasma-500/10 px-3 py-2 font-mono text-xs uppercase tracking-wider text-plasma-300 transition hover:bg-plasma-500/20"
+            >
+              Fly here →
+            </button>
+            {onToggleFavorite && (
+              <button
+                type="button"
+                onClick={onToggleFavorite}
+                title={
+                  isFavorited ? "Remove from favorites" : "Save to favorites"
+                }
+                className={`shrink-0 rounded-lg border px-3 py-2 font-mono text-xs uppercase tracking-wider transition ${
+                  isFavorited
+                    ? "border-amber-400/50 bg-amber-400/15 text-amber-300 hover:bg-amber-400/25"
+                    : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10 hover:text-amber-300"
+                }`}
+              >
+                {isFavorited ? "★" : "☆"}
+              </button>
+            )}
+          </div>
 
           <div className="mt-3 text-[10px] text-white/30">
             via SIMBAD · CDS Strasbourg{wiki ? " · Wikipedia (CC BY-SA)" : ""}
