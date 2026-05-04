@@ -10,7 +10,11 @@ export type GuideBlock =
   | { kind: "ul"; items: string[] }
   | { kind: "kbd"; rows: Array<[string, string]> }
   | { kind: "callout"; tone: "info" | "warn" | "tip"; text: string }
-  | { kind: "link"; slug: string; text: string };
+  | { kind: "link"; slug: string; text: string }
+  | {
+      kind: "votes";
+      items: Array<{ id: string; title: string; detail: string }>;
+    };
 
 export type GuidePage = {
   slug: string;
@@ -413,9 +417,95 @@ export const GUIDE_PAGES: GuidePage[] = [
           "ℹ About panel — every data source + license",
         ],
       },
-      { kind: "link", slug: "faq", text: "Continue with FAQ" },
+      { kind: "link", slug: "account", text: "Continue with Account" },
     ],
     prev: "galactic",
+    next: "account",
+  },
+  {
+    slug: "account",
+    section: "Configuration",
+    title: "Account & Sign-in",
+    lede:
+      "There is no account in v1. Everything you do is local-first, anonymous, and free forever.",
+    body: [
+      { kind: "h2", text: "Why no sign-in?" },
+      {
+        kind: "p",
+        text:
+          "We federate public archives. There is nothing to lock behind a paywall, no quotas to enforce, no per-user state on a server. Your camera state, layer toggles, and pinned objects live in your browser only.",
+      },
+      { kind: "h2", text: "What persists locally" },
+      {
+        kind: "ul",
+        items: [
+          "Layer toggles (constellations, grid, pulsars, exoplanets, …)",
+          "Real-scale toggle, orbit opacity, star brightness sliders",
+          "Last-visited mode and camera state (URL hash + localStorage)",
+          "Roadmap upvotes on the Roadmap page",
+        ],
+      },
+      { kind: "h2", text: "What does NOT persist anywhere" },
+      {
+        kind: "ul",
+        items: [
+          "Geolocation — Tonight's Sky uses it once per session, never sent to a server",
+          "Browser fingerprint, IP, or device id",
+          "Search history, click history, dwell time",
+        ],
+      },
+      {
+        kind: "callout",
+        tone: "info",
+        text:
+          "If a future version adds optional sign-in (collections, sharing), it will be opt-in and the no-account path will always work.",
+      },
+      { kind: "link", slug: "quality", text: "Continue with Quality & Performance" },
+    ],
+    prev: "settings",
+    next: "quality",
+  },
+  {
+    slug: "quality",
+    section: "Configuration",
+    title: "Quality & Performance",
+    lede:
+      "How to get smooth 60 fps on a laptop, on a phone, and on a 5-year-old machine.",
+    body: [
+      { kind: "h2", text: "Render-on-demand" },
+      {
+        kind: "p",
+        text:
+          "When the camera idles for >250 ms we pause the requestAnimationFrame loop. Hover, pan, or click and it resumes. This is why a stationary 'staring at Andromeda' view costs near zero battery.",
+      },
+      { kind: "h2", text: "Recommended specs" },
+      {
+        kind: "ul",
+        items: [
+          "Best: any laptop or desktop with a discrete GPU and Chrome / Edge / Safari 17+",
+          "Good: integrated-graphics Mac (M1+), modern phone (iPhone 12+, Pixel 6+)",
+          "Reduced: low-end Android — falls back to fewer point sprites and lower star count",
+        ],
+      },
+      { kind: "h2", text: "If frame rate drops" },
+      {
+        kind: "ul",
+        items: [
+          "Disable layers you're not using (pulsars + exoplanets are the heaviest)",
+          "Switch from Universe to Sky Atlas (2D-on-sphere is cheaper than 3D)",
+          "Close other GPU-heavy tabs (YouTube, Figma, Maps)",
+          "On phone: tap once to dismiss the FLY-TO chip strip — it stops re-rendering",
+        ],
+      },
+      { kind: "h2", text: "Memory ceiling" },
+      {
+        kind: "p",
+        text:
+          "Whole-app footprint stays under ~280 MB on first load (Three.js + 117K-star buffer + 14K DSO + HiPS sphere). Subsequent navigation between modes does not duplicate the catalogs.",
+      },
+      { kind: "link", slug: "faq", text: "Continue with FAQ" },
+    ],
+    prev: "account",
     next: "faq",
   },
   {
@@ -455,44 +545,313 @@ export const GUIDE_PAGES: GuidePage[] = [
       },
       { kind: "link", slug: "contact", text: "Continue with Contact" },
     ],
-    prev: "settings",
+    prev: "quality",
     next: "contact",
   },
   {
     slug: "contact",
     section: "Help",
-    title: "Contact + Roadmap",
+    title: "Contact",
+    lede: "Reach the maintainer or open an issue.",
     body: [
       { kind: "h2", text: "Where to find us" },
       {
         kind: "ul",
         items: [
-          "GitHub: github.com/sboghossian/unspeakable-world — issues, PRs, discussions",
-          "Live: space.dashable.dev",
-          "Built in public — every commit lands on main",
+          "GitHub issues — github.com/sboghossian/unspeakable-world/issues",
+          "GitHub discussions — for ideas, questions, show-and-tell",
+          "Email — stephanemboghossian@gmail.com (response time: best effort, days not hours)",
+          "Live build — space.dashable.dev",
         ],
       },
-      { kind: "h2", text: "License + attribution" },
-      {
-        kind: "p",
-        text:
-          "MIT for our source. Sky tiles via CDS Strasbourg + ESAC (public domain / CDS open). HYG v4.0 (CC BY-SA, David Nash). OpenNGC (CC BY-SA, Mattia Verga). d3-celestial (BSD-3, Olaf Frohn). AstronomyEngine (MIT, Don Cross). NASA Exoplanet Archive (public domain). SIMBAD via CDS open service. NOAA SWPC (US public domain). Celestrak TLEs (public domain). NASA imagery via Wikimedia Commons.",
-      },
-      { kind: "h2", text: "Roadmap" },
+      { kind: "h2", text: "Reporting a bug" },
       {
         kind: "ul",
         items: [
-          "Click-to-inspect on planets / stars / landmarks across all modes",
-          "Aladin-Lite-style postage-stamp cutouts when clicking sky regions",
-          "Layer 2 — grounded AI 'what am I looking at?' panel with citations",
-          "Live transient stream (GraceDB + GCN + ATel)",
-          "12 more HiPS surveys (Chandra, ROSAT, eROSITA, Spitzer, Herschel, IRAS, GAIA DR3, HI4PI, Planck CMB, EHT)",
-          "Production HEALPix renderer — fix the polar seam",
-          "VizieR catalog federation",
-          "Mobile gyroscope: point your phone at the sky",
+          "Browser + version + OS",
+          "URL hash that reproduces it (the entire #… string)",
+          "Screenshot or short screen capture if visual",
+          "Browser console errors (Cmd-Opt-J / F12)",
         ],
       },
+      { kind: "link", slug: "roadmap", text: "Continue with Roadmap & Voting" },
     ],
     prev: "faq",
+    next: "roadmap",
+  },
+  {
+    slug: "roadmap",
+    section: "Help",
+    title: "Roadmap & Voting",
+    lede:
+      "Vote on what comes next. Counts persist locally per browser and inform what we build first.",
+    body: [
+      { kind: "h2", text: "Coming soon — vote it up" },
+      {
+        kind: "votes",
+        items: [
+          {
+            id: "ai-inspector",
+            title: "Grounded AI inspector",
+            detail:
+              "“What am I looking at?” panel with cited claims, drawing on SIMBAD + Wikipedia + NASA ADS.",
+          },
+          {
+            id: "transients",
+            title: "Live transient stream",
+            detail:
+              "GraceDB + GCN + ATel feed with markers that pulse on the sky for new alerts.",
+          },
+          {
+            id: "more-hips",
+            title: "12 more HiPS surveys",
+            detail:
+              "Chandra, ROSAT, eROSITA, Spitzer, Herschel, IRAS, Gaia DR3, HI4PI, Planck CMB, EHT, …",
+          },
+          {
+            id: "vizier",
+            title: "VizieR catalog federation",
+            detail:
+              "Search and overlay any of the 20,000+ VizieR catalogs as a layer.",
+          },
+          {
+            id: "mobile-gyro",
+            title: "Mobile gyroscope mode",
+            detail:
+              "Point your phone at the sky and the camera tracks. AR-style stargazing.",
+          },
+          {
+            id: "healpix-prod",
+            title: "Production HEALPix renderer",
+            detail:
+              "Fix the polar seam at lat ±41.81° with proper Collignon-aware tile geometry.",
+          },
+          {
+            id: "spacecraft-trajectories",
+            title: "Spacecraft trajectories",
+            detail:
+              "Voyager 1/2, New Horizons, JWST, Parker Solar Probe with real ephemerides.",
+          },
+          {
+            id: "dark-matter",
+            title: "Dark-matter halo overlay",
+            detail:
+              "Visualize the inferred mass distribution in the Local Group and Virgo Supercluster.",
+          },
+          {
+            id: "collections",
+            title: "Collections (opt-in account)",
+            detail:
+              "Save a list of objects and share the collection by URL. Opt-in only — anonymous path stays default.",
+          },
+          {
+            id: "i18n",
+            title: "Translations",
+            detail:
+              "Languages: ES, FR, DE, JA, ZH. UI strings + body text.",
+          },
+        ],
+      },
+      {
+        kind: "callout",
+        tone: "tip",
+        text:
+          "Votes are stored in your browser's localStorage. We periodically aggregate anonymous counts via opt-in telemetry — never tied to any identity.",
+      },
+      { kind: "link", slug: "support", text: "Continue with Support" },
+    ],
+    prev: "contact",
+    next: "support",
+  },
+  {
+    slug: "support",
+    section: "Help",
+    title: "Support",
+    lede:
+      "How to get help, how to support the project, and what to expect on response times.",
+    body: [
+      { kind: "h2", text: "Get help" },
+      {
+        kind: "ul",
+        items: [
+          "Read the FAQ first — most questions are answered there",
+          "Open a GitHub Discussion for usage questions",
+          "Open a GitHub Issue for reproducible bugs",
+          "Email for sensitive reports (security, copyright, takedown)",
+        ],
+      },
+      { kind: "h2", text: "Support the project" },
+      {
+        kind: "ul",
+        items: [
+          "Star the GitHub repo — visibility helps recruit contributors",
+          "Share a deep-link of a beautiful view on social",
+          "File a clear bug report with a hash URL — saves us hours",
+          "Open a PR — small docs fixes are deeply appreciated",
+        ],
+      },
+      { kind: "h2", text: "Response times" },
+      {
+        kind: "p",
+        text:
+          "This is a solo MIT-licensed project. Best-effort response within a few days; no SLA. Critical security reports get priority — email rather than filing a public issue.",
+      },
+      { kind: "link", slug: "copyright", text: "Continue with Copyright" },
+    ],
+    prev: "roadmap",
+    next: "copyright",
+  },
+  {
+    slug: "copyright",
+    section: "Legal",
+    title: "Copyright & Attribution",
+    lede:
+      "Our source is MIT. The data we federate stays under its upstream licenses. Here's how to credit each piece.",
+    body: [
+      { kind: "h2", text: "Source code" },
+      {
+        kind: "p",
+        text:
+          "© 2026 Stephane Boghossian and contributors. Source released under the MIT License. You may copy, modify, distribute, and use it commercially, with attribution. The full text lives at the LICENSE file in the repo.",
+      },
+      { kind: "h2", text: "Catalogs & sky tiles" },
+      {
+        kind: "ul",
+        items: [
+          "HYG v4.0 star catalog — © David Nash · CC BY-SA 2.5 · github.com/astronexus/HYG-Database",
+          "OpenNGC deep-sky catalog — © Mattia Verga · CC BY-SA 4.0 · github.com/mattiaverga/OpenNGC",
+          "NASA Exoplanet Archive (PSCompPars) — public domain · exoplanetarchive.ipac.caltech.edu",
+          "SIMBAD object database — CDS, Strasbourg · CC BY 4.0 · simbad.cds.unistra.fr",
+          "HiPS sky imagery — CDS / NASA IRSA / ESA ESASky · open-access scientific use · aladin.cds.unistra.fr/hips",
+          "d3-celestial constellation lines — © Olaf Frohn · BSD-3 · github.com/ofrohn/d3-celestial",
+          "AstronomyEngine ephemerides — © Don Cross · MIT · github.com/cosinekitty/astronomy",
+          "Celestrak TLEs (satellites) — public domain · celestrak.org",
+          "NOAA SWPC space-weather feeds — US public domain · swpc.noaa.gov",
+          "JPL CAD API (NEO close approach) — public domain · ssd-api.jpl.nasa.gov",
+          "Wikipedia REST API — CC BY-SA · en.wikipedia.org/api/rest_v1",
+          "Planet textures — NASA / JPL / USGS public domain via Wikimedia Commons",
+        ],
+      },
+      { kind: "h2", text: "Citing us" },
+      {
+        kind: "p",
+        text:
+          "If you use a figure or screenshot in a paper or article, please credit ‘The Unspeakable World — space.dashable.dev’ and a permalink (URL hash) to the view. Bibtex stub on the GitHub README.",
+      },
+      {
+        kind: "callout",
+        tone: "warn",
+        text:
+          "If you believe content here infringes your rights, please email stephanemboghossian@gmail.com with the URL and a description. We act within 72 hours on good-faith requests.",
+      },
+      { kind: "link", slug: "terms", text: "Continue with Terms" },
+    ],
+    prev: "support",
+    next: "terms",
+  },
+  {
+    slug: "terms",
+    section: "Legal",
+    title: "Terms of Use",
+    lede:
+      "Plain-English summary first. Free to use, AS-IS, no warranty, no resale of mirrored content.",
+    body: [
+      { kind: "h2", text: "Plain English" },
+      {
+        kind: "ul",
+        items: [
+          "It's free. No accounts, no payments, no quotas in v1.",
+          "Don't break the law with it (illegal targeting, harassment, etc.).",
+          "Don't try to DoS the upstream archives we federate (CDS, IRSA, NASA, SIMBAD).",
+          "We provide the service AS-IS. No warranty. Outages happen.",
+          "We may change the URL or shut down the service at any time.",
+        ],
+      },
+      { kind: "h2", text: "Acceptable use" },
+      {
+        kind: "p",
+        text:
+          "You agree not to use the service to violate any law, infringe any third-party right, or attempt to overwhelm the federated data sources. Automated scraping must respect each upstream provider's rate limits — they are not ours to grant.",
+      },
+      { kind: "h2", text: "No warranty" },
+      {
+        kind: "p",
+        text:
+          "The site is provided AS-IS, without warranty of any kind, express or implied, including but not limited to merchantability, fitness for a particular purpose, and non-infringement. The maintainers are not liable for any damages arising from use of the site.",
+      },
+      { kind: "h2", text: "Educational / research use" },
+      {
+        kind: "p",
+        text:
+          "All data shown is intended for education, public outreach, and informal scientific exploration. For peer-reviewed work, always cite the upstream archive directly.",
+      },
+      { kind: "h2", text: "Changes" },
+      {
+        kind: "p",
+        text:
+          "We may update these terms. Material changes will be noted in the GitHub repo; continued use after a change means you accept the new terms.",
+      },
+      { kind: "link", slug: "privacy", text: "Continue with Privacy" },
+    ],
+    prev: "copyright",
+    next: "privacy",
+  },
+  {
+    slug: "privacy",
+    section: "Legal",
+    title: "Privacy",
+    lede:
+      "We don't have your data. There is no account, no tracker, no third-party analytics that follows you.",
+    body: [
+      { kind: "h2", text: "What we DO NOT collect" },
+      {
+        kind: "ul",
+        items: [
+          "No account — there is no sign-up form",
+          "No advertising trackers, no Facebook/Google pixels",
+          "No browser fingerprinting",
+          "No location data sent to a server (Tonight's Sky is fully client-side)",
+          "No payment data — there is nothing to pay for",
+        ],
+      },
+      { kind: "h2", text: "What lives in YOUR browser only" },
+      {
+        kind: "ul",
+        items: [
+          "Layer toggles, sliders, and last-mode (localStorage)",
+          "Roadmap upvotes (localStorage)",
+          "Search history is not persisted",
+          "URL hash with current camera state (you choose to share)",
+        ],
+      },
+      { kind: "h2", text: "What we MIGHT collect" },
+      {
+        kind: "ul",
+        items: [
+          "Server access logs at the CDN edge — IP + URL + timestamp + UA — kept up to 14 days for abuse prevention, then dropped",
+          "Aggregated anonymous request counts — no per-user breakdown",
+          "Optional self-hosted analytics for page views (no cookies, no fingerprint, country-level only)",
+        ],
+      },
+      { kind: "h2", text: "Third parties" },
+      {
+        kind: "p",
+        text:
+          "When you use the viewer, your browser fetches sky tiles and catalog data directly from CDS Strasbourg, NASA IRSA, ESA ESASky, SIMBAD, NOAA, JPL, Celestrak, and Wikipedia. Each of those services has its own privacy policy and may log requests. We do not proxy or relay your queries.",
+      },
+      { kind: "h2", text: "Your rights" },
+      {
+        kind: "p",
+        text:
+          "You can clear all local data by clearing your browser's site data for space.dashable.dev. There is nothing to delete on our side because we never received it.",
+      },
+      {
+        kind: "callout",
+        tone: "tip",
+        text:
+          "If you spot a feature that leaks personal data (geolocation, IP, etc.) to anyone other than the upstream archives listed above, treat it as a security bug and email us.",
+      },
+    ],
+    prev: "terms",
   },
 ];

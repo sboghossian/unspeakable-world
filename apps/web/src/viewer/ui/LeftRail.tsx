@@ -1,0 +1,306 @@
+import { useState } from "react";
+import type { UniverseState } from "../universe/universe-scene";
+
+type Scene = {
+  flyTo(name: string): void;
+  setConstellations(on: boolean): void;
+  setCoordGrid(on: boolean): void;
+  setStarLabels(on: boolean): void;
+  setPulsars(on: boolean): void;
+  setExoplanets(on: boolean): void;
+  setCosmicLandmarks(on: boolean): void;
+  setOverlay(id: string | null): void;
+  setOverlayMix(mix: number): void;
+};
+
+type Props = {
+  state: UniverseState;
+  scene: Scene | null;
+  onOpenGuide: () => void;
+};
+
+const TRAVEL: Array<{ label: string; key: string; tone: string }> = [
+  { label: "Sun", key: "Sun", tone: "text-amber-200" },
+  { label: "Mercury", key: "Mercury", tone: "text-white/70" },
+  { label: "Venus", key: "Venus", tone: "text-amber-100" },
+  { label: "Earth", key: "Earth", tone: "text-cyan-200" },
+  { label: "Mars", key: "Mars", tone: "text-orange-300" },
+  { label: "Jupiter", key: "Jupiter", tone: "text-amber-300" },
+  { label: "Saturn", key: "Saturn", tone: "text-amber-200" },
+  { label: "Uranus", key: "Uranus", tone: "text-cyan-300" },
+  { label: "Neptune", key: "Neptune", tone: "text-blue-300" },
+  { label: "Galactic Center", key: "Galactic Center", tone: "text-violet-300" },
+  { label: "M31 (Andromeda)", key: "M31", tone: "text-violet-200" },
+  { label: "Local Group", key: "Local Group", tone: "text-rose-300" },
+];
+
+const WAVES: Array<{ id: string; label: string }> = [
+  { id: "halpha", label: "Hα" },
+  { id: "2mass", label: "2MASS" },
+  { id: "allwise", label: "WISE" },
+  { id: "galex", label: "UV" },
+  { id: "integral", label: "X-ray" },
+  { id: "nvss", label: "Radio" },
+  { id: "fermi", label: "γ-ray" },
+];
+
+export function LeftRail({ state, scene, onOpenGuide }: Props) {
+  const [collapsed, setCollapsed] = useState(false);
+  const [open, setOpen] = useState<{
+    objects: boolean;
+    waves: boolean;
+    travel: boolean;
+  }>({ objects: true, waves: false, travel: true });
+
+  if (!scene) return null;
+
+  const layerToggle = (
+    on: boolean,
+    label: string,
+    onClick: () => void,
+    hint?: string,
+  ) => (
+    <button
+      key={label}
+      type="button"
+      onClick={onClick}
+      className={`flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-left font-mono text-[11px] uppercase tracking-widest transition ${
+        on
+          ? "bg-emerald-400/15 text-emerald-200 hover:bg-emerald-400/20"
+          : "text-white/65 hover:bg-white/5 hover:text-white"
+      }`}
+    >
+      <span className="flex items-center gap-2">
+        <span
+          className={`h-1.5 w-1.5 rounded-full ${on ? "bg-emerald-300" : "bg-white/25"}`}
+        />
+        {label}
+      </span>
+      {hint && (
+        <span className="font-mono text-[9px] tracking-wider text-white/30">
+          {hint}
+        </span>
+      )}
+    </button>
+  );
+
+  if (collapsed) {
+    return (
+      <div className="pointer-events-auto absolute left-3 top-32 z-10 flex flex-col gap-1.5 rounded-xl border border-white/10 bg-space-950/85 p-1.5 backdrop-blur">
+        <button
+          type="button"
+          onClick={() => setCollapsed(false)}
+          title="Expand panel"
+          className="flex h-9 w-9 items-center justify-center rounded-md text-white/70 hover:bg-white/5 hover:text-white"
+        >
+          ▶
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setCollapsed(false);
+            setOpen((o) => ({ ...o, objects: true }));
+          }}
+          title="Celestial objects"
+          className="flex h-9 w-9 items-center justify-center rounded-md text-white/70 hover:bg-white/5 hover:text-white"
+        >
+          ✦
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setCollapsed(false);
+            setOpen((o) => ({ ...o, waves: true }));
+          }}
+          title="Wavelengths"
+          className="flex h-9 w-9 items-center justify-center rounded-md text-white/70 hover:bg-white/5 hover:text-white"
+        >
+          ◐
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setCollapsed(false);
+            setOpen((o) => ({ ...o, travel: true }));
+          }}
+          title="Quick travel"
+          className="flex h-9 w-9 items-center justify-center rounded-md text-white/70 hover:bg-white/5 hover:text-white"
+        >
+          🚀
+        </button>
+        <button
+          type="button"
+          onClick={onOpenGuide}
+          title="User Guide"
+          className="flex h-9 w-9 items-center justify-center rounded-md text-white/70 hover:bg-white/5 hover:text-white"
+        >
+          📖
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="pointer-events-auto absolute left-3 top-32 bottom-32 z-10 flex w-64 flex-col rounded-xl border border-white/10 bg-space-950/85 backdrop-blur">
+      <div className="flex items-center justify-between border-b border-white/5 px-3 py-2">
+        <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/45">
+          Universe
+        </div>
+        <button
+          type="button"
+          onClick={() => setCollapsed(true)}
+          title="Collapse"
+          className="rounded-md p-1 font-mono text-xs text-white/50 hover:bg-white/5 hover:text-white"
+        >
+          ◀
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-1.5 py-2">
+        <Section
+          label="Celestial objects"
+          open={open.objects}
+          onToggle={() =>
+            setOpen((o) => ({ ...o, objects: !o.objects }))
+          }
+        >
+          {layerToggle(
+            state.constellationsOn,
+            "✦ Constellations",
+            () => scene.setConstellations(!state.constellationsOn),
+            "L",
+          )}
+          {layerToggle(
+            state.coordGridOn,
+            "⌖ Reference grid",
+            () => scene.setCoordGrid(!state.coordGridOn),
+            "G",
+          )}
+          {layerToggle(state.starLabelsOn, "★ Star names", () =>
+            scene.setStarLabels(!state.starLabelsOn),
+          )}
+          {layerToggle(state.pulsarsOn, "⚡ Pulsars (3,927)", () =>
+            scene.setPulsars(!state.pulsarsOn),
+          )}
+          {layerToggle(state.exoplanetsOn, "⊙ Exoplanets (6,278)", () =>
+            scene.setExoplanets(!state.exoplanetsOn),
+          )}
+          {layerToggle(state.cosmicLandmarksOn, "◉ Exotic objects", () =>
+            scene.setCosmicLandmarks(!state.cosmicLandmarksOn),
+          )}
+        </Section>
+
+        <Section
+          label="Wavelengths"
+          open={open.waves}
+          onToggle={() => setOpen((o) => ({ ...o, waves: !o.waves }))}
+        >
+          <button
+            type="button"
+            onClick={() => scene.setOverlay(null)}
+            className={`flex w-full items-center justify-between rounded-md px-2.5 py-1.5 font-mono text-[11px] uppercase tracking-widest transition ${
+              state.overlayId === null
+                ? "bg-plasma-500/15 text-plasma-300"
+                : "text-white/65 hover:bg-white/5 hover:text-white"
+            }`}
+          >
+            <span>Visible (DSS2)</span>
+          </button>
+          {WAVES.map((w) => (
+            <button
+              key={w.id}
+              type="button"
+              onClick={() =>
+                scene.setOverlay(state.overlayId === w.id ? null : w.id)
+              }
+              className={`flex w-full items-center justify-between rounded-md px-2.5 py-1.5 font-mono text-[11px] uppercase tracking-widest transition ${
+                state.overlayId === w.id
+                  ? "bg-amber-400/15 text-amber-200"
+                  : "text-white/65 hover:bg-white/5 hover:text-white"
+              }`}
+            >
+              <span>{w.label}</span>
+            </button>
+          ))}
+          {state.overlayId && (
+            <div className="mt-2 px-2.5">
+              <div className="mb-1 font-mono text-[9px] uppercase tracking-widest text-white/40">
+                Cross-fade
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.01}
+                value={state.overlayMix}
+                onChange={(e) =>
+                  scene.setOverlayMix(parseFloat(e.target.value))
+                }
+                className="h-1 w-full accent-amber-400"
+                aria-label="Wavelength cross-fade"
+              />
+            </div>
+          )}
+        </Section>
+
+        <Section
+          label="Quick travel"
+          open={open.travel}
+          onToggle={() =>
+            setOpen((o) => ({ ...o, travel: !o.travel }))
+          }
+        >
+          <div className="grid grid-cols-2 gap-1">
+            {TRAVEL.map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => scene.flyTo(t.key)}
+                className={`rounded-md px-2 py-1 text-left font-mono text-[10.5px] uppercase tracking-wider transition hover:bg-white/5 ${t.tone}`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </Section>
+      </div>
+
+      <div className="border-t border-white/5 p-2">
+        <button
+          type="button"
+          onClick={onOpenGuide}
+          className="flex w-full items-center justify-between rounded-md px-2.5 py-1.5 font-mono text-[11px] uppercase tracking-widest text-white/65 transition hover:bg-white/5 hover:text-white"
+        >
+          <span>📖 User Guide</span>
+          <span className="text-white/30">↗</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function Section({
+  label,
+  open,
+  onToggle,
+  children,
+}: {
+  label: string;
+  open: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="mb-1">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-center justify-between px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.25em] text-white/45 transition hover:text-white/80"
+      >
+        <span>{label}</span>
+        <span className={`transition ${open ? "rotate-90" : ""}`}>›</span>
+      </button>
+      {open && <div className="flex flex-col gap-0.5 pb-2">{children}</div>}
+    </div>
+  );
+}

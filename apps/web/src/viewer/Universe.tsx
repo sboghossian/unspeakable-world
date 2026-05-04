@@ -14,6 +14,7 @@ import { TonightSky } from "./ui/TonightSky";
 import { SearchBar } from "./ui/SearchBar";
 import { SnapshotButton } from "./ui/SnapshotButton";
 import { ColorLegend } from "./ui/ColorLegend";
+import { LeftRail } from "./ui/LeftRail";
 import { SearchIndex, type SearchEntry } from "./search/search-index";
 
 /**
@@ -49,21 +50,6 @@ const DEFAULT_STATE: UniverseState = {
   exoplanetsOn: false,
   cosmicLandmarksOn: false,
 };
-
-const FLY_TARGETS = [
-  "Sun",
-  "Mercury",
-  "Venus",
-  "Earth",
-  "Mars",
-  "Jupiter",
-  "Saturn",
-  "Uranus",
-  "Neptune",
-  "Galactic Center",
-  "M31",
-  "Local Group",
-] as const;
 
 export function Universe({ onExit }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -243,109 +229,17 @@ export function Universe({ onExit }: Props) {
             }}
             onZenith={() => sceneRef.current?.flyTo("Sun")}
           />
-          <span className="font-mono text-[10px] uppercase tracking-widest text-white/40">
-            fly
-          </span>
-          {FLY_TARGETS.map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => sceneRef.current?.flyTo(t)}
-              className="rounded-md border border-white/10 bg-white/5 px-2 py-1 font-mono text-[11px] text-white/65 transition hover:bg-white/10 hover:text-emerald-200"
-            >
-              {t}
-            </button>
-          ))}
         </div>
       </div>
 
-      {/* Wavelength bar — only visible when sky tiles dominate (Solar tier) */}
-      {state.skyTilesVisible && (
-        <div className="pointer-events-none absolute inset-x-0 top-20 z-10 flex justify-center px-3">
-          <div className="pointer-events-auto flex flex-wrap items-center gap-1 rounded-xl border border-white/10 bg-space-950/80 px-3 py-2 backdrop-blur">
-            <span className="font-mono text-[10px] uppercase tracking-widest text-white/40">
-              wavelength
-            </span>
-            <button
-              type="button"
-              onClick={() => sceneRef.current?.setOverlay(null)}
-              className={`rounded-md border px-2.5 py-1 font-mono text-xs uppercase tracking-wider transition ${
-                state.overlayId === null
-                  ? "border-plasma-500/40 bg-plasma-500/15 text-plasma-400"
-                  : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10"
-              }`}
-            >
-              visible
-            </button>
-            {(
-              [
-                ["halpha", "Hα"],
-                ["2mass", "2MASS"],
-                ["allwise", "WISE"],
-                ["galex", "UV"],
-                ["integral", "X-ray"],
-                ["nvss", "Radio"],
-                ["fermi", "γ-ray"],
-              ] as const
-            ).map(([id, label]) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() =>
-                  sceneRef.current?.setOverlay(
-                    state.overlayId === id ? null : id,
-                  )
-                }
-                className={`rounded-md border px-2.5 py-1 font-mono text-xs uppercase tracking-wider transition ${
-                  state.overlayId === id
-                    ? "border-amber-400/40 bg-amber-400/15 text-amber-300"
-                    : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-            {state.overlayId && (
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.01}
-                value={state.overlayMix}
-                onChange={(e) =>
-                  sceneRef.current?.setOverlayMix(parseFloat(e.target.value))
-                }
-                className="ml-2 h-1 w-24 accent-amber-400"
-                aria-label="Wavelength cross-fade"
-              />
-            )}
-            <div className="mx-2 h-4 w-px bg-white/10" />
-            {(
-              [
-                ["constellations", state.constellationsOn, "✦ lines", () => sceneRef.current?.setConstellations(!state.constellationsOn)],
-                ["grid", state.coordGridOn, "⌖ grid", () => sceneRef.current?.setCoordGrid(!state.coordGridOn)],
-                ["names", state.starLabelsOn, "★ names", () => sceneRef.current?.setStarLabels(!state.starLabelsOn)],
-                ["pulsars", state.pulsarsOn, "⚡ pulsars", () => sceneRef.current?.setPulsars(!state.pulsarsOn)],
-                ["exo", state.exoplanetsOn, "⊙ exo", () => sceneRef.current?.setExoplanets(!state.exoplanetsOn)],
-                ["exotic", state.cosmicLandmarksOn, "◉ exotic", () => sceneRef.current?.setCosmicLandmarks(!state.cosmicLandmarksOn)],
-              ] as const
-            ).map(([key, on, label, onClick]) => (
-              <button
-                key={key}
-                type="button"
-                onClick={onClick}
-                className={`rounded-md border px-2 py-1 font-mono text-[11px] uppercase tracking-wider transition ${
-                  on
-                    ? "border-emerald-400/50 bg-emerald-400/15 text-emerald-200"
-                    : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Left rail — sectioned navigation panel (layers, wavelengths, travel) */}
+      <LeftRail
+        state={state}
+        scene={sceneRef.current}
+        onOpenGuide={() => {
+          window.location.hash = "#guide";
+        }}
+      />
 
       {/* Bottom bar */}
       <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex flex-col items-center gap-2 px-3">
