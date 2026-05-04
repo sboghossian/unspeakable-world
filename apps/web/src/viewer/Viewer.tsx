@@ -9,6 +9,7 @@ import { SearchIndex, type SearchEntry } from "./search/search-index";
 import { TonightSky } from "./ui/TonightSky";
 import { TourCard } from "./ui/TourCard";
 import { GRAND_TOUR } from "./tour/tour";
+import { parseHash, replaceHash, serializeState } from "./share/url-state";
 import { WavelengthBar } from "./ui/WavelengthBar";
 import { InfoPanel } from "./ui/InfoPanel";
 import {
@@ -184,12 +185,74 @@ export function Viewer() {
     setStatus("live");
     const unsubscribe = scene.subscribe(setState);
 
+    // Apply hash → scene state once the scene is ready. Wait a tick so the
+    // initial Sun-aimed setForward + base-tile loads land first.
+    setTimeout(() => {
+      const initial = parseHash();
+      if (initial.fov !== undefined) scene.setFov(initial.fov);
+      if (initial.ra !== undefined && initial.dec !== undefined) {
+        const raRad = (initial.ra * Math.PI) / 180;
+        const decRad = (initial.dec * Math.PI) / 180;
+        const cdec = Math.cos(decRad);
+        // Same Z-up → Y-up rotation our astronomy groups apply: (x, z, -y)
+        const dir = new Vector3(
+          cdec * Math.cos(raRad),
+          Math.sin(decRad),
+          -cdec * Math.sin(raRad),
+        ).normalize();
+        scene.flyTo(dir, 600);
+      }
+      if (initial.time) scene.setTime(initial.time);
+      if (initial.overlayId !== undefined) scene.setOverlay(initial.overlayId);
+      if (initial.overlayMix !== undefined)
+        scene.setOverlayMix(initial.overlayMix);
+      if (initial.constellations) scene.setConstellations(true);
+    }, 60);
+
     return () => {
       unsubscribe();
       scene.dispose();
       sceneRef.current = null;
     };
   }, []);
+
+  // Debounced URL writeback: keep the hash in sync with the live state so
+  // the user's address bar is always a shareable view.
+  useEffect(() => {
+    if (status !== "live") return;
+    const t = window.setTimeout(() => {
+      // Convert world-Y-up forward back to celestial RA/Dec (inverse of the
+      // astronomy groups' rotation.x = -π/2, i.e. (x, y, z)_world → (x, -z, y)).
+      const f = state.forward;
+      const xCel = f.x;
+      const yCel = -f.z;
+      const zCel = f.y;
+      const len = Math.hypot(xCel, yCel, zCel) || 1;
+      const dec =
+        (Math.asin(Math.max(-1, Math.min(1, zCel / len))) * 180) / Math.PI;
+      let ra = (Math.atan2(yCel, xCel) * 180) / Math.PI;
+      if (ra < 0) ra += 360;
+      const params = serializeState({
+        ra,
+        dec,
+        fov: state.fov,
+        time: state.time,
+        overlayId: state.overlayId,
+        overlayMix: state.overlayMix,
+        constellations: state.constellations,
+      });
+      replaceHash(params);
+    }, 250);
+    return () => window.clearTimeout(t);
+  }, [
+    status,
+    state.forward,
+    state.fov,
+    state.time,
+    state.overlayId,
+    state.overlayMix,
+    state.constellations,
+  ]);
 
   // Tap on sky: open the SIMBAD info panel for that direction *and* fly camera.
   const onCanvasClick = useCallback(
