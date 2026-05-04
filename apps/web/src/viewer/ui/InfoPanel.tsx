@@ -1,6 +1,7 @@
 import type { SimbadHit } from "../info/simbad";
 import { describeType } from "../info/simbad";
 import type { WikiSummary } from "../info/wikipedia";
+import { computeRiseSet } from "../observer/rise-set";
 
 type Props = {
   raDeg: number;
@@ -11,6 +12,7 @@ type Props = {
   wiki?: WikiSummary | null;
   wikiLoading?: boolean;
   isFavorited?: boolean;
+  observer?: { lat: number; lon: number } | null;
   onClose: () => void;
   onFlyTo: () => void;
   onToggleFavorite?: () => void;
@@ -25,6 +27,7 @@ export function InfoPanel({
   wiki,
   wikiLoading,
   isFavorited,
+  observer,
   onClose,
   onFlyTo,
   onToggleFavorite,
@@ -106,6 +109,15 @@ export function InfoPanel({
                 ))}
               </div>
             </div>
+          )}
+
+          {observer && hit && (
+            <TonightRow
+              raDeg={hit.raDeg}
+              decDeg={hit.decDeg}
+              lat={observer.lat}
+              lon={observer.lon}
+            />
           )}
 
           {(wikiLoading || wiki) && (
@@ -213,4 +225,82 @@ function formatDec(decDeg: number): string {
 
 function pad2(n: number): string {
   return n.toString().padStart(2, "0");
+}
+
+/**
+ * Local rise / transit / set times for the inspected target. Pure compute,
+ * no network — recalculated each render which is cheap (a handful of
+ * trig calls). The "now" reference is sampled once at render; if the user
+ * keeps the panel open across midnight the times stay valid for the
+ * computed sidereal day.
+ */
+function TonightRow({
+  raDeg,
+  decDeg,
+  lat,
+  lon,
+}: {
+  raDeg: number;
+  decDeg: number;
+  lat: number;
+  lon: number;
+}) {
+  const rs = computeRiseSet(raDeg, decDeg, lat, lon);
+
+  return (
+    <div className="mt-4 rounded-lg border border-white/10 bg-white/[0.02] p-3">
+      <div className="mb-1.5 flex items-center justify-between">
+        <span className="font-mono text-[10px] uppercase tracking-widest text-white/40">
+          tonight · your sky
+        </span>
+        <span
+          className={`font-mono text-[10px] ${
+            rs.currentlyUp ? "text-emerald-300/80" : "text-white/40"
+          }`}
+        >
+          {rs.currentlyUp ? "● up now" : "○ below horizon"}
+        </span>
+      </div>
+      {rs.kind === "transits" && (
+        <dl className="grid grid-cols-3 gap-x-2 text-[11px]">
+          <Tile label="rise" value={fmtLocalTime(rs.rise)} />
+          <Tile label="transit" value={fmtLocalTime(rs.transit)} />
+          <Tile label="set" value={fmtLocalTime(rs.set)} />
+        </dl>
+      )}
+      {rs.kind === "circumpolar" && (
+        <div className="text-[11px] text-white/70">
+          <span className="text-emerald-300/80">Circumpolar</span> — never sets.
+          Highest at{" "}
+          <span className="font-mono text-white">
+            {fmtLocalTime(rs.transit)}
+          </span>
+          .
+        </div>
+      )}
+      {rs.kind === "never" && (
+        <div className="text-[11px] text-white/55">
+          Below your horizon all day. Try a different latitude.
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Tile({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="font-mono text-[9px] uppercase tracking-widest text-white/40">
+        {label}
+      </dt>
+      <dd className="font-mono text-white/90">{value}</dd>
+    </div>
+  );
+}
+
+function fmtLocalTime(d: Date): string {
+  const sameDay = d.toDateString() === new Date().toDateString();
+  const hh = pad2(d.getHours());
+  const mm = pad2(d.getMinutes());
+  return sameDay ? `${hh}:${mm}` : `${hh}:${mm} +1d`;
 }

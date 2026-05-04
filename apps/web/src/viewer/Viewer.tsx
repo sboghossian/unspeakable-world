@@ -526,6 +526,7 @@ export function Viewer() {
                 )
               : false
           }
+          observer={observer}
           onClose={() => setInspect(null)}
           onFlyTo={() => sceneRef.current?.flyTo(inspect.dir)}
           onToggleFavorite={onToggleFavorite}
