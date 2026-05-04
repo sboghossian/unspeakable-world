@@ -18,9 +18,22 @@ const SolarFlight = lazy(() =>
 const PlanetSurface = lazy(() =>
   import("./viewer/PlanetSurface").then((m) => ({ default: m.PlanetSurface })),
 );
+const Galactic = lazy(() =>
+  import("./viewer/Galactic").then((m) => ({ default: m.Galactic })),
+);
 
 export function App() {
   const route = useRoute();
+
+  if (route === "galactic") {
+    return (
+      <main className="relative h-full w-full bg-space-950">
+        <Suspense fallback={<ViewerLoadingVeil />}>
+          <Galactic onExit={() => navigate("solar")} />
+        </Suspense>
+      </main>
+    );
+  }
 
   if (route === "surface") {
     return (

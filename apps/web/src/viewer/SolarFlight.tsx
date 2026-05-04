@@ -95,6 +95,13 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
           <div className="rounded-lg border border-white/10 bg-space-950/70 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.25em] text-cyan-200/80 backdrop-blur">
             🚀 solar system flight
           </div>
+          <a
+            href="#galactic"
+            title="Zoom out to the Milky Way galaxy + Local Group + Cosmic Web"
+            className="rounded-lg border border-violet-400/40 bg-violet-400/10 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-violet-200 backdrop-blur transition hover:bg-violet-400/20"
+          >
+            🌌 galactic →
+          </a>
         </div>
 
         <div className="pointer-events-auto flex flex-wrap items-center justify-end gap-1">
