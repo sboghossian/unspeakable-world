@@ -7,6 +7,8 @@ import { QuickTargets } from "./ui/QuickTargets";
 import { SearchBar } from "./ui/SearchBar";
 import { SearchIndex, type SearchEntry } from "./search/search-index";
 import { TonightSky } from "./ui/TonightSky";
+import { TourCard } from "./ui/TourCard";
+import { GRAND_TOUR } from "./tour/tour";
 import { WavelengthBar } from "./ui/WavelengthBar";
 import { InfoPanel } from "./ui/InfoPanel";
 import {
@@ -79,6 +81,79 @@ export function Viewer() {
     },
   );
   const [searchIndex, setSearchIndex] = useState<SearchIndex | null>(null);
+  const [tourIndex, setTourIndex] = useState<number | null>(null);
+
+  const runTourStep = useCallback((idx: number) => {
+    const scene = sceneRef.current;
+    const step = GRAND_TOUR[idx];
+    if (!scene || !step) return;
+
+    if (step.target.kind === "body") {
+      const dir = scene.bodyDirection(step.target.name);
+      if (dir) scene.flyTo(dir, 1500);
+    } else {
+      // Convert celestial RA/Dec to world Y-up direction
+      const raRad = (step.target.ra * Math.PI) / 180;
+      const decRad = (step.target.dec * Math.PI) / 180;
+      const cdec = Math.cos(decRad);
+      const x = cdec * Math.cos(raRad);
+      const y = cdec * Math.sin(raRad);
+      const z = Math.sin(decRad);
+      // Same Z-up → Y-up rotation our astronomy groups apply: (x, z, -y)
+      scene.flyTo(new Vector3(x, z, -y).normalize(), 1500);
+    }
+    scene.setFov(step.fov);
+
+    // If the step prefers a wavelength, switch the overlay sphere accordingly.
+    if (step.wavelengthHint) {
+      const surveyId =
+        step.wavelengthHint === "visible"
+          ? null
+          : step.wavelengthHint === "near-ir"
+            ? "2mass"
+            : step.wavelengthHint === "mid-ir"
+              ? "allwise"
+              : step.wavelengthHint === "x-ray"
+                ? "integral"
+                : null;
+      scene.setOverlay(surveyId);
+      if (surveyId) scene.setOverlayMix(0.55);
+    } else {
+      scene.setOverlay(null);
+    }
+  }, []);
+
+  const startTour = useCallback(() => {
+    setTourIndex(0);
+    runTourStep(0);
+  }, [runTourStep]);
+
+  const nextTour = useCallback(() => {
+    setTourIndex((prev) => {
+      if (prev === null) return null;
+      const next = prev + 1;
+      if (next >= GRAND_TOUR.length) {
+        sceneRef.current?.setOverlay(null);
+        return null; // exit at end
+      }
+      runTourStep(next);
+      return next;
+    });
+  }, [runTourStep]);
+
+  const prevTour = useCallback(() => {
+    setTourIndex((prev) => {
+      if (prev === null || prev === 0) return prev;
+      const next = prev - 1;
+      runTourStep(next);
+      return next;
+    });
+  }, [runTourStep]);
+
+  const exitTour = useCallback(() => {
+    setTourIndex(null);
+    sceneRef.current?.setOverlay(null);
+  }, []);
 
   // Build the local search index once on mount.
   useEffect(() => {
@@ -185,6 +260,17 @@ export function Viewer() {
         </button>
 
         <div className="pointer-events-auto flex items-center gap-2">
+          {tourIndex === null && (
+            <button
+              type="button"
+              onClick={startTour}
+              className="rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-violet-300 backdrop-blur transition hover:bg-violet-500/20"
+              title="Take a guided tour through 8 highlights of the sky"
+            >
+              <span className="md:hidden">▶</span>
+              <span className="hidden md:inline">▶ tour</span>
+            </button>
+          )}
           <SearchBar
             index={searchIndex}
             onSelect={(entry: SearchEntry) =>
@@ -278,6 +364,18 @@ export function Viewer() {
             drag · pinch · wheel · tap
           </div>
         </div>
+      )}
+
+      {/* Tour card (top-center; SIMBAD panel hides automatically when tour wins z-30) */}
+      {status === "live" && tourIndex !== null && GRAND_TOUR[tourIndex] && (
+        <TourCard
+          step={GRAND_TOUR[tourIndex]!}
+          index={tourIndex}
+          total={GRAND_TOUR.length}
+          onPrev={prevTour}
+          onNext={nextTour}
+          onExit={exitTour}
+        />
       )}
 
       {/* SIMBAD info panel (click on sky) */}

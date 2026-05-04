@@ -426,6 +426,22 @@ export class ViewerScene {
     this.flyTo(dir, 1500);
   }
 
+  /** Programmatically set the camera FOV (used by the tour system). */
+  setFov(deg: number): void {
+    const target = Math.max(6, Math.min(100, deg));
+    this.controls.fov = target;
+    this.camera.fov = target;
+    this.camera.updateProjectionMatrix();
+    this.dirty = true;
+    this.publishState();
+  }
+
+  /** Resolve a body name to its current direction (used by the tour). */
+  bodyDirection(name: string): Vector3 | null {
+    if (name === "ISS") return this.iss.direction();
+    return this.solar.directionOf(name);
+  }
+
   dispose(): void {
     this.disposed = true;
     cancelAnimationFrame(this.rafHandle);
