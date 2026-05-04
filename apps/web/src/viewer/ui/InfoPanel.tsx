@@ -1,7 +1,7 @@
 import type { SimbadHit } from "../info/simbad";
 import { describeType } from "../info/simbad";
 import type { WikiSummary } from "../info/wikipedia";
-import { computeRiseSet } from "../observer/rise-set";
+import { computeRiseSet, currentAltitude } from "../observer/rise-set";
 
 type Props = {
   raDeg: number;
@@ -262,21 +262,37 @@ function TonightRow({
         </span>
       </div>
       {rs.kind === "transits" && (
-        <dl className="grid grid-cols-3 gap-x-2 text-[11px]">
-          <Tile label="rise" value={fmtLocalTime(rs.rise)} />
-          <Tile label="transit" value={fmtLocalTime(rs.transit)} />
-          <Tile label="set" value={fmtLocalTime(rs.set)} />
-        </dl>
+        <>
+          <dl className="grid grid-cols-3 gap-x-2 text-[11px]">
+            <Tile label="rise" value={fmtLocalTime(rs.rise)} />
+            <Tile label="transit" value={fmtLocalTime(rs.transit)} />
+            <Tile label="set" value={fmtLocalTime(rs.set)} />
+          </dl>
+          <AltitudeSparkline
+            raDeg={raDeg}
+            decDeg={decDeg}
+            lat={lat}
+            lon={lon}
+          />
+        </>
       )}
       {rs.kind === "circumpolar" && (
-        <div className="text-[11px] text-white/70">
-          <span className="text-emerald-300/80">Circumpolar</span> — never sets.
-          Highest at{" "}
-          <span className="font-mono text-white">
-            {fmtLocalTime(rs.transit)}
-          </span>
-          .
-        </div>
+        <>
+          <div className="text-[11px] text-white/70">
+            <span className="text-emerald-300/80">Circumpolar</span> — never
+            sets. Highest at{" "}
+            <span className="font-mono text-white">
+              {fmtLocalTime(rs.transit)}
+            </span>
+            .
+          </div>
+          <AltitudeSparkline
+            raDeg={raDeg}
+            decDeg={decDeg}
+            lat={lat}
+            lon={lon}
+          />
+        </>
       )}
       {rs.kind === "never" && (
         <div className="text-[11px] text-white/55">
@@ -294,6 +310,153 @@ function Tile({ label, value }: { label: string; value: string }) {
         {label}
       </dt>
       <dd className="font-mono text-white/90">{value}</dd>
+    </div>
+  );
+}
+
+/**
+ * 24-hour altitude curve from now → +24h, sampled every 15 minutes.
+ * Rendered as an inline SVG arc with a horizon baseline and a "now"
+ * marker at x=0. The curve is filled below for visual heft, then
+ * stroked. Negative altitudes (below horizon) are clamped to the
+ * baseline so the user reads the arc as observable hours.
+ */
+function AltitudeSparkline({
+  raDeg,
+  decDeg,
+  lat,
+  lon,
+}: {
+  raDeg: number;
+  decDeg: number;
+  lat: number;
+  lon: number;
+}) {
+  const W = 300;
+  const H = 56;
+  const padX = 4;
+  const padTop = 4;
+  const padBot = 14; // leaves room for hour ticks
+  const innerW = W - padX * 2;
+  const innerH = H - padTop - padBot;
+  const STEPS = 96; // every 15 min
+
+  const now = Date.now();
+  const points: { x: number; alt: number }[] = [];
+  let peak = -90;
+  for (let i = 0; i <= STEPS; i++) {
+    const t = new Date(now + (i / STEPS) * 24 * 3600_000);
+    const a = currentAltitude(raDeg, decDeg, lat, lon, t);
+    if (a > peak) peak = a;
+    points.push({ x: i / STEPS, alt: a });
+  }
+
+  const yFor = (alt: number) => {
+    // Map [-90, 90] → bottom..top, but only [0, 90] is interesting; clamp.
+    const clamped = Math.max(0, Math.min(90, alt));
+    return padTop + innerH * (1 - clamped / 90);
+  };
+  const xFor = (n: number) => padX + n * innerW;
+
+  const horizonY = yFor(0);
+  // Build the area + line path strings.
+  let areaPath = `M${xFor(0)},${horizonY}`;
+  let linePath = "";
+  for (const p of points) {
+    const x = xFor(p.x);
+    const y = yFor(p.alt);
+    areaPath += ` L${x.toFixed(1)},${y.toFixed(1)}`;
+    linePath += linePath
+      ? ` L${x.toFixed(1)},${y.toFixed(1)}`
+      : `M${x.toFixed(1)},${y.toFixed(1)}`;
+  }
+  areaPath += ` L${xFor(1)},${horizonY} Z`;
+
+  // Hour ticks at +6h / +12h / +18h.
+  const ticks = [
+    { frac: 0.25, label: "+6h" },
+    { frac: 0.5, label: "+12h" },
+    { frac: 0.75, label: "+18h" },
+  ];
+
+  return (
+    <div className="mt-3">
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        preserveAspectRatio="none"
+        className="block w-full"
+        aria-label="24-hour altitude curve"
+      >
+        {/* horizon baseline */}
+        <line
+          x1={padX}
+          x2={W - padX}
+          y1={horizonY}
+          y2={horizonY}
+          stroke="rgba(255,255,255,0.15)"
+          strokeDasharray="3 3"
+        />
+        {/* fill */}
+        <path d={areaPath} fill="rgba(110, 231, 183, 0.15)" />
+        {/* curve */}
+        <path
+          d={linePath}
+          fill="none"
+          stroke="rgba(110, 231, 183, 0.85)"
+          strokeWidth={1.4}
+        />
+        {/* now marker */}
+        <line
+          x1={padX}
+          x2={padX}
+          y1={padTop}
+          y2={H - padBot}
+          stroke="rgba(255,255,255,0.45)"
+          strokeWidth={1}
+        />
+        <text
+          x={padX + 3}
+          y={padTop + 8}
+          fontSize={8}
+          fill="rgba(255,255,255,0.55)"
+          fontFamily="ui-monospace, monospace"
+        >
+          now
+        </text>
+        {/* hour ticks */}
+        {ticks.map((t) => (
+          <g key={t.label}>
+            <line
+              x1={xFor(t.frac)}
+              x2={xFor(t.frac)}
+              y1={H - padBot}
+              y2={H - padBot + 3}
+              stroke="rgba(255,255,255,0.25)"
+            />
+            <text
+              x={xFor(t.frac)}
+              y={H - 2}
+              fontSize={8}
+              textAnchor="middle"
+              fill="rgba(255,255,255,0.45)"
+              fontFamily="ui-monospace, monospace"
+            >
+              {t.label}
+            </text>
+          </g>
+        ))}
+        {/* peak label */}
+        <text
+          x={W - padX - 3}
+          y={padTop + 8}
+          fontSize={8}
+          textAnchor="end"
+          fill="rgba(110, 231, 183, 0.85)"
+          fontFamily="ui-monospace, monospace"
+        >
+          peak {peak.toFixed(0)}°
+        </text>
+      </svg>
     </div>
   );
 }
