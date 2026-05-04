@@ -9,9 +9,14 @@
  */
 
 const LAYERS = [
-  { id: '2mass' as const, label: '2MASS', sub: 'near-IR', accent: 'orange' },
-  { id: 'allwise' as const, label: 'WISE', sub: 'mid-IR', accent: 'red' },
-  { id: 'integral' as const, label: 'X-ray', sub: 'INTEGRAL hard X-ray', accent: 'purple' },
+  { id: "2mass" as const, label: "2MASS", sub: "near-IR", accent: "orange" },
+  { id: "allwise" as const, label: "WISE", sub: "mid-IR", accent: "red" },
+  {
+    id: "integral" as const,
+    label: "X-ray",
+    sub: "INTEGRAL hard X-ray",
+    accent: "purple",
+  },
 ];
 
 const ACCENT: Record<string, { active: string; idle: string }> = {
@@ -20,12 +25,12 @@ const ACCENT: Record<string, { active: string; idle: string }> = {
     idle: "border-white/10 bg-white/5 text-white/60 hover:bg-white/10",
   },
   red: {
-    active: 'border-red-400/40 bg-red-400/15 text-red-300',
-    idle: 'border-white/10 bg-white/5 text-white/60 hover:bg-white/10',
+    active: "border-red-400/40 bg-red-400/15 text-red-300",
+    idle: "border-white/10 bg-white/5 text-white/60 hover:bg-white/10",
   },
   purple: {
-    active: 'border-fuchsia-400/40 bg-fuchsia-400/15 text-fuchsia-300',
-    idle: 'border-white/10 bg-white/5 text-white/60 hover:bg-white/10',
+    active: "border-fuchsia-400/40 bg-fuchsia-400/15 text-fuchsia-300",
+    idle: "border-white/10 bg-white/5 text-white/60 hover:bg-white/10",
   },
 };
 

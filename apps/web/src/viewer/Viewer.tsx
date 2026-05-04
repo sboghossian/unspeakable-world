@@ -4,6 +4,8 @@ import { ViewerScene, type ViewerState } from "./scene/scene";
 import { navigate } from "../router";
 import { TimeStrip } from "./ui/TimeStrip";
 import { QuickTargets } from "./ui/QuickTargets";
+import { SearchBar } from "./ui/SearchBar";
+import { SearchIndex, type SearchEntry } from "./search/search-index";
 import { TonightSky } from "./ui/TonightSky";
 import { WavelengthBar } from "./ui/WavelengthBar";
 import { InfoPanel } from "./ui/InfoPanel";
@@ -76,6 +78,16 @@ export function Viewer() {
       return null;
     },
   );
+  const [searchIndex, setSearchIndex] = useState<SearchIndex | null>(null);
+
+  // Build the local search index once on mount.
+  useEffect(() => {
+    const idx = new SearchIndex();
+    void idx
+      .loadStaticCatalogs()
+      .then(() => setSearchIndex(idx))
+      .catch((err) => console.warn("[search] index load failed", err));
+  }, []);
 
   useEffect(() => {
     if (!detectWebGL2()) {
@@ -173,6 +185,12 @@ export function Viewer() {
         </button>
 
         <div className="pointer-events-auto flex items-center gap-2">
+          <SearchBar
+            index={searchIndex}
+            onSelect={(entry: SearchEntry) =>
+              sceneRef.current?.flyTo(entry.direction)
+            }
+          />
           <TonightSky
             location={observer}
             onLocationFix={(lat, lon) => {

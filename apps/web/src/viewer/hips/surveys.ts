@@ -6,10 +6,16 @@
 export type Survey = {
   id: string;
   label: string;
-  wavelength: 'visible' | 'near-ir' | 'mid-ir' | 'x-ray' | 'radio' | 'microwave';
+  wavelength:
+    | "visible"
+    | "near-ir"
+    | "mid-ir"
+    | "x-ray"
+    | "radio"
+    | "microwave";
   baseUrl: string;
   /** Tile file extension at typical orders. */
-  format: 'jpg' | 'png';
+  format: "jpg" | "png";
   /** Minimum HEALPix order this survey provides (default 0). */
   minOrder?: number;
   /** Maximum order this survey provides. */
@@ -38,22 +44,22 @@ export const SURVEYS: Record<string, Survey> = {
     attribution: "2MASS color · CDS / IPAC",
   },
   allwise: {
-    id: 'allwise',
-    label: 'AllWISE W4·W2·W1',
-    wavelength: 'mid-ir',
-    baseUrl: 'https://alasky.cds.unistra.fr/AllWISE/RGB-W4-W2-W1',
-    format: 'jpg',
+    id: "allwise",
+    label: "AllWISE W4·W2·W1",
+    wavelength: "mid-ir",
+    baseUrl: "https://alasky.cds.unistra.fr/AllWISE/RGB-W4-W2-W1",
+    format: "jpg",
     maxOrder: 8,
-    attribution: 'AllWISE · CDS / IPAC',
+    attribution: "AllWISE · CDS / IPAC",
   },
   integral: {
-    id: 'integral',
-    label: 'INTEGRAL color',
-    wavelength: 'x-ray',
-    baseUrl: 'http://skies.esac.esa.int/Integral/color',
-    format: 'jpg',
+    id: "integral",
+    label: "INTEGRAL color",
+    wavelength: "x-ray",
+    baseUrl: "http://skies.esac.esa.int/Integral/color",
+    format: "jpg",
     maxOrder: 6,
-    attribution: 'INTEGRAL hard X-ray · ESA',
+    attribution: "INTEGRAL hard X-ray · ESA",
   },
 };
 
