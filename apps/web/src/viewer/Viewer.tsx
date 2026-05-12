@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { log } from "../lib/logger";
 import { Vector3 } from "three";
 import { ViewerScene, type ViewerState } from "./scene/scene";
 import { navigate } from "../router";
@@ -350,7 +351,7 @@ export function Viewer() {
     void idx
       .loadStaticCatalogs()
       .then(() => setSearchIndex(idx))
-      .catch((err) => console.warn("[search] index load failed", err));
+      .catch((err) => log.warn("[search] index load failed", err));
   }, []);
 
   // Global keyboard shortcuts. We deliberately keep this list small and

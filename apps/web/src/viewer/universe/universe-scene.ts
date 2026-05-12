@@ -68,6 +68,7 @@ import { SolarZones, type ZoneId } from "./solar-zones";
 import { LightCone } from "./light-cone";
 import { AuroraOverlay } from "../space-weather/aurora-overlay";
 import { getSettings, onSettingsChange } from "../../lib/settings";
+import { log } from "../../lib/logger";
 
 /**
  * 🌌 Universe Mode — single seamless scene across scales.
@@ -371,7 +372,7 @@ export class UniverseScene {
     this.hipsGroup.add(this.constellations.group);
     void this.constellations
       .load("/data/constellations.lines.json")
-      .catch((err) => console.warn("[constellations] load", err));
+      .catch((err) => log.warn("[constellations] load", err));
 
     this.coordGrid = new CoordGrid();
     this.hipsGroup.add(this.coordGrid.group);
@@ -380,19 +381,19 @@ export class UniverseScene {
     this.hipsGroup.add(this.starLabels.group);
     void this.starLabels
       .load("/data/hyg-named.json")
-      .catch((err) => console.warn("[star-labels] load", err));
+      .catch((err) => log.warn("[star-labels] load", err));
 
     this.pulsars = new PulsarField();
     this.hipsGroup.add(this.pulsars.group);
     void this.pulsars
       .load("/data/pulsars.json")
-      .catch((err) => console.warn("[pulsars] load", err));
+      .catch((err) => log.warn("[pulsars] load", err));
 
     this.exoplanets = new ExoplanetField();
     this.hipsGroup.add(this.exoplanets.group);
     void this.exoplanets
       .load("/data/exoplanets.json")
-      .catch((err) => console.warn("[exoplanets] load", err));
+      .catch((err) => log.warn("[exoplanets] load", err));
 
     this.cosmicLandmarks = new CosmicLandmarks();
     this.hipsGroup.add(this.cosmicLandmarks.group);
@@ -404,7 +405,7 @@ export class UniverseScene {
     this.hipsGroup.add(this.starTrails.group);
     void this.starTrails
       .load("/data/hyg-bright.bin")
-      .catch((err) => console.warn("[star-trails] load", err));
+      .catch((err) => log.warn("[star-trails] load", err));
 
     this.hipsGroup.scale.setScalar(2000); // 2000 scene-unit radius
     this.scene.add(this.hipsGroup);
@@ -713,7 +714,7 @@ export class UniverseScene {
         this.solarGroup.add(this.asteroids);
       }
     } catch (err) {
-      console.warn("[asteroids] load", err);
+      log.warn("[asteroids] load", err);
     }
     // Comets
     try {
@@ -724,7 +725,7 @@ export class UniverseScene {
         this.solarGroup.add(this.comets);
       }
     } catch (err) {
-      console.warn("[comets] load", err);
+      log.warn("[comets] load", err);
     }
     // Interstellar
     try {
@@ -735,7 +736,7 @@ export class UniverseScene {
         this.solarGroup.add(this.interstellar);
       }
     } catch (err) {
-      console.warn("[interstellar] load", err);
+      log.warn("[interstellar] load", err);
     }
     // Missions
     try {
@@ -745,7 +746,7 @@ export class UniverseScene {
       // Group itself stays visible; per-mission visibility is off by default.
       this.solarGroup.add(this.missions);
     } catch (err) {
-      console.warn("[missions] load", err);
+      log.warn("[missions] load", err);
     }
     this.publishState();
   }

@@ -8,6 +8,7 @@ import {
 } from "three";
 import { loadTile } from "../hips/tile-loader";
 import type { Survey } from "../hips/surveys";
+import { log } from "../../lib/logger";
 
 /**
  * Build a Three.js Mesh for a single HEALPix tile (any order).
@@ -87,7 +88,7 @@ export function buildTile(
       tile.loaded = true;
     })
     .catch((err) => {
-      console.warn(
+      log.warn(
         `[hips] tile fetch failed: order=${order} ipix=${ipix}`,
         err,
       );

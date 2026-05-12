@@ -1,3 +1,5 @@
+import { log } from "../../lib/logger";
+
 /**
  * ✨ Surprise me — a sparkle button in the top-bar that flies the
  * camera to a random famous-and-photogenic target. Cheap fun on idle,
@@ -41,7 +43,7 @@ export function SurpriseButton({ onPick }: Props) {
     const pick = POOL[Math.floor(Math.random() * POOL.length)];
     if (!pick) return;
     // eslint-disable-next-line no-console
-    console.info(
+    log.info(
       `[surprise] flying to ${pick.name} — ${pick.tagline} ${pick.emoji}`,
     );
     onPick(pick.name);
