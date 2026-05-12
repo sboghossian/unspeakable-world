@@ -35,7 +35,7 @@ import {
   saveFavorite,
 } from "./favorites/favorites-store";
 import { parseHash, replaceHash, serializeState } from "./share/url-state";
-import { WavelengthBar } from "./ui/WavelengthBar";
+import { WavelengthBar, type SkyCultureChoice } from "./ui/WavelengthBar";
 import { getSettings, updateSettings } from "../lib/settings";
 import type { SkyProjection } from "./sky-atlas/projection-shader";
 import { SkyInfoPanel } from "./ui/SkyInfoPanel";
@@ -164,6 +164,7 @@ export function Viewer() {
   const [skyProjection, setSkyProjection] = useState<SkyProjection>(
     () => getSettings().skyProjection,
   );
+  const [skyCulture, setSkyCulture] = useState<SkyCultureChoice>("western");
 
   const runTourStep = useCallback((idx: number) => {
     const scene = sceneRef.current;
@@ -825,6 +826,11 @@ export function Viewer() {
             onToggleConstellations={() =>
               sceneRef.current?.setConstellations(!state.constellations)
             }
+            skyCulture={skyCulture}
+            onSetSkyCulture={(id) => {
+              setSkyCulture(id);
+              sceneRef.current?.setSkyCulture(id);
+            }}
             coordGridVisible={state.coordGrid}
             onToggleCoordGrid={() =>
               sceneRef.current?.setCoordGrid(!state.coordGrid)

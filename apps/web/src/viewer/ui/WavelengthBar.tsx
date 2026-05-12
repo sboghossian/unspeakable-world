@@ -19,6 +19,7 @@ const LAYERS = [
   },
   { id: "nvss" as const, label: "Radio", sub: "NVSS 1.4 GHz", accent: "teal" },
   { id: "fermi" as const, label: "γ-ray", sub: "Fermi LAT 1-300 GeV", accent: "lime" },
+  { id: "planck" as const, label: "CMB", sub: "Planck HFI sub-mm", accent: "fuchsia" },
 ];
 
 const ACCENT: Record<string, { active: string; idle: string }> = {
@@ -50,7 +51,17 @@ const ACCENT: Record<string, { active: string; idle: string }> = {
     active: "border-lime-400/40 bg-lime-400/15 text-lime-300",
     idle: "border-white/10 bg-white/5 text-white/60 hover:bg-white/10",
   },
+  fuchsia: {
+    active: "border-fuchsia-400/40 bg-fuchsia-400/15 text-fuchsia-200",
+    idle: "border-white/10 bg-white/5 text-white/60 hover:bg-white/10",
+  },
 };
+
+export type SkyCultureChoice =
+  | "western"
+  | "chinese"
+  | "polynesian"
+  | "lakota";
 
 type Props = {
   overlayId: string | null;
@@ -59,6 +70,8 @@ type Props = {
   onSetMix: (mix: number) => void;
   constellationsVisible: boolean;
   onToggleConstellations: () => void;
+  skyCulture: SkyCultureChoice;
+  onSetSkyCulture: (id: SkyCultureChoice) => void;
   coordGridVisible: boolean;
   onToggleCoordGrid: () => void;
   starLabelsVisible: boolean;
@@ -82,6 +95,8 @@ export function WavelengthBar({
   onSetMix,
   constellationsVisible,
   onToggleConstellations,
+  skyCulture,
+  onSetSkyCulture,
   coordGridVisible,
   onToggleCoordGrid,
   starLabelsVisible,
@@ -185,6 +200,22 @@ export function WavelengthBar({
         >
           ✦ lines
         </button>
+        {constellationsVisible && (
+          <select
+            value={skyCulture}
+            onChange={(e) =>
+              onSetSkyCulture(e.target.value as SkyCultureChoice)
+            }
+            aria-label="Sky culture"
+            title="Switch between sky cultures — line figures from Western (IAU), Chinese, Polynesian, or Lakota traditions"
+            className="rounded-md border border-violet-500/30 bg-violet-500/10 px-2 py-1 font-mono text-[11px] uppercase tracking-wider text-violet-200 outline-none transition hover:bg-violet-500/20"
+          >
+            <option value="western">IAU</option>
+            <option value="chinese">Chinese</option>
+            <option value="polynesian">Polynesian</option>
+            <option value="lakota">Lakota</option>
+          </select>
+        )}
         <button
           type="button"
           onClick={onToggleCoordGrid}

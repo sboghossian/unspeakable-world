@@ -28,12 +28,17 @@ import { Body, HelioVector } from "astronomy-engine";
 import { Raycaster, Vector2 } from "three";
 import {
   makePlanetTexture,
+  makeSdoLiveTexture,
   paintCanvas,
   paintSun,
 } from "../solar/celestial-art";
 import { HipsSphere } from "../scene/hips-sphere";
 import { SURVEYS, type Survey } from "../hips/surveys";
 import { ConstellationLines } from "../constellations/constellation-lines";
+import {
+  SkyCultureLines,
+  type SkyCultureId,
+} from "../constellations/sky-cultures";
 import { CoordGrid } from "../scene/coord-grid";
 import { PulsarField, type PulsarPick } from "../cosmic/pulsar-field";
 import { raDecToVec3 } from "../stars/coords";
@@ -224,6 +229,8 @@ export class UniverseScene {
   // Sky-overlay layers — all live in hipsGroup so they share the
   // skybox-follows-camera transform and scale together.
   private constellations: ConstellationLines;
+  private skyCulture: SkyCultureLines;
+  private skyCultureId: SkyCultureId = "western";
   private coordGrid: CoordGrid;
   private starLabels: StarLabels;
   private pulsars: PulsarField;
@@ -374,6 +381,9 @@ export class UniverseScene {
       .load("/data/constellations.lines.json")
       .catch((err) => log.warn("[constellations] load", err));
 
+    this.skyCulture = new SkyCultureLines();
+    this.hipsGroup.add(this.skyCulture.group);
+
     this.coordGrid = new CoordGrid();
     this.hipsGroup.add(this.coordGrid.group);
 
@@ -418,6 +428,13 @@ export class UniverseScene {
     });
     this.sunMesh = new Mesh(sunGeom, sunMat);
     this.solarGroup.add(this.sunMesh);
+    // Live SDO/AIA 193 Å (extreme-UV corona) upgrade — falls back to
+    // the procedural granulation canvas on CORS / network failure.
+    void makeSdoLiveTexture().then((tex) => {
+      if (!tex || this.disposed) return;
+      sunMat.map = tex;
+      sunMat.needsUpdate = true;
+    });
 
     this.sunGlow = makeGlowSprite(0xffd06a, 2.1);
     this.solarGroup.add(this.sunGlow);
@@ -571,7 +588,19 @@ export class UniverseScene {
 
   setConstellations(on: boolean): void {
     this.constellations.setVisible(on);
+    this.skyCulture.setVisible(on);
     this.publishState();
+  }
+
+  setSkyCulture(id: SkyCultureId): void {
+    this.skyCultureId = id;
+    this.skyCulture.setCulture(id);
+    this.skyCulture.setVisible(this.constellations.group.visible);
+    this.publishState();
+  }
+
+  getSkyCulture(): SkyCultureId {
+    return this.skyCultureId;
   }
 
   setCoordGrid(on: boolean): void {

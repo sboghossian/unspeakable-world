@@ -7,6 +7,7 @@ import { Roadmap } from "./landing/Roadmap";
 import { Footer } from "./landing/Footer";
 import { PwaInstallBanner } from "./landing/PwaInstallBanner";
 import { AstronomyToday } from "./landing/AstronomyToday";
+import { ApodCard } from "./landing/ApodCard";
 import { navigate, surfacePlanet, useRoute } from "./router";
 
 // Lazy: the viewer pulls in Three.js, AstronomyEngine, and ~500 KB of HiPS /
@@ -138,6 +139,17 @@ export function App() {
       <div className="relative z-10 flex min-h-full flex-col">
         <Hero />
         <Highlights />
+        <section className="mx-auto w-full max-w-3xl px-6 pb-16">
+          <div className="mb-6 flex flex-col items-center text-center">
+            <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-white/40">
+              picture of the day
+            </div>
+            <h2 className="mt-1 font-display text-2xl font-semibold text-white/95 md:text-3xl">
+              From NASA, today
+            </h2>
+          </div>
+          <ApodCard />
+        </section>
         <OpenData />
         <Roadmap />
         <Footer />

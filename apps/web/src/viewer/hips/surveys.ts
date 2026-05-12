@@ -97,6 +97,17 @@ export const SURVEYS: Record<string, Survey> = {
     maxOrder: 6,
     attribution: "Fermi LAT γ-ray · NASA",
   },
+  planck: {
+    id: "planck",
+    label: "Planck HFI color",
+    wavelength: "microwave",
+    // Planck HFI color composite (217/353/545/857 GHz) full-sky HiPS,
+    // served by alasky / CDS. Reads as the CMB foreground at sub-mm.
+    baseUrl: "https://alasky.cds.unistra.fr/Planck/HFI_Color",
+    format: "jpg",
+    maxOrder: 5,
+    attribution: "Planck HFI · ESA / CDS",
+  },
 };
 
 /**

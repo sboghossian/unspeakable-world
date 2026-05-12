@@ -35,6 +35,7 @@ import {
   makeEarthDayNightMaterial,
   makePlanetTexture,
   makeSaturnRingShadowMaterial,
+  makeSdoLiveTexture,
   paintCanvas,
   paintEarthNight,
   paintMoon,
@@ -329,6 +330,14 @@ export class SolarFlightScene {
     });
     this.sun = new Mesh(sunGeom, sunMat);
     this.scene.add(this.sun);
+    // Try to upgrade the procedural disc to a live SDO/AIA 193 Å image
+    // (extreme-UV view of the corona, refreshed several times an hour).
+    // Silently falls back to the procedural texture on CORS / failure.
+    void makeSdoLiveTexture().then((tex) => {
+      if (!tex || this.disposed) return;
+      sunMat.map = tex;
+      sunMat.needsUpdate = true;
+    });
 
     this.sunGlow = makeGlowSprite(0xffd06a, SUN_DRAW_SIZE * 6);
     this.scene.add(this.sunGlow);
