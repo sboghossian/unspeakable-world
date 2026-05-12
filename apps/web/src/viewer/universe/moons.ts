@@ -23,6 +23,7 @@ import {
   PARENT_OBLIQUITY_DEG,
   type MoonElements,
 } from "../data/moons";
+import { moonTexture } from "./moon-paint";
 
 /**
  * 🛰 Planetary moon layer.
@@ -86,7 +87,10 @@ export class MoonField extends Object3D {
 
       const group = new Group();
       const geom = new SphereGeometry(m.drawSize, 16, 16);
-      const mat = new MeshBasicMaterial({ color: 0xd9d6cf });
+      const tex = moonTexture(m.name);
+      const mat = tex
+        ? new MeshBasicMaterial({ map: tex })
+        : new MeshBasicMaterial({ color: 0xd9d6cf });
       const sphere = new Mesh(geom, mat);
       sphere.userData = { moonName: m.name };
       group.add(sphere);
