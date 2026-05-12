@@ -8,6 +8,10 @@ import { Spacecraft } from "../spacecraft/spacecraft";
 import { IssTracker, type IssState } from "../iss/iss-tracker";
 import { DsoField } from "../dso/dso-field";
 import { ConstellationLines } from "../constellations/constellation-lines";
+import {
+  SkyCultureLines,
+  type SkyCultureId,
+} from "../constellations/sky-cultures";
 import { CoordGrid } from "./coord-grid";
 import { CosmicLandmarks } from "../cosmic/cosmic-landmarks";
 import { ExoplanetField } from "../exoplanets/exoplanet-field";
@@ -95,6 +99,8 @@ export class ViewerScene {
   private iss: IssTracker;
   private dsos: DsoField;
   private constellations: ConstellationLines;
+  private skyCulture: SkyCultureLines;
+  private skyCultureId: SkyCultureId = "western";
   private coordGrid: CoordGrid;
   private landmarks: Landmarks;
   private controls: VoyagerControls;
@@ -216,6 +222,9 @@ export class ViewerScene {
 
     this.constellations = new ConstellationLines();
     this.scene.add(this.constellations.group);
+
+    this.skyCulture = new SkyCultureLines();
+    this.scene.add(this.skyCulture.group);
 
     this.coordGrid = new CoordGrid();
     this.scene.add(this.coordGrid.group);
@@ -446,8 +455,27 @@ export class ViewerScene {
 
   setConstellations(visible: boolean): void {
     this.constellations.setVisible(visible);
+    // The non-Western culture overlay shares the constellations toggle:
+    // when constellations are off, all line figures hide; when on, the
+    // active culture (if any non-Western) renders alongside the IAU set.
+    this.skyCulture.setVisible(visible);
     this.dirty = true;
     this.publishState();
+  }
+
+  setSkyCulture(id: SkyCultureId): void {
+    this.skyCultureId = id;
+    this.skyCulture.setCulture(id);
+    // Keep IAU lines visible as the "western" baseline regardless of
+    // which non-Western culture is selected. The user can hide all line
+    // figures via `setConstellations(false)`.
+    this.skyCulture.setVisible(this.constellations.group.visible);
+    this.dirty = true;
+    this.publishState();
+  }
+
+  getSkyCulture(): SkyCultureId {
+    return this.skyCultureId;
   }
 
   setCoordGrid(visible: boolean): void {
@@ -651,6 +679,7 @@ export class ViewerScene {
     this.starLabels.dispose();
     this.dsos.dispose();
     this.constellations.dispose();
+    this.skyCulture.dispose();
     this.coordGrid.dispose();
     this.landmarks.dispose();
     this.solar.dispose();
