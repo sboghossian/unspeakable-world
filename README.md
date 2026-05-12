@@ -1,12 +1,68 @@
 # 🌌 The Unspeakable World
 
-> The first emotionally legible front-end to the entire Virtual Observatory.
-> Every wavelength of every sky survey. Live ISS. Click any star and ask SIMBAD what it is.
-> In a browser. 60 fps. MIT licensed.
+> The first browser-interactive reference for the known universe — every
+> federated sky survey, every named object, every recent space-news
+> headline, every famous UAP case, every common space myth, every
+> biosignature exoplanet, plus an 8-lesson curriculum that takes a
+> curious learner from "Earth spins" to "the cosmic web." 60 fps. MIT.
 
 **🚀 Live:** [space.dashable.dev](https://space.dashable.dev) — open `/#viewer` and drag
 
 [![og](apps/web/public/og-card.png)](https://space.dashable.dev/#viewer)
+
+---
+
+## 🆕 v3 — the educational reference release
+
+A focused sprint to push UW from "richest viewer in the field" to "first
+credible educational reference product." Highlights:
+
+- 🎓 **Curriculum** — 8 lessons (~50 min) with narrated camera tours and
+  end-of-lesson quizzes. Progress saves in `localStorage`. Lessons:
+  *Where are we standing? · How big is the Sun? · The Solar System in
+  true scale · Kepler's laws · Why planets aren't all the same · Moons,
+  rings, asteroids · The Sun is a star · How far is the nearest star?*
+- 📜 **Citations + glossary** — 100 named objects ship with a one-paragraph
+  "why this matters" + SIMBAD / Wikipedia / ADS / primary-source links;
+  98 astronomy terms have hover-to-define glossary tooltips.
+- 👽 **SETI / Aliens / UAP / Biosignatures** — evidence-based catalog: 5
+  candidate signals, 3 interstellar visitors, 6 biosignature exoplanets
+  (K2-18b et al.), 5 famous UAP cases with skeptical framing, Drake
+  equation interactive sliders, 9 Fermi-paradox answers.
+- 📰 **Space news + launches** — live feed from Spaceflight News API +
+  Launch Library 2 (upcoming launches w/ T-minus countdown).
+- 🔍 **Common space myths** — 52 myths debunked across 6 categories
+  (Solar System / Stars / Cosmology / Space Travel / Physics / History),
+  each cited.
+- ⚖ **Side-by-side compare** — pin any two of 54 objects at matched
+  physical scale, from a human (1.7 m) to IC 1101 (6 Mly).
+- ✨ **Star trails** — long-exposure overlay (15 min → 8 h sweep).
+- 📐 **Distance ruler** — two-click great-circle measurement with
+  human-readable equivalents ("47° · ~94 full moons").
+- 🧬 **Planet cross-section** — interior layers for all 10 solar bodies.
+- 🌌 **Planck CMB sky layer** — toggle the 13.8 Gyr-old sky into the
+  existing wavelength cross-fader.
+- ☀ **SDO live Sun** — the Sun mesh tries to load AIA 193 Å live
+  imagery; falls back to procedural granulation if CORS blocks.
+- 🌅 **APOD daily card** — NASA Astronomy Picture of the Day on the
+  landing page.
+- 🛐 **Sky cultures toggle** — Western IAU / Chinese / Polynesian /
+  Lakota constellation traditions.
+- 🌃 **Bortle-scale light pollution** — pick your dark-sky class; tonight
+  panel filters fainter targets out.
+- 🌀 **Black-hole lensing visual** — Doppler-beamed accretion disk +
+  Einstein-ring halo on every named BH landmark.
+- 🪨 **Procedural moon textures** — all 15 named moons (Mimas's Herschel,
+  Enceladus's tiger stripes, Iapetus's walnut seam, Triton's cantaloupe).
+- 🌟 **Open + globular cluster 3D point fields** — Pleiades / Hyades /
+  M13 / Omega Cen + 9 more rendered as actual star scatter, not just
+  labels.
+- 🔗 **Embed mode** — `?embed=1` strips all chrome for iframe-on-blog use;
+  3 ready-to-paste examples at `/embed.html`.
+
+Built CLAUDE-friendly: every commit conventional, every push on `main`,
+every dataset federated (R2 free egress), all logging through
+`apps/web/src/lib/logger.ts`. MIT throughout.
 
 ---
 
