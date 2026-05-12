@@ -15,6 +15,7 @@ import { PulsarField } from "../cosmic/pulsar-field";
 import { Landmarks } from "./landmarks";
 import { zenithWorldDirection } from "../observer/zenith";
 import { VoyagerControls } from "./voyager-controls";
+import { log } from "../../lib/logger";
 
 /**
  * Observable view-state the UI can subscribe to (loading veil, log-scale chip,
@@ -145,7 +146,7 @@ export class ViewerScene {
       .then(() => {
         this.dirty = true;
       })
-      .catch((err) => console.warn("[star-labels] load failed", err));
+      .catch((err) => log.warn("[star-labels] load failed", err));
     void this.stars
       .load("/data/hyg-bright.bin")
       .then(() => {
@@ -153,7 +154,7 @@ export class ViewerScene {
         this.state = { ...this.state, starCount: this.stars.count() };
         this.emit();
       })
-      .catch((err) => console.warn("[stars] catalog load failed", err));
+      .catch((err) => log.warn("[stars] catalog load failed", err));
 
     this.solar = new SolarSystem();
     this.scene.add(this.solar.group);
@@ -175,7 +176,7 @@ export class ViewerScene {
         };
         this.emit();
       })
-      .catch((err) => console.warn("[exoplanets] load failed", err));
+      .catch((err) => log.warn("[exoplanets] load failed", err));
 
     this.cosmicLandmarks = new CosmicLandmarks();
     this.scene.add(this.cosmicLandmarks.group);
@@ -192,7 +193,7 @@ export class ViewerScene {
         };
         this.emit();
       })
-      .catch((err) => console.warn("[pulsars] load failed", err));
+      .catch((err) => log.warn("[pulsars] load failed", err));
 
     this.iss = new IssTracker();
     this.scene.add(this.iss.group);
@@ -212,7 +213,7 @@ export class ViewerScene {
         this.state = { ...this.state, dsoCount: this.dsos.count() };
         this.emit();
       })
-      .catch((err) => console.warn("[dso] catalog load failed", err));
+      .catch((err) => log.warn("[dso] catalog load failed", err));
 
     this.constellations = new ConstellationLines();
     this.scene.add(this.constellations.group);
@@ -227,7 +228,7 @@ export class ViewerScene {
       .then(() => {
         this.dirty = true;
       })
-      .catch((err) => console.warn("[constellations] load failed", err));
+      .catch((err) => log.warn("[constellations] load failed", err));
 
     this.controls = new VoyagerControls(this.camera, canvas);
     this.controls.onChange = () => {

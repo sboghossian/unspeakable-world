@@ -7,6 +7,7 @@ import {
   SpriteMaterial,
   Vector3,
 } from "three";
+import { log } from "../../lib/logger";
 
 /**
  * Live ISS tracker.
@@ -105,7 +106,7 @@ export class IssTracker {
       this.applyPosition();
       for (const l of this.listeners) l(this.latest);
     } catch (err) {
-      console.warn("[iss] poll failed", err);
+      log.warn("[iss] poll failed", err);
     }
   }
 

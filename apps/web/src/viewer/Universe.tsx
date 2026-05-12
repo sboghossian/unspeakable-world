@@ -36,6 +36,7 @@ import {
 } from "./ui/LightConeControls";
 import { SearchIndex, type SearchEntry } from "./search/search-index";
 import { addBookmark } from "../lib/bookmarks";
+import { log } from "../lib/logger";
 
 const TimeMachinePanel = lazy(() =>
   import("./ui/TimeMachinePanel").then((m) => ({ default: m.TimeMachinePanel })),
@@ -276,7 +277,7 @@ export function Universe({ onExit }: Props) {
     void idx
       .loadStaticCatalogs()
       .then(() => setSearchIndex(idx))
-      .catch((err) => console.warn("[universe-search] load failed", err));
+      .catch((err) => log.warn("[universe-search] load failed", err));
   }, []);
 
   void useMemo;
