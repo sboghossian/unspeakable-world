@@ -42,6 +42,7 @@ import {
 } from "./celestial-art";
 import { SatelliteField } from "../satellites/satellite-field";
 import { IssModel } from "../satellites/iss-model";
+import { JwstModel } from "../spacecraft/jwst-model";
 import * as satelliteJs from "satellite.js";
 import { AsteroidField } from "../universe/asteroids";
 import { AuroraOverlay } from "../space-weather/aurora-overlay";
@@ -250,6 +251,8 @@ export class SolarFlightScene {
    *  without re-parsing the TLE. */
   private issSatRec: ReturnType<typeof satelliteJs.twoline2satrec> | null =
     null;
+  /** Stylized 3D JWST model, parked at Sun-Earth L2 in solar flight. */
+  private jwstModel: JwstModel | null = null;
   private orbits: LineLoop[] = [];
   private solarZones: LineLoop[] = [];
   private starPoints: Points | null = null;
@@ -343,6 +346,9 @@ export class SolarFlightScene {
     // the same SGP4 propagation the satellite cloud uses.
     this.issModel = new IssModel();
     this.scene.add(this.issModel);
+    // Stylized 3D JWST model — parked at Sun-Earth L2 each frame.
+    this.jwstModel = new JwstModel();
+    this.scene.add(this.jwstModel);
     void fetch("/data/satellites.json")
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -787,6 +793,27 @@ export class SolarFlightScene {
       for (const label of this.earthCityLabels) {
         (label.material as SpriteMaterial).opacity = t;
         label.visible = t > 0.02;
+      }
+    }
+
+    // JWST at Sun-Earth L2 — Earth's heliocentric position pushed
+    // ~0.01 AU farther from the Sun along the Sun-Earth line.
+    if (this.jwstModel) {
+      const rE = Math.hypot(earthX, earthY, earthZ);
+      if (rE > 1e-6) {
+        const k = 1 + 0.01 / rE;
+        this.jwstModel.position.set(earthX * k, earthY * k, earthZ * k);
+        // Always face the Sun so the gold mirror is visible.
+        this.jwstModel.lookAt(0, 0, 0);
+        const camWorld = this.camera.position;
+        const dist = Math.hypot(
+          camWorld.x - earthX,
+          camWorld.y - earthY,
+          camWorld.z - earthZ,
+        );
+        // Visible once the camera is within ~0.1 AU of Earth (covers
+        // anywhere from LEO out to JWST itself).
+        this.jwstModel.visible = dist < 0.1;
       }
     }
 
