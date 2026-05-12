@@ -24,6 +24,7 @@ import {
 } from "./ui/SceneBottomHud";
 import { TopBarActions } from "./ui/TopBarActions";
 import { AchievementsPanel } from "./ui/AchievementsPanel";
+import { TransientsPanel } from "./ui/TransientsPanel";
 import { MeasurePanel } from "./ui/MeasurePanel";
 import { MythsPanel } from "./ui/MythsPanel";
 import { NewsPanel } from "./ui/NewsPanel";
@@ -80,6 +81,7 @@ const DEFAULT_STATE: UniverseState = {
   pulsarsOn: false,
   exoplanetsOn: false,
   cosmicLandmarksOn: false,
+  transientsOn: false,
   playing: true,
   rate: 86400,
   asteroidsOn: false,
@@ -388,6 +390,7 @@ export function Universe({ onExit }: Props) {
           <NewsPanel />
           <MythsPanel />
           <ComparePanel />
+          <TransientsPanel scene={sceneRef.current} />
           <AchievementsPanel />
           <TopBarActions />
         </div>

@@ -12,6 +12,7 @@ import {
   formatDistanceAU,
 } from "./ui/SceneBottomHud";
 import { TopBarActions } from "./ui/TopBarActions";
+import { TransientsPanel } from "./ui/TransientsPanel";
 import { SatellitesPanel } from "./ui/SatellitesPanel";
 import { AchievementsPanel } from "./ui/AchievementsPanel";
 import { PlanetCrossSection } from "./ui/PlanetCrossSection";
@@ -295,6 +296,7 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
           <NewsPanel />
           <MythsPanel />
           <ComparePanel />
+          <TransientsPanel />
           <AchievementsPanel />
           <TopBarActions
             focusActive={focusMode}
