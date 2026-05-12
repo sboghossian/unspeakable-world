@@ -5,6 +5,7 @@ import { OpenData } from "./landing/OpenData";
 import { Roadmap } from "./landing/Roadmap";
 import { Footer } from "./landing/Footer";
 import { PwaInstallBanner } from "./landing/PwaInstallBanner";
+import { AstronomyToday } from "./landing/AstronomyToday";
 import { navigate, surfacePlanet, useRoute } from "./router";
 
 // Lazy: the viewer pulls in Three.js, AstronomyEngine, and ~500 KB of HiPS /
@@ -126,6 +127,7 @@ export function App() {
         <Roadmap />
         <Footer />
       </div>
+      <AstronomyToday />
       <PwaInstallBanner />
     </main>
   );
