@@ -37,6 +37,7 @@ import {
   makeSaturnRingShadowMaterial,
   paintCanvas,
   paintEarthNight,
+  paintMoon,
   paintSun,
 } from "./celestial-art";
 import { SatelliteField } from "../satellites/satellite-field";
@@ -200,6 +201,9 @@ export class SolarFlightScene {
     /** Sidereal period in days. */
     period: number;
   }> = [];
+  /** Earth's Moon. Positioned via GeoVector(Moon) each frame, with a
+   *  cosmetic scale so it sits visibly outside Earth's drawn radius. */
+  private earthsMoon: { sphere: Mesh; label: Sprite } | null = null;
   private orbits: LineLoop[] = [];
   private solarZones: LineLoop[] = [];
   private starPoints: Points | null = null;
@@ -271,6 +275,7 @@ export class SolarFlightScene {
     void this.buildOrbits();
     this.buildGalileanMoons();
     this.buildMarsMoons();
+    this.buildEarthsMoon();
     this.buildSolarZones();
 
     // Background star field on a giant sphere (radius STAR_RADIUS).
@@ -595,6 +600,9 @@ export class SolarFlightScene {
     let marsX = 0;
     let marsY = 0;
     let marsZ = 0;
+    let earthX = 0;
+    let earthY = 0;
+    let earthZ = 0;
     // Days since J2000 epoch (2000-01-01 12:00 TT). Drives axial rotation
     // for every body so their textures actually spin as time scrubs.
     const J2000_MS = Date.UTC(2000, 0, 1, 12, 0, 0);
@@ -620,6 +628,10 @@ export class SolarFlightScene {
           marsX = sx;
           marsY = sy;
           marsZ = sz;
+        } else if (p.name === "Earth") {
+          earthX = sx;
+          earthY = sy;
+          earthZ = sz;
         } else if (p.name === "Saturn" && this.saturnMat) {
           // Push Saturn's current world position into the ring-shadow
           // shader so per-fragment ray-casts to the Sun know where the
@@ -646,6 +658,27 @@ export class SolarFlightScene {
         m.label.position.set(x, y + 0.005, z);
       }
     }
+    // Earth's Moon: GeoVector returns Moon-from-Earth in J2000 AU. Real
+    // orbital radius (~0.00257 AU) is much smaller than Earth's drawn
+    // size, so we apply a cosmetic SCALE to push the Moon outside the
+    // sphere — same trick used for the Galilean moons.
+    if (this.earthsMoon) {
+      try {
+        const rel = GeoVector(Body.Moon, this.simTime, true);
+        const SCALE = 40;
+        const mx = earthX + rel.x * AU * SCALE;
+        const my = earthY + rel.z * AU * SCALE;
+        const mz = earthZ + -rel.y * AU * SCALE;
+        this.earthsMoon.sphere.position.set(mx, my, mz);
+        this.earthsMoon.label.position.set(mx, my + 0.018, mz);
+        // Synchronous-rotation: same face toward Earth. Approximated by
+        // pointing the sphere's local +Z at Earth and rolling around.
+        this.earthsMoon.sphere.lookAt(earthX, earthY, earthZ);
+      } catch {
+        // ignore
+      }
+    }
+
     // Galilean moons: position in heliocentric scene = Jupiter heliocentric
     // + moon-relative-to-Jupiter (StateVector returns AU). Both vectors are
     // equatorial J2000 so we apply the same Z-up→Y-up swap. We multiply
@@ -875,6 +908,36 @@ export class SolarFlightScene {
         period: m.period,
       });
     }
+  }
+
+  private buildEarthsMoon(): void {
+    // Real Moon size relative to Earth (drawSize 0.045) ≈ 0.272. Bump
+    // a little so the disk reads at distance.
+    const moonSize = 0.014;
+    const geom = new SphereGeometry(moonSize, 24, 24);
+    const mat = new MeshLambertMaterial({
+      map: paintCanvas(512, 256, paintMoon),
+      color: 0xffffff,
+    });
+    const sphere = new Mesh(geom, mat);
+    sphere.renderOrder = 5;
+    this.scene.add(sphere);
+
+    const labelTex = makeLabelTexture("Moon");
+    const labelMat = new SpriteMaterial({
+      map: labelTex,
+      transparent: true,
+      depthWrite: false,
+      depthTest: false,
+      opacity: 0.85,
+    });
+    const label = new Sprite(labelMat);
+    const aspect = labelTex.image.width / labelTex.image.height;
+    const h = 0.02;
+    label.scale.set(h * aspect, h, 1);
+    this.scene.add(label);
+
+    this.earthsMoon = { sphere, label };
   }
 
   private buildGalileanMoons(): void {
