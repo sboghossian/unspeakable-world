@@ -24,6 +24,9 @@ import {
 } from "./ui/SceneBottomHud";
 import { TopBarActions } from "./ui/TopBarActions";
 import { AchievementsPanel } from "./ui/AchievementsPanel";
+import { MarsPhotosPanel } from "./ui/MarsPhotosPanel";
+import { ApodArchivePanel } from "./ui/ApodArchivePanel";
+import { JwstPanel } from "./ui/JwstPanel";
 import { MeasurePanel } from "./ui/MeasurePanel";
 import { MythsPanel } from "./ui/MythsPanel";
 import { NewsPanel } from "./ui/NewsPanel";
@@ -388,6 +391,9 @@ export function Universe({ onExit }: Props) {
           <NewsPanel />
           <MythsPanel />
           <ComparePanel />
+          <MarsPhotosPanel />
+          <ApodArchivePanel />
+          <JwstPanel />
           <AchievementsPanel />
           <TopBarActions />
         </div>
