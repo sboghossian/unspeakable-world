@@ -24,6 +24,7 @@ import {
 } from "./ui/SceneBottomHud";
 import { TopBarActions } from "./ui/TopBarActions";
 import { AchievementsPanel } from "./ui/AchievementsPanel";
+import { GyroButton } from "./ui/GyroButton";
 import { MarsPhotosPanel } from "./ui/MarsPhotosPanel";
 import { ApodArchivePanel } from "./ui/ApodArchivePanel";
 import { JwstPanel } from "./ui/JwstPanel";
@@ -86,6 +87,7 @@ const DEFAULT_STATE: UniverseState = {
   cosmicLandmarksOn: false,
   cosmicFlowsOn: false,
   transientsOn: false,
+  darkMatterOn: false,
   playing: true,
   rate: 86400,
   asteroidsOn: false,
@@ -398,6 +400,7 @@ export function Universe({ onExit }: Props) {
           <ApodArchivePanel />
           <JwstPanel />
           <TransientsPanel scene={sceneRef.current} />
+          <GyroButton scene={sceneRef.current} />
           <AchievementsPanel />
           <TopBarActions />
         </div>

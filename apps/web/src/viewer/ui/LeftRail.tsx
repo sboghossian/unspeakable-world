@@ -15,6 +15,7 @@ type Scene = {
   setExoplanets(on: boolean): void;
   setCosmicLandmarks(on: boolean): void;
   setCosmicFlows(on: boolean): void;
+  setDarkMatter(on: boolean): void;
   setAsteroids(on: boolean): void;
   setComets(on: boolean): void;
   setInterstellar(on: boolean): void;
@@ -354,6 +355,13 @@ export function LeftRail({ state, scene, onOpenGuide, onOpenTimeMachine }: Props
             },
             undefined,
             "CF4",
+          )}
+          {layerToggle(
+            state.darkMatterOn,
+            "🌑 Dark matter",
+            () => scene.setDarkMatter(!state.darkMatterOn),
+            undefined,
+            "halos",
           )}
         </Section>
 
