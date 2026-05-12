@@ -23,6 +23,8 @@ import {
   formatDistanceLY,
 } from "./ui/SceneBottomHud";
 import { TopBarActions } from "./ui/TopBarActions";
+import { AchievementsPanel } from "./ui/AchievementsPanel";
+import { unlock } from "../lib/achievements";
 import {
   LightConeControls,
   type LightConePreset,
@@ -126,6 +128,22 @@ export function Universe({ onExit }: Props) {
       sceneRef.current = null;
     };
   }, []);
+
+  // First-light achievement on mount.
+  useEffect(() => {
+    unlock("first-light");
+  }, []);
+
+  // Cosmologist achievement: distFromSunLY > 1 Mly is well into the
+  // cosmic-web tier.
+  useEffect(() => {
+    if (state.distFromSunLY > 1_000_000) unlock("cosmologist");
+  }, [state.distFromSunLY]);
+
+  // Multi-wavelength achievement: cross-fade slider engaged at > 5%.
+  useEffect(() => {
+    if (state.overlayId && state.overlayMix > 0.05) unlock("multi-wavelength");
+  }, [state.overlayId, state.overlayMix]);
 
   // Hotkeys: `K` zone overlays, `Y` aurora, `T` tracking on last target.
   useEffect(() => {
@@ -335,6 +353,7 @@ export function Universe({ onExit }: Props) {
             }}
             onZenith={() => sceneRef.current?.flyTo("Sun")}
           />
+          <AchievementsPanel />
           <TopBarActions />
         </div>
       </div>
