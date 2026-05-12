@@ -44,6 +44,7 @@ import { PulsarField, type PulsarPick } from "../cosmic/pulsar-field";
 import { raDecToVec3 } from "../stars/coords";
 import { ExoplanetField } from "../exoplanets/exoplanet-field";
 import { CosmicLandmarks } from "../cosmic/cosmic-landmarks";
+import { CosmicFlowField } from "../cosmicflows/cosmic-flow-field";
 import { MeasureTool, worldDirToRaDec } from "../measure/measure-tool";
 import { StarLabels } from "../stars/star-labels";
 import { StarTrails } from "../stars/star-trails";
@@ -155,6 +156,7 @@ export type UniverseState = {
   pulsarsOn: boolean;
   exoplanetsOn: boolean;
   cosmicLandmarksOn: boolean;
+  cosmicFlowsOn: boolean;
   /** Time playback. */
   playing: boolean;
   /** Time rate (sim seconds per wall second). */
@@ -237,6 +239,7 @@ export class UniverseScene {
   private pulsars: PulsarField;
   private exoplanets: ExoplanetField;
   private cosmicLandmarks: CosmicLandmarks;
+  private cosmicFlows!: CosmicFlowField;
   private measureTool: MeasureTool;
   private measureMode = false;
   private onMeasureChange: (() => void) | null = null;
@@ -485,6 +488,15 @@ export class UniverseScene {
     this.cosmicWebPoints = makeCosmicWebPoints();
     this.galacticGroup.add(this.cosmicWebPoints);
 
+    // Cosmicflows-4 peculiar-velocity streamlines — anchored on the
+    // Sun's galactic position. Off by default; toggled via LeftRail.
+    this.cosmicFlows = new CosmicFlowField({
+      x: SUN_LY.x,
+      y: SUN_LY.y,
+      z: SUN_LY.z,
+    });
+    this.galacticGroup.add(this.cosmicFlows.group);
+
     // Galactic labels (LY positions, will be visible based on distance).
     addGalacticLabels(this.galacticLabels, this.galacticGroup);
     addArmLabels(this.armLabels, this.galacticGroup);
@@ -626,6 +638,11 @@ export class UniverseScene {
 
   setCosmicLandmarks(on: boolean): void {
     this.cosmicLandmarks.setVisible(on);
+    this.publishState();
+  }
+
+  setCosmicFlows(on: boolean): void {
+    this.cosmicFlows.setVisible(on);
     this.publishState();
   }
 
@@ -1422,6 +1439,7 @@ export class UniverseScene {
       pulsarsOn: this.pulsars.visible(),
       exoplanetsOn: this.exoplanets.visible(),
       cosmicLandmarksOn: this.cosmicLandmarks.visible(),
+      cosmicFlowsOn: this.cosmicFlows.visible(),
       playing: this.playing,
       rate: this.timeRate,
       asteroidsOn: this.asteroids?.visible ?? false,

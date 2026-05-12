@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { UniverseState } from "../universe/universe-scene";
 import { SettingsPanel } from "./SettingsPanel";
+import { CosmicFlowHint } from "./CosmicFlowHint";
 import { useSettings } from "../../lib/settings";
 
 type ZoneId = "habitable" | "asteroid" | "frost" | "kuiper" | "oort";
@@ -13,6 +14,7 @@ type Scene = {
   setPulsars(on: boolean): void;
   setExoplanets(on: boolean): void;
   setCosmicLandmarks(on: boolean): void;
+  setCosmicFlows(on: boolean): void;
   setAsteroids(on: boolean): void;
   setComets(on: boolean): void;
   setInterstellar(on: boolean): void;
@@ -80,6 +82,11 @@ export function LeftRail({ state, scene, onOpenGuide, onOpenTimeMachine }: Props
   const [collapsed, setCollapsed] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settings, updateSettings] = useSettings();
+  // Bumped each time the user turns the cosmic-flows layer ON. The
+  // CosmicFlowHint component watches `active` and shows the one-time
+  // educational toast — gated by its own localStorage flag so it
+  // only ever appears once per browser.
+  const [flowsActivatedAt, setFlowsActivatedAt] = useState(0);
   const [open, setOpen] = useState<{
     objects: boolean;
     missions: boolean;
@@ -150,6 +157,8 @@ export function LeftRail({ state, scene, onOpenGuide, onOpenTimeMachine }: Props
 
   if (collapsed) {
     return (
+      <>
+      <CosmicFlowHint active={flowsActivatedAt > 0} />
       <div className="pointer-events-auto absolute left-3 top-32 z-10 flex flex-col gap-1.5 rounded-xl border border-white/10 bg-space-950/85 p-1.5 backdrop-blur">
         <button
           type="button"
@@ -224,10 +233,13 @@ export function LeftRail({ state, scene, onOpenGuide, onOpenTimeMachine }: Props
           onClose={() => setSettingsOpen(false)}
         />
       </div>
+      </>
     );
   }
 
   return (
+    <>
+    <CosmicFlowHint active={flowsActivatedAt > 0} />
     <div className="pointer-events-auto absolute left-3 top-32 bottom-32 z-10 flex w-64 flex-col rounded-xl border border-white/10 bg-space-950/85 backdrop-blur">
       <div className="flex items-center justify-between border-b border-white/5 px-3 py-2">
         <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/45">
@@ -330,6 +342,17 @@ export function LeftRail({ state, scene, onOpenGuide, onOpenTimeMachine }: Props
             () => scene.setCosmicLandmarks(!state.cosmicLandmarksOn),
             undefined,
             "BH · QSO · GW",
+          )}
+          {layerToggle(
+            state.cosmicFlowsOn,
+            "🌊 Cosmic flow",
+            () => {
+              const next = !state.cosmicFlowsOn;
+              scene.setCosmicFlows(next);
+              if (next) setFlowsActivatedAt(Date.now());
+            },
+            undefined,
+            "CF4",
           )}
         </Section>
 
@@ -540,6 +563,7 @@ export function LeftRail({ state, scene, onOpenGuide, onOpenTimeMachine }: Props
         onClose={() => setSettingsOpen(false)}
       />
     </div>
+    </>
   );
 }
 
