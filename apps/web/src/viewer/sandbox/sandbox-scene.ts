@@ -93,7 +93,6 @@ export class SandboxScene {
   // FPS tracking
   private fpsAccum = 0;
   private fpsFrames = 0;
-  private fpsLast = performance.now();
 
   private rafId = 0;
   private lastTime = performance.now();
