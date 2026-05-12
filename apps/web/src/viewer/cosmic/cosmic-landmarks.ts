@@ -868,7 +868,9 @@ export class CosmicLandmarks {
           blending: AdditiveBlending,
         });
         const disk = new Sprite(diskMat);
-        const dh = 0.018;
+        // Bumped from 0.018 → 0.026 so the lensing halo + Doppler-beamed
+        // accretion disk read at sky-view zoom without being too tiny.
+        const dh = 0.026;
         disk.scale.set(dh, dh, 1);
         disk.position.set(x, y, z);
         disk.renderOrder = 3; // behind the label sprite
@@ -955,27 +957,76 @@ function roundRect(
  *  Reads as the EHT silhouette idiom (M87*, Sgr A*). One texture
  *  shared across every BH sprite. */
 function makeAccretionDiskTexture(): CanvasTexture {
-  const SIZE = 256;
+  const SIZE = 512;
   const canvas = document.createElement("canvas");
   canvas.width = SIZE;
   canvas.height = SIZE;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("2d context unavailable");
-  // Transparent base — we want the BH to read against the sky.
   ctx.clearRect(0, 0, SIZE, SIZE);
   const cx = SIZE / 2;
   const cy = SIZE / 2;
-  // Outer warm ring → photon-ring darkening → black core.
-  const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, SIZE / 2);
-  grad.addColorStop(0.0, "rgba(0,0,0,0.95)"); // event-horizon shadow
-  grad.addColorStop(0.18, "rgba(0,0,0,0.85)");
-  grad.addColorStop(0.22, "rgba(255,210,140,0.95)"); // photon ring bright edge
-  grad.addColorStop(0.32, "rgba(255,160,80,0.85)");
-  grad.addColorStop(0.55, "rgba(220,110,40,0.55)");
-  grad.addColorStop(0.85, "rgba(140,60,20,0.18)");
-  grad.addColorStop(1.0, "rgba(140,60,20,0)");
-  ctx.fillStyle = grad;
+
+  // Layer 1 — outer gravitationally-lensed halo. Light from background
+  // stars bent around the BH appears as a soft warm ring at ~150%
+  // the Einstein-ring radius. We render it as a wider gradient so it
+  // fades cleanly into the sky.
+  const halo = ctx.createRadialGradient(cx, cy, SIZE * 0.32, cx, cy, SIZE * 0.5);
+  halo.addColorStop(0.0, "rgba(255,200,140,0.0)");
+  halo.addColorStop(0.55, "rgba(255,180,120,0.18)");
+  halo.addColorStop(0.85, "rgba(220,140,80,0.08)");
+  halo.addColorStop(1.0, "rgba(220,140,80,0)");
+  ctx.fillStyle = halo;
   ctx.fillRect(0, 0, SIZE, SIZE);
+
+  // Layer 2 — accretion disk + photon ring. Sharper than the previous
+  // version so the Einstein ring reads cleanly. Inner ~20% radius is
+  // pitch-black (event-horizon shadow).
+  const disk = ctx.createRadialGradient(cx, cy, 0, cx, cy, SIZE * 0.32);
+  disk.addColorStop(0.0, "rgba(0,0,0,1.0)");
+  disk.addColorStop(0.4, "rgba(0,0,0,0.96)");
+  disk.addColorStop(0.5, "rgba(0,0,0,0.92)");
+  disk.addColorStop(0.55, "rgba(255,230,170,1.0)"); // sharp photon ring peak
+  disk.addColorStop(0.62, "rgba(255,180,90,0.92)");
+  disk.addColorStop(0.78, "rgba(220,110,40,0.55)");
+  disk.addColorStop(1.0, "rgba(180,80,30,0)");
+  ctx.fillStyle = disk;
+  ctx.fillRect(0, 0, SIZE, SIZE);
+
+  // Layer 3 — relativistic Doppler beaming. The approaching side of the
+  // disk is brighter (blueshifted + boosted intensity); the receding
+  // side dimmer (redshifted). We paint the left half with a brightening
+  // wedge so the disk reads as physically rotating, not just glowing.
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  const beam = ctx.createLinearGradient(0, cy, SIZE, cy);
+  beam.addColorStop(0.0, "rgba(255,240,200,0.45)");
+  beam.addColorStop(0.45, "rgba(255,200,140,0.12)");
+  beam.addColorStop(0.5, "rgba(0,0,0,0)");
+  beam.addColorStop(1.0, "rgba(0,0,0,0)");
+  ctx.fillStyle = beam;
+  // Constrain the beaming to the disk annulus only (not the central shadow
+  // or the outer halo) via a clipped ring.
+  ctx.beginPath();
+  ctx.arc(cx, cy, SIZE * 0.38, 0, Math.PI * 2);
+  ctx.arc(cx, cy, SIZE * 0.18, 0, Math.PI * 2, true);
+  ctx.fill();
+  ctx.restore();
+
+  // Layer 4 — wispy lensed-star arcs above and below the disk. Two
+  // faint horizontal streaks at ~y = cy ± 8px simulating background
+  // starlight bent into "secondary images" near the photon ring.
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  const arc1 = ctx.createLinearGradient(cx - SIZE * 0.28, 0, cx + SIZE * 0.28, 0);
+  arc1.addColorStop(0.0, "rgba(255,220,180,0)");
+  arc1.addColorStop(0.5, "rgba(255,220,180,0.45)");
+  arc1.addColorStop(1.0, "rgba(255,220,180,0)");
+  ctx.fillStyle = arc1;
+  ctx.fillRect(cx - SIZE * 0.28, cy - SIZE * 0.08, SIZE * 0.56, 2);
+  ctx.fillRect(cx - SIZE * 0.28, cy + SIZE * 0.08, SIZE * 0.56, 2);
+  ctx.restore();
+
   const tex = new CanvasTexture(canvas);
   tex.minFilter = LinearFilter;
   tex.magFilter = LinearFilter;
