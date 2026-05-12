@@ -45,6 +45,7 @@ import { IssModel } from "../satellites/iss-model";
 import { JwstModel } from "../spacecraft/jwst-model";
 import { OortCloud } from "./oort-cloud";
 import { SunGravityWell } from "./gravity-well";
+import { MoonField } from "../universe/moons";
 import * as satelliteJs from "satellite.js";
 import { AsteroidField } from "../universe/asteroids";
 import { AuroraOverlay } from "../space-weather/aurora-overlay";
@@ -261,6 +262,10 @@ export class SolarFlightScene {
   /** Faint lattice in the ecliptic plane that dips toward the Sun like
    *  a stretched rubber sheet. */
   private gravityWell: SunGravityWell | null = null;
+  /** Outer-planet moons (Saturn / Uranus / Neptune systems). Mars +
+   *  Jupiter are handled by buildMarsMoons + buildGalileanMoons, so we
+   *  exclude them from this field to avoid double-rendering. */
+  private outerMoons: MoonField | null = null;
   /** Sun-Earth Lagrange-point markers L1-L5. Each is a sprite label
    *  plus a small dot, positioned each frame from Earth's heliocentric
    *  state. */
@@ -374,6 +379,15 @@ export class SolarFlightScene {
     // Gravity-well grid — visible at inner-solar-system scales only.
     this.gravityWell = new SunGravityWell();
     this.scene.add(this.gravityWell.mesh);
+
+    // Outer-planet moons: Mimas / Enceladus / Tethys / Dione / Rhea /
+    // Titan / Iapetus around Saturn; Miranda / Ariel / Umbriel /
+    // Titania / Oberon around Uranus; Triton around Neptune. Mars +
+    // Jupiter's moons are handled by the bespoke builders elsewhere
+    // in this scene, so we exclude them here.
+    this.outerMoons = new MoonField({ excludeParents: ["Mars"] });
+    this.outerMoons.visible = true;
+    this.scene.add(this.outerMoons);
     void fetch("/data/satellites.json")
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -752,6 +766,7 @@ export class SolarFlightScene {
     const daysSinceJ2000 = (this.simTime.getTime() - J2000_MS) / 86400000;
     this.sun.rotation.y = ((daysSinceJ2000 / SUN_ROTATION_DAYS) % 1) * Math.PI * 2;
     if (this.asteroids) this.asteroids.setSimTime(this.simTime);
+    if (this.outerMoons) this.outerMoons.setSimTime(this.simTime);
 
     for (const p of this.planets) {
       try {
@@ -819,6 +834,20 @@ export class SolarFlightScene {
         (label.material as SpriteMaterial).opacity = t;
         label.visible = t > 0.02;
       }
+    }
+
+    // Push planet positions into the outer-moons field so its anchors
+    // track Saturn / Uranus / Neptune each frame.
+    if (this.outerMoons) {
+      const positions = new Map<string, Vector3>();
+      for (const p of this.planets) {
+        positions.set(p.name, p.group.position);
+      }
+      this.outerMoons.setParentPositions(
+        positions as unknown as Parameters<
+          typeof this.outerMoons.setParentPositions
+        >[0],
+      );
     }
 
     // Sun-Earth Lagrange points — L1 / L2 along the Sun-Earth line

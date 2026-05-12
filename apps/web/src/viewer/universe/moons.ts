@@ -62,9 +62,10 @@ export class MoonField extends Object3D {
   /** Visibility threshold — labels visible if camera is within this many AU. */
   private static LABEL_AU = 0.05;
 
-  constructor() {
+  constructor(options: { excludeParents?: MoonElements["parent"][] } = {}) {
     super();
     this.visible = false;
+    const exclude = new Set(options.excludeParents ?? []);
 
     // Pre-compute per-parent rotation (just a single x-axis tilt to
     // approximate ecliptic projection — adequate for v1 visuals).
@@ -75,6 +76,7 @@ export class MoonField extends Object3D {
     }
 
     for (const m of MOONS) {
+      if (exclude.has(m.parent)) continue;
       let anchor = this.anchors.get(m.parent);
       if (!anchor) {
         anchor = new Group();
