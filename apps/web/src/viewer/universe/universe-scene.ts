@@ -667,6 +667,13 @@ export class UniverseScene {
     this.transients.setData(items);
   }
 
+  /** Push GW / GCN extra markers (with finite RA/Dec) into the field. */
+  setTransientExtras(
+    extras: import("../transients/transient-field").ExtraMarker[],
+  ): void {
+    this.transients.setExtras(extras);
+  }
+
 
   setAsteroids(on: boolean): void {
     if (this.asteroids) this.asteroids.visible = on;
