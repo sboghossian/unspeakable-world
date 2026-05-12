@@ -12,7 +12,8 @@ export type Survey = {
     | "mid-ir"
     | "x-ray"
     | "radio"
-    | "microwave";
+    | "microwave"
+    | "catalog";
   baseUrl: string;
   /** Tile file extension at typical orders. */
   format: "jpg" | "png";
@@ -107,6 +108,19 @@ export const SURVEYS: Record<string, Survey> = {
     format: "jpg",
     maxOrder: 5,
     attribution: "Planck HFI · ESA / CDS",
+  },
+  gaia: {
+    id: "gaia",
+    label: "Gaia (DR3)",
+    // Not a wavelength survey strictly — this is a star-density / flux
+    // composite from the Gaia DR3 catalog (Bp · G · Rp). We bucket it as
+    // "catalog" so the UI can tag it distinctly from imaging surveys.
+    wavelength: "catalog",
+    baseUrl:
+      "https://alasky.cds.unistra.fr/ancillary/GaiaDR3/color-Rp-G-Bp-flux-map",
+    format: "jpg",
+    maxOrder: 7,
+    attribution: "Gaia DR3 Rp·G·Bp flux map · ESA / CDS",
   },
 };
 
