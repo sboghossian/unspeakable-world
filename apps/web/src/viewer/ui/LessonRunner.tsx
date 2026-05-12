@@ -9,6 +9,33 @@ import {
 } from "../../lib/lesson-progress";
 
 /**
+ * Web Speech API helpers. Voice narration is opt-in (persists per
+ * learner via `localStorage` key `uw:lesson-narration`), and gracefully
+ * falls back to silent when the runtime has no `speechSynthesis`.
+ */
+const NARRATION_KEY = "uw:lesson-narration";
+
+function speechAvailable(): boolean {
+  return typeof window !== "undefined" && "speechSynthesis" in window;
+}
+
+function readNarrationPref(): boolean {
+  try {
+    return localStorage.getItem(NARRATION_KEY) === "on";
+  } catch {
+    return false;
+  }
+}
+
+function writeNarrationPref(on: boolean): void {
+  try {
+    localStorage.setItem(NARRATION_KEY, on ? "on" : "off");
+  } catch {
+    /* ignore */
+  }
+}
+
+/**
  * Full-screen overlay that drives one lesson from start to finish.
  *
  * The runner is intentionally dumb about scenes: when a `scene` step is
@@ -49,6 +76,7 @@ export function LessonRunner({ lesson, onClose }: Props) {
   });
   const [finished, setFinished] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
+  const [narrate, setNarrate] = useState<boolean>(readNarrationPref);
 
   const step: LessonStep | undefined = lesson.steps[stepIdx];
 
@@ -77,9 +105,37 @@ export function LessonRunner({ lesson, onClose }: Props) {
   }, [lesson]);
 
   // Auto-advance for narrate/scene/wait steps.
+  // When voice narration is on, the narrate step is driven by the
+  // speechSynthesis `end` event instead of a fixed timer — the lesson
+  // advances exactly when the voice finishes speaking, no faster.
   useEffect(() => {
     if (!step || finished) return;
     if (step.kind === "quiz") return;
+
+    if (step.kind === "narrate" && narrate && speechAvailable()) {
+      const synth = window.speechSynthesis;
+      synth.cancel();
+      const utter = new SpeechSynthesisUtterance(step.text);
+      utter.rate = 0.95;
+      utter.pitch = 1.0;
+      utter.onend = () => advance();
+      // 25-second hard cap so a broken speech engine doesn't strand
+      // the learner on one step.
+      const watchdog = window.setTimeout(() => {
+        synth.cancel();
+        advance();
+      }, 25_000);
+      utter.onerror = () => {
+        window.clearTimeout(watchdog);
+        advance();
+      };
+      synth.speak(utter);
+      return () => {
+        window.clearTimeout(watchdog);
+        synth.cancel();
+      };
+    }
+
     let ms: number;
     if (step.kind === "wait") {
       ms = step.ms;
@@ -93,7 +149,14 @@ export function LessonRunner({ lesson, onClose }: Props) {
     const handle = window.setTimeout(advance, ms);
     return () => window.clearTimeout(handle);
     // step is structurally stable per index — depend on idx + finished
-  }, [step, finished, advance]);
+  }, [step, finished, advance, narrate]);
+
+  // Cancel any in-flight speech when the runner unmounts.
+  useEffect(() => {
+    return () => {
+      if (speechAvailable()) window.speechSynthesis.cancel();
+    };
+  }, []);
 
   // Keyboard shortcuts.
   useEffect(() => {
@@ -151,6 +214,30 @@ export function LessonRunner({ lesson, onClose }: Props) {
       >
         ✕
       </button>
+      {speechAvailable() && (
+        <button
+          type="button"
+          onClick={() => {
+            const next = !narrate;
+            setNarrate(next);
+            writeNarrationPref(next);
+            // Cancel any current utterance so the new mode takes effect
+            // immediately rather than waiting out the in-flight one.
+            window.speechSynthesis.cancel();
+          }}
+          title={narrate ? "Mute narration" : "Speak narration aloud"}
+          aria-label={narrate ? "Mute narration" : "Speak narration aloud"}
+          aria-pressed={narrate}
+          className={`absolute right-14 top-4 inline-flex h-8 items-center gap-1.5 rounded-md border px-2 font-mono text-[11px] backdrop-blur transition ${
+            narrate
+              ? "border-cyan-400/50 bg-cyan-400/15 text-cyan-200"
+              : "border-white/15 bg-space-950/80 text-white/75 hover:bg-white/10 hover:text-white"
+          }`}
+        >
+          <span aria-hidden>{narrate ? "🔊" : "🔈"}</span>
+          <span>{narrate ? "speaking" : "silent"}</span>
+        </button>
+      )}
 
       <div className="pointer-events-auto m-4 w-[min(720px,94vw)] rounded-2xl border border-white/10 bg-space-950/92 p-5 shadow-2xl backdrop-blur">
         <div className="mb-3 flex items-baseline justify-between">
