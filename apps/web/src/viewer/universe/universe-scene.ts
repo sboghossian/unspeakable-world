@@ -26,6 +26,11 @@ import {
 } from "three";
 import { Body, HelioVector } from "astronomy-engine";
 import { Raycaster, Vector2 } from "three";
+import {
+  makePlanetTexture,
+  paintCanvas,
+  paintSun,
+} from "../solar/celestial-art";
 import { HipsSphere } from "../scene/hips-sphere";
 import { SURVEYS, type Survey } from "../hips/surveys";
 import { ConstellationLines } from "../constellations/constellation-lines";
@@ -390,8 +395,11 @@ export class UniverseScene {
     this.scene.add(this.hipsGroup);
 
     // ─── Solar group ───────────────────────────────────────────
-    const sunGeom = new SphereGeometry(0.35, 32, 32); // 0.35 AU
-    const sunMat = new MeshBasicMaterial({ color: 0xffeb91 });
+    const sunGeom = new SphereGeometry(0.35, 48, 48); // 0.35 AU
+    const sunMat = new MeshBasicMaterial({
+      map: paintCanvas(1024, 512, paintSun),
+      color: 0xffffff,
+    });
     this.sunMesh = new Mesh(sunGeom, sunMat);
     this.solarGroup.add(this.sunMesh);
 
@@ -833,7 +841,13 @@ export class UniverseScene {
     for (const spec of PLANETS) {
       const group = new Group();
       const geom = new SphereGeometry(spec.drawSize, 24, 24);
-      const mat = new MeshBasicMaterial({ color: spec.color });
+      // Same procedural texture set used in solar flight, so each planet
+      // reads as a real body in Universe mode too. The realColor toggle
+      // still tints via .color; default white = unfiltered texture.
+      const mat = new MeshBasicMaterial({
+        map: makePlanetTexture(spec.name),
+        color: 0xffffff,
+      });
       const sphere = new Mesh(geom, mat);
       group.add(sphere);
 
