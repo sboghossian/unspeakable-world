@@ -854,4 +854,176 @@ export const GUIDE_PAGES: GuidePage[] = [
     ],
     prev: "terms",
   },
+
+  // ── Release & reference ─────────────────────────────────────────────
+  {
+    slug: "whats-new",
+    section: "Release notes",
+    title: "What's new",
+    lede:
+      "Release log for the Unspeakable World. New entries land when a substantial feature batch hits main.",
+    body: [
+      { kind: "h2", text: "May 2026 — visual & UX parity pass" },
+      { kind: "h3", text: "Solar system" },
+      {
+        kind: "ul",
+        items: [
+          "Textured planets — Mercury craters, Venus swirls, banded Jupiter w/ Great Red Spot, Mars rust + polar caps, paler Saturn bands, faint Uranus bands, deep azure Neptune w/ dark spot",
+          "Earth day/night shader with city-lights map on the unlit hemisphere, smooth ~17° terminator, Fresnel atmosphere with golden sunset glow",
+          "Real PointLight at the Sun + AmbientLight floor — every planet + moon shows correct day/night gradients",
+          "Granulated Sun: convection cells + sunspots biased to the activity belt",
+          "Saturn ring shadow on the body — analytical ray-cast shader, no shadow maps",
+          "Every planet (and the Sun) rotates on its real sidereal day, Venus + Uranus retrograde",
+          "Earth's Moon — Lambert-lit, synchronous rotation, maria + ray craters",
+          "10k-body main-belt asteroid swarm shared with Universe mode, Oort Cloud shell at 2-6k AU",
+          "Sun-Earth Lagrange points L1-L5",
+          "3D ISS + 3D JWST models, propagated from real TLE / L2 geometry",
+          "27 capital-city labels parented to Earth's sphere — fade in when zoomed close",
+        ],
+      },
+      { kind: "h3", text: "UI / UX" },
+      {
+        kind: "ul",
+        items: [
+          "Cinematic bottom-HUD across every scene: DISTANCE FROM SUN · vicinity · SCREEN SCALE",
+          "Categorized Celestial Objects panel with count badges",
+          "Top-bar icon cluster: mute · focus · fullscreen, plus a ✨ surprise-me random fly-to",
+          "🏆 Achievements (10 badges) + bottom-right unlock toast",
+          "Satellites drawer with live SGP4 readouts (altitude · speed · lat · lon · orbital period · inclination · NORAD ID · launch year)",
+          "Black-hole landmarks gain a photon-ring + accretion-disk sprite",
+          "Cinematic loading veil with named phases",
+          "🐛 Report-a-bug floating button — prefilled GitHub Issue",
+          "Global `?` hotkey opens a keyboard-shortcut overlay",
+        ],
+      },
+      { kind: "h3", text: "Landing" },
+      {
+        kind: "ul",
+        items: [
+          "Drifting Starfield with shooting-star meteors every 4-10s",
+          "Active PWA install banner",
+          "Today-in-astronomy-history card (~30 curated dates)",
+          "Six-card feature highlights grid",
+        ],
+      },
+      { kind: "h2", text: "Earlier" },
+      {
+        kind: "p",
+        text:
+          "Tracking mode, snapshot/share parity, cross-mode bookmarks, pulsar sonification, aurora oval, light cone, grounded SIMBAD + Wikipedia inspector, IndexedDB cache, verified imagery, continuous time scrubber, 2D Aitoff sky projection, planetary moons, curated mission trajectories with HORIZONS data, time-machine presets, eclipse predictor, solar-system zones, settings panel + persistence, standby mode, NEO panel, space-weather panel, Tonight Sky observer panel, 8 wavelengths of HiPS tiles, full 6DOF Universe mode, gravity sandbox playground.",
+      },
+    ],
+    prev: "privacy",
+    next: "deep-links",
+  },
+
+  {
+    slug: "deep-links",
+    section: "Release notes",
+    title: "Deep links",
+    lede:
+      "Every mode, body, and zone is reachable by URL. Share the exact view; the receiver lands where you were.",
+    body: [
+      { kind: "h2", text: "Modes" },
+      {
+        kind: "ul",
+        items: [
+          "/#universe — the full multi-tier explorer (default for repeat visitors)",
+          "/#solar — solar-flight at heliocentric AU",
+          "/#galactic — Milky Way + Local Group + cosmic web",
+          "/#surface/earth and /#surface/mars — high-detail planet surfaces",
+          "/#viewer — Sky Atlas (celestial-sphere browser)",
+          "/#sandbox — gravity sandbox playground",
+          "/#guide — this user guide",
+        ],
+      },
+      { kind: "h2", text: "Camera-state parameters" },
+      {
+        kind: "p",
+        text:
+          "Every scene appends its camera state to the hash: focus body, yaw/pitch/distance, sim time, time rate, tracking flag. The share button copies the entire hash so URLs round-trip cleanly.",
+      },
+      { kind: "h2", text: "Examples" },
+      {
+        kind: "ul",
+        items: [
+          "/#solar?focus=Saturn&dist=0.5 — fly to Saturn with a 0.5 AU camera distance",
+          "/#universe?ra=83.633&dec=22.014&fov=2 — point at the Crab Nebula at 2° FOV",
+          "/#guide/whats-new — jump straight to the release log",
+        ],
+      },
+      {
+        kind: "callout",
+        tone: "tip",
+        text:
+          "The share button copies the hash with the simulation time — a link saved during an eclipse will replay the same eclipse view.",
+      },
+    ],
+    prev: "whats-new",
+    next: "shortcuts-ref",
+  },
+
+  {
+    slug: "shortcuts-ref",
+    section: "Release notes",
+    title: "Keyboard shortcuts",
+    lede:
+      "Press `?` from anywhere in the viewer for a categorized cheat sheet. The full list lives below for offline reference.",
+    body: [
+      { kind: "h2", text: "Global" },
+      {
+        kind: "kbd",
+        rows: [
+          ["?", "Open the keyboard-shortcuts overlay"],
+          ["Esc", "Close panels / overlays"],
+          ["⌘K / /", "Open search"],
+          ["Space", "Play / pause time"],
+          ["← / →", "Step time backward / forward"],
+          [".", "Reset simulation to now"],
+        ],
+      },
+      { kind: "h2", text: "Solar flight" },
+      {
+        kind: "kbd",
+        rows: [
+          ["`", "Reset focus to the Sun"],
+          ["1 – 8", "Jump focus to Mercury → Neptune"],
+          ["F", "Toggle focus-mode (hide UI for screenshots)"],
+          ["K", "Toggle solar-system zone overlays"],
+          ["drag", "Orbit camera around focus"],
+          ["wheel / pinch", "Zoom"],
+        ],
+      },
+      { kind: "h2", text: "Universe" },
+      {
+        kind: "kbd",
+        rows: [
+          ["W A S D", "Free-fly through 3D space"],
+          ["Q / E", "Roll up / down"],
+          ["1 – 8", "Jump to planet"],
+          ["B", "Jump to the Galactic Centre"],
+          ["N", "Jump to M31 (Andromeda)"],
+          ["L", "Toggle constellation lines"],
+          ["G", "Toggle reference grid"],
+          ["Y", "Toggle live aurora overlay"],
+          ["K", "Toggle solar zones"],
+        ],
+      },
+      { kind: "h2", text: "Sky Atlas" },
+      {
+        kind: "kbd",
+        rows: [
+          ["C", "Toggle constellation lines"],
+          ["N", "Toggle bright-star names"],
+          ["S", "Toggle spacecraft markers"],
+          ["X", "Toggle exoplanet hosts"],
+          ["Z", "Toggle exotic objects (BH · pulsars · SNR)"],
+          ["I", "About / credits"],
+          ["E", "Astronomical events panel"],
+          ["T", "Start the Grand Tour"],
+        ],
+      },
+    ],
+    prev: "deep-links",
+  },
 ];
