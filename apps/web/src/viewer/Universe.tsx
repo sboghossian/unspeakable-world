@@ -80,6 +80,7 @@ const DEFAULT_STATE: UniverseState = {
   pulsarsOn: false,
   exoplanetsOn: false,
   cosmicLandmarksOn: false,
+  cosmicFlowsOn: false,
   playing: true,
   rate: 86400,
   asteroidsOn: false,
