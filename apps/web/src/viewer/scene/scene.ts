@@ -638,6 +638,29 @@ export class ViewerScene {
     this.flyTo(dir, 1500);
   }
 
+  /**
+   * Set camera orientation from explicit (yaw, pitch) radians. Used by
+   * the gyroscope AR controller — converts to a forward vector and reuses
+   * the existing VoyagerControls.setForward path so inertia is reset
+   * cleanly. yaw is around world-up, pitch around the right-axis, both
+   * matching the VoyagerControls YXZ Euler convention.
+   */
+  setCameraDirection(yaw: number, pitch: number): void {
+    if (!Number.isFinite(yaw) || !Number.isFinite(pitch)) return;
+    const clampedPitch = Math.max(
+      -Math.PI / 2 + 0.01,
+      Math.min(Math.PI / 2 - 0.01, pitch),
+    );
+    const fwd = new Vector3(
+      Math.cos(clampedPitch) * Math.sin(yaw),
+      Math.sin(clampedPitch),
+      -Math.cos(clampedPitch) * Math.cos(yaw),
+    );
+    this.controls.setForward(fwd);
+    this.dirty = true;
+    this.publishState();
+  }
+
   /** Programmatically set the camera FOV (used by the tour system). */
   setFov(deg: number): void {
     const target = Math.max(6, Math.min(100, deg));

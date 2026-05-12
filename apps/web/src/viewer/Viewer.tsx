@@ -23,6 +23,7 @@ import {
 import { EventsPanel } from "./ui/EventsPanel";
 import { NeoPanel } from "./ui/NeoPanel";
 import { ShareButton } from "./ui/ShareButton";
+import { GyroButton } from "./ui/GyroButton";
 import { SnapshotButton } from "./ui/SnapshotButton";
 import { ShortcutsOverlay } from "./ui/ShortcutsOverlay";
 import { SkyTonightPanel } from "./ui/SkyTonightPanel";
@@ -732,6 +733,7 @@ export function Viewer() {
             onChange={reloadFavorites}
           />
           <ShareButton />
+          <GyroButton scene={sceneRef.current} />
           <SnapshotButton
             onCapture={() => sceneRef.current?.snapshotPng() ?? null}
           />

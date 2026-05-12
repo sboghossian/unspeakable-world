@@ -75,6 +75,7 @@ import {
 } from "./missions";
 import { SolarZones, type ZoneId } from "./solar-zones";
 import { LightCone } from "./light-cone";
+import { DarkMatterField } from "./dark-matter-field";
 import { AuroraOverlay } from "../space-weather/aurora-overlay";
 import { getSettings, onSettingsChange } from "../../lib/settings";
 import { log } from "../../lib/logger";
@@ -160,6 +161,8 @@ export type UniverseState = {
   cosmicLandmarksOn: boolean;
   cosmicFlowsOn: boolean;
   transientsOn: boolean;
+  /** Dark-matter halo overlay (Local Group + Virgo Supercluster). */
+  darkMatterOn: boolean;
   /** Time playback. */
   playing: boolean;
   /** Time rate (sim seconds per wall second). */
@@ -244,6 +247,7 @@ export class UniverseScene {
   private cosmicLandmarks: CosmicLandmarks;
   private cosmicFlows!: CosmicFlowField;
   private transients!: TransientField;
+  private darkMatter!: DarkMatterField;
   private measureTool: MeasureTool;
   private measureMode = false;
   private onMeasureChange: (() => void) | null = null;
@@ -507,6 +511,12 @@ export class UniverseScene {
     });
     this.galacticGroup.add(this.cosmicFlows.group);
 
+    // Dark-matter halo overlay (Local Group + Virgo Supercluster). Off by
+    // default; toggled via LeftRail. Halo positions are absolute LY in
+    // the galactic frame, so the field lives in galacticGroup.
+    this.darkMatter = new DarkMatterField();
+    this.galacticGroup.add(this.darkMatter.group);
+
     // Galactic labels (LY positions, will be visible based on distance).
     addGalacticLabels(this.galacticLabels, this.galacticGroup);
     addArmLabels(this.armLabels, this.galacticGroup);
@@ -653,6 +663,11 @@ export class UniverseScene {
 
   setCosmicFlows(on: boolean): void {
     this.cosmicFlows.setVisible(on);
+    this.publishState();
+  }
+
+  setDarkMatter(on: boolean): void {
+    this.darkMatter.setVisible(on);
     this.publishState();
   }
 
@@ -1463,6 +1478,7 @@ export class UniverseScene {
       cosmicLandmarksOn: this.cosmicLandmarks.visible(),
       cosmicFlowsOn: this.cosmicFlows.visible(),
       transientsOn: this.transients.visible(),
+      darkMatterOn: this.darkMatter.visible(),
       playing: this.playing,
       rate: this.timeRate,
       asteroidsOn: this.asteroids?.visible ?? false,
@@ -1515,6 +1531,22 @@ export class UniverseScene {
     }
     this.trackingTarget = name;
     this.trackOffset.copy(this.logicalPos).sub(pos);
+    this.lastInteractionMs = performance.now();
+    this.publishState();
+  }
+
+  /**
+   * Set the camera orientation directly (yaw radians around world-up,
+   * pitch radians around right-axis). Used by the gyroscope AR controller
+   * to map a phone's DeviceOrientation onto the sky view.
+   */
+  setCameraDirection(yaw: number, pitch: number): void {
+    if (Number.isFinite(yaw)) this.yaw = yaw;
+    if (Number.isFinite(pitch)) {
+      this.pitch = Math.max(-Math.PI / 2 + 0.01, Math.min(Math.PI / 2 - 0.01, pitch));
+    }
+    // Drop any in-flight fly-to so manual orientation wins.
+    this.flyTween = null;
     this.lastInteractionMs = performance.now();
     this.publishState();
   }
