@@ -872,6 +872,26 @@ export class UniverseScene {
         pos = new Vector3(1_000_000, 0, 0); // 1 Mly out
         speed = 5;
         break;
+      case "Virgo Supercluster":
+        // ~55 Mly from us toward Virgo Cluster (RA 12h27m, Dec +12°43').
+        pos = new Vector3(55_000_000, 8_000_000, 0);
+        speed = 100;
+        break;
+      case "Laniakea":
+        // ~250 Mly out — high enough to see the Laniakea-scale flow.
+        pos = new Vector3(250_000_000, 60_000_000, 50_000_000);
+        speed = 1000;
+        break;
+      case "Cosmic Web":
+        // ~1 Gly — supercluster filaments + voids dominate the view.
+        pos = new Vector3(1_000_000_000, 200_000_000, 200_000_000);
+        speed = 5000;
+        break;
+      case "Observable Universe":
+        // 13.8 Gly comoving — just inside the cap so we see the CMB shell.
+        pos = new Vector3(13_800_000_000, 0, 0);
+        speed = 50_000;
+        break;
       case "Mercury":
       case "Venus":
       case "Earth":
@@ -1383,7 +1403,10 @@ export class UniverseScene {
     if (r < 1e-12) return;
     const fine = e.shiftKey ? 0.15 : 1;
     // ≈ 8 % per natural wheel notch (deltaY 100); shift = ~1.2 %.
-    const factor = Math.exp(e.deltaY * 0.0008 * fine);
+    // Past 1000 LY (stellar → galactic → cosmic) we accelerate the wheel
+    // step so reaching observable-universe scale doesn't take 400 notches.
+    const cosmicBoost = r > 1000 ? (r > 1_000_000 ? 4 : 2) : 1;
+    const factor = Math.exp(e.deltaY * 0.0008 * fine * cosmicBoost);
     // Don't let the user dolly inside the anchor body.
     const minR = anchor === SUN_LY ? 0.005 / AU_PER_LY : 1e-6;
     const maxR = 5e10;
