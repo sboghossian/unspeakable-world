@@ -41,6 +41,7 @@ import { ExoplanetField } from "../exoplanets/exoplanet-field";
 import { CosmicLandmarks } from "../cosmic/cosmic-landmarks";
 import { MeasureTool, worldDirToRaDec } from "../measure/measure-tool";
 import { StarLabels } from "../stars/star-labels";
+import { StarTrails } from "../stars/star-trails";
 import {
   BODY_INFO,
   bodyFactsToPayload,
@@ -230,6 +231,7 @@ export class UniverseScene {
   private measureTool: MeasureTool;
   private measureMode = false;
   private onMeasureChange: (() => void) | null = null;
+  private starTrails: StarTrails;
 
   // Solar small-body layers (live in solarGroup, AU units).
   private asteroids: AsteroidField | null = null;
@@ -397,6 +399,12 @@ export class UniverseScene {
 
     this.measureTool = new MeasureTool();
     this.hipsGroup.add(this.measureTool.group);
+
+    this.starTrails = new StarTrails();
+    this.hipsGroup.add(this.starTrails.group);
+    void this.starTrails
+      .load("/data/hyg-bright.bin")
+      .catch((err) => console.warn("[star-trails] load", err));
 
     this.hipsGroup.scale.setScalar(2000); // 2000 scene-unit radius
     this.scene.add(this.hipsGroup);
@@ -1066,6 +1074,24 @@ export class UniverseScene {
   measureClear(): void {
     this.measureTool.clear();
     this.onMeasureChange?.();
+  }
+
+  /** Long-exposure star-trails layer. Off by default; toggleable from
+   *  the Sky Atlas panel. Default duration 2 hours = 30° arc. */
+  setStarTrails(on: boolean): void {
+    this.starTrails.setVisible(on);
+  }
+
+  setStarTrailsDuration(hours: number): void {
+    this.starTrails.setDurationHours(hours);
+  }
+
+  starTrailsOn(): boolean {
+    return this.starTrails.visible();
+  }
+
+  starTrailsDuration(): number {
+    return this.starTrails.durationHoursValue();
   }
 
   private onClickCb: ((hit: UniverseHit) => void) | null = null;
