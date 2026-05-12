@@ -13,6 +13,8 @@ import {
 } from "./ui/SceneBottomHud";
 import { TopBarActions } from "./ui/TopBarActions";
 import { SatellitesPanel } from "./ui/SatellitesPanel";
+import { AchievementsPanel } from "./ui/AchievementsPanel";
+import { recordPlanetVisit, unlock } from "../lib/achievements";
 import { SettingsPanel } from "./ui/SettingsPanel";
 import { SnapshotButton } from "./ui/SnapshotButton";
 import { ShareButton } from "./ui/ShareButton";
@@ -62,6 +64,17 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
   const sceneRef = useRef<SolarFlightScene | null>(null);
   const [state, setState] = useState<SolarFlightState>(DEFAULT_STATE);
   const [inspect, setInspect] = useState<SolarFlightHit | null>(null);
+
+  // First-light achievement: getting any scene loaded counts.
+  useEffect(() => {
+    unlock("first-light");
+  }, []);
+
+  // Voyager achievement: every focus change that lands on a planet
+  // gets recorded; the 8th distinct planet flips the badge.
+  useEffect(() => {
+    recordPlanetVisit(state.focus);
+  }, [state.focus]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -250,6 +263,7 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
             </button>
           ))}
           <SatellitesPanel />
+          <AchievementsPanel />
           <TopBarActions
             focusActive={focusMode}
             onFocusToggle={() => setFocusMode((v) => !v)}

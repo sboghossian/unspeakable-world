@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as satelliteJs from "satellite.js";
+import { unlock } from "../../lib/achievements";
 
 /**
  * 🛰 Satellites panel — searchable catalog of every TLE we ship plus a
@@ -297,7 +298,10 @@ export function SatellitesPanel() {
               <button
                 key={e.l1}
                 type="button"
-                onClick={() => setSelected(e)}
+                onClick={() => {
+                  setSelected(e);
+                  if (e.name.includes("ISS")) unlock("iss-spotter");
+                }}
                 className="flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left font-mono text-[11px] text-white/80 transition hover:bg-white/5 hover:text-white"
               >
                 <span className="truncate">{e.name}</span>
