@@ -1,4 +1,5 @@
 import type { InfoPayload, InfoSection } from "../ui/InfoPanel";
+import { citationFor, type ObjectCitation } from "./object-citations";
 import {
   lookupObjectImagery,
   type ImageEntry,
@@ -203,7 +204,7 @@ export function bodyFactsToPayload(
       kind: "links",
       items: [{ label: "Wikipedia", href: facts.wikipedia }],
     });
-  return enrichWithImagery({ kind, name, sections });
+  return enrichWithCitation(enrichWithImagery({ kind, name, sections }));
 }
 
 /**
@@ -246,6 +247,42 @@ export function enrichWithImagery(payload: InfoPayload): InfoPayload {
   return { ...payload, sections: [imageSection, ...payload.sections] };
 }
 
+/**
+ * Convert an `ObjectCitation` into a `references` `InfoSection`. Wikipedia
+ * gets a dedicated chip; SIMBAD and ADS get added when present. Returns
+ * `null` if there is no useful content to render.
+ */
+function citationToSection(cit: ObjectCitation): InfoSection | null {
+  const archives: Array<{ label: string; href: string }> = [];
+  if (cit.simbadUrl) archives.push({ label: "SIMBAD", href: cit.simbadUrl });
+  if (cit.wikipediaUrl) archives.push({ label: "Wikipedia", href: cit.wikipediaUrl });
+  if (cit.adsQueryUrl) archives.push({ label: "NASA ADS", href: cit.adsQueryUrl });
+  if (!cit.whyMatters && archives.length === 0 && !cit.primarySources?.length) {
+    return null;
+  }
+  const section: Extract<InfoSection, { kind: "references" }> = {
+    kind: "references",
+    whyMatters: cit.whyMatters,
+  };
+  if (archives.length > 0) section.archives = archives;
+  if (cit.primarySources && cit.primarySources.length > 0) {
+    section.primarySources = cit.primarySources;
+  }
+  return section;
+}
+
+/**
+ * Append a `references` section to an `InfoPayload` if a curated citation
+ * exists for the body. No-op when the citation table has no entry.
+ */
+export function enrichWithCitation(payload: InfoPayload): InfoPayload {
+  const cit = citationFor(payload.name);
+  if (!cit) return payload;
+  const section = citationToSection(cit);
+  if (!section) return payload;
+  return { ...payload, sections: [...payload.sections, section] };
+}
+
 /** Build a minimal payload for a cosmic landmark (DSO / exotic object). */
 export function cosmicLandmarkFactsToPayload(
   name: string,
@@ -265,7 +302,7 @@ export function cosmicLandmarkFactsToPayload(
       },
     ],
   });
-  return enrichWithImagery({ kind: "Landmark", name, sections });
+  return enrichWithCitation(enrichWithImagery({ kind: "Landmark", name, sections }));
 }
 
 /* ───────────────────────── MISSION SUPPORT ───────────────────────── */
@@ -382,12 +419,14 @@ export function moonFactsToPayload(
       ],
     },
   ];
-  return enrichWithImagery({
-    kind: "Moon",
-    name: moon.name,
-    subtitle: `Moon of ${moon.parent}`,
-    sections,
-  });
+  return enrichWithCitation(
+    enrichWithImagery({
+      kind: "Moon",
+      name: moon.name,
+      subtitle: `Moon of ${moon.parent}`,
+      sections,
+    }),
+  );
 }
 
 /** Convenience: payload for a named body (returns null if unknown). */

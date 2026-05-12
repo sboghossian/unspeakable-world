@@ -52,6 +52,15 @@ export type InfoSection =
       name: string;
       /** Optional curated preset that pre-fills the years slider. */
       currentAgeYears?: number;
+    }
+  | {
+      kind: "references";
+      /** Editorial "why does this matter?" paragraph. */
+      whyMatters: string;
+      /** Optional archive shortcuts — SIMBAD, Wikipedia, NASA ADS. */
+      archives?: Array<{ label: string; href: string }>;
+      /** Optional landmark primary papers. */
+      primarySources?: Array<{ title: string; url: string; year: number }>;
     };
 
 export type InfoPayload = {
@@ -92,6 +101,7 @@ const SECTION_TITLE: Record<InfoSection["kind"], string> = {
   grounded: "✨ ai summary",
   sonification: "sonification",
   lightcone: "light cone",
+  references: "why it matters",
 };
 
 const KIND_TONE: Record<InfoPayload["kind"], string> = {
@@ -282,7 +292,65 @@ function renderBody(
           onStart={onStartLightCone}
         />
       );
+    case "references":
+      return <ReferencesBlock section={section} />;
   }
+}
+
+function ReferencesBlock({
+  section,
+}: {
+  section: Extract<InfoSection, { kind: "references" }>;
+}): ReactElement {
+  return (
+    <div className="space-y-3">
+      <p className="text-sm leading-relaxed text-white/80">{section.whyMatters}</p>
+      {section.archives && section.archives.length > 0 && (
+        <div>
+          <div className="mb-1 font-mono text-[9px] uppercase tracking-widest text-white/35">
+            archives
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {section.archives.map((a) => (
+              <a
+                key={a.href}
+                href={a.href}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-cyan-300 hover:bg-white/10 hover:text-cyan-200"
+              >
+                {a.label} ↗
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+      {section.primarySources && section.primarySources.length > 0 && (
+        <div>
+          <div className="mb-1 font-mono text-[9px] uppercase tracking-widest text-white/35">
+            primary sources
+          </div>
+          <ul className="space-y-1.5">
+            {section.primarySources.map((s) => (
+              <li key={s.url} className="text-[12px] leading-snug text-white/70">
+                <a
+                  href={s.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-cyan-300 hover:text-cyan-200"
+                >
+                  {s.title}
+                </a>
+                <span className="ml-1 font-mono text-[10px] text-white/40">
+                  ({s.year})
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function GroundedBody({
