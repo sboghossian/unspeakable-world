@@ -960,7 +960,7 @@ export const GUIDE_PAGES: GuidePage[] = [
       },
     ],
     prev: "whats-new",
-    next: "shortcuts-ref",
+    next: "embed",
   },
 
   {
@@ -1031,6 +1031,76 @@ export const GUIDE_PAGES: GuidePage[] = [
   },
 
   {
+    slug: "embed",
+    section: "Release notes",
+    title: "Embedding the viewer",
+    lede:
+      "Drop a chrome-less, interactive Unspeakable World scene into your blog, course site, or Notion page with a single iframe.",
+    body: [
+      { kind: "h2", text: "How it works" },
+      {
+        kind: "p",
+        text:
+          "Append ?embed=1 to any unspeakable-world.pages.dev URL and the viewer renders without the top bar, the left rail, the bottom HUD, the share/snapshot buttons, or any overlays. Just the scene, plus a tiny 'Unspeakable World ↗' link in the bottom-right that opens the full app in a new tab. Drag, pinch, and scroll-wheel still work — your readers can explore inside the iframe.",
+      },
+      { kind: "h2", text: "URL pattern" },
+      {
+        kind: "ul",
+        items: [
+          "https://unspeakable-world.pages.dev/?embed=1#viewer (Sky Atlas — fully chrome-less)",
+          "https://unspeakable-world.pages.dev/?embed=1#viewer?ra=10.68&dec=41.27&fov=8 (Andromeda)",
+          "https://unspeakable-world.pages.dev/?embed=1#solar?focus=Saturn (heliocentric — mode picker still visible)",
+        ],
+      },
+      {
+        kind: "callout",
+        tone: "info",
+        text:
+          "Both query (?embed=1) and hash (#embed) detection work; either form on its own is enough to enter embed mode. The fragment after the # encodes the camera / focus state exactly like a normal share link.",
+      },
+      { kind: "h2", text: "Iframe snippet" },
+      {
+        kind: "p",
+        text:
+          "Paste this into your HTML, Markdown article, or Notion 'Embed' block. Set the height to whatever fits your layout — 60vh is a sensible default.",
+      },
+      {
+        kind: "ul",
+        items: [
+          "<iframe src=\"https://unspeakable-world.pages.dev/?embed=1#viewer\" width=\"100%\" height=\"540\" style=\"border:0;border-radius:12px\" loading=\"lazy\" allow=\"fullscreen\"></iframe>",
+        ],
+      },
+      { kind: "h2", text: "Three examples" },
+      {
+        kind: "ul",
+        items: [
+          "Saturn close-up — ?embed=1#solar?focus=Saturn (heliocentric, ringed)",
+          "Andromeda (M31) — ?embed=1#viewer?ra=10.68&dec=41.27&fov=8 (Sky Atlas)",
+          "ISS live tracker — ?embed=1#viewer (default Sky Atlas; the ISS marker chases its current ground track in real time)",
+        ],
+      },
+      { kind: "h2", text: "Responsive sizing tip" },
+      {
+        kind: "p",
+        text:
+          "The viewer is fluid — it fills 100% of the iframe at any aspect ratio. For mobile, prefer aspect-ratio:16/9 with a min-height around 320px so the canvas still has room. Avoid fixed pixel widths.",
+      },
+      {
+        kind: "callout",
+        tone: "tip",
+        text:
+          "Embedded views remain fully interactive but never auto-prompt for geolocation. Tonight's-sky features in embed mode will fall back to the read-only universal view.",
+      },
+      {
+        kind: "p",
+        text:
+          "A standalone copy-paste demo lives at /embed.html on the deployed site, so you can preview the snippet without leaving Unspeakable World.",
+      },
+    ],
+    prev: "deep-links",
+    next: "shortcuts-ref",
+  },
+  {
     slug: "shortcuts-ref",
     section: "Release notes",
     title: "Keyboard shortcuts",
@@ -1091,7 +1161,7 @@ export const GUIDE_PAGES: GuidePage[] = [
         ],
       },
     ],
-    prev: "deep-links",
+    prev: "embed",
     next: "whoami",
   },
 ];
