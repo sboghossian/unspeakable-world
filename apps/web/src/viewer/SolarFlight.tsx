@@ -32,6 +32,7 @@ import { ComparePanel } from "./ui/ComparePanel";
 import { ColorLegend } from "./ui/ColorLegend";
 import { ShortcutsOverlay } from "./ui/ShortcutsOverlay";
 import { ReportBugButton } from "./ui/ReportBugButton";
+import { SupportRibbon } from "./ui/SupportRibbon";
 import { ExploreDrawer, type Group } from "./ui/ExploreDrawer";
 import { SceneEditorPanel } from "./ui/SceneEditorPanel";
 import { SceneLinkToast } from "./scene-editor/SceneLinkToast";
@@ -682,6 +683,7 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
       {!focusMode && <ColorLegend />}
 
       {!focusMode && <ReportBugButton />}
+      {!focusMode && <SupportRibbon />}
 
       {shortcutsOpen && (
         <ShortcutsOverlay onClose={() => setShortcutsOpen(false)} />

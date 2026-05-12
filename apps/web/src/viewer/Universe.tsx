@@ -43,6 +43,7 @@ import { StarTrailsPanel } from "./ui/StarTrailsPanel";
 import { SurpriseButton } from "./ui/SurpriseButton";
 import { ShortcutsOverlay } from "./ui/ShortcutsOverlay";
 import { ReportBugButton } from "./ui/ReportBugButton";
+import { SupportRibbon } from "./ui/SupportRibbon";
 import { ExploreDrawer, type Group } from "./ui/ExploreDrawer";
 import { SceneEditorPanel } from "./ui/SceneEditorPanel";
 import { SceneLinkToast } from "./scene-editor/SceneLinkToast";
@@ -592,6 +593,7 @@ export function Universe({ onExit }: Props) {
       <ColorLegend />
 
       <ReportBugButton />
+      <SupportRibbon />
 
       {shortcutsOpen && (
         <ShortcutsOverlay onClose={() => setShortcutsOpen(false)} />
