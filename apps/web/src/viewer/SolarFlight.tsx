@@ -14,6 +14,7 @@ import {
 import { TopBarActions } from "./ui/TopBarActions";
 import { SatellitesPanel } from "./ui/SatellitesPanel";
 import { AchievementsPanel } from "./ui/AchievementsPanel";
+import { ColorLegend } from "./ui/ColorLegend";
 import { recordPlanetVisit, unlock } from "../lib/achievements";
 import { SettingsPanel } from "./ui/SettingsPanel";
 import { SnapshotButton } from "./ui/SnapshotButton";
@@ -211,6 +212,13 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
           <div className="rounded-lg border border-white/10 bg-space-950/70 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.25em] text-cyan-200/80 backdrop-blur">
             🚀 solar system flight
           </div>
+          <a
+            href="#guide"
+            title="Open the User Guide — every feature + every keyboard shortcut"
+            className="rounded-lg border border-white/10 bg-space-950/70 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-white/80 backdrop-blur transition hover:bg-white/10 hover:text-white"
+          >
+            📖 user guide
+          </a>
           <a
             href="#galactic"
             title="Zoom out to the Milky Way galaxy + Local Group + Cosmic Web"
@@ -545,6 +553,8 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
           }
         />
       )}
+
+      {!focusMode && <ColorLegend />}
     </div>
   );
 }
