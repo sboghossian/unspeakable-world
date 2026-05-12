@@ -3,6 +3,7 @@ import { LESSONS } from "../curriculum/lessons";
 import type { Lesson } from "../curriculum/types";
 import { useLessonProgress } from "../../lib/lesson-progress";
 import { LessonRunner } from "./LessonRunner";
+import { t, useLanguage } from "../../lib/i18n";
 
 /**
  * 🎓 Lessons — top-bar entry into the curriculum.
@@ -22,6 +23,7 @@ import { LessonRunner } from "./LessonRunner";
  */
 
 export function LessonPanel() {
+  useLanguage();
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState<Lesson | null>(null);
   const progress = useLessonProgress();
@@ -38,7 +40,7 @@ export function LessonPanel() {
       {open && (
         <div className="pointer-events-auto absolute right-3 top-12 z-30 w-[min(380px,92vw)] max-h-[70vh] overflow-y-auto rounded-xl border border-white/10 bg-space-950/95 p-3 backdrop-blur">
           <div className="mb-2 flex items-baseline justify-between">
-            <div className="font-display text-sm text-white/90">Lessons</div>
+            <div className="font-display text-sm text-white/90">{t("panel.lessons", "Lessons")}</div>
             <div className="font-mono text-[10px] uppercase tracking-widest text-white/45">
               {done} / {total}
             </div>
@@ -94,10 +96,10 @@ export function LessonPanel() {
                       className="pointer-events-auto inline-flex h-7 shrink-0 items-center rounded-md border border-emerald-400/40 bg-emerald-400/10 px-2.5 font-mono text-[10px] uppercase tracking-widest text-emerald-200 transition hover:bg-emerald-400/20"
                     >
                       {p?.completed
-                        ? "Replay"
+                        ? t("lesson.replay", "Replay")
                         : p?.started
-                          ? "Resume"
-                          : "Start"}
+                          ? t("lesson.resume", "Resume")
+                          : t("lesson.start", "Start")}
                     </button>
                   </div>
                 </li>
@@ -127,8 +129,8 @@ export function LessonPanelButton({
     <button
       type="button"
       onClick={onClick}
-      title={`Lessons (${completed} / ${total})`}
-      aria-label="Lessons"
+      title={`${t("panel.lessons", "Lessons")} (${completed} / ${total})`}
+      aria-label={t("panel.lessons", "Lessons")}
       className="pointer-events-auto inline-flex h-7 items-center gap-1.5 rounded-md border border-white/10 bg-space-950/70 px-2 text-[12px] text-white/70 backdrop-blur transition hover:bg-white/10 hover:text-white"
     >
       <span aria-hidden>🎓</span>
