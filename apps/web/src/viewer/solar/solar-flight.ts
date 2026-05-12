@@ -367,25 +367,18 @@ export class SolarFlightScene {
     for (const spec of PLANETS) {
       const group = new Group();
       const geom = new SphereGeometry(spec.drawSize, 24, 24);
-      const mat = new MeshBasicMaterial({ color: spec.color });
+      // Every planet gets a styled procedural texture (Mercury craters,
+      // Jupiter bands, Mars rust + polar caps, etc.) so the globes don't
+      // read as flat marbles. The base color tints the texture white-on
+      // (set color to white so the map shows through unfiltered).
+      const planetTex = makePlanetTexture(spec.name);
+      const mat = new MeshBasicMaterial({ map: planetTex, color: 0xffffff });
       const sphere = new Mesh(geom, mat);
       group.add(sphere);
 
-      // Earth: real Blue Marble texture + subtle atmosphere glow halo.
-      // The texture is a procedural canvas that reads as continents over
-      // ocean (no external assets required); the front-side glow goes on
-      // top of it to read on the night side. We could swap to NASA's
-      // public-domain Blue Marble JPG via TextureLoader if we want photo
-      // realism, but procedural keeps us federation-friendly.
+      // Earth: try to upgrade to the real NASA Blue Marble photo. Falls
+      // back to procedural on CORS / offline.
       if (spec.name === "Earth") {
-        const earthTex = makeEarthTexture();
-        (sphere.material as MeshBasicMaterial).map = earthTex;
-        (sphere.material as MeshBasicMaterial).color = new Color(0xffffff);
-        (sphere.material as MeshBasicMaterial).needsUpdate = true;
-
-        // Try to upgrade to a real Blue Marble photo asynchronously. If it
-        // loads, swap the texture; if it fails (CORS / offline), keep the
-        // procedural one.
         const loader = new TextureLoader();
         loader.setCrossOrigin("anonymous");
         loader.load(
@@ -1288,17 +1281,55 @@ function makeLabelTexture(text: string): CanvasTexture {
   return tex;
 }
 
-/** Procedural Earth texture: blue ocean base with continent-shaped land
- *  blobs sketched into the canvas. Reads as Earth-from-orbit at a glance
- *  even before the (optional) NASA Blue Marble photo loads. */
-function makeEarthTexture(): CanvasTexture {
-  const w = 1024;
-  const h = 512;
+/** Per-planet procedural texture dispatcher. Each branch paints a canvas
+ *  that reads as the body at a glance — cratered gray Mercury, swirly
+ *  cream Venus, banded gas giants — well enough that the globe doesn't
+ *  look like a flat marble before any external photo loads. Earth's
+ *  branch still gets the optional NASA Blue Marble swap-in upstream. */
+function makePlanetTexture(name: string): CanvasTexture {
+  switch (name) {
+    case "Mercury":
+      return paintCanvas(512, 256, paintMercury);
+    case "Venus":
+      return paintCanvas(512, 256, paintVenus);
+    case "Earth":
+      return paintCanvas(1024, 512, paintEarth);
+    case "Mars":
+      return paintCanvas(512, 256, paintMars);
+    case "Jupiter":
+      return paintCanvas(1024, 512, paintJupiter);
+    case "Saturn":
+      return paintCanvas(1024, 512, paintSaturn);
+    case "Uranus":
+      return paintCanvas(512, 256, paintUranus);
+    case "Neptune":
+      return paintCanvas(512, 256, paintNeptune);
+    default:
+      return paintCanvas(256, 128, (ctx, w, h) => {
+        ctx.fillStyle = "#888";
+        ctx.fillRect(0, 0, w, h);
+      });
+  }
+}
+
+function paintCanvas(
+  w: number,
+  h: number,
+  paint: (ctx: CanvasRenderingContext2D, w: number, h: number) => void,
+): CanvasTexture {
   const canvas = document.createElement("canvas");
   canvas.width = w;
   canvas.height = h;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("2d context unavailable");
+  paint(ctx, w, h);
+  const tex = new CanvasTexture(canvas);
+  tex.minFilter = LinearFilter;
+  tex.magFilter = LinearFilter;
+  return tex;
+}
+
+function paintEarth(ctx: CanvasRenderingContext2D, w: number, h: number): void {
   // Ocean
   const ocean = ctx.createLinearGradient(0, 0, 0, h);
   ocean.addColorStop(0, "#0a3a6e");
@@ -1328,31 +1359,215 @@ function makeEarthTexture(): CanvasTexture {
     ctx.fillStyle = color;
     ctx.fill();
   };
-  // Africa
   drawBlob(20, 0, 25, land);
   drawBlob(25, -20, 18, landDark);
-  // Eurasia
   drawBlob(55, 50, 50, land);
   drawBlob(100, 45, 30, landDark);
-  // Americas
   drawBlob(-95, 40, 28, land);
   drawBlob(-65, -15, 22, landDark);
   drawBlob(-110, 55, 22, land);
-  // Australia
   drawBlob(135, -25, 18, land);
-  // Antarctica
   ctx.fillStyle = "#e9eef5";
   ctx.fillRect(0, h - 32, w, 32);
-  // Greenland / Arctic ice cap
   ctx.fillStyle = "#dde6ee";
   ctx.beginPath();
   ctx.ellipse(w * 0.32, h * 0.07, w * 0.04, h * 0.05, 0, 0, Math.PI * 2);
   ctx.fill();
+}
 
-  const tex = new CanvasTexture(canvas);
-  tex.minFilter = LinearFilter;
-  tex.magFilter = LinearFilter;
-  return tex;
+function paintMercury(ctx: CanvasRenderingContext2D, w: number, h: number): void {
+  // Base: warm gray with a faint vertical gradient for terminator hint.
+  const base = ctx.createLinearGradient(0, 0, 0, h);
+  base.addColorStop(0, "#8c857c");
+  base.addColorStop(0.5, "#a8a098");
+  base.addColorStop(1, "#7a736a");
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, w, h);
+  // Cratered patches — light + dark blotches sprinkled over the surface.
+  const seed = mulberry32(0x4e7c);
+  for (let i = 0; i < 220; i++) {
+    const cx = seed() * w;
+    const cy = seed() * h;
+    const r = 4 + seed() * 18;
+    const dark = seed() < 0.5;
+    ctx.fillStyle = dark
+      ? `rgba(60,55,50,${0.18 + seed() * 0.22})`
+      : `rgba(220,210,195,${0.12 + seed() * 0.18})`;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, r, r * (0.7 + seed() * 0.6), 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function paintVenus(ctx: CanvasRenderingContext2D, w: number, h: number): void {
+  // Yellow-cream sulfuric cloud deck. Smooth swirls, no sharp features.
+  const base = ctx.createLinearGradient(0, 0, 0, h);
+  base.addColorStop(0, "#d8b56a");
+  base.addColorStop(0.5, "#f3dc9a");
+  base.addColorStop(1, "#c79f55");
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, w, h);
+  // Soft horizontal swirl bands.
+  const seed = mulberry32(0x1f55);
+  for (let i = 0; i < 14; i++) {
+    const yy = seed() * h;
+    const tone = seed() < 0.5 ? "rgba(255,235,180,0.18)" : "rgba(150,110,55,0.16)";
+    ctx.fillStyle = tone;
+    ctx.beginPath();
+    for (let x = 0; x <= w; x += 8) {
+      const y = yy + Math.sin((x / w) * Math.PI * 4 + i) * 12;
+      if (x === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    for (let x = w; x >= 0; x -= 8) {
+      const y = yy + 28 + Math.sin((x / w) * Math.PI * 4 + i) * 12;
+      ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fill();
+  }
+}
+
+function paintMars(ctx: CanvasRenderingContext2D, w: number, h: number): void {
+  // Rust base with darker basalt plains and bright polar caps.
+  const base = ctx.createLinearGradient(0, 0, 0, h);
+  base.addColorStop(0, "#cf7a4a");
+  base.addColorStop(0.5, "#d88a55");
+  base.addColorStop(1, "#a85a30");
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, w, h);
+  // Dark plain patches — Syrtis Major, Mare Cimmerium-ish blobs.
+  const seed = mulberry32(0x7a31);
+  for (let i = 0; i < 18; i++) {
+    const cx = seed() * w;
+    const cy = h * 0.25 + seed() * h * 0.5;
+    const rx = 20 + seed() * 60;
+    const ry = 10 + seed() * 30;
+    ctx.fillStyle = `rgba(80,40,20,${0.25 + seed() * 0.2})`;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx, ry, seed() * Math.PI, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // Polar caps — sharper, brighter than Earth's.
+  ctx.fillStyle = "#f1ece2";
+  ctx.fillRect(0, 0, w, h * 0.06);
+  ctx.fillRect(0, h * 0.93, w, h * 0.07);
+}
+
+function paintJupiter(ctx: CanvasRenderingContext2D, w: number, h: number): void {
+  // Strong horizontal banding alternating tan and umber, with a single
+  // Great Red Spot oval below the equator.
+  const bands: Array<[number, number, string]> = [
+    [0.0, 0.06, "#c89c6a"], // dark polar
+    [0.06, 0.14, "#e5c69a"],
+    [0.14, 0.22, "#a37a55"],
+    [0.22, 0.32, "#efd1a8"],
+    [0.32, 0.42, "#b88e63"],
+    [0.42, 0.48, "#f5dab0"], // equatorial zone
+    [0.48, 0.55, "#e0c191"],
+    [0.55, 0.65, "#9a724d"],
+    [0.65, 0.75, "#dfba88"],
+    [0.75, 0.85, "#aa8055"],
+    [0.85, 0.94, "#e8c79c"],
+    [0.94, 1.0, "#bd8e60"], // dark polar
+  ];
+  for (const [a, b, c] of bands) {
+    ctx.fillStyle = c;
+    ctx.fillRect(0, a * h, w, (b - a) * h);
+  }
+  // Subtle inter-band turbulence
+  const seed = mulberry32(0x9a12);
+  for (let i = 0; i < 70; i++) {
+    const cy = seed() * h;
+    const cx = seed() * w;
+    const rx = 30 + seed() * 80;
+    const ry = 4 + seed() * 8;
+    ctx.fillStyle = `rgba(60,40,20,${0.05 + seed() * 0.12})`;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // Great Red Spot
+  const gx = w * 0.62;
+  const gy = h * 0.62;
+  const grs = ctx.createRadialGradient(gx, gy, 6, gx, gy, 56);
+  grs.addColorStop(0, "#c84a2a");
+  grs.addColorStop(0.6, "rgba(180,80,40,0.6)");
+  grs.addColorStop(1, "rgba(180,80,40,0)");
+  ctx.fillStyle = grs;
+  ctx.beginPath();
+  ctx.ellipse(gx, gy, 70, 36, 0, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function paintSaturn(ctx: CanvasRenderingContext2D, w: number, h: number): void {
+  // Softer, paler bands than Jupiter — almost a creamy haze.
+  const bands: Array<[number, number, string]> = [
+    [0.0, 0.08, "#caaa78"],
+    [0.08, 0.22, "#e7cf9d"],
+    [0.22, 0.4, "#d6b87f"],
+    [0.4, 0.6, "#f1dbac"],
+    [0.6, 0.78, "#cbaa75"],
+    [0.78, 0.92, "#e5cd9a"],
+    [0.92, 1.0, "#bd9e6c"],
+  ];
+  for (const [a, b, c] of bands) {
+    ctx.fillStyle = c;
+    ctx.fillRect(0, a * h, w, (b - a) * h);
+  }
+  const seed = mulberry32(0x4321);
+  for (let i = 0; i < 30; i++) {
+    const cy = seed() * h;
+    const cx = seed() * w;
+    ctx.fillStyle = `rgba(170,130,80,${0.05 + seed() * 0.08})`;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 60 + seed() * 80, 3 + seed() * 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function paintUranus(ctx: CanvasRenderingContext2D, w: number, h: number): void {
+  // Pale ice-cyan with very faint banding (Uranus appears nearly
+  // featureless in visible light).
+  const base = ctx.createLinearGradient(0, 0, 0, h);
+  base.addColorStop(0, "#a8d8e2");
+  base.addColorStop(0.5, "#c2e6ec");
+  base.addColorStop(1, "#94c8d4");
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, w, h);
+  // Three barely-visible latitudinal bands.
+  ctx.fillStyle = "rgba(140,200,210,0.18)";
+  ctx.fillRect(0, h * 0.3, w, h * 0.06);
+  ctx.fillRect(0, h * 0.55, w, h * 0.05);
+  ctx.fillRect(0, h * 0.72, w, h * 0.04);
+}
+
+function paintNeptune(ctx: CanvasRenderingContext2D, w: number, h: number): void {
+  // Deep azure with subtle bands + a single dark storm oval.
+  const base = ctx.createLinearGradient(0, 0, 0, h);
+  base.addColorStop(0, "#2b4f9a");
+  base.addColorStop(0.5, "#4174c8");
+  base.addColorStop(1, "#1f3a78");
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = "rgba(120,170,230,0.25)";
+  ctx.fillRect(0, h * 0.28, w, h * 0.06);
+  ctx.fillRect(0, h * 0.58, w, h * 0.04);
+  ctx.fillStyle = "rgba(20,30,80,0.5)";
+  ctx.beginPath();
+  ctx.ellipse(w * 0.35, h * 0.5, 36, 18, 0, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+/** Tiny seeded RNG so the procedural noise is stable across reloads. */
+function mulberry32(seed: number): () => number {
+  let t = seed >>> 0;
+  return () => {
+    t = (t + 0x6d2b79f5) | 0;
+    let r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
 }
 
 /** Procedural Saturn-ring texture: a horizontal stripe of warm bands
