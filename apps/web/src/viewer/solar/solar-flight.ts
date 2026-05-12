@@ -109,6 +109,39 @@ const SATURN_RING_INNER_MULT = 1.4;
 const SATURN_RING_OUTER_MULT = 2.4;
 const SATURN_RING_TILT = Math.PI / 2 - 0.466;
 
+/** Major Earth cities surfaced as sprite labels once the camera is close
+ *  enough to read them. Lat/lon in decimal degrees, name is what shows
+ *  in the label. Curated — capitals + major metropolises. */
+const EARTH_CITIES: Array<{ name: string; lat: number; lon: number }> = [
+  { name: "New York", lat: 40.71, lon: -74.0 },
+  { name: "Los Angeles", lat: 34.05, lon: -118.24 },
+  { name: "Mexico City", lat: 19.43, lon: -99.13 },
+  { name: "São Paulo", lat: -23.55, lon: -46.63 },
+  { name: "Buenos Aires", lat: -34.6, lon: -58.38 },
+  { name: "Anchorage", lat: 61.22, lon: -149.9 },
+  { name: "Reykjavik", lat: 64.13, lon: -21.95 },
+  { name: "London", lat: 51.51, lon: -0.13 },
+  { name: "Paris", lat: 48.86, lon: 2.35 },
+  { name: "Madrid", lat: 40.42, lon: -3.7 },
+  { name: "Berlin", lat: 52.52, lon: 13.41 },
+  { name: "Rome", lat: 41.9, lon: 12.5 },
+  { name: "Moscow", lat: 55.76, lon: 37.62 },
+  { name: "Istanbul", lat: 41.01, lon: 28.98 },
+  { name: "Cairo", lat: 30.04, lon: 31.24 },
+  { name: "Lagos", lat: 6.45, lon: 3.39 },
+  { name: "Nairobi", lat: -1.29, lon: 36.82 },
+  { name: "Johannesburg", lat: -26.2, lon: 28.04 },
+  { name: "Dubai", lat: 25.2, lon: 55.27 },
+  { name: "Mumbai", lat: 19.08, lon: 72.88 },
+  { name: "Bangkok", lat: 13.76, lon: 100.5 },
+  { name: "Jakarta", lat: -6.21, lon: 106.85 },
+  { name: "Beijing", lat: 39.9, lon: 116.4 },
+  { name: "Tokyo", lat: 35.68, lon: 139.69 },
+  { name: "Seoul", lat: 37.57, lon: 126.98 },
+  { name: "Sydney", lat: -33.87, lon: 151.21 },
+  { name: "Auckland", lat: -36.85, lon: 174.76 },
+];
+
 const ORBIT_COLORS: Record<string, number> = {
   Mercury: 0xc8c1b8,
   Venus: 0xffd57a,
@@ -205,6 +238,9 @@ export class SolarFlightScene {
   /** Earth's Moon. Positioned via GeoVector(Moon) each frame, with a
    *  cosmetic scale so it sits visibly outside Earth's drawn radius. */
   private earthsMoon: { sphere: Mesh; label: Sprite } | null = null;
+  /** City labels parented to Earth's sphere so they rotate with the
+   *  planet. Hidden when the camera is far from Earth. */
+  private earthCityLabels: Sprite[] = [];
   private orbits: LineLoop[] = [];
   private solarZones: LineLoop[] = [];
   private starPoints: Points | null = null;
@@ -515,6 +551,35 @@ export class SolarFlightScene {
         const aurora = new AuroraOverlay({ earthRadius: spec.drawSize });
         group.add(aurora);
         this.auroraOverlay = aurora;
+
+        // City labels — parented to the rotating sphere so they sweep
+        // around with the diurnal spin. Stay invisible until the camera
+        // is close enough to Earth that the labels would actually read.
+        for (const c of EARTH_CITIES) {
+          const lat = (c.lat * Math.PI) / 180;
+          const lon = (c.lon * Math.PI) / 180;
+          // Match the texture's UV → 3D mapping: lon=0 hits the texture
+          // centre (Greenwich), lat=+90 the north pole.
+          const r = spec.drawSize * 1.005;
+          const px = r * Math.cos(lat) * Math.cos(lon);
+          const py = r * Math.sin(lat);
+          const pz = -r * Math.cos(lat) * Math.sin(lon);
+          const labelTex = makeLabelTexture(c.name);
+          const labelMat = new SpriteMaterial({
+            map: labelTex,
+            transparent: true,
+            depthWrite: false,
+            depthTest: true,
+            opacity: 0,
+          });
+          const label = new Sprite(labelMat);
+          const aspect = labelTex.image.width / labelTex.image.height;
+          const h = spec.drawSize * 0.16;
+          label.scale.set(h * aspect, h, 1);
+          label.position.set(px, py, pz);
+          sphere.add(label);
+          this.earthCityLabels.push(label);
+        }
       }
 
       // Saturn: textured ring system. RingGeometry is a flat disk; we tilt
@@ -676,6 +741,25 @@ export class SolarFlightScene {
         m.label.position.set(x, y + 0.005, z);
       }
     }
+    // City labels — fade in as the camera gets close to Earth, fade out
+    // when the user pulls back. Threshold tuned so they appear once
+    // Earth fills a meaningful chunk of the screen.
+    if (this.earthCityLabels.length > 0) {
+      const camWorld = this.camera.position;
+      const dist = Math.hypot(
+        camWorld.x - earthX,
+        camWorld.y - earthY,
+        camWorld.z - earthZ,
+      );
+      // Map distance → opacity. Fully visible at ≤ 0.005 AU
+      // (~750k km, just outside Moon orbit), invisible past 0.05 AU.
+      const t = Math.max(0, Math.min(1, (0.05 - dist) / (0.05 - 0.005)));
+      for (const label of this.earthCityLabels) {
+        (label.material as SpriteMaterial).opacity = t;
+        label.visible = t > 0.02;
+      }
+    }
+
     // Earth's Moon: GeoVector returns Moon-from-Earth in J2000 AU. Real
     // orbital radius (~0.00257 AU) is much smaller than Earth's drawn
     // size, so we apply a cosmetic SCALE to push the Moon outside the
