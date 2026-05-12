@@ -15,6 +15,7 @@ import { TopBarActions } from "./ui/TopBarActions";
 import { TransientsPanel } from "./ui/TransientsPanel";
 import { SatellitesPanel } from "./ui/SatellitesPanel";
 import { SpacecraftPanel } from "./ui/SpacecraftPanel";
+import { HistoryPanel } from "./ui/HistoryPanel";
 import { MissionsCatalogPanel } from "./ui/MissionsCatalogPanel";
 import { AchievementsPanel } from "./ui/AchievementsPanel";
 import { CollectionsPanel } from "./ui/CollectionsPanel";
@@ -325,6 +326,7 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
             }}
           />
           <MissionsCatalogPanel />
+          <HistoryPanel />
           <AchievementsPanel />
           <CollectionsPanel
             onFlyTo={(item) => sceneRef.current?.setFocus(item.id)}
