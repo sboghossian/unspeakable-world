@@ -93,29 +93,57 @@ export function LeftRail({ state, scene, onOpenGuide, onOpenTimeMachine }: Props
     label: string,
     onClick: () => void,
     hint?: string,
+    count?: string,
   ) => (
     <button
       key={label}
       type="button"
       onClick={onClick}
-      className={`flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-left font-mono text-[11px] uppercase tracking-widest transition ${
+      className={`flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-1.5 text-left font-mono text-[11px] uppercase tracking-widest transition ${
         on
           ? "bg-emerald-400/15 text-emerald-200 hover:bg-emerald-400/20"
           : "text-white/65 hover:bg-white/5 hover:text-white"
       }`}
     >
-      <span className="flex items-center gap-2">
+      <span className="flex min-w-0 flex-1 items-center gap-2 truncate">
         <span
-          className={`h-1.5 w-1.5 rounded-full ${on ? "bg-emerald-300" : "bg-white/25"}`}
+          className={`h-1.5 w-1.5 shrink-0 rounded-full ${on ? "bg-emerald-300" : "bg-white/25"}`}
         />
-        {label}
+        <span className="truncate">{label}</span>
       </span>
-      {hint && (
-        <span className="font-mono text-[9px] tracking-wider text-white/30">
-          {hint}
+      <span className="flex shrink-0 items-center gap-1.5">
+        {count && (
+          <span className="font-mono text-[9px] normal-case tracking-wider text-white/35">
+            {count}
+          </span>
+        )}
+        {hint && (
+          <span className="font-mono text-[9px] tracking-wider text-white/30">
+            {hint}
+          </span>
+        )}
+        {/* Toggle switch — visible affordance. */}
+        <span
+          aria-hidden
+          className={`relative inline-block h-3 w-6 rounded-full transition ${
+            on ? "bg-emerald-400/80" : "bg-white/15"
+          }`}
+        >
+          <span
+            className={`absolute top-0.5 h-2 w-2 rounded-full bg-white transition-all ${
+              on ? "left-3.5" : "left-0.5"
+            }`}
+          />
         </span>
-      )}
+      </span>
     </button>
+  );
+
+  /** Small category sub-header inside an open Section. */
+  const Sub = ({ label }: { label: string }) => (
+    <div className="mt-1.5 mb-0.5 px-2.5 font-mono text-[9px] uppercase tracking-[0.3em] text-white/30">
+      {label}
+    </div>
   );
 
   if (collapsed) {
@@ -221,11 +249,13 @@ export function LeftRail({ state, scene, onOpenGuide, onOpenTimeMachine }: Props
             setOpen((o) => ({ ...o, objects: !o.objects }))
           }
         >
+          <Sub label="Sky reference" />
           {layerToggle(
             state.constellationsOn,
             "✦ Constellations",
             () => scene.setConstellations(!state.constellationsOn),
             "L",
+            "88",
           )}
           {layerToggle(
             state.coordGridOn,
@@ -233,35 +263,71 @@ export function LeftRail({ state, scene, onOpenGuide, onOpenTimeMachine }: Props
             () => scene.setCoordGrid(!state.coordGridOn),
             "G",
           )}
-          {layerToggle(state.starLabelsOn, "★ Star names", () =>
-            scene.setStarLabels(!state.starLabelsOn),
+          {layerToggle(
+            state.starLabelsOn,
+            "★ Star names",
+            () => scene.setStarLabels(!state.starLabelsOn),
+            undefined,
+            "120k+",
           )}
-          {layerToggle(state.pulsarsOn, "⚡ Pulsars (3,927)", () =>
-            scene.setPulsars(!state.pulsarsOn),
+
+          <Sub label="Solar system" />
+          {layerToggle(
+            state.moonsOn,
+            "🌙 Moons",
+            () => scene.setMoons(!state.moonsOn),
+            undefined,
+            "20+",
           )}
-          {layerToggle(state.exoplanetsOn, "⊙ Exoplanets (6,278)", () =>
-            scene.setExoplanets(!state.exoplanetsOn),
+          {layerToggle(
+            state.asteroidsOn,
+            "💫 Asteroids",
+            () => scene.setAsteroids(!state.asteroidsOn),
+            undefined,
+            "~100k",
           )}
-          {layerToggle(state.cosmicLandmarksOn, "◉ Exotic objects", () =>
-            scene.setCosmicLandmarks(!state.cosmicLandmarksOn),
+          {layerToggle(
+            state.cometsOn,
+            "☄ Comets",
+            () => scene.setComets(!state.cometsOn),
+            undefined,
+            "thousands",
           )}
-          {layerToggle(state.asteroidsOn, "💫 Asteroids (~100k)", () =>
-            scene.setAsteroids(!state.asteroidsOn),
-          )}
-          {layerToggle(state.cometsOn, "☄ Comets", () =>
-            scene.setComets(!state.cometsOn),
-          )}
-          {layerToggle(state.interstellarOn, "🪐 Interstellar", () =>
-            scene.setInterstellar(!state.interstellarOn),
-          )}
-          {layerToggle(state.moonsOn, "🌙 Moons", () =>
-            scene.setMoons(!state.moonsOn),
+          {layerToggle(
+            state.interstellarOn,
+            "🪐 Interstellar",
+            () => scene.setInterstellar(!state.interstellarOn),
+            undefined,
+            "2",
           )}
           {layerToggle(
             state.auroraOn,
             "🌌 Aurora",
             () => scene.setAurora(!state.auroraOn),
             "Y",
+          )}
+
+          <Sub label="Deep sky" />
+          {layerToggle(
+            state.exoplanetsOn,
+            "⊙ Exoplanets",
+            () => scene.setExoplanets(!state.exoplanetsOn),
+            undefined,
+            "6,278",
+          )}
+          {layerToggle(
+            state.pulsarsOn,
+            "⚡ Pulsars",
+            () => scene.setPulsars(!state.pulsarsOn),
+            undefined,
+            "3,927",
+          )}
+          {layerToggle(
+            state.cosmicLandmarksOn,
+            "◉ Exotic objects",
+            () => scene.setCosmicLandmarks(!state.cosmicLandmarksOn),
+            undefined,
+            "BH · QSO · GW",
           )}
         </Section>
 
