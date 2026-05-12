@@ -8,14 +8,14 @@
 > - Audience: consumer-default, deep enough for the science-curious
 > - **Never** monetize (in v1)
 > - **Build in public**: GitHub repo public from commit #1
-> - Domain: space.dashable.dev
+> - Domain: unspeakable-world.dashable.dev
 > - Camera: Voyager (orbit + tap-to-fly), no Pilot mode in v1
 
 ---
 
 ## What ships in 7 days
 
-Public OSS browser app at space.dashable.dev that:
+Public OSS browser app at unspeakable-world.dashable.dev that:
 
 1. Streams real HiPS sky tiles (DSS2 + 2MASS + WISE) onto a 3D sphere with free 6DOF Voyager camera
 2. Renders Hipparcos bright stars with GPU instancing
@@ -41,7 +41,7 @@ What it does NOT ship: production HEALPix renderer (toy only, polar seam bugs do
 - [ ] LICENSE (MIT)
 - [ ] README with vision (cinematic, builds-in-public energy)
 - [ ] Landing page: dark, animated, email capture, "coming this week" headline
-- [ ] Cloudflare Pages + named tunnel for space.dashable.dev
+- [ ] Cloudflare Pages + named tunnel for unspeakable-world.dashable.dev
 - [ ] git init + first commit + push to public GitHub
 - [ ] Tweet/X devlog Day 1 with screenshot
 

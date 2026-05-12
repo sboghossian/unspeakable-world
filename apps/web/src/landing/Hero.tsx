@@ -154,7 +154,7 @@ export function Hero() {
 
       <p className="mt-12 text-sm text-white/40">
         Live at{" "}
-        <span className="font-mono text-white/60">space.dashable.dev</span> · still
+        <span className="font-mono text-white/60">unspeakable-world.dashable.dev</span> · still
         building in public
       </p>
     </section>

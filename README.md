@@ -6,9 +6,9 @@
 > biosignature exoplanet, plus an 8-lesson curriculum that takes a
 > curious learner from "Earth spins" to "the cosmic web." 60 fps. MIT.
 
-**🚀 Live:** [space.dashable.dev](https://space.dashable.dev) — open `/#viewer` and drag
+**🚀 Live:** [unspeakable-world.dashable.dev](https://unspeakable-world.dashable.dev) — open `/#viewer` and drag
 
-[![og](apps/web/public/og-card.png)](https://space.dashable.dev/#viewer)
+[![og](apps/web/public/og-card.png)](https://unspeakable-world.dashable.dev/#viewer)
 
 ---
 
@@ -132,7 +132,7 @@ every dataset federated (R2 free egress), all logging through
 
 ## v3 — Solar System Flight + Gravity Sandbox
 
-**🚀 [/#solar — Solar System Flight Mode](https://space.dashable.dev/#solar).** A separate 3-D heliocentric view where the camera flies around the Sun in true heliocentric coordinates (1 AU = 1 unit). Each planet sits at its real `HelioVector()` position, with a one-period sampled elliptical orbit drawn behind it. **Textured Earth** with continents + atmosphere glow. **Saturn with rings** (Cassini Division included). **Jupiter with all four Galilean moons** orbiting in 3D. **Mars with Phobos + Deimos**. **30K background stars** with full constellation context (50 brightest stars labelled, 73 cosmic landmarks visible). **Solar zones** overlay: habitable zone, frost line, asteroid belt, Kuiper belt as colour-coded ring loops.
+**🚀 [/#solar — Solar System Flight Mode](https://unspeakable-world.dashable.dev/#solar).** A separate 3-D heliocentric view where the camera flies around the Sun in true heliocentric coordinates (1 AU = 1 unit). Each planet sits at its real `HelioVector()` position, with a one-period sampled elliptical orbit drawn behind it. **Textured Earth** with continents + atmosphere glow. **Saturn with rings** (Cassini Division included). **Jupiter with all four Galilean moons** orbiting in 3D. **Mars with Phobos + Deimos**. **30K background stars** with full constellation context (50 brightest stars labelled, 73 cosmic landmarks visible). **Solar zones** overlay: habitable zone, frost line, asteroid belt, Kuiper belt as colour-coded ring loops.
 
 **🛰 935 real satellites** with live SGP4 propagation. Sourced from Celestrak's TLE feeds (stations + GPS + Galileo + GEO + Intelsat + Iridium NEXT + science + amateur — Starlink intentionally excluded as visual noise). Each frame's tick re-propagates every TLE for the current sim time, draping a halo of cyan dots around Earth that actually move as time scrubs.
 

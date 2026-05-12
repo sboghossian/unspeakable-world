@@ -7,7 +7,7 @@ export default defineConfig({
     host: true,
     port: 4500,
     strictPort: true,
-    allowedHosts: ["space.dashable.dev", "localhost", "127.0.0.1"],
+    allowedHosts: ["unspeakable-world.dashable.dev", "localhost", "127.0.0.1"],
     proxy: {
       // Dev-time CORS proxy for JPL Solar System Dynamics endpoints —
       // mirrors the Pages Function in apps/web/functions/api/. The

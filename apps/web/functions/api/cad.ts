@@ -3,7 +3,7 @@
  *
  * Why this exists: NASA JPL's `ssd-api.jpl.nasa.gov/cad.api` is a
  * straight HTTPS endpoint with no `Access-Control-Allow-Origin` header,
- * so a browser fetch from `space.dashable.dev` is blocked. This function
+ * so a browser fetch from `unspeakable-world.dashable.dev` is blocked. This function
  * forwards the query string to JPL, returns the JSON verbatim, and adds
  * the CORS header the browser needs.
  *
@@ -24,7 +24,7 @@ export const onRequest: PagesFunction = async (ctx) => {
   // CACHE_SECONDS hit the edge instead of JPL.
   const upstream = await fetch(target, {
     cf: { cacheEverything: true, cacheTtl: CACHE_SECONDS },
-    headers: { "user-agent": "unspeakable-world (space.dashable.dev)" },
+    headers: { "user-agent": "unspeakable-world (unspeakable-world.dashable.dev)" },
   });
 
   const headers = new Headers();
