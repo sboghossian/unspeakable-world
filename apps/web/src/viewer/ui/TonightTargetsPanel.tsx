@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Vector3 } from "three";
 import { currentAltitude } from "../observer/rise-set";
+import {
+  BORTLE,
+  type BortleClass,
+  effectiveBortle,
+} from "../observer/bortle";
+import { BortleBadge, BortleSelector } from "./BortleSelector";
 import type { SearchEntry } from "../search/search-index";
 
 /**
@@ -25,6 +31,23 @@ const LIMIT = 15;
 export function TonightTargetsPanel({ entries, observer, onSelect }: Props) {
   const [open, setOpen] = useState(false);
   const [tick, setTick] = useState(0);
+  const [bortle, setBortle] = useState<BortleClass>(() =>
+    effectiveBortle(observer),
+  );
+
+  // If the observer fixes their location after we mounted, re-seed the
+  // default Bortle so the geo-based guess kicks in even on first open.
+  useEffect(() => {
+    setBortle((prev) => {
+      // Only re-seed if the user hasn't manually picked yet — readBortle
+      // path inside effectiveBortle wins over the geo guess. Cheapest
+      // way to "respect existing pick" is to recompute through
+      // effectiveBortle and accept whatever it returns; the localStorage
+      // value is canonical.
+      const next = effectiveBortle(observer);
+      return next === prev ? prev : next;
+    });
+  }, [observer]);
 
   // Keep the list fresh while open — Earth rotates fast at zenith.
   useEffect(() => {
@@ -32,6 +55,8 @@ export function TonightTargetsPanel({ entries, observer, onSelect }: Props) {
     const id = window.setInterval(() => setTick((n) => n + 1), 60_000);
     return () => window.clearInterval(id);
   }, [open]);
+
+  const limitingMag = BORTLE[bortle].limitingMag;
 
   const ranked = useMemo(() => {
     if (!observer) return [];
@@ -53,6 +78,11 @@ export function TonightTargetsPanel({ entries, observer, onSelect }: Props) {
       // Brighter = lower mag = better. Default mag 8 if unknown so it
       // sinks below stars/Messier with measured magnitudes.
       const mag = e.mag ?? 8;
+      // Bortle filter: hide objects fainter than what's naked-eye-visible
+      // at the user's site. Allow a +1.5 mag "binocular grace" so the
+      // panel isn't empty under Bortle 7-9. Solar-system bodies (very
+      // bright) always pass.
+      if (mag > limitingMag + 1.5 && e.kind !== "planet") continue;
       // Score: higher altitude wins (atmospheric extinction), bright wins.
       // Treat altitudes above 60° as equally premium.
       const altWeight = Math.min(alt, 60) / 60;
@@ -61,7 +91,7 @@ export function TonightTargetsPanel({ entries, observer, onSelect }: Props) {
     }
     scored.sort((a, b) => b.score - a.score);
     return scored.slice(0, LIMIT);
-  }, [entries, observer, tick]);
+  }, [entries, observer, tick, limitingMag]);
 
   if (!observer) return null;
 
@@ -83,13 +113,18 @@ export function TonightTargetsPanel({ entries, observer, onSelect }: Props) {
 
       {open && (
         <div className="absolute right-0 top-full z-30 mt-2 w-[min(380px,92vw)] overflow-hidden rounded-xl border border-white/10 bg-space-950/95 backdrop-blur">
-          <div className="border-b border-white/5 px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-white/40">
-            up now · ≥{MIN_ALT_DEG}° · top {LIMIT} by brightness × altitude
+          <div className="flex items-center justify-between gap-2 border-b border-white/5 px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-white/40">
+            <span>up now · ≥{MIN_ALT_DEG}° · top {LIMIT}</span>
+            <BortleBadge value={bortle} />
+          </div>
+          <div className="border-b border-white/5 px-3 py-2">
+            <BortleSelector value={bortle} onChange={setBortle} />
           </div>
           {ranked.length === 0 ? (
             <div className="px-3 py-4 text-xs text-white/40">
-              Nothing bright above {MIN_ALT_DEG}° at your location right now.
-              Try again later — the sky rotates 15°/hour.
+              Nothing brighter than mag {limitingMag.toFixed(1)} is above{" "}
+              {MIN_ALT_DEG}° right now. Try a higher Bortle class for a
+              wider list, or wait — the sky rotates 15°/hour.
             </div>
           ) : (
             <ul className="max-h-[60vh] overflow-y-auto">
