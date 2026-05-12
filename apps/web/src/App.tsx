@@ -4,6 +4,7 @@ import { Hero } from "./landing/Hero";
 import { OpenData } from "./landing/OpenData";
 import { Roadmap } from "./landing/Roadmap";
 import { Footer } from "./landing/Footer";
+import { PwaInstallBanner } from "./landing/PwaInstallBanner";
 import { navigate, surfacePlanet, useRoute } from "./router";
 
 // Lazy: the viewer pulls in Three.js, AstronomyEngine, and ~500 KB of HiPS /
@@ -38,6 +39,7 @@ export function App() {
         <Suspense fallback={<ViewerLoadingVeil />}>
           <Guide onExit={() => navigate("landing")} />
         </Suspense>
+        <PwaInstallBanner />
       </main>
     );
   }
@@ -48,6 +50,7 @@ export function App() {
         <Suspense fallback={<ViewerLoadingVeil />}>
           <Universe onExit={() => navigate("landing")} />
         </Suspense>
+        <PwaInstallBanner />
       </main>
     );
   }
@@ -58,6 +61,7 @@ export function App() {
         <Suspense fallback={<ViewerLoadingVeil />}>
           <Galactic onExit={() => navigate("solar")} />
         </Suspense>
+        <PwaInstallBanner />
       </main>
     );
   }
@@ -71,6 +75,7 @@ export function App() {
             onExit={() => navigate("solar")}
           />
         </Suspense>
+        <PwaInstallBanner />
       </main>
     );
   }
@@ -96,6 +101,7 @@ export function App() {
             }}
           />
         </Suspense>
+        <PwaInstallBanner />
       </main>
     );
   }
@@ -106,6 +112,7 @@ export function App() {
         <Suspense fallback={<ViewerLoadingVeil />}>
           <Viewer />
         </Suspense>
+        <PwaInstallBanner />
       </main>
     );
   }
@@ -119,6 +126,7 @@ export function App() {
         <Roadmap />
         <Footer />
       </div>
+      <PwaInstallBanner />
     </main>
   );
 }
