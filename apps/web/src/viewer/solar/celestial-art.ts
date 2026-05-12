@@ -4,6 +4,7 @@ import {
   CanvasTexture,
   LinearFilter,
   ShaderMaterial,
+  Texture,
   Vector3,
 } from "three";
 
@@ -672,6 +673,46 @@ export function paintNeptune(
   ctx.beginPath();
   ctx.ellipse(w * 0.35, h * 0.5, 36, 18, 0, 0, Math.PI * 2);
   ctx.fill();
+}
+
+/**
+ * Try to load the latest SDO/AIA 193 Å full-disk Sun image (1024 px)
+ * as a CORS-enabled texture. Resolves to a Three.js `Texture` on
+ * success or `null` on any error (CORS, 4xx/5xx, network) so the
+ * caller can fall back to the procedural granulation canvas.
+ *
+ * AIA 193 Å is the SDO Atmospheric Imaging Assembly's extreme-UV
+ * channel that highlights the hot corona (~1.6 MK) and coronal-hole
+ * boundaries — the iconic "fiery Sun" look. The asset at
+ * `latest_1024_0193.jpg` is updated several times per hour upstream.
+ */
+export function makeSdoLiveTexture(): Promise<Texture | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.referrerPolicy = "no-referrer";
+    let settled = false;
+    const done = (value: Texture | null) => {
+      if (settled) return;
+      settled = true;
+      resolve(value);
+    };
+    img.addEventListener("load", () => {
+      try {
+        const tex = new Texture(img);
+        tex.minFilter = LinearFilter;
+        tex.magFilter = LinearFilter;
+        tex.needsUpdate = true;
+        done(tex);
+      } catch {
+        done(null);
+      }
+    });
+    img.addEventListener("error", () => done(null));
+    // Belt-and-braces timeout so a hung fetch never blocks the Sun.
+    window.setTimeout(() => done(null), 8000);
+    img.src = "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_1024_0193.jpg";
+  });
 }
 
 /** Tiny seeded RNG so the procedural noise is stable across reloads. */
