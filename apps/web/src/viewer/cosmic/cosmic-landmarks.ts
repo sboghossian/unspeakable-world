@@ -1,10 +1,16 @@
 import {
   AdditiveBlending,
+  BufferGeometry,
   CanvasTexture,
+  Color,
+  Float32BufferAttribute,
   Group,
   LinearFilter,
+  Points,
+  PointsMaterial,
   Sprite,
   SpriteMaterial,
+  Vector3,
 } from "three";
 import { raDecToVec3 } from "../stars/coords";
 
@@ -676,6 +682,105 @@ export type Placed = {
   sprite: Sprite;
 };
 
+/**
+ * Per-cluster visual profile for the 3D point field. Apparent angular
+ * diameters from SEDS / SIMBAD. Open clusters render uniformly across
+ * a small disk; globulars concentrate toward their core via a Gaussian
+ * radial profile. The point colour is a tint applied to a soft round
+ * sprite so the stars don't look like flat squares at any zoom.
+ */
+type ClusterProfile = {
+  apparentDiameterDeg: number;
+  starCount: number;
+  /** Disk (open) vs ball with Gaussian-density (globular). */
+  profile: "disk" | "ball";
+  /** Tint applied to every star in the cluster. */
+  tint: string;
+};
+
+const CLUSTER_PROFILES: Record<string, ClusterProfile> = {
+  // Open clusters — young + loose. Tints lean blue-white.
+  "Pleiades (M45)": {
+    apparentDiameterDeg: 1.83,
+    starCount: 280,
+    profile: "disk",
+    tint: "#cfe4ff",
+  },
+  Hyades: {
+    apparentDiameterDeg: 5.5,
+    starCount: 320,
+    profile: "disk",
+    tint: "#ffd9b0",
+  },
+  "Praesepe (M44)": {
+    apparentDiameterDeg: 1.58,
+    starCount: 220,
+    profile: "disk",
+    tint: "#fff1c8",
+  },
+  "Coma Berenices Cluster": {
+    apparentDiameterDeg: 7.5,
+    starCount: 200,
+    profile: "disk",
+    tint: "#fff5dc",
+  },
+  "Double Cluster (NGC 869 / 884)": {
+    apparentDiameterDeg: 1.5,
+    starCount: 380,
+    profile: "disk",
+    tint: "#d6e2ff",
+  },
+  "Wild Duck Cluster (M11)": {
+    apparentDiameterDeg: 0.23,
+    starCount: 320,
+    profile: "disk",
+    tint: "#ffe8b8",
+  },
+  // Globulars — old + dense. Yellow-orange tints, Gaussian profile.
+  "M13 (Great Hercules Cluster)": {
+    apparentDiameterDeg: 0.33,
+    starCount: 600,
+    profile: "ball",
+    tint: "#ffd180",
+  },
+  "M22 (Sagittarius Cluster)": {
+    apparentDiameterDeg: 0.53,
+    starCount: 500,
+    profile: "ball",
+    tint: "#ffce72",
+  },
+  "Omega Centauri (NGC 5139)": {
+    apparentDiameterDeg: 0.6,
+    starCount: 800,
+    profile: "ball",
+    tint: "#ffd28a",
+  },
+  "47 Tucanae": {
+    apparentDiameterDeg: 0.5,
+    starCount: 700,
+    profile: "ball",
+    tint: "#ffd896",
+  },
+  M3: {
+    apparentDiameterDeg: 0.3,
+    starCount: 480,
+    profile: "ball",
+    tint: "#ffd182",
+  },
+  M5: {
+    apparentDiameterDeg: 0.38,
+    starCount: 500,
+    profile: "ball",
+    tint: "#ffd99c",
+  },
+  M15: {
+    apparentDiameterDeg: 0.3,
+    starCount: 520,
+    profile: "ball",
+    tint: "#ffd07a",
+  },
+};
+
 const COLOR_BY_KIND: Record<LandmarkKind, string> = {
   "black-hole": "rgba(255, 130, 130, 0.95)",
   pulsar: "rgba(255, 200, 90, 0.95)",
@@ -718,7 +823,19 @@ export class CosmicLandmarks {
 
   private build(): void {
     const accretionTex = makeAccretionDiskTexture();
+    const starSpriteTex = makeStarSpriteTexture();
     for (const lm of COSMIC_LANDMARKS) {
+      // 3D point fields for star clusters — these go BEHIND the label
+      // sprite so the label always reads on top. Each cluster gets
+      // ~200-800 points scattered in a small angular patch, tinted by
+      // the cluster's intrinsic colour.
+      if (lm.kind === "open-cluster" || lm.kind === "globular-cluster") {
+        const profile = CLUSTER_PROFILES[lm.name];
+        if (profile) {
+          const pts = buildClusterPoints(lm, profile, starSpriteTex);
+          this.group.add(pts);
+        }
+      }
       const tex = makeLabel(lm.name, COLOR_BY_KIND[lm.kind]);
       const mat = new SpriteMaterial({
         map: tex,
@@ -863,4 +980,154 @@ function makeAccretionDiskTexture(): CanvasTexture {
   tex.minFilter = LinearFilter;
   tex.magFilter = LinearFilter;
   return tex;
+}
+
+/**
+ * Soft round star sprite — radial gradient from a bright core to a
+ * transparent rim. Shared across every cluster point so the point cloud
+ * reads as actual stars rather than flat squares (the default Three.js
+ * Points appearance).
+ */
+function makeStarSpriteTexture(): CanvasTexture {
+  const SIZE = 64;
+  const canvas = document.createElement("canvas");
+  canvas.width = SIZE;
+  canvas.height = SIZE;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("2d context unavailable");
+  const cx = SIZE / 2;
+  const cy = SIZE / 2;
+  const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, SIZE / 2);
+  grad.addColorStop(0.0, "rgba(255,255,255,1.0)");
+  grad.addColorStop(0.2, "rgba(255,255,255,0.85)");
+  grad.addColorStop(0.5, "rgba(255,255,255,0.18)");
+  grad.addColorStop(1.0, "rgba(255,255,255,0)");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, SIZE, SIZE);
+  const tex = new CanvasTexture(canvas);
+  tex.minFilter = LinearFilter;
+  tex.magFilter = LinearFilter;
+  return tex;
+}
+
+/**
+ * Build a Points cloud for a single cluster. We start with a frame whose
+ * Z axis points toward the cluster's RA/Dec direction, scatter stars in
+ * that frame's tangent plane (open clusters: uniform disk) or in a small
+ * ball around the centre (globulars: Gaussian density), then rotate the
+ * whole patch back into world coordinates.
+ *
+ * The resulting points sit at radii slightly less than 1.0 so they're
+ * just inside the celestial-sphere shell where the labels live — that
+ * keeps depth-order intuitive and makes the cluster read as a group
+ * sitting "in front of" the chip label.
+ */
+function buildClusterPoints(
+  lm: CosmicLandmark,
+  profile: ClusterProfile,
+  sprite: CanvasTexture,
+): Points {
+  const [cx, cy, cz] = raDecToVec3(lm.raDeg, lm.decDeg, 1);
+  const center = new Vector3(cx, cy, cz);
+
+  // Pick any vector not parallel to center, then build an orthonormal
+  // basis (u, v, center) so we can scatter points in (u, v) and rotate
+  // into world space.
+  const ref =
+    Math.abs(center.y) < 0.9 ? new Vector3(0, 1, 0) : new Vector3(1, 0, 0);
+  const u = new Vector3().crossVectors(ref, center).normalize();
+  const v = new Vector3().crossVectors(center, u).normalize();
+
+  const halfAngleRad = (profile.apparentDiameterDeg * 0.5 * Math.PI) / 180;
+  const angularRadius = Math.tan(halfAngleRad); // small-angle tan ≈ rad
+
+  const positions = new Float32Array(profile.starCount * 3);
+  const sizes = new Float32Array(profile.starCount);
+  const tint = new Color(profile.tint);
+  const colors = new Float32Array(profile.starCount * 3);
+
+  // Use a tiny linear-congruential RNG so the layout is deterministic
+  // across reloads (same cluster, same shape) but still hand-tuned per
+  // cluster by the name string.
+  let seed = hashString(lm.name);
+  const rand = () => {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed / 0xffffffff;
+  };
+
+  for (let i = 0; i < profile.starCount; i++) {
+    let r: number;
+    if (profile.profile === "ball") {
+      // Gaussian-ish via Box-Muller, clamped to angularRadius.
+      const u1 = Math.max(rand(), 1e-6);
+      const u2 = rand();
+      const g = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+      r = Math.min(Math.abs(g) * angularRadius * 0.45, angularRadius);
+    } else {
+      // Open clusters: uniform disk with √ for area-fair sampling.
+      r = Math.sqrt(rand()) * angularRadius;
+    }
+    const theta = rand() * 2 * Math.PI;
+    const offsetU = r * Math.cos(theta);
+    const offsetV = r * Math.sin(theta);
+
+    // For globulars we also nudge stars along the line-of-sight to give
+    // the ball some thickness. For open clusters we keep it flat — they
+    // ARE flatter on the sky than they are deep.
+    const radial =
+      profile.profile === "ball" ? (rand() - 0.5) * angularRadius * 0.6 : 0;
+
+    const x = center.x + u.x * offsetU + v.x * offsetV + center.x * radial;
+    const y = center.y + u.y * offsetU + v.y * offsetV + center.y * radial;
+    const z = center.z + u.z * offsetU + v.z * offsetV + center.z * radial;
+
+    // Renormalize back to the celestial-sphere shell (a hair inside so
+    // the cluster sits slightly behind labels).
+    const norm = Math.hypot(x, y, z);
+    const k = 0.9955 / norm;
+    positions[i * 3] = x * k;
+    positions[i * 3 + 1] = y * k;
+    positions[i * 3 + 2] = z * k;
+
+    // Slight per-star size variation so the cluster isn't uniform.
+    sizes[i] = 0.0018 + rand() * 0.0028;
+    // Slight per-star tint variation around the cluster's baseline.
+    const jitter = 0.7 + rand() * 0.3;
+    colors[i * 3] = tint.r * jitter;
+    colors[i * 3 + 1] = tint.g * jitter;
+    colors[i * 3 + 2] = tint.b * jitter;
+  }
+
+  const geom = new BufferGeometry();
+  geom.setAttribute("position", new Float32BufferAttribute(positions, 3));
+  geom.setAttribute("color", new Float32BufferAttribute(colors, 3));
+
+  // We use PointsMaterial with vertexColors — per-star sizing would need
+  // a custom shader and we want the LOWEST possible bundle hit. The
+  // texture's soft falloff already gives the "real star" feel.
+  const mat = new PointsMaterial({
+    map: sprite,
+    size: 0.0035,
+    sizeAttenuation: true,
+    transparent: true,
+    depthWrite: false,
+    depthTest: true,
+    blending: AdditiveBlending,
+    vertexColors: true,
+    opacity: 0.95,
+  });
+
+  const points = new Points(geom, mat);
+  points.renderOrder = 2; // behind labels (renderOrder 4) and BH disks (3)
+  points.name = `cluster:${lm.name}`;
+  return points;
+}
+
+function hashString(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
 }
