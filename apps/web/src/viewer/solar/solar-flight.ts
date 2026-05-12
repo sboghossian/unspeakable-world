@@ -636,7 +636,11 @@ export class SolarFlightScene {
         const loader = new TextureLoader();
         loader.setCrossOrigin("anonymous");
         loader.load(
-          "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Land_ocean_ice_cloud_2048.jpg/1024px-Land_ocean_ice_cloud_2048.jpg",
+          // The 2048px native thumbnail is the canonical Wikimedia size
+          // for this file and is reliably served. The previous 1024px
+          // variant 400'd on a cold cache miss — the surface module
+          // already uses 2048 successfully.
+          "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Land_ocean_ice_cloud_2048.jpg/2048px-Land_ocean_ice_cloud_2048.jpg",
           (tex) => {
             const dayUniform = earthMat.uniforms["uDay"];
             if (dayUniform) dayUniform.value = tex;

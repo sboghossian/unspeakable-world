@@ -687,32 +687,13 @@ export function paintNeptune(
  * `latest_1024_0193.jpg` is updated several times per hour upstream.
  */
 export function makeSdoLiveTexture(): Promise<Texture | null> {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.referrerPolicy = "no-referrer";
-    let settled = false;
-    const done = (value: Texture | null) => {
-      if (settled) return;
-      settled = true;
-      resolve(value);
-    };
-    img.addEventListener("load", () => {
-      try {
-        const tex = new Texture(img);
-        tex.minFilter = LinearFilter;
-        tex.magFilter = LinearFilter;
-        tex.needsUpdate = true;
-        done(tex);
-      } catch {
-        done(null);
-      }
-    });
-    img.addEventListener("error", () => done(null));
-    // Belt-and-braces timeout so a hung fetch never blocks the Sun.
-    window.setTimeout(() => done(null), 8000);
-    img.src = "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_1024_0193.jpg";
-  });
+  // SDO assets at sdo.gsfc.nasa.gov are NOT CORS-enabled — every attempt
+  // logs three browser-level CORS errors before our JS handler can swallow
+  // them. To keep the console clean for production users we short-circuit
+  // here and always fall back to procedural granulation. The live AIA 193
+  // texture will return once we ship the Cloudflare Worker proxy
+  // (`/api/proxy/sdo`), at which point this can hit the proxied URL.
+  return Promise.resolve(null);
 }
 
 /** Tiny seeded RNG so the procedural noise is stable across reloads. */

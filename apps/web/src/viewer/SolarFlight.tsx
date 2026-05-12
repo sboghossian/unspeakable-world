@@ -18,6 +18,7 @@ import { SpacecraftPanel } from "./ui/SpacecraftPanel";
 import { HistoryPanel } from "./ui/HistoryPanel";
 import { MissionsCatalogPanel } from "./ui/MissionsCatalogPanel";
 import { AchievementsPanel } from "./ui/AchievementsPanel";
+import { MusicPanel } from "./ui/MusicPanel";
 import { CollectionsPanel } from "./ui/CollectionsPanel";
 import { MarsPhotosPanel } from "./ui/MarsPhotosPanel";
 import { ApodArchivePanel } from "./ui/ApodArchivePanel";
@@ -369,6 +370,7 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
           ))}
           <PlanetCrossSection focus={state.focus} />
           <ExploreDrawer groups={exploreGroups} />
+          <MusicPanel />
           <AchievementsPanel />
           <TopBarActions
             focusActive={focusMode}

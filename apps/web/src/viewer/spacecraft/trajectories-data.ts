@@ -213,72 +213,14 @@ export async function refreshParkerSolarProbe(now: Date = new Date()): Promise<
     CSV_FORMAT: "NO",
   });
 
-  let text: string;
-  try {
-    const res = await fetch(
-      `https://ssd.jpl.nasa.gov/api/horizons.api?${params.toString()}`,
-    );
-    if (!res.ok) return null;
-    const body = (await res.json()) as { result?: string };
-    if (!body.result) return null;
-    text = body.result;
-  } catch {
-    return null;
-  }
-
-  // Extract the $$SOE … $$EOE block, then parse alternating
-  // "JD … TDB …" / " X = …  Y = …  Z = …" lines.
-  const start = text.indexOf("$$SOE");
-  const end = text.indexOf("$$EOE");
-  if (start < 0 || end < 0 || end < start) return null;
-  const block = text.slice(start + 5, end);
-  const lines = block.split(/\r?\n/);
-  const jds: number[] = [];
-  const xyz: number[] = [];
-  let pendingJD: number | null = null;
-  for (const raw of lines) {
-    const line = raw.trim();
-    if (!line) continue;
-    // "2459214.500000000 = A.D. 2021-Jan-01 00:00:00.0000 TDB"
-    const jdMatch = line.match(/^(\d{7}\.\d+)\s*=/);
-    if (jdMatch && jdMatch[1]) {
-      pendingJD = parseFloat(jdMatch[1]);
-      continue;
-    }
-    // " X =-1.234E+00 Y = 5.678E-01 Z =-9.876E-02"
-    const xyzMatch = line.match(
-      /X\s*=\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?).*Y\s*=\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?).*Z\s*=\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)/,
-    );
-    if (xyzMatch && pendingJD !== null) {
-      const x = parseFloat(xyzMatch[1] ?? "0");
-      const y = parseFloat(xyzMatch[2] ?? "0");
-      const z = parseFloat(xyzMatch[3] ?? "0");
-      if (Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(z)) {
-        jds.push(pendingJD);
-        xyz.push(x, y, z);
-      }
-      pendingJD = null;
-    }
-  }
-  if (jds.length < 4) return null;
-
-  // Persist to cache for next time.
-  try {
-    const cached: CachedPsp = {
-      fetchedAt: Date.now(),
-      polyline: xyz,
-      epochJDs: jds,
-    };
-    window.localStorage.setItem(PSP_CACHE_KEY, JSON.stringify(cached));
-  } catch {
-    // localStorage may be disabled (private mode, quota); not fatal.
-  }
-
-  return {
-    slug: "psp",
-    polyline: new Float32Array(xyz),
-    epochJDs: new Float32Array(jds),
-  };
+  // JPL Horizons API does NOT send CORS headers, so a direct browser
+  // fetch always logs three CORS errors before our try/catch can swallow
+  // them. We short-circuit until the Cloudflare Worker proxy at
+  // `/api/proxy/horizons` is shipped; until then Parker Solar Probe's
+  // refreshed trajectory just stays absent — the static baseline at
+  // `/data/missions/psp.bin` (if shipped) covers it.
+  void params;
+  return null;
 }
 
 /**

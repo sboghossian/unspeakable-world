@@ -24,6 +24,7 @@ import {
 } from "./ui/SceneBottomHud";
 import { TopBarActions } from "./ui/TopBarActions";
 import { AchievementsPanel } from "./ui/AchievementsPanel";
+import { MusicPanel } from "./ui/MusicPanel";
 import { HistoryPanel } from "./ui/HistoryPanel";
 import { MissionsCatalogPanel } from "./ui/MissionsCatalogPanel";
 import { GyroButton } from "./ui/GyroButton";
@@ -460,6 +461,7 @@ export function Universe({ onExit }: Props) {
 
         <div className="pointer-events-auto flex max-w-[60vw] flex-wrap items-center justify-end gap-1.5">
           <ExploreDrawer groups={exploreGroups} />
+          <MusicPanel />
           <AchievementsPanel />
           <TopBarActions />
         </div>
