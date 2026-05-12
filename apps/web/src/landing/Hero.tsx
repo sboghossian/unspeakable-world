@@ -23,9 +23,10 @@ export function Hero() {
       </h1>
 
       <p className="mx-auto mt-6 max-w-2xl text-balance text-lg text-white/70 md:text-xl">
-        Every wavelength of every sky survey. Every spacecraft trajectory ever
-        flown. Earth's surface to the cosmic web. In a browser. 60 fps.
-        Open source from commit one.
+        Every wavelength of every sky survey. 1 million Gaia stars. 136K
+        galaxies in 3D. Live transients, gravitational-wave chirps, the
+        full multi-messenger sky. Earth's surface to the cosmic web. In a
+        browser. 60 fps. Open source from commit one.
       </p>
 
       {/* Single primary CTA */}

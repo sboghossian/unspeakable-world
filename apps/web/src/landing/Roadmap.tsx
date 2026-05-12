@@ -135,7 +135,70 @@ const PHASES: Phase[] = [
     day: "Day 20",
     title: "v2 ship",
     detail:
-      "You are here. Refreshed README, updated OG card, new screenshots, fresh hello on socials.",
+      "Refreshed README, updated OG card, new screenshots, fresh hello on socials.",
+    status: "shipped",
+  },
+  {
+    day: "v3.A",
+    title: "Educational reference",
+    detail:
+      "8-lesson curriculum with narrated camera tours · 100 named objects with one-paragraph 'why this matters' + SIMBAD/Wikipedia/ADS citations · 98-term glossary · achievements + Scholar / Mythbuster unlocks.",
+    status: "shipped",
+  },
+  {
+    day: "v3.B",
+    title: "SETI · UAP · Biosignatures",
+    detail:
+      "5 candidate SETI signals · 3 interstellar visitors · 6 biosignature exoplanets · 5 famous UAP cases with skeptical framing · Drake equation sliders · 52 myths debunked with citations.",
+    status: "shipped",
+  },
+  {
+    day: "v3.C",
+    title: "Solar flight + gravity sandbox",
+    detail:
+      "3-D heliocentric scene · 935 SGP4-propagated satellites · gravity sandbox (n-body integration with comet → black hole projectiles) · tracking mode · 3,927 SIMBAD pulsars.",
+    status: "shipped",
+  },
+  {
+    day: "v3.D",
+    title: "AstroGrid parity",
+    detail:
+      "Scene Editor (keyframed cinematic camera walks) · Cosmic flows · dark matter halos · GraceDB + GCN + ATel transient streams · spacecraft trajectories · Explore drawer.",
+    status: "shipped",
+  },
+  {
+    day: "v4.A",
+    title: "+ 6 HiPS surveys",
+    detail:
+      "Pan-STARRS DR1 · SDSS9 · DESI Legacy DR10 · VLASS · TGSS · HST color composite — all CDS / NRAO / ASTRON CORS-verified at Norder3.",
+    status: "shipped",
+  },
+  {
+    day: "v4.B",
+    title: "Federation sweep — 15 datasets",
+    detail:
+      "Gaia DR3 (1M stars) · 6,286 NASA exoplanets + PHL habitability · 84 Chandra X-ray · 7,931 TESS TOIs + 72 VSX variables · 136K galaxies (2MRS + 6dFGS) · multi-messenger (IceCube + Auger + LIGO GWTC-3 + NANOGrav) · ZTF/Lasair · JPL Sentry · Starlink opt-in · Planck E/B · CosmicFlows-4 · 12 sky cultures · Globe at Night · OPAL HST · Mars Rover IoTD.",
+    status: "shipped",
+  },
+  {
+    day: "v4.C",
+    title: "Cosmic Copilot — Layer 2 AI",
+    detail:
+      "Ask 'what am I looking at?' with citations. Offline-first 32-answer fallback · optional Ollama backend (qwen3:8b default) · pluggable OpenAI-compatible · grounded by current scene state · threads persist in localStorage.",
+    status: "shipped",
+  },
+  {
+    day: "v4.D",
+    title: "Universe Mode v2 — seamless tiers",
+    detail:
+      "One scene, two coordinate frames (AU + LY). Camera-relative rendering, tier-aware opacity cross-fades, adaptive WASD speed. Fly from a planet to the cosmic web without a scene swap.",
+    status: "shipped",
+  },
+  {
+    day: "v4.E",
+    title: "AR Sky + WebGPU + URL deep-link",
+    detail:
+      "Mobile AR with rear-camera passthrough + gyro fusion + tap-to-identify · opt-in WebGPU renderer behind a flag (WebGL2 fallback on failure) · every layer toggle round-trips via `&layers=` URL hash.",
     status: "now",
   },
 ];
@@ -160,7 +223,7 @@ export function Roadmap() {
       <div className="mb-10 flex flex-col items-start justify-between gap-3 md:flex-row md:items-end">
         <div>
           <h2 className="font-display text-3xl font-semibold md:text-4xl">
-            19 days shipped.{" "}
+            29 phases shipped.{" "}
             <span className="text-white/40">Building in public.</span>
           </h2>
           <p className="mt-2 text-sm text-white/50">
