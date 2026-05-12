@@ -367,25 +367,42 @@ export class SolarFlightScene {
     for (const spec of PLANETS) {
       const group = new Group();
       const geom = new SphereGeometry(spec.drawSize, 24, 24);
-      // Every planet gets a styled procedural texture (Mercury craters,
-      // Jupiter bands, Mars rust + polar caps, etc.) so the globes don't
-      // read as flat marbles. The base color tints the texture white-on
-      // (set color to white so the map shows through unfiltered).
-      const planetTex = makePlanetTexture(spec.name);
-      const mat = new MeshBasicMaterial({ map: planetTex, color: 0xffffff });
-      const sphere = new Mesh(geom, mat);
+
+      let sphere: Mesh;
+      let earthMaterial: ShaderMaterial | null = null;
+
+      if (spec.name === "Earth") {
+        // Earth gets a custom day/night shader. Sun sits at world origin
+        // in this scene, so the lit hemisphere is the side whose surface
+        // normal points back toward the origin. The night hemisphere
+        // shows a sparse warm city-lights map; a smooth terminator band
+        // cross-fades them.
+        const dayTex = makePlanetTexture("Earth");
+        const nightTex = paintCanvas(1024, 512, paintEarthNight);
+        earthMaterial = makeEarthDayNightMaterial(dayTex, nightTex);
+        sphere = new Mesh(geom, earthMaterial);
+      } else {
+        // Every other planet gets its styled procedural texture
+        // (Mercury craters, Jupiter bands, Mars rust + polar caps, etc.)
+        // applied to a simple unlit MeshBasicMaterial.
+        const planetTex = makePlanetTexture(spec.name);
+        const mat = new MeshBasicMaterial({ map: planetTex, color: 0xffffff });
+        sphere = new Mesh(geom, mat);
+      }
       group.add(sphere);
 
-      // Earth: try to upgrade to the real NASA Blue Marble photo. Falls
-      // back to procedural on CORS / offline.
-      if (spec.name === "Earth") {
+      // Earth: try to upgrade the day texture to the real NASA Blue
+      // Marble photo. Falls back to procedural on CORS / offline.
+      if (spec.name === "Earth" && earthMaterial) {
+        const earthMat = earthMaterial;
         const loader = new TextureLoader();
         loader.setCrossOrigin("anonymous");
         loader.load(
           "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Land_ocean_ice_cloud_2048.jpg/1024px-Land_ocean_ice_cloud_2048.jpg",
           (tex) => {
-            (sphere.material as MeshBasicMaterial).map = tex;
-            (sphere.material as MeshBasicMaterial).needsUpdate = true;
+            const dayUniform = earthMat.uniforms["uDay"];
+            if (dayUniform) dayUniform.value = tex;
+            earthMat.needsUpdate = true;
           },
           undefined,
           () => {
@@ -1373,6 +1390,151 @@ function paintEarth(ctx: CanvasRenderingContext2D, w: number, h: number): void {
   ctx.beginPath();
   ctx.ellipse(w * 0.32, h * 0.07, w * 0.04, h * 0.05, 0, 0, Math.PI * 2);
   ctx.fill();
+}
+
+/** Earth-at-night: dark indigo ocean + black land silhouette with sparse
+ *  warm city-lights dots clustered along the continents. Reads as a
+ *  "lit Earth from orbit" once the day/night shader fades out the day
+ *  hemisphere across the terminator. */
+function paintEarthNight(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+): void {
+  // Deep ocean — nearly black with a hint of blue.
+  ctx.fillStyle = "#020713";
+  ctx.fillRect(0, 0, w, h);
+
+  // Continents as opaque-black silhouettes (no daylight green).
+  const drawBlob = (
+    lon: number,
+    lat: number,
+    scale: number,
+    color: string,
+  ) => {
+    const cx = ((lon + 180) / 360) * w;
+    const cy = ((90 - lat) / 180) * h;
+    const sx = scale * (w / 360);
+    const sy = scale * (h / 180);
+    ctx.beginPath();
+    ctx.moveTo(cx + sx, cy);
+    for (let a = 0; a < Math.PI * 2; a += 0.3) {
+      const r = 1 + Math.sin(a * 3) * 0.18 + Math.cos(a * 2) * 0.1;
+      ctx.lineTo(cx + Math.cos(a) * sx * r, cy + Math.sin(a) * sy * r);
+    }
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+  };
+  const landDark = "#050810";
+  drawBlob(20, 0, 25, landDark);
+  drawBlob(25, -20, 18, landDark);
+  drawBlob(55, 50, 50, landDark);
+  drawBlob(100, 45, 30, landDark);
+  drawBlob(-95, 40, 28, landDark);
+  drawBlob(-65, -15, 22, landDark);
+  drawBlob(-110, 55, 22, landDark);
+  drawBlob(135, -25, 18, landDark);
+
+  // City-light clusters: warm amber dots concentrated around major
+  // population centers. Lon/lat approximations — close enough for an
+  // orbital fade-through.
+  const cityClusters: Array<{ lon: number; lat: number; r: number; n: number }> = [
+    { lon: -74, lat: 41, r: 14, n: 80 }, // US Northeast
+    { lon: -118, lat: 34, r: 10, n: 50 }, // US West Coast
+    { lon: -90, lat: 30, r: 12, n: 40 }, // US Gulf
+    { lon: 2, lat: 49, r: 9, n: 60 }, // Western Europe
+    { lon: 13, lat: 52, r: 9, n: 70 }, // Central Europe
+    { lon: 28, lat: 41, r: 7, n: 30 }, // Turkey
+    { lon: 35, lat: 32, r: 6, n: 25 }, // Levant
+    { lon: 55, lat: 25, r: 6, n: 30 }, // Gulf
+    { lon: 77, lat: 21, r: 11, n: 90 }, // India
+    { lon: 114, lat: 30, r: 12, n: 110 }, // China
+    { lon: 139, lat: 35, r: 6, n: 50 }, // Japan
+    { lon: 106, lat: -6, r: 5, n: 25 }, // SE Asia
+    { lon: 31, lat: 30, r: 6, n: 30 }, // Egypt/Nile
+    { lon: 3, lat: 6, r: 5, n: 20 }, // Nigeria
+    { lon: -46, lat: -23, r: 6, n: 25 }, // São Paulo
+    { lon: -58, lat: -34, r: 4, n: 15 }, // Buenos Aires
+    { lon: 151, lat: -33, r: 4, n: 15 }, // Sydney
+  ];
+  const seed = mulberry32(0xc171);
+  for (const c of cityClusters) {
+    const cx = ((c.lon + 180) / 360) * w;
+    const cy = ((90 - c.lat) / 180) * h;
+    const sx = c.r * (w / 360);
+    const sy = c.r * (h / 180);
+    for (let i = 0; i < c.n; i++) {
+      // Gaussian-ish scatter around the cluster center.
+      const u = seed() * 2 - 1;
+      const v = seed() * 2 - 1;
+      const x = cx + u * sx;
+      const y = cy + v * sy * 0.7;
+      const a = 0.55 + seed() * 0.45;
+      const r = 0.6 + seed() * 1.4;
+      ctx.fillStyle = `rgba(255,200,120,${a})`;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+}
+
+/** Custom Earth shader: smooth day↔night terminator with city-light
+ *  glow on the unlit hemisphere. Sun is assumed at world origin so the
+ *  light direction at any surface point is -worldPos normalized. */
+function makeEarthDayNightMaterial(
+  dayTex: CanvasTexture,
+  nightTex: CanvasTexture,
+): ShaderMaterial {
+  return new ShaderMaterial({
+    uniforms: {
+      uDay: { value: dayTex },
+      uNight: { value: nightTex },
+    },
+    vertexShader: `
+      varying vec3 vNormalW;
+      varying vec3 vWorldPos;
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        vNormalW = normalize(mat3(modelMatrix) * normal);
+        vec4 wp = modelMatrix * vec4(position, 1.0);
+        vWorldPos = wp.xyz;
+        gl_Position = projectionMatrix * viewMatrix * wp;
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D uDay;
+      uniform sampler2D uNight;
+      varying vec3 vNormalW;
+      varying vec3 vWorldPos;
+      varying vec2 vUv;
+      void main() {
+        // Sun lives at world origin in solar flight; light direction at
+        // any point is the unit vector pointing from that point back to
+        // the origin.
+        vec3 ld = normalize(-vWorldPos);
+        float ndl = dot(normalize(vNormalW), ld);
+        // Soft terminator over ~17° band on either side of the
+        // geometric horizon for a believable twilight.
+        float dayMix = smoothstep(-0.15, 0.15, ndl);
+
+        vec3 day = texture2D(uDay, vUv).rgb;
+        vec3 night = texture2D(uNight, vUv).rgb;
+
+        // Day: Lambert with a small ambient floor so the lit hemisphere
+        // doesn't fall off to pure black at the limb.
+        vec3 dayLit = day * (max(ndl, 0.0) * 0.85 + 0.25);
+        // Night: city lights at full intensity, fading out across the
+        // terminator into the day side.
+        vec3 nightGlow = night * (1.0 - dayMix);
+
+        vec3 col = dayLit * dayMix + nightGlow;
+        gl_FragColor = vec4(col, 1.0);
+      }
+    `,
+  });
 }
 
 function paintMercury(ctx: CanvasRenderingContext2D, w: number, h: number): void {
