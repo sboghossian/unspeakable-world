@@ -374,4 +374,325 @@ export const LESSONS: Lesson[] = [
       },
     ],
   },
+  {
+    id: "constellations-human-invention",
+    title: "Constellations are a human invention",
+    summary:
+      "Orion's stars look neighbourly — until you ask how far away each one actually is.",
+    ageTier: "teen",
+    durationMin: 6,
+    steps: [
+      {
+        kind: "narrate",
+        text: "Turn on the constellation overlay and the sky snaps into shapes — a hunter, a bear, a swan. Every culture has drawn its own. Here's the secret: none of those shapes are physically real.",
+      },
+      { kind: "scene", hash: "#viewer?ra=83.82&dec=-1.20&fov=30&c=1" },
+      {
+        kind: "narrate",
+        text: "This is Orion — the most recognisable constellation in the northern sky. The hunter's belt, his shoulders, his sword — seven naked-eye stars connected by lines that humans drew. Now look at how far away each one really is.",
+      },
+      { kind: "scene", hash: "#sky?ra=88.79&dec=7.41" },
+      {
+        kind: "narrate",
+        text: "Betelgeuse — the red shoulder — sits 642 light-years from us. Bellatrix, the bluer shoulder right next to it on the sky, is only 250 light-years away. They're separated by nearly 400 light-years along our line of sight. They aren't neighbours; they only look adjacent because we're looking at them from one specific angle in the galaxy.",
+      },
+      {
+        kind: "narrate",
+        text: "Fly to any other star system and Orion vanishes. The pattern only exists from Earth. Constellations are coordinates we drew on the dome of the sky — useful for navigation, beautiful as mythology, but not physical groups. The stars inside one are no more related to each other than three random people who happen to line up on a city street.",
+      },
+      {
+        kind: "quiz",
+        question:
+          "Why isn't a constellation a 'real' physical group of stars?",
+        options: [
+          "The stars are too dim to be related",
+          "The stars are at completely different distances from us",
+          "Constellations only contain one star each",
+          "The stars are moving too fast to be grouped",
+        ],
+        answerIndex: 1,
+        explanation:
+          "A constellation is a 2D pattern projected onto the sky. The stars inside it are at wildly different distances — Betelgeuse and Bellatrix differ by ~400 ly along our sightline. From any other vantage point in the galaxy, the pattern dissolves.",
+      },
+      {
+        kind: "narrate",
+        text: "The shapes are ours. The stars are simply where they are.",
+      },
+    ],
+  },
+  {
+    id: "milky-way-place-we-live",
+    title: "The Milky Way is a place we live in",
+    summary:
+      "Pull back from the Sun until our whole galaxy fits in the frame — and meet the black hole at its centre.",
+    ageTier: "teen",
+    durationMin: 7,
+    steps: [
+      {
+        kind: "narrate",
+        text: "Everything we've looked at so far — the planets, the Sun, the few hundred stars you can name — fits inside a tiny patch of one galaxy. Time to zoom out.",
+      },
+      { kind: "scene", hash: "#galactic" },
+      {
+        kind: "narrate",
+        text: "This is the Milky Way: a barred spiral disc roughly 100,000 light-years across, with somewhere between 100 and 400 billion stars. We sit 26,000 light-years from the centre, in a minor spiral feature called the Orion Spur — a quiet suburb between the Sagittarius and Perseus arms.",
+      },
+      { kind: "scene", hash: "#sky?ra=266.4168&dec=-29.0078" },
+      {
+        kind: "narrate",
+        text: "At the centre is Sagittarius A* — a supermassive black hole with 4.3 million solar masses crammed into a region smaller than Mercury's orbit. We can't see it in visible light because 26,000 ly of galactic dust sits in the way, but X-ray and infrared cut right through. The Event Horizon Telescope imaged its shadow in 2022.",
+      },
+      {
+        kind: "narrate",
+        text: "Every star you can see with the naked eye lives inside this same disc. The faint band of light you call 'the Milky Way' on a dark night is the disc itself, viewed edge-on from inside it. You are literally looking out through the body of your own galaxy.",
+      },
+      {
+        kind: "quiz",
+        question: "Roughly how many stars does the Milky Way contain?",
+        options: [
+          "1 billion",
+          "100–400 billion",
+          "10 trillion",
+          "1 quadrillion",
+        ],
+        answerIndex: 1,
+        explanation:
+          "Modern surveys converge on 100–400 billion stars, depending on how you count low-mass red dwarfs. Most are far too dim to see individually — they're hidden in the diffuse glow of the disc.",
+      },
+      {
+        kind: "narrate",
+        text: "One galaxy down. Roughly two trillion to go.",
+      },
+    ],
+  },
+  {
+    id: "other-galaxies-milky-ways",
+    title: "Other galaxies, other Milky Ways",
+    summary:
+      "Andromeda is 2.5 million light-years away — and on a collision course with us.",
+    ageTier: "teen",
+    durationMin: 6,
+    steps: [
+      {
+        kind: "narrate",
+        text: "The Milky Way is one galaxy out of about two trillion in the observable universe. The nearest large one — Andromeda, M31 — is close enough that you can see it with the naked eye on a dark night, as a faint smudge in the constellation of the same name.",
+      },
+      { kind: "scene", hash: "#sky?ra=10.6847&dec=41.2691" },
+      {
+        kind: "narrate",
+        text: "Andromeda is 2.5 million light-years away. The photons hitting your eye when you look at it left M31 when our ancestors were Homo habilis, just figuring out how to chip stone tools. Everything that has ever happened in recorded human history is younger than the light from this one galaxy.",
+      },
+      {
+        kind: "narrate",
+        text: "M31 is bigger than the Milky Way — about a trillion stars — and it's coming for us. Andromeda is moving toward the Milky Way at 110 km/s. In 4.5 billion years the two galaxies will collide, slingshot through each other, and over the next billion years settle into a single elliptical galaxy astronomers have already nicknamed Milkomeda.",
+      },
+      {
+        kind: "narrate",
+        text: "Don't worry about the stars colliding. Galaxies are mostly empty space — the chance of any two stars hitting is essentially zero. But the night sky changes utterly. The sky won't be black and starry anymore; it'll have another galaxy's disc smeared across it.",
+      },
+      {
+        kind: "quiz",
+        question: "How long does light from Andromeda take to reach us?",
+        options: [
+          "2.5 years",
+          "2,500 years",
+          "2.5 million years",
+          "25 million years",
+        ],
+        answerIndex: 2,
+        explanation:
+          "Andromeda is 2.5 million light-years away, so its light takes 2.5 million years to reach us. Looking at it is literal time travel — you're seeing it as it was when our genus first appeared on Earth.",
+      },
+      {
+        kind: "narrate",
+        text: "Every fuzzy patch in a deep telescope image is another disc of a hundred billion suns. The universe is built out of galaxies the way a beach is built out of sand.",
+      },
+    ],
+  },
+  {
+    id: "redshift-universe-past",
+    title: "The universe has a past you can see",
+    summary:
+      "Redshift turns colour into distance — and lets us look billions of years backward in time.",
+    ageTier: "teen",
+    durationMin: 7,
+    steps: [
+      {
+        kind: "narrate",
+        text: "When a galaxy moves away from us, the light it emits gets stretched on the way here. Blue lines slide toward red. The faster the galaxy recedes, the larger the shift. Astronomers call the ratio z — and it's how we measure the universe.",
+      },
+      { kind: "scene", hash: "#sky?ra=187.278&dec=2.052" },
+      {
+        kind: "narrate",
+        text: "This is 3C 273, the first quasar ever identified — Maarten Schmidt cracked its spectrum in 1963. Its lines were shifted so far to the red that nothing nearby could explain it. The only answer was distance: 3C 273 sits about 2.4 billion light-years away, in a galaxy whose central black hole is devouring matter so violently it outshines the Milky Way by a factor of four trillion.",
+      },
+      {
+        kind: "narrate",
+        text: "We're seeing 3C 273 as it was 2.4 billion years ago — when Earth had no multicellular life and the atmosphere was just beginning to fill with oxygen. The light spent longer crossing space to reach us than complex life has existed on this planet.",
+      },
+      {
+        kind: "narrate",
+        text: "The bigger the redshift, the further back you're looking. The James Webb Space Telescope has now found galaxies at z = 14 — light that left them when the universe was only 290 million years old. Telescopes are time machines that only point one direction: backwards.",
+      },
+      {
+        kind: "quiz",
+        question: "What does a galaxy's redshift z directly tell you?",
+        options: [
+          "The galaxy's temperature",
+          "How fast it's moving away from us",
+          "The galaxy's age",
+          "The galaxy's mass",
+        ],
+        answerIndex: 1,
+        explanation:
+          "Redshift is a Doppler measurement: it gives you recession velocity directly. Combined with Hubble's law (v ≈ H₀ × d), that velocity then converts to distance — and distance, divided by the speed of light, converts to look-back time.",
+      },
+      {
+        kind: "narrate",
+        text: "Every spectrum is a fossil. Read the lines, and you read the history of the cosmos.",
+      },
+    ],
+  },
+  {
+    id: "cosmic-web",
+    title: "The cosmic web",
+    summary:
+      "Galaxies aren't scattered — they cluster on filaments separated by gigantic empty voids.",
+    ageTier: "teen",
+    durationMin: 7,
+    steps: [
+      {
+        kind: "narrate",
+        text: "If you sprinkled two trillion galaxies through space at random, the sky would be a uniform fog. Instead, when we map them in three dimensions, galaxies clump along thin sheets and filaments separated by enormous empty regions. The structure has a name: the cosmic web.",
+      },
+      { kind: "scene", hash: "#universe" },
+      {
+        kind: "narrate",
+        text: "The largest single structure we know — the Sloan Great Wall — is a filament of galaxy clusters 1.4 billion light-years long. The largest empty region — the Boötes Void — is 330 million light-years across and contains only about 60 galaxies, where a typical region of that size would hold ten thousand.",
+      },
+      {
+        kind: "narrate",
+        text: "We didn't design these patterns. They were seeded 380,000 years after the Big Bang as tiny density fluctuations — one part in 100,000, recorded in the cosmic microwave background — and amplified by gravity over 13.8 billion years. The web you're looking at is the universe's slow self-assembly.",
+      },
+      {
+        kind: "narrate",
+        text: "And the threads of the web aren't made of stars. They're made of something we cannot see directly. Galaxies are just glowing markers stuck to the surface of vast invisible filaments — and those filaments are dark matter.",
+      },
+      {
+        kind: "quiz",
+        question: "What dominates the mass of the cosmic web?",
+        options: [
+          "Stars",
+          "Interstellar gas",
+          "Dark matter",
+          "Black holes",
+        ],
+        answerIndex: 2,
+        explanation:
+          "Dark matter is roughly 85% of all the matter in the universe and about 27% of its total energy budget. We've never detected a dark matter particle directly — only its gravitational pull on galaxies, on light, and on the shape of the web itself.",
+      },
+      {
+        kind: "narrate",
+        text: "Everything you've ever seen, every star and every galaxy, is decoration on a scaffolding made of stuff we can't see. The visible universe is the foam on a much darker ocean.",
+      },
+    ],
+  },
+  {
+    id: "how-we-know-m87",
+    title: "How we know all this",
+    summary:
+      "The first photograph of a black hole — and the year of work it took to make it.",
+    ageTier: "teen",
+    durationMin: 8,
+    steps: [
+      {
+        kind: "narrate",
+        text: "It's fair to ask: how does anyone actually know what's true about something 55 million light-years away? Here's one example, end to end.",
+      },
+      { kind: "scene", hash: "#sky?ra=187.706&dec=12.391" },
+      {
+        kind: "narrate",
+        text: "This is M87* — the supermassive black hole at the heart of the elliptical galaxy M87, in the Virgo Cluster. It weighs 6.5 billion solar masses, more than 1,500× heavier than the one at the centre of our own galaxy. On April 10, 2019, the Event Horizon Telescope collaboration published the first photograph of its shadow.",
+      },
+      {
+        kind: "narrate",
+        text: "It is not actually a photograph in the camera-shutter sense. The EHT is eight radio telescopes spread across Earth — Hawaii to Spain to Antarctica — observing M87 simultaneously and combining their signals into a synthetic dish the size of the planet. The technique is called very-long-baseline interferometry, VLBI. The observation took five nights in April 2017; the image took two years of analysis to extract.",
+      },
+      {
+        kind: "narrate",
+        text: "The dark central region in the EHT image is about 2.5 times the Schwarzschild radius of the black hole. That's not the event horizon itself — it's the photon sphere, the radius at which a beam of light is bent by exactly 90° and orbits the black hole. The bright ring is light wrapping around behind the hole and being focused back toward us.",
+      },
+      {
+        kind: "narrate",
+        text: "General relativity, formulated by Einstein in 1915, predicted that this is exactly what you'd see if you could resolve a black hole's shadow. A hundred and four years later, the measurement matched the prediction to within a few percent. That's how we know.",
+      },
+      {
+        kind: "quiz",
+        question:
+          "The EHT's M87* image directly confirmed which prediction of general relativity?",
+        options: [
+          "Gravitational waves",
+          "Light bending into a photon ring around an event horizon",
+          "Hawking radiation",
+          "The existence of dark matter",
+        ],
+        answerIndex: 1,
+        explanation:
+          "The bright crescent in the image is light forced onto curved paths around the black hole — GR predicts a photon ring at 2.5× the Schwarzschild radius, and the measurement landed there. Hawking radiation is far too faint to detect this way, and dark matter and gravitational waves are unrelated tests.",
+      },
+      {
+        kind: "narrate",
+        text: "Every claim in this curriculum is the end of a chain like this one: a prediction, an instrument, a measurement, a comparison. The universe is knowable. It just takes patience.",
+      },
+    ],
+  },
+  {
+    id: "what-we-still-dont-know",
+    title: "What we still don't know",
+    summary:
+      "Dark matter, dark energy, the question of life elsewhere — the honest map of our ignorance.",
+    ageTier: "teen",
+    durationMin: 8,
+    steps: [
+      {
+        kind: "narrate",
+        text: "End of the tour. Time for the uncomfortable confession: we have a pretty good map of the universe, but we don't know what most of it is made of.",
+      },
+      {
+        kind: "narrate",
+        text: "Roughly 5% of the universe's energy is ordinary matter — atoms, the stuff stars and people are built from. About 27% is dark matter, which clumps under gravity but doesn't emit, absorb, or scatter light. The remaining 68% is dark energy, a uniform pressure stretching space itself, accelerating the expansion of the cosmos. We have detected both only through their gravitational effects. We do not know what they are.",
+      },
+      {
+        kind: "narrate",
+        text: "Next question: is there life anywhere else? As of today, no biosignature has been confirmed on any exoplanet. The most discussed recent candidate is JWST's tentative detection of dimethyl sulphide in the atmosphere of K2-18 b in 2023 — a molecule produced only by living organisms on Earth — but the signal is weak, contested, and being re-checked.",
+      },
+      { kind: "scene", hash: "#sky?ra=346.622&dec=-5.041" },
+      {
+        kind: "narrate",
+        text: "This is TRAPPIST-1, a red dwarf 40 light-years away with seven Earth-sized planets in orbit — three of them in the habitable zone where liquid water could exist on the surface. JWST is scanning their atmospheres right now, looking for water, methane, oxygen, anything anomalous. We may have an answer to 'are we alone' within the next decade. We may not.",
+      },
+      {
+        kind: "narrate",
+        text: "And the biggest open problems beneath everything: we have no working theory that combines quantum mechanics with general relativity. Why dark energy has the value it does is unexplained. Whether our universe is the only one is genuinely unknown. These aren't gaps in a textbook — they're cliffs at the edge of the map.",
+      },
+      {
+        kind: "quiz",
+        question:
+          "Which of these is honestly the BIGGEST unsolved problem in physics today?",
+        options: [
+          "What dark energy is",
+          "How consciousness arises",
+          "How to unify quantum mechanics and gravity",
+          "Where life on Earth came from",
+        ],
+        answerIndex: 0,
+        explanation:
+          "This is a judgment call — quantum gravity is a defensible answer too, since solving it would likely tell us what dark energy is and what happens inside a black hole. Dark energy is currently the biggest measured thing in the universe that nobody can explain. Consciousness and abiogenesis are huge open questions, but they sit further from fundamental physics.",
+      },
+      {
+        kind: "narrate",
+        text: "You now know roughly what the human species knows about the universe. Most of the work is still ahead of us. That's the good news.",
+      },
+    ],
+  },
 ];
