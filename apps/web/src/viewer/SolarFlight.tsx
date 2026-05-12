@@ -14,6 +14,7 @@ import {
 import { TopBarActions } from "./ui/TopBarActions";
 import { TransientsPanel } from "./ui/TransientsPanel";
 import { SatellitesPanel } from "./ui/SatellitesPanel";
+import { SpacecraftPanel } from "./ui/SpacecraftPanel";
 import { AchievementsPanel } from "./ui/AchievementsPanel";
 import { MarsPhotosPanel } from "./ui/MarsPhotosPanel";
 import { ApodArchivePanel } from "./ui/ApodArchivePanel";
@@ -157,6 +158,7 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
     "Neptune",
   ];
   const [zonesOn, setZonesOn] = useState(false);
+  const [trajectoriesOn, setTrajectoriesOn] = useState(false);
   const [satellitesOn, setSatellitesOn] = useState(false);
   const [auroraOn, setAuroraOn] = useState(false);
   const [sandboxOpen, setSandboxOpen] = useState(false);
@@ -303,6 +305,23 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
           <ApodArchivePanel />
           <JwstPanel />
           <TransientsPanel />
+          <SpacecraftPanel
+            active={trajectoriesOn}
+            onToggle={(next) => {
+              setTrajectoriesOn(next);
+              sceneRef.current?.setTrajectories(next);
+            }}
+            getStatus={() => sceneRef.current?.spacecraftStatus() ?? []}
+            onFlyTo={(slug) => {
+              // Make sure the layer is visible so the marker is on
+              // screen after the camera lands.
+              if (!trajectoriesOn) {
+                setTrajectoriesOn(true);
+                sceneRef.current?.setTrajectories(true);
+              }
+              sceneRef.current?.flyToSpacecraft(slug);
+            }}
+          />
           <AchievementsPanel />
           <TopBarActions
             focusActive={focusMode}

@@ -44,6 +44,11 @@ import {
 import { SatelliteField } from "../satellites/satellite-field";
 import { IssModel } from "../satellites/iss-model";
 import { JwstModel } from "../spacecraft/jwst-model";
+import { TrajectoryField, type SpacecraftStatus } from "../spacecraft/trajectory-field";
+import {
+  loadAllTrajectories,
+  type SpacecraftSlug,
+} from "../spacecraft/trajectories-data";
 import { OortCloud } from "./oort-cloud";
 import { SunGravityWell } from "./gravity-well";
 import { MoonField } from "../universe/moons";
@@ -284,6 +289,10 @@ export class SolarFlightScene {
    *  Keplerian elements. Same field used in Universe mode; here it sits
    *  in the same heliocentric ecliptic AU frame as the planets. */
   private asteroids: AsteroidField | null = null;
+  /** Real spacecraft trajectories — five iconic missions rendered
+   *  as past (solid) + future (dashed) polylines + current marker. */
+  private trajectories: TrajectoryField | null = null;
+  private trajectoriesOn = false;
   private auroraOverlay: AuroraOverlay | null = null;
   /** Saturn's sphere material — kept on hand so updatePlanets() can push
    *  the planet's current world position into the ring-shadow uniform. */
@@ -428,6 +437,23 @@ export class SolarFlightScene {
       })
       .catch(() => {
         // optional layer
+      });
+
+    // Spacecraft trajectories — five iconic missions. The pre-baked
+    // binary blobs ship in `apps/web/public/data/missions/<slug>.bin`,
+    // with an optional ±2-year HORIZONS refresh for Parker Solar Probe
+    // whose perihelion passes update its trajectory significantly.
+    void loadAllTrajectories(this.simTime)
+      .then((samples) => {
+        if (this.disposed) return;
+        const field = new TrajectoryField(samples);
+        field.setAllVisible(this.trajectoriesOn);
+        field.setSimTime(this.simTime, this.camera.position);
+        this.trajectories = field;
+        this.scene.add(field);
+      })
+      .catch(() => {
+        // Optional layer — silently skip if the bundle is missing.
       });
 
     // Gravity sandbox layer (initially empty).
@@ -776,6 +802,9 @@ export class SolarFlightScene {
     this.sun.rotation.y = ((daysSinceJ2000 / SUN_ROTATION_DAYS) % 1) * Math.PI * 2;
     if (this.asteroids) this.asteroids.setSimTime(this.simTime);
     if (this.outerMoons) this.outerMoons.setSimTime(this.simTime);
+    if (this.trajectories) {
+      this.trajectories.setSimTime(this.simTime, this.camera.position);
+    }
 
     for (const p of this.planets) {
       try {
@@ -1073,6 +1102,55 @@ export class SolarFlightScene {
 
   setAurora(visible: boolean): void {
     this.auroraOverlay?.setVisible(visible);
+  }
+
+  /** Toggle the spacecraft trajectory layer as a whole. The field
+   *  may still be loading on first call; the flag is stashed so the
+   *  field comes up in the correct state once `loadAllTrajectories`
+   *  resolves. */
+  setTrajectories(on: boolean): void {
+    this.trajectoriesOn = on;
+    this.trajectories?.setAllVisible(on);
+    if (this.trajectories) {
+      this.trajectories.setSimTime(this.simTime, this.camera.position);
+    }
+  }
+
+  trajectoriesVisible(): boolean {
+    return this.trajectoriesOn;
+  }
+
+  /** Live status snapshot for every loaded spacecraft — fed into the
+   *  Spacecraft popover so the panel can show distance + speed without
+   *  doing its own propagation. Empty until the field finishes loading. */
+  spacecraftStatus(): SpacecraftStatus[] {
+    return this.trajectories?.status() ?? [];
+  }
+
+  /** Frame the camera on a spacecraft. Drops focus back to Sun (so
+   *  the camera lives in the heliocentric frame) and orients yaw/pitch
+   *  to look down the Sun → spacecraft direction at a distance that
+   *  comfortably encloses both the Sun and the marker. */
+  flyToSpacecraft(slug: SpacecraftSlug): void {
+    if (!this.trajectories) return;
+    const status = this.trajectories.status().find((s) => s.slug === slug);
+    if (!status) return;
+    this.focusName = "Sun";
+    // Pick a viewing distance roughly equal to the spacecraft's
+    // distance from the Sun, capped at 60 AU so Voyager 1's 165 AU
+    // doesn't fling the camera into interstellar space.
+    const targetAU = Math.min(60, Math.max(2, status.distanceAU * 1.05));
+    this.cameraDistance = targetAU;
+    // Aim the camera so the spacecraft direction is centered. Solve
+    // for yaw/pitch from the unit direction in scene-Y-up coordinates.
+    const { x, y, z } = status.direction;
+    this.yaw = Math.atan2(x, z);
+    this.pitch = Math.max(
+      -Math.PI / 2 + 0.05,
+      Math.min(Math.PI / 2 - 0.05, Math.asin(Math.max(-1, Math.min(1, y)))),
+    );
+    this.applyCamera();
+    this.publishState();
   }
 
   /** Re-propagate every TLE for the current sim time and update positions
@@ -1751,6 +1829,11 @@ export class SolarFlightScene {
       this.satellites.dispose();
       this.scene.remove(this.satellites.group);
       this.satellites = null;
+    }
+    if (this.trajectories) {
+      this.trajectories.dispose();
+      this.scene.remove(this.trajectories);
+      this.trajectories = null;
     }
     for (const p of this.projectiles) p.dispose(this.projectileGroup);
     this.projectiles = [];
