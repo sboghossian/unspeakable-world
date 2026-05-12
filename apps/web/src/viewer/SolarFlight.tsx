@@ -31,6 +31,8 @@ import { ComparePanel } from "./ui/ComparePanel";
 import { ColorLegend } from "./ui/ColorLegend";
 import { ShortcutsOverlay } from "./ui/ShortcutsOverlay";
 import { ReportBugButton } from "./ui/ReportBugButton";
+import { ExploreDrawer, type Group } from "./ui/ExploreDrawer";
+import { useIdle } from "../lib/use-idle";
 import { recordPlanetVisit, unlock } from "../lib/achievements";
 import { SettingsPanel } from "./ui/SettingsPanel";
 import { SnapshotButton } from "./ui/SnapshotButton";
@@ -218,14 +220,82 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
   >("Comet");
   const [sandboxSpeed, setSandboxSpeed] = useState(30);
 
+  const idle = useIdle(3500);
+
+  // Drawer groups — mirrors Universe.tsx but with the panels relevant
+  // to solar-flight (no SkyTonight / SpaceWeather / TonightSky which
+  // are sky-mode features, plus Satellites + Spacecraft for in-system).
+  const exploreGroups: Group[] = [
+    {
+      label: "Learn",
+      children: (
+        <>
+          <LessonPanel />
+          <MythsPanel />
+          <ComparePanel />
+          <SetiPanel />
+        </>
+      ),
+    },
+    {
+      label: "Live",
+      children: (
+        <>
+          <NewsPanel />
+          <TransientsPanel />
+        </>
+      ),
+    },
+    {
+      label: "Imagery",
+      children: (
+        <>
+          <MarsPhotosPanel />
+          <ApodArchivePanel />
+          <JwstPanel />
+          <HistoryPanel />
+        </>
+      ),
+    },
+    {
+      label: "Catalog",
+      children: (
+        <>
+          <SatellitesPanel />
+          <SpacecraftPanel
+            active={trajectoriesOn}
+            onToggle={(next) => {
+              setTrajectoriesOn(next);
+              sceneRef.current?.setTrajectories(next);
+            }}
+            getStatus={() => sceneRef.current?.spacecraftStatus() ?? []}
+            onFlyTo={(slug) => {
+              if (!trajectoriesOn) {
+                setTrajectoriesOn(true);
+                sceneRef.current?.setTrajectories(true);
+              }
+              sceneRef.current?.flyToSpacecraft(slug);
+            }}
+          />
+          <MissionsCatalogPanel />
+          <CollectionsPanel
+            onFlyTo={(item) => sceneRef.current?.setFocus(item.id)}
+          />
+        </>
+      ),
+    },
+  ];
+
   return (
     <div className="relative h-full w-full bg-[#000208]">
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
 
-      {/* Top bar — back button + focus picker (hidden in focus mode) */}
+      {/* Top bar — back button + focus picker (hidden in focus mode).
+          Also fades to 30% when the user is idle so the canvas owns the
+          stage; popovers and the bottom time-strip stay solid. */}
       <div
-        className={`pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-2 p-3 transition-opacity ${
-          focusMode ? "opacity-0" : "opacity-100"
+        className={`pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-2 p-3 transition-opacity duration-500 ${
+          focusMode ? "opacity-0" : idle ? "opacity-30" : "opacity-100"
         }`}
       >
         <div className="pointer-events-auto flex items-center gap-2">
@@ -297,40 +367,9 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
               {t}
             </button>
           ))}
-          <SatellitesPanel />
           <PlanetCrossSection focus={state.focus} />
-          <LessonPanel />
-          <SetiPanel />
-          <NewsPanel />
-          <MythsPanel />
-          <ComparePanel />
-          <MarsPhotosPanel />
-          <ApodArchivePanel />
-          <JwstPanel />
-          <TransientsPanel />
-          <SpacecraftPanel
-            active={trajectoriesOn}
-            onToggle={(next) => {
-              setTrajectoriesOn(next);
-              sceneRef.current?.setTrajectories(next);
-            }}
-            getStatus={() => sceneRef.current?.spacecraftStatus() ?? []}
-            onFlyTo={(slug) => {
-              // Make sure the layer is visible so the marker is on
-              // screen after the camera lands.
-              if (!trajectoriesOn) {
-                setTrajectoriesOn(true);
-                sceneRef.current?.setTrajectories(true);
-              }
-              sceneRef.current?.flyToSpacecraft(slug);
-            }}
-          />
-          <MissionsCatalogPanel />
-          <HistoryPanel />
+          <ExploreDrawer groups={exploreGroups} />
           <AchievementsPanel />
-          <CollectionsPanel
-            onFlyTo={(item) => sceneRef.current?.setFocus(item.id)}
-          />
           <TopBarActions
             focusActive={focusMode}
             onFocusToggle={() => setFocusMode((v) => !v)}

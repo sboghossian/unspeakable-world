@@ -42,6 +42,8 @@ import { StarTrailsPanel } from "./ui/StarTrailsPanel";
 import { SurpriseButton } from "./ui/SurpriseButton";
 import { ShortcutsOverlay } from "./ui/ShortcutsOverlay";
 import { ReportBugButton } from "./ui/ReportBugButton";
+import { ExploreDrawer, type Group } from "./ui/ExploreDrawer";
+import { useIdle } from "../lib/use-idle";
 import { unlock } from "../lib/achievements";
 import {
   LightConeControls,
@@ -298,6 +300,90 @@ export function Universe({ onExit }: Props) {
 
   void useMemo;
 
+  const idle = useIdle(3500);
+
+  // Drawer groups — every secondary panel lives here. Each group is a
+  // tidy row of the existing panel components; when the drawer is
+  // closed the children don't mount so the top bar stays uncluttered.
+  const exploreGroups: Group[] = [
+    {
+      label: "Learn",
+      children: (
+        <>
+          <LessonPanel />
+          <MythsPanel />
+          <ComparePanel />
+          <SetiPanel />
+        </>
+      ),
+    },
+    {
+      label: "Live",
+      children: (
+        <>
+          <NewsPanel />
+          <TransientsPanel scene={sceneRef.current} />
+          <SkyTonightPanel observer={observer} />
+          <SpaceWeatherPanel observer={observer} />
+          <TonightSky
+            location={observer}
+            onLocationFix={(lat, lon) => {
+              setObserver({ lat, lon });
+              try {
+                localStorage.setItem(
+                  "uw:observer",
+                  JSON.stringify({ lat, lon }),
+                );
+              } catch {
+                /* ignore */
+              }
+            }}
+            onZenith={() => sceneRef.current?.flyTo("Sun")}
+          />
+        </>
+      ),
+    },
+    {
+      label: "Imagery",
+      children: (
+        <>
+          <MarsPhotosPanel />
+          <ApodArchivePanel />
+          <JwstPanel />
+          <HistoryPanel />
+        </>
+      ),
+    },
+    {
+      label: "Tools",
+      children: (
+        <>
+          <MeasurePanel scene={sceneRef.current} />
+          <StarTrailsPanel scene={sceneRef.current} />
+          <SurpriseButton onPick={(name) => sceneRef.current?.flyTo(name)} />
+          <GyroButton scene={sceneRef.current} />
+        </>
+      ),
+    },
+    {
+      label: "Catalog",
+      children: (
+        <>
+          <NeoPanel />
+          <EventsPanel
+            open={eventsOpen}
+            onOpenChange={setEventsOpen}
+            onFlyToBody={(name) => sceneRef.current?.flyTo(name)}
+          />
+          <MissionsCatalogPanel />
+          <CollectionsPanel
+            onFlyTo={(item) => sceneRef.current?.flyTo(item.id)}
+          />
+        </>
+      ),
+    },
+  ];
+
   return (
     <div className="relative h-full w-full bg-[#020415]">
       <canvas
@@ -306,8 +392,13 @@ export function Universe({ onExit }: Props) {
         className="absolute inset-0 h-full w-full focus:outline-none"
       />
 
-      {/* Top bar */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-2 p-3">
+      {/* Top bar — fades to 30% opacity when the user is idle so the
+          3D canvas owns the stage. Popovers inside are unaffected. */}
+      <div
+        className={`pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-2 p-3 transition-opacity duration-500 ${
+          idle ? "opacity-30" : "opacity-100"
+        }`}
+      >
         <div className="pointer-events-auto flex items-center gap-2">
           <button
             type="button"
@@ -368,48 +459,8 @@ export function Universe({ onExit }: Props) {
         </div>
 
         <div className="pointer-events-auto flex max-w-[60vw] flex-wrap items-center justify-end gap-1.5">
-          <EventsPanel
-            open={eventsOpen}
-            onOpenChange={setEventsOpen}
-            onFlyToBody={(name) => sceneRef.current?.flyTo(name)}
-          />
-          <NeoPanel />
-          <SkyTonightPanel observer={observer} />
-          <SpaceWeatherPanel observer={observer} />
-          <TonightSky
-            location={observer}
-            onLocationFix={(lat, lon) => {
-              setObserver({ lat, lon });
-              try {
-                localStorage.setItem(
-                  "uw:observer",
-                  JSON.stringify({ lat, lon }),
-                );
-              } catch {
-                /* ignore */
-              }
-            }}
-            onZenith={() => sceneRef.current?.flyTo("Sun")}
-          />
-          <SurpriseButton onPick={(name) => sceneRef.current?.flyTo(name)} />
-          <MeasurePanel scene={sceneRef.current} />
-          <StarTrailsPanel scene={sceneRef.current} />
-          <LessonPanel />
-          <SetiPanel />
-          <NewsPanel />
-          <MythsPanel />
-          <ComparePanel />
-          <MarsPhotosPanel />
-          <ApodArchivePanel />
-          <JwstPanel />
-          <TransientsPanel scene={sceneRef.current} />
-          <GyroButton scene={sceneRef.current} />
-          <MissionsCatalogPanel />
-          <HistoryPanel />
+          <ExploreDrawer groups={exploreGroups} />
           <AchievementsPanel />
-          <CollectionsPanel
-            onFlyTo={(item) => sceneRef.current?.flyTo(item.id)}
-          />
           <TopBarActions />
         </div>
       </div>
