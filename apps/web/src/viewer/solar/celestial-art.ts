@@ -350,6 +350,79 @@ export function paintSun(
   }
 }
 
+export function paintMoon(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+): void {
+  // Base: cool light gray with a hint of warm undertone.
+  const base = ctx.createLinearGradient(0, 0, 0, h);
+  base.addColorStop(0, "#a39c95");
+  base.addColorStop(0.5, "#c4bdb4");
+  base.addColorStop(1, "#9a948c");
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, w, h);
+
+  // Maria — large dark basaltic patches concentrated on the near side
+  // (~lon -90 to 90, lat -40 to 40 in our equirectangular UVs). Reads
+  // as Mare Tranquillitatis / Imbrium / etc.
+  const maria: Array<{ lon: number; lat: number; rx: number; ry: number; a: number }> = [
+    { lon: -30, lat: 25, rx: 28, ry: 16, a: 0.55 }, // Imbrium
+    { lon: 30, lat: 20, rx: 22, ry: 14, a: 0.5 }, // Serenitatis
+    { lon: 35, lat: 5, rx: 18, ry: 12, a: 0.5 }, // Tranquillitatis
+    { lon: -10, lat: -10, rx: 24, ry: 16, a: 0.45 }, // Nubium / Cognitum
+    { lon: 60, lat: 15, rx: 14, ry: 8, a: 0.4 }, // Crisium
+    { lon: -50, lat: -25, rx: 16, ry: 10, a: 0.4 }, // Humorum
+  ];
+  for (const m of maria) {
+    const cx = ((m.lon + 180) / 360) * w;
+    const cy = ((90 - m.lat) / 180) * h;
+    const sx = m.rx * (w / 360);
+    const sy = m.ry * (h / 180);
+    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(sx, sy));
+    grad.addColorStop(0, `rgba(70,65,60,${m.a})`);
+    grad.addColorStop(1, "rgba(70,65,60,0)");
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, sx, sy, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Bright impact craters with rays (Tycho, Copernicus). A small number
+  // of stark white dots with faint radiating streaks.
+  const rays: Array<{ lon: number; lat: number; r: number }> = [
+    { lon: -11, lat: -43, r: 4 }, // Tycho
+    { lon: -20, lat: 10, r: 3 }, // Copernicus
+  ];
+  for (const c of rays) {
+    const cx = ((c.lon + 180) / 360) * w;
+    const cy = ((90 - c.lat) / 180) * h;
+    ctx.fillStyle = "rgba(245,240,235,0.85)";
+    ctx.beginPath();
+    ctx.arc(cx, cy, c.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "rgba(245,240,235,0.18)";
+    ctx.beginPath();
+    ctx.arc(cx, cy, c.r * 5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Cratered noise overlay — many small bright/dark blotches.
+  const seed = mulberry32(0x10a0);
+  for (let i = 0; i < 320; i++) {
+    const cx = seed() * w;
+    const cy = seed() * h;
+    const r = 1.2 + seed() * 5;
+    const dark = seed() < 0.55;
+    ctx.fillStyle = dark
+      ? `rgba(60,55,50,${0.12 + seed() * 0.2})`
+      : `rgba(225,218,210,${0.08 + seed() * 0.18})`;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
 export function paintMercury(
   ctx: CanvasRenderingContext2D,
   w: number,
