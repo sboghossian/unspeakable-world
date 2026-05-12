@@ -19,6 +19,7 @@ import { MythsPanel } from "./ui/MythsPanel";
 import { NewsPanel } from "./ui/NewsPanel";
 import { LessonPanel } from "./ui/LessonPanel";
 import { SetiPanel } from "./ui/SetiPanel";
+import { ComparePanel } from "./ui/ComparePanel";
 import { ColorLegend } from "./ui/ColorLegend";
 import { ShortcutsOverlay } from "./ui/ShortcutsOverlay";
 import { ReportBugButton } from "./ui/ReportBugButton";
@@ -293,6 +294,7 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
           <SetiPanel />
           <NewsPanel />
           <MythsPanel />
+          <ComparePanel />
           <AchievementsPanel />
           <TopBarActions
             focusActive={focusMode}

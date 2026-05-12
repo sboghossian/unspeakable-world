@@ -29,6 +29,7 @@ import { MythsPanel } from "./ui/MythsPanel";
 import { NewsPanel } from "./ui/NewsPanel";
 import { LessonPanel } from "./ui/LessonPanel";
 import { SetiPanel } from "./ui/SetiPanel";
+import { ComparePanel } from "./ui/ComparePanel";
 import { StarTrailsPanel } from "./ui/StarTrailsPanel";
 import { SurpriseButton } from "./ui/SurpriseButton";
 import { ShortcutsOverlay } from "./ui/ShortcutsOverlay";
@@ -386,6 +387,7 @@ export function Universe({ onExit }: Props) {
           <SetiPanel />
           <NewsPanel />
           <MythsPanel />
+          <ComparePanel />
           <AchievementsPanel />
           <TopBarActions />
         </div>
