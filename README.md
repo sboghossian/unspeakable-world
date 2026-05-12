@@ -47,6 +47,55 @@
 
 ---
 
+## ✨ v4 — Federated data sweep
+
+A 21-dataset push that turns the viewer into a live wide-area data portal.
+Everything is federated (we host none of it), opt-in (off by default), and
+exposed behind one ✨ **layers** button in the top bar. Toggles deep-link
+into the URL hash — share a link, restore the exact stack of overlays.
+
+- **🛰 6 new HiPS surveys** — **Pan-STARRS DR1** (deep optical) ·
+  **SDSS9** · **DESI Legacy DR10** · **VLASS** (3 GHz radio) ·
+  **TGSS** (150 MHz radio) · **HST** colour mosaic — all stream from
+  CDS / IRSA / ESASky into the existing wavelength cross-fader.
+- **⭐ Gaia DR3 — 1M stars.** A binary-packed bright slice of the 1.8 B
+  Gaia catalog, GPU-instanced over the HYG field; parallax-distance
+  coloured.
+- **🪐 6,286 confirmed exoplanets** from the NASA Exoplanet Archive,
+  cross-joined with the **PHL habitability index** so the inspector
+  reads "ESI 0.84 · habitable-zone optimistic" where applicable.
+- **🔭 Chandra Source Catalog 2.1** — 84 brightest X-ray sources as a
+  cyan ring field, with hardness-ratio shaders.
+- **🌍 TESS TOI — 7,931 planet candidates** as faint orange dots, plus
+  **ASAS-SN VSX 72 variables** (eclipsing binaries, Mira, RR Lyrae)
+  with light-curve sparklines in the inspector.
+- **🌌 2MRS + 6dFGS galaxy cone — 136,596 galaxies in true 3D.** Fly
+  past the Local Group and watch the Great Attractor wall scroll past.
+- **📡 Multi-messenger sky** — IceCube neutrino tracks · Auger UHECR
+  arrival directions · LIGO GWTC-3 90% localisation contours · NANOGrav
+  pulsar-timing-array sources, the last with audio chirps re-synthesised
+  from the published inspiral parameters.
+- **⚡ ZTF / Lasair live transients** + **JPL Sentry NEO impact risk
+  table** + **Starlink TLEs** (opt-in — off by default; thousands of dots
+  is a lot of dots).
+- **🌀 Planck E/B polarization** sky layer alongside the existing T-map.
+- **🏃 CosmicFlows-4** peculiar-velocity field — see the local universe
+  fall toward the Great Attractor as colour-coded vectors.
+- **🛐 12 sky cultures** (Western · Chinese · Polynesian · Lakota plus 8
+  more from Stellarium-Skycultures): Inuit, Egyptian, Maori, Navajo,
+  Sami, Korean, Romanian, Tongan.
+- **🌃 Globe at Night** citizen-science light-pollution submissions
+  rendered as ground points, complementing the Bortle layer.
+- **🪐 OPAL Hubble outer-planet portraits** updated yearly (the
+  best Jupiter / Saturn / Uranus / Neptune full-disk imagery in
+  existence) + **Mars Rover Image of the Day** from the
+  Perseverance / Curiosity feeds on the planet-surface scene.
+
+The new ✨ panel is dynamic-imported per layer so the landing bundle is
+unchanged — modules only download the moment you flip a toggle on.
+
+---
+
 ## 🆕 v3 — the educational reference release
 
 A focused sprint to push UW from "richest viewer in the field" to "first
@@ -123,7 +172,7 @@ every dataset federated (R2 free egress), all logging through
 
 **8,921 bright stars + 879 deep-sky objects.** HYG v4.0 stars (CC BY-SA, 139 KB packed binary) GPU-instanced with B-V → RGB color, plus OpenNGC's bright filtered subset as type-coded ring markers (galaxy / cluster / nebula).
 
-**Shareable URLs.** Every camera state, FOV, time, overlay + mix, and constellation toggle round-trips via the URL hash — copy-paste any view to share exactly what you see.
+**Shareable URLs.** Every camera state, FOV, time, overlay + mix, constellation toggle, and now the full ✨ federated-layers selection round-trips via the URL hash — copy-paste any view to share exactly what you see, every Gaia / Chandra / multi-messenger overlay included.
 
 ---
 
@@ -234,9 +283,25 @@ Every dependency is MIT, Apache-2.0, BSD, or public domain. **No GPL, no AGPL.**
 
 ## Data sources (federated, never re-hosted at petabyte scale)
 
-- **HiPS surveys** at CDS Strasbourg, NASA IRSA, ESA ESASky — gamma → radio, ~1,400 surveys
+- **HiPS surveys** at CDS Strasbourg, NASA IRSA, ESA ESASky — gamma → radio, ~1,400 surveys including DSS2, 2MASS, AllWISE, GALEX, INTEGRAL, NVSS, Fermi-LAT, Planck T/E/B, **Pan-STARRS DR1**, **SDSS9**, **DESI Legacy DR10**, **VLASS**, **TGSS**, and the **HST** colour mosaic
 - **SIMBAD** — federated cone search via CDS Strasbourg (CORS-open, no proxy)
 - **HYG v4.0** — 8,921 bright stars (CC BY-SA 2.5)
+- **Gaia DR3** — 1M-star bright slice via CDS VizieR
+- **NASA Exoplanet Archive** — 6,286 confirmed exoplanets (TAP)
+- **PHL @ UPR Arecibo** — habitability index (ESI / SPH)
+- **Chandra Source Catalog 2.1** — 84 brightest X-ray sources
+- **TESS TOI** — 7,931 planet candidates (MAST)
+- **ASAS-SN VSX** — 72 bright variables with light curves
+- **2MRS + 6dFGS** — 136,596 galaxies in 3D (IPAC)
+- **IceCube · Auger · LIGO GWTC-3 · NANOGrav** — multi-messenger event streams
+- **ZTF / Lasair** — live transient alerts
+- **JPL Sentry** — near-Earth-object impact risk table
+- **Celestrak** — Starlink + science satellite TLEs (opt-in)
+- **CosmicFlows-4** — local-universe peculiar velocities (Tully et al.)
+- **Stellarium Skycultures** — 12 cultural constellation traditions (GPL data, MIT-compatible CC re-encoding)
+- **Globe at Night** — citizen-science light pollution reports
+- **NASA OPAL** — yearly HST outer-planet portraits
+- **NASA Mars Rover (Perseverance / Curiosity)** — Image of the Day feeds
 - **AstronomyEngine** — solar system positions, no ephemeris files
 - **wheretheiss.at** — live ISS sub-satellite point
 - **JPL Horizons + SPICE kernels** — every spacecraft trajectory ever flown (Phase 2)
@@ -290,7 +355,10 @@ tasks/
 | 17  | e8c1b4c | Wikipedia summary in the SIMBAD inspector                        |
 | 18  | f1d0f27 | Famous-object alias map ("Crab" → M1, "Pleiades" → M45)          |
 | 19  | 56eebf0 | 88 constellation labels at line centroids                        |
-| 20  | (this)  | v2 ship — refreshed README · OG card · landing roadmap update    |
+| 20  | (v2)    | v2 ship — refreshed README · OG card · landing roadmap update    |
+| 21  | 5ff0ae7 | v4.A — six new HiPS surveys (Pan-STARRS · SDSS9 · DESI · VLASS · TGSS · HST) |
+| 22  | 549633a | v4.B — extra-layers swarm (Gaia DR3, exoplanets, Chandra, TESS, ZTF, multi-messenger, …) |
+| 23  | (this)  | v4 ship — README refresh · ✨ layer toggles deep-linked into URL hash |
 
 ---
 

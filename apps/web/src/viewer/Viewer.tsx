@@ -1,9 +1,17 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { log } from "../lib/logger";
 import { Vector3 } from "three";
+import type { SceneContext } from "./copilot/types";
 import { ViewerScene, type ViewerState } from "./scene/scene";
 import { isEmbedMode, navigate } from "../router";
+
+// Lazy-load the copilot UI — keeps the LLM-y chat code out of the main
+// viewer chunk so first paint stays snappy.
+const CopilotPanel = lazy(() =>
+  import("./ui/CopilotPanel").then((m) => ({ default: m.CopilotPanel })),
+);
 import { EmbedBadge } from "./ui/EmbedBadge";
+import { RendererBadge } from "./ui/RendererBadge";
 import { TimeStrip } from "./ui/TimeStrip";
 import { QuickTargets } from "./ui/QuickTargets";
 import { SearchBar } from "./ui/SearchBar";
@@ -24,6 +32,7 @@ import { EventsPanel } from "./ui/EventsPanel";
 import { NeoPanel } from "./ui/NeoPanel";
 import { ShareButton } from "./ui/ShareButton";
 import { GyroButton } from "./ui/GyroButton";
+import { ArSkyButton } from "./ui/ArSkyButton";
 import { SnapshotButton } from "./ui/SnapshotButton";
 import { ShortcutsOverlay } from "./ui/ShortcutsOverlay";
 import { SkyTonightPanel } from "./ui/SkyTonightPanel";
@@ -42,6 +51,7 @@ import { getSettings, updateSettings } from "../lib/settings";
 import type { SkyProjection } from "./sky-atlas/projection-shader";
 import { SkyInfoPanel } from "./ui/SkyInfoPanel";
 import { ExtraLayersPanel } from "./ui/ExtraLayersPanel";
+import { MultimessengerControls } from "./ui/MultimessengerControls";
 import {
   candidatesFromSimbad,
   wikipediaSummary,
@@ -88,6 +98,7 @@ const DEFAULT_STATE: ViewerState = {
   pulsars: false,
   exoplanetCount: 0,
   pulsarCount: 0,
+  rendererKind: "webgl",
 };
 
 type Inspect = {
@@ -173,6 +184,57 @@ export function Viewer() {
     () => getSettings().skyProjection,
   );
   const [skyCulture, setSkyCulture] = useState<SkyCultureChoice>("western");
+  const [copilotOpen, setCopilotOpen] = useState(false);
+  const [copilotSeed, setCopilotSeed] = useState<string | null>(null);
+
+  const openCopilot = useCallback((seed: string | null) => {
+    setCopilotSeed(seed);
+    setCopilotOpen(true);
+  }, []);
+
+  /**
+   * Build a fresh SceneContext snapshot each render — the Copilot panel
+   * captures whatever is current at send time. Cheap; no extra fetches.
+   */
+  const sceneContext = useMemo<SceneContext>(() => {
+    // Convert the live world-Y-up forward back to celestial RA/Dec.
+    const f = state.forward;
+    const xCel = f.x;
+    const yCel = -f.z;
+    const zCel = f.y;
+    const len = Math.hypot(xCel, yCel, zCel) || 1;
+    const dec =
+      (Math.asin(Math.max(-1, Math.min(1, zCel / len))) * 180) / Math.PI;
+    let ra = (Math.atan2(yCel, xCel) * 180) / Math.PI;
+    if (ra < 0) ra += 360;
+
+    const overlays: string[] = [];
+    if (state.overlayId) overlays.push(`overlay:${state.overlayId}`);
+    if (state.constellations) overlays.push("constellations");
+    if (state.coordGrid) overlays.push("coord-grid");
+    if (state.starLabels) overlays.push("star-labels");
+    if (state.spacecraft) overlays.push("spacecraft");
+    if (state.exoplanets) overlays.push("exoplanets");
+    if (state.cosmicLandmarks) overlays.push("cosmic-landmarks");
+    if (state.pulsars) overlays.push("pulsars");
+
+    return {
+      focusedObject: inspect?.hit
+        ? {
+            name: inspect.hit.name,
+            type: inspect.hit.type,
+            raDeg: inspect.hit.raDeg,
+            decDeg: inspect.hit.decDeg,
+          }
+        : null,
+      cameraRaDeg: ra,
+      cameraDecDeg: dec,
+      fovDeg: state.fov,
+      overlays,
+      simTimeIso: state.time.toISOString(),
+      observer,
+    };
+  }, [state, inspect, observer]);
 
   const runTourStep = useCallback((idx: number) => {
     const scene = sceneRef.current;
@@ -540,6 +602,9 @@ export function Viewer() {
         (Math.asin(Math.max(-1, Math.min(1, zCel / len))) * 180) / Math.PI;
       let ra = (Math.atan2(yCel, xCel) * 180) / Math.PI;
       if (ra < 0) ra += 360;
+      // Preserve any `layers` selection owned by the ExtraLayersPanel so
+      // camera/time/overlay writebacks don't clobber a shared deep-link.
+      const existingLayers = parseHash().layers;
       const params = serializeState({
         ra,
         dec,
@@ -550,6 +615,9 @@ export function Viewer() {
         constellations: state.constellations,
         coordGrid: state.coordGrid,
         starLabels: state.starLabels,
+        ...(existingLayers && existingLayers.length > 0
+          ? { layers: existingLayers }
+          : {}),
       });
       replaceHash(params);
     }, 250);
@@ -720,6 +788,7 @@ export function Viewer() {
           />
           <NeoPanel />
           <ExtraLayersPanel scene={sceneRef.current} />
+          <MultimessengerControls scene={sceneRef.current} />
           <SkyTonightPanel observer={observer} />
           <SpaceWeatherPanel observer={observer} />
           {searchIndex && (
@@ -735,7 +804,17 @@ export function Viewer() {
             onChange={reloadFavorites}
           />
           <ShareButton />
+          <button
+            type="button"
+            onClick={() => openCopilot(null)}
+            title="Open the Cosmic Copilot — an AI tutor grounded in what you're looking at"
+            className="pointer-events-auto rounded-lg border border-violet-400/40 bg-violet-400/10 px-2.5 py-1.5 font-mono text-xs uppercase tracking-widest text-violet-200 backdrop-blur transition hover:bg-violet-400/20 sm:px-3"
+          >
+            <span className="md:hidden">🧠</span>
+            <span className="hidden md:inline">🧠 ask</span>
+          </button>
           <GyroButton scene={sceneRef.current} />
+          <ArSkyButton scene={sceneRef.current} />
           <SnapshotButton
             onCapture={() => sceneRef.current?.snapshotPng() ?? null}
           />
@@ -949,7 +1028,21 @@ export function Viewer() {
           onClose={() => setInspect(null)}
           onFlyTo={() => sceneRef.current?.flyTo(inspect.dir)}
           onToggleFavorite={onToggleFavorite}
+          onAskCopilot={(seed) => openCopilot(seed)}
         />
+      )}
+
+      {/* Cosmic Copilot — slide-in chat (lazy-loaded chunk) */}
+      {!embed && status === "live" && copilotOpen && (
+        <Suspense fallback={null}>
+          <CopilotPanel
+            open={copilotOpen}
+            onClose={() => setCopilotOpen(false)}
+            context={sceneContext}
+            seedQuestion={copilotSeed}
+            onSeedConsumed={() => setCopilotSeed(null)}
+          />
+        </Suspense>
       )}
 
       {/* Loading veil */}
@@ -999,6 +1092,12 @@ export function Viewer() {
 
       {/* Embed-mode corner attribution — opens full app in a new tab. */}
       {embed && status === "live" && <EmbedBadge />}
+
+      {/* Active-renderer badge — hidden in embed mode to keep the
+          iframe minimal. Updates if/when the scene swaps to WebGPU. */}
+      {!embed && status === "live" && (
+        <RendererBadge kind={state.rendererKind} />
+      )}
     </div>
   );
 }

@@ -26,7 +26,10 @@ export const LAYER_META = {
   modes: ["galactic", "universe"] as const,
   defaultEnabled: false,
   description:
-    "~10 000 nearby galaxies plotted with their measured peculiar-velocity vectors in the supergalactic frame.",
+    "~15 000 nearby galaxy groups plotted with their measured peculiar-velocity vectors in the supergalactic frame.",
+  // Real CF4 group catalog now baked from VizieR J/ApJ/944/94/groups
+  // via `scripts/bake-cosmicflows4.ts`. Falls back to the synthetic
+  // model only if VizieR is unreachable at bake time.
 } as const;
 
 export type MountOptions = {

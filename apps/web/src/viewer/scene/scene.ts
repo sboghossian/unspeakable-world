@@ -1,4 +1,10 @@
-import { PerspectiveCamera, Scene, Vector3, WebGLRenderer } from "three";
+import { PerspectiveCamera, Scene, Vector3 } from "three";
+import {
+  createWebGLRenderer,
+  tryCreateWebGPURenderer,
+  type SceneRenderer,
+} from "./renderer-factory";
+import { getRendererPreference } from "../../lib/settings";
 import { SURVEYS } from "../hips/surveys";
 import { HipsSphere } from "./hips-sphere";
 import { StarField } from "../stars/star-field";
@@ -76,6 +82,12 @@ export type ViewerState = {
   exoplanetCount: number;
   /** Loaded pulsar count (0 until catalog arrives). */
   pulsarCount: number;
+  /**
+   * Active renderer backend. Starts at `"webgl"` and, if the user has
+   * opted in via `getRendererPreference()`, may flip to `"webgpu"` once
+   * the async swap completes successfully.
+   */
+  rendererKind: "webgl" | "webgpu";
 };
 
 type Listener = (s: ViewerState) => void;
@@ -89,7 +101,18 @@ type Listener = (s: ViewerState) => void;
  * 5 minutes (per Day 0 research).
  */
 export class ViewerScene {
-  private renderer: WebGLRenderer;
+  private renderer: SceneRenderer;
+  /**
+   * Tracks the currently-mounted backend so the badge/state subscriber
+   * can read it without inspecting the renderer instance type.
+   */
+  private rendererKind: "webgl" | "webgpu" = "webgl";
+  /**
+   * True while a WebGPU swap is in flight; the tick loop skips
+   * `renderer.render(...)` so a half-mounted backend never tries to
+   * draw. Cleared on success or fallback.
+   */
+  private renderSuspended = false;
   private camera: PerspectiveCamera;
   private scene = new Scene();
   private sphere: HipsSphere;
@@ -130,19 +153,12 @@ export class ViewerScene {
   private fwd = new Vector3();
 
   constructor(readonly canvas: HTMLCanvasElement) {
-    this.renderer = new WebGLRenderer({
-      canvas,
-      antialias: true,
-      powerPreference: "high-performance",
-      alpha: false,
-      stencil: false,
-      // Required so we can call canvas.toDataURL() / toBlob() for the
-      // snapshot button — without it the framebuffer is cleared after
-      // each rAF and the read returns transparent black.
-      preserveDrawingBuffer: true,
-    });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.setClearColor(0x03050a, 1);
+    // The ctor cannot be async, so we always start on WebGL2 — the
+    // existing, known-good codepath. If the user has opted into WebGPU
+    // (or "auto"), we kick off an async swap *after* the ctor returns;
+    // see `maybeSwapToWebGPU` below.
+    this.renderer = createWebGLRenderer(canvas);
+    this.rendererKind = "webgl";
 
     this.camera = new PerspectiveCamera(60, 1, 0.001, 100);
     this.camera.position.set(0, 0, 0);
@@ -303,10 +319,90 @@ export class ViewerScene {
       pulsars: false,
       exoplanetCount: 0,
       pulsarCount: 0,
+      rendererKind: this.rendererKind,
     };
 
     this.tick();
     this.scheduleLODUpdate();
+
+    // Honour the user's renderer preference. WebGL is the default and
+    // already mounted — only kick off the async path for "webgpu" /
+    // "auto". Any failure rolls back silently to the WebGL2 renderer.
+    const pref = getRendererPreference();
+    if (pref === "webgpu" || pref === "auto") {
+      void this.maybeSwapToWebGPU();
+    }
+  }
+
+  /**
+   * Async path: try to swap the live WebGL2 renderer for a freshly-
+   * initialised WebGPU renderer attached to the same canvas. Pauses
+   * the tick loop, disposes the old renderer, hot-swaps, resumes.
+   *
+   * Any failure (capability probe miss, dynamic import failure,
+   * `await renderer.init()` throw) keeps WebGL2 mounted — the user
+   * still gets a working scene; only the badge stays on "WebGL2".
+   *
+   * IMPORTANT: we must dispose the WebGL2 renderer *before* the
+   * WebGPU renderer's GPUCanvasContext is requested, otherwise the
+   * canvas already has a `webgl2` context bound and `getContext
+   * ("webgpu")` returns null. The init order is:
+   *   1. suspend tick.render
+   *   2. dispose WebGL2 renderer (releases the WebGL2 context)
+   *   3. await new WebGPURenderer(canvas).init()
+   *   4. on failure, rebuild a WebGL2 renderer on the same canvas
+   */
+  private async maybeSwapToWebGPU(): Promise<void> {
+    this.renderSuspended = true;
+    const previous = this.renderer;
+    try {
+      // Release the WebGL2 context first — a single canvas can only
+      // host one rendering context, so WebGPU's `getContext("webgpu")`
+      // call inside `init()` would fail if WebGL2 still owned the
+      // surface.
+      previous.dispose();
+      const next = await tryCreateWebGPURenderer(this.canvas);
+      if (this.disposed) {
+        next?.dispose();
+        return;
+      }
+      if (next) {
+        this.renderer = next;
+        this.rendererKind = "webgpu";
+        // Re-apply size now that the new backend owns the surface —
+        // the pixel-ratio was set inside the factory but the canvas
+        // client dimensions may have changed during the init wait.
+        this.handleResize();
+        this.state = { ...this.state, rendererKind: this.rendererKind };
+        this.emit();
+        log.info("[scene] renderer swapped to WebGPU");
+        return;
+      }
+      // WebGPU failed: rebuild WebGL2 on the same canvas so rendering
+      // can resume. This is the safe fallback path the rest of the
+      // scene already expects.
+      this.renderer = createWebGLRenderer(this.canvas);
+      this.rendererKind = "webgl";
+      this.handleResize();
+      log.warn("[scene] WebGPU swap failed; rebuilt WebGL2 renderer");
+    } catch (err) {
+      log.warn("[scene] renderer swap errored; rebuilding WebGL2", err);
+      // Defensive: if anything threw past the WebGL dispose, the scene
+      // is left without a renderer. Rebuild WebGL2 unconditionally.
+      try {
+        this.renderer = createWebGLRenderer(this.canvas);
+        this.rendererKind = "webgl";
+        this.handleResize();
+      } catch (rebuildErr) {
+        log.error(
+          "[scene] catastrophic: failed to rebuild WebGL2 after WebGPU swap",
+          rebuildErr,
+        );
+      }
+    } finally {
+      this.renderSuspended = false;
+      this.dirty = true;
+    }
   }
 
   /**
@@ -373,6 +469,7 @@ export class ViewerScene {
       pulsars: this.pulsars?.visible() ?? false,
       exoplanetCount: this.exoplanets?.count() ?? 0,
       pulsarCount: this.pulsars?.count() ?? 0,
+      rendererKind: this.rendererKind,
     };
     this.emit();
   }
@@ -546,6 +643,20 @@ export class ViewerScene {
     return this.extras.listMounted();
   }
 
+  /**
+   * Return the host-facing API exposed by a loaded extra layer, if any.
+   * Used by React panels that drive module-specific behavior (e.g. the
+   * multi-messenger chirp player).
+   */
+  getExtraLayerApi(id: string): unknown {
+    return this.extras.getLayerApi(id);
+  }
+
+  /** Force-load an extra layer module without enabling its visuals. */
+  ensureExtraLayerLoaded(id: string): Promise<void> {
+    return this.extras.ensureLoaded(id);
+  }
+
   exoplanetList(): ReturnType<ExoplanetField["list"]> {
     return this.exoplanets.list();
   }
@@ -622,8 +733,11 @@ export class ViewerScene {
       this.publishState();
     }
 
-    if (this.dirty) {
-      this.renderer.render(this.scene, this.camera);
+    if (this.dirty && !this.renderSuspended) {
+      // `WebGPURenderer.render` returns `Promise<void>`, WebGLRenderer
+      // returns `void`. We don't await — Three.js queues internally and
+      // we just need the call site to schedule it.
+      void this.renderer.render(this.scene, this.camera);
       this.dirty = false;
     }
     this.rafHandle = requestAnimationFrame(this.tick);
@@ -708,7 +822,11 @@ export class ViewerScene {
    * regardless of whether render-on-demand has skipped this frame.
    */
   snapshotPng(): string {
-    this.renderer.render(this.scene, this.camera);
+    // Both backends accept this call shape; WebGPURenderer returns a
+    // Promise we intentionally don't await — by the time the user
+    // clicks the snapshot button the most recent frame is already on
+    // the surface and `toDataURL()` reads the existing framebuffer.
+    void this.renderer.render(this.scene, this.camera);
     return this.canvas.toDataURL("image/png");
   }
 
@@ -716,6 +834,27 @@ export class ViewerScene {
   bodyDirection(name: string): Vector3 | null {
     if (name === "ISS") return this.iss.direction();
     return this.solar.directionOf(name);
+  }
+
+  /**
+   * Pause / resume the Voyager pointer + wheel controls. Used by AR Sky
+   * mode to hand camera control to the device gyroscope without leaking
+   * drag listeners. The renderer keeps rendering; only input is gated.
+   */
+  setControlsEnabled(enabled: boolean): void {
+    this.controls.setActive(enabled);
+  }
+
+  /** Current camera FOV in degrees. */
+  getFov(): number {
+    return this.camera.fov;
+  }
+
+  /** Current camera forward direction in world Y-up coords. */
+  getForward(): Vector3 {
+    const out = new Vector3();
+    this.camera.getWorldDirection(out);
+    return out;
   }
 
   dispose(): void {

@@ -25,6 +25,10 @@ export const LAYER_META = {
   defaultEnabled: false,
   description:
     "Cosmic microwave background E-mode polarization vectors from Planck's 353 GHz map, drawn as tangent lines on the sky.",
+  // Module currently ships physically-motivated synthetic vectors
+  // shaped like Planck PR3 polarization; the real upstream feed is
+  // not yet wired through `scripts/bake-planck-polarization.ts`.
+  synthetic: true,
 } as const;
 
 export type MountOptions = {

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { log } from "../../lib/logger";
-import type { LayerMeta } from "../extra-layers/registry";
+import { EXTRA_LAYERS, type LayerMeta } from "../extra-layers/registry";
+import { makeLayerHashWriter, readLayerHash } from "./layer-hash";
 
 const STORAGE_KEY = "uw:extra-layers:v1";
 
@@ -42,28 +43,69 @@ function writeEnabled(v: Enabled): void {
 
 /**
  * ✨ Extra Layers — single popover that exposes every federated overlay
- * mounted by the extra-layers registry (Gaia DR3, Chandra, multi-messenger,
- * planck polarization, sky cultures extended, ZTF alerts, …).
+ * advertised by the extra-layers registry (Gaia DR3, Chandra, multi-
+ * messenger, planck polarization, sky cultures extended, ZTF alerts, …).
  *
- * Designed to be cheap to add to the main sky viewer: drop the component
- * into the top bar, pass the scene ref, and toggles persist in localStorage
- * automatically.
+ * Modules are dynamically imported by the scene's `ExtrasController`
+ * the first time a layer is toggled on. The panel shows a small
+ * loading spinner next to the toggle while that import is in flight,
+ * by awaiting the same loader thunk (dynamic imports are deduped by
+ * the JS runtime so there's no second fetch).
+ *
+ * Designed to be cheap to add to the main sky viewer: drop the
+ * component into the top bar, pass the scene ref, and toggles persist
+ * in localStorage automatically.
  */
 export function ExtraLayersPanel({ scene }: Props) {
   const [open, setOpen] = useState(false);
-  const [enabled, setEnabled] = useState<Enabled>(() => readEnabled());
+  const [enabled, setEnabled] = useState<Enabled>(() => {
+    // URL hash wins over localStorage so a shared deep-link always
+    // restores the sender's selection on first paint. If the hash key
+    // is absent we fall back to the persisted user preference.
+    const fromHash = readLayerHash();
+    if (fromHash !== null) {
+      const seeded: Enabled = {};
+      for (const id of fromHash) seeded[id] = true;
+      // Persist the URL-derived selection so subsequent reloads without
+      // the hash also keep the shared view sticky.
+      writeEnabled(seeded);
+      return seeded;
+    }
+    return readEnabled();
+  });
+  // Per-component debounced writer for the `layers` hash key. Skips the
+  // very first sync (we don't want to spawn a history entry just from
+  // mounting the panel) — only post-mount toggles write to the URL.
+  const hashWriterRef = useRef<ReturnType<typeof makeLayerHashWriter> | null>(
+    null,
+  );
+  const didMountRef = useRef<boolean>(false);
+  /** Set of layer ids whose module download is currently in flight. */
+  const [loading, setLoading] = useState<ReadonlySet<string>>(
+    () => new Set<string>(),
+  );
+  /** Set of layer ids whose module has finished loading at least once. */
+  const loadedRef = useRef<Set<string>>(new Set<string>());
   const popoverRef = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
 
   // Read the live list of layers mounted by the scene. The registry is
-  // static so we could call `listExtras("sky")` directly, but reading
+  // static so we could call `listExtras(mode)` directly, but reading
   // from the scene also tells us if any layer failed to mount (it'd be
   // missing from the list).
   const metas = useMemo(() => scene?.listExtraLayers() ?? [], [scene]);
 
+  // Loader lookup: map of layer id → registry entry loader. Used to
+  // observe the dynamic import promise for spinner UI.
+  const loadersById = useMemo(() => {
+    const m = new Map<string, () => Promise<unknown>>();
+    for (const entry of EXTRA_LAYERS) m.set(entry.id, entry.loader);
+    return m;
+  }, []);
+
   // Push the persisted toggle state to the scene whenever scene or
   // state changes. Cheap idempotent operation — each scene.setExtraLayer
-  // just flips a `.visible` flag in the layer group.
+  // just flips a `.visible` flag (or kicks off a lazy import).
   useEffect(() => {
     if (!scene) return;
     for (const meta of metas) {
@@ -73,8 +115,61 @@ export function ExtraLayersPanel({ scene }: Props) {
       } catch (err) {
         log.warn(`[extra-layers] sync ${meta.id}`, err);
       }
+      // If we asked for ON and we've never seen this module load yet,
+      // observe the dynamic import for the spinner UI. Dynamic imports
+      // are deduped by the runtime, so this rides the same fetch.
+      if (on && !loadedRef.current.has(meta.id)) {
+        const loader = loadersById.get(meta.id);
+        if (!loader) continue;
+        setLoading((prev) => {
+          if (prev.has(meta.id)) return prev;
+          const next = new Set(prev);
+          next.add(meta.id);
+          return next;
+        });
+        void loader()
+          .catch((err: unknown) => {
+            log.warn(`[extra-layers] panel-observed load failed: ${meta.id}`, err);
+          })
+          .finally(() => {
+            loadedRef.current.add(meta.id);
+            setLoading((prev) => {
+              if (!prev.has(meta.id)) return prev;
+              const next = new Set(prev);
+              next.delete(meta.id);
+              return next;
+            });
+          });
+      }
     }
-  }, [scene, metas, enabled]);
+  }, [scene, metas, enabled, loadersById]);
+
+  // Debounced URL-hash sync. Fires only on user-driven toggle changes —
+  // initial mount is skipped so we never spawn a spurious history entry
+  // and `open`/close transitions don't touch the hash at all (we don't
+  // depend on `open` here).
+  useEffect(() => {
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    }
+    if (!hashWriterRef.current) hashWriterRef.current = makeLayerHashWriter();
+    const ids = Object.keys(enabled).filter((id) => enabled[id] === true);
+    hashWriterRef.current.schedule(ids);
+    return () => {
+      // Don't cancel: we want a pending write to land even if the
+      // component re-renders before the timer fires. Cleanup happens
+      // in the unmount-only effect below.
+    };
+  }, [enabled]);
+
+  // Cancel any pending hash write on unmount so we don't fire a stale
+  // selection after the user has navigated away from the viewer.
+  useEffect(() => {
+    return () => {
+      hashWriterRef.current?.cancel();
+    };
+  }, []);
 
   // Close popover on Escape or outside click.
   useEffect(() => {
@@ -167,6 +262,7 @@ export function ExtraLayersPanel({ scene }: Props) {
           <ul className="space-y-1.5">
             {metas.map((meta) => {
               const on = enabled[meta.id] === true;
+              const isLoading = loading.has(meta.id);
               return (
                 <li
                   key={meta.id}
@@ -177,14 +273,23 @@ export function ExtraLayersPanel({ scene }: Props) {
                   }`}
                 >
                   <label className="flex cursor-pointer items-start gap-2">
-                    <input
-                      type="checkbox"
-                      checked={on}
-                      onChange={() => toggle(meta.id)}
-                      className="mt-[3px] h-3.5 w-3.5 accent-emerald-400"
-                    />
+                    <span className="relative mt-[3px] inline-flex h-3.5 w-3.5 items-center justify-center">
+                      <input
+                        type="checkbox"
+                        checked={on}
+                        onChange={() => toggle(meta.id)}
+                        className="h-3.5 w-3.5 accent-emerald-400"
+                      />
+                      {isLoading && (
+                        <span
+                          aria-hidden
+                          title="Loading layer module…"
+                          className="pointer-events-none absolute -right-4 inline-block h-3 w-3 animate-spin rounded-full border border-violet-300/70 border-t-transparent"
+                        />
+                      )}
+                    </span>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-1.5">
+                      <div className="flex flex-wrap items-baseline gap-1.5">
                         <span
                           aria-hidden
                           className="text-[12px] leading-none text-white/70"
@@ -194,6 +299,20 @@ export function ExtraLayersPanel({ scene }: Props) {
                         <span className="font-mono text-[12px] text-white/90">
                           {meta.label}
                         </span>
+                        {meta.synthetic && (
+                          <span
+                            title="Physically-motivated synthetic data — real upstream not yet wired."
+                            className="inline-flex items-center gap-0.5 rounded-full border border-amber-400/40 bg-amber-400/15 px-1.5 py-[1px] font-mono text-[9px] uppercase tracking-[0.15em] text-amber-200"
+                          >
+                            <span aria-hidden>⚠</span>
+                            synthetic
+                          </span>
+                        )}
+                        {isLoading && (
+                          <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-violet-200/80">
+                            loading…
+                          </span>
+                        )}
                       </div>
                       <div className="mt-0.5 font-mono text-[10px] leading-snug text-white/55">
                         {meta.description}

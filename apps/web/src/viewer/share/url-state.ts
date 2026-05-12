@@ -4,10 +4,16 @@
  * Encodes the visible state into the URL hash so that any view can be
  * shared with one link. Format:
  *
- *   /#viewer?ra=10.68&dec=41.27&fov=22&t=2026-05-04T08:00Z&w=2mass&mix=0.5&c=1
+ *   /#viewer?ra=10.68&dec=41.27&fov=22&t=2026-05-04T08:00Z&w=2mass&mix=0.5&c=1&layers=gaia,chandra
  *
  * All keys are optional; missing values mean "don't override".
  */
+
+/**
+ * Maximum number of extra-layer ids encoded into the `layers` hash key.
+ * Anything beyond is silently dropped to keep shareable URLs short.
+ */
+export const MAX_HASH_LAYERS = 10;
 
 export type ShareableState = {
   ra: number; // RA degrees of camera forward, ICRS
@@ -25,6 +31,8 @@ export type ShareableState = {
   coordGrid: boolean;
   /** Bright-star name labels toggle. */
   starLabels: boolean;
+  /** Extra-federated-layer ids currently enabled (e.g. ["gaia","chandra"]). */
+  layers?: string[];
 };
 
 /**
@@ -43,6 +51,20 @@ export function serializeState(state: ShareableState): URLSearchParams {
   if (state.constellations) p.set("c", "1");
   if (state.coordGrid) p.set("g", "1");
   if (state.starLabels) p.set("n", "1");
+  if (state.layers && state.layers.length > 0) {
+    // Slice to cap and filter out empty/dup ids so we never produce a
+    // pathological URL even if the caller forgets to dedupe.
+    const seen = new Set<string>();
+    const ids: string[] = [];
+    for (const id of state.layers) {
+      if (!id) continue;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      ids.push(id);
+      if (ids.length >= MAX_HASH_LAYERS) break;
+    }
+    if (ids.length > 0) p.set("layers", ids.join(","));
+  }
   return p;
 }
 
@@ -80,8 +102,44 @@ export function parseHash(): Partial<ShareableState> {
   if (g === "1") out.coordGrid = true;
   const n = params.get("n");
   if (n === "1") out.starLabels = true;
+  const layersRaw = params.get("layers");
+  if (layersRaw) {
+    const seen = new Set<string>();
+    const ids: string[] = [];
+    for (const raw of layersRaw.split(",")) {
+      const id = raw.trim();
+      if (!id) continue;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      ids.push(id);
+      if (ids.length >= MAX_HASH_LAYERS) break;
+    }
+    if (ids.length > 0) out.layers = ids;
+  }
 
   return out;
+}
+
+/**
+ * Merge a small partial update into the current hash and replaceState it.
+ * Used by feature panels (e.g. ExtraLayersPanel) that only own a slice of
+ * the hash and must not clobber camera/time/overlay keys written by the
+ * main viewer's writeback loop.
+ */
+export function updateHashParams(
+  updates: Record<string, string | null>,
+): void {
+  if (typeof window === "undefined") return;
+  const hash = window.location.hash;
+  if (!hash.startsWith("#viewer")) return;
+  const q = hash.indexOf("?");
+  const params =
+    q >= 0 ? new URLSearchParams(hash.slice(q + 1)) : new URLSearchParams();
+  for (const [k, v] of Object.entries(updates)) {
+    if (v === null || v === "") params.delete(k);
+    else params.set(k, v);
+  }
+  replaceHash(params);
 }
 
 /**

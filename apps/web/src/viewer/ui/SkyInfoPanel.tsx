@@ -18,6 +18,8 @@ type Props = {
   onClose: () => void;
   onFlyTo: () => void;
   onToggleFavorite?: () => void;
+  /** Open the Cosmic Copilot panel seeded with "Tell me about <obj>". */
+  onAskCopilot?: (seedQuestion: string) => void;
 };
 
 export function SkyInfoPanel({
@@ -34,6 +36,7 @@ export function SkyInfoPanel({
   onClose,
   onFlyTo,
   onToggleFavorite,
+  onAskCopilot,
 }: Props) {
   return (
     <aside className="pointer-events-auto absolute right-2 top-32 z-20 w-[300px] max-w-[calc(100vw-1rem)] rounded-xl border border-white/10 bg-space-950/85 p-4 backdrop-blur sm:right-4 sm:top-20 md:w-[340px]">
@@ -176,7 +179,18 @@ export function SkyInfoPanel({
             </div>
           )}
 
-          <div className="mt-5 flex gap-2">
+          {onAskCopilot && (
+            <button
+              type="button"
+              onClick={() => onAskCopilot(`Tell me about ${hit.name}`)}
+              title="Ask the Cosmic Copilot about this object"
+              className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-violet-400/40 bg-violet-400/10 px-3 py-2 font-mono text-xs uppercase tracking-wider text-violet-200 transition hover:bg-violet-400/20"
+            >
+              🧠 Ask Copilot
+            </button>
+          )}
+
+          <div className="mt-3 flex gap-2">
             <button
               type="button"
               onClick={onFlyTo}

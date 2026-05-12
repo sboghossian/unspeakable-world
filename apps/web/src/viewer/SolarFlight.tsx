@@ -48,6 +48,7 @@ import { SnapshotButton } from "./ui/SnapshotButton";
 import { ShareButton } from "./ui/ShareButton";
 import { BookmarksPanel } from "./ui/BookmarksPanel";
 import { ExtraLayersPanel } from "./ui/ExtraLayersPanel";
+import { MarsRoverInspectorCard } from "./ui/MarsRoverInspectorCard";
 import { addBookmark } from "../lib/bookmarks";
 import { getSettings, useSettings } from "../lib/settings";
 
@@ -687,6 +688,12 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
               : undefined
           }
         />
+      )}
+
+      {/* Mars Rover Image-of-the-Day inspector card — floats top-right
+          whenever the federated `mars-rover-iotd` extra layer is enabled. */}
+      {!focusMode && (
+        <MarsRoverInspectorCard scene={sceneRef.current} />
       )}
 
       {!focusMode && <ColorLegend />}

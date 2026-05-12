@@ -1,14 +1,27 @@
 /**
  * bake-planck-polarization.ts — emit a JSON polarization field at
- * NSIDE 16 (3072 pixels) for the Planck PR3 353 GHz CMB+dust map.
+ * NSIDE 16-equivalent sampling for the Planck PR3 353 GHz CMB+dust map.
  *
- * Upstream:
- *   http://pla.esac.esa.int/pla/  (HFI_SkyMap_353_2048_R3.01_full.fits)
+ * Upstream attempts:
+ *   1. ESA Planck Legacy Archive (pla.esac.esa.int): public FITS files
+ *      for the SMICA component-separated CMB Q/U map
+ *      `COM_CMB_IQU-smica_2048_R3.00_full.fits` and the thermal-dust
+ *      polarization map `COM_CompMap_QU-thermaldust-smica_2048_R3.00_full.fits`.
+ *   2. IRSA Planck mirror at
+ *      https://irsa.ipac.caltech.edu/data/Planck/release_3/all-sky-maps/
+ *      ships the same files. SMICA at NSIDE 2048 weighs ≈ 2.0 GB
+ *      (verified via HEAD: Content-Length 2 013 312 960).
+ *      Thermal-dust QU is similar scale.
  *
- * The full PR3 polarization FITS is ~600 MB and we have neither
- * network bandwidth nor an in-tree FITS reader. We instead emit a
- * physically motivated synthetic field at HEALPix-equivalent sampling
- * that reproduces the most visually striking PR3 features:
+ * Both NSIDE-2048 maps exceed the 5-minute / 5-MB bake budget by three
+ * orders of magnitude. ESA does not publish a precomputed NSIDE-16
+ * downgrade of the polarization maps (only NSIDE 256 LFI bandpass-
+ * corrected versions, which still exceed our budget), and writing a
+ * full HEALPix reader + udgrade step in TypeScript without `healpy`
+ * is out of scope for this bake.
+ *
+ * Therefore we keep the previously-shipped synthetic field, which
+ * reproduces the most visually striking PR3 features:
  *
  *   • Strong horizontal alignment along the galactic plane (|b| < 10°),
  *     with amplitude tapering as cos²(b)
@@ -16,7 +29,13 @@
  *   • Loop I (north polar spur) signature near (l, b) ≈ (30°, +30°)
  *   • Small isotropic noise floor (~3 µK)
  *
- * Output: apps/web/public/data/planck-polarization.json (~250 KB)
+ * Upgrade path: when we can either (a) afford a one-time 2 GB pull on
+ * a build server and downgrade with `healpy`, or (b) talk ESA into
+ * publishing a precomputed NSIDE 16 version of SMICA Q/U, swap this
+ * for a real-data reader at this same JSON shape — the viewer code
+ * path is identical.
+ *
+ * Output: apps/web/public/data/planck-polarization.json (~75 KB)
  *
  * Run: pnpm --filter @unspeakable/web bake:planck-polarization
  */
@@ -178,11 +197,13 @@ async function main(): Promise<void> {
     );
   }
   const payload = {
-    attribution: "ESA / Planck Collaboration · PR3 353 GHz (CC BY 4.0)",
+    attribution:
+      "Synthetic field shaped like ESA Planck PR3 polarization (real upstream FITS is 2 GB; not bakeable)",
     nside: NSIDE,
     nVectors: vecs.length,
+    synthetic: true,
     note:
-      "Synthetic dust-aligned model matching Planck PR3 large-scale morphology — see bake-planck-polarization.ts",
+      "Synthetic dust-aligned model matching Planck PR3 large-scale morphology — see bake-planck-polarization.ts. Upstream SMICA QU FITS (NSIDE 2048, ≈2 GB) is too large to fetch in a bake; no precomputed NSIDE 16 downgrade is published by ESA.",
     data: flat,
   };
   const json = JSON.stringify(payload);

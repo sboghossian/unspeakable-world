@@ -123,6 +123,8 @@ const DEFAULT_STATE: UniverseState = {
   lightConeYears: 1000,
   lightConeOpacity: 0.35,
   lightConeTargetName: null,
+  frameTier: "solar",
+  focusMode: false,
 };
 
 export function Universe({ onExit }: Props) {
@@ -407,6 +409,14 @@ export function Universe({ onExit }: Props) {
     },
   ];
 
+  // Focus mode (F key) — hides every overlay so the 3D canvas owns the
+  // full viewport. Toggled by the scene's keydown handler; we mirror it
+  // through `state.focusMode`. The shared class collapses opacity and
+  // pointer events so the user can still drag the canvas underneath.
+  const chromeCls = state.focusMode
+    ? "opacity-0 pointer-events-none transition-opacity duration-300"
+    : "opacity-100 transition-opacity duration-300";
+
   return (
     <div className="relative h-full w-full bg-[#020415]">
       <canvas
@@ -415,11 +425,31 @@ export function Universe({ onExit }: Props) {
         className="absolute inset-0 h-full w-full focus:outline-none"
       />
 
-      {/* Top bar — fades to 30% opacity when the user is idle so the
-          3D canvas owns the stage. Popovers inside are unaffected. */}
+      {/* Bottom-left tier HUD — Universe Mode v2 readout. Always visible
+          (even in focus mode) so the user knows which frame is dominant
+          and how to get back. Tiny scale chip on the right. */}
       <div
-        className={`pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-2 p-3 transition-opacity duration-500 ${
-          idle ? "opacity-30" : "opacity-100"
+        className={`pointer-events-none absolute bottom-3 left-3 z-[7] flex flex-col items-start gap-1 font-mono text-[11px] uppercase tracking-[0.2em] ${
+          state.focusMode ? "opacity-50" : "opacity-100"
+        } transition-opacity duration-300`}
+      >
+        <div className="rounded-md border border-white/10 bg-space-950/70 px-2.5 py-1 text-emerald-200/90 backdrop-blur">
+          {state.frameTier === "solar" ? "Solar Tier" : "Galactic Tier"} ·{" "}
+          {fmtDistFromSun(state.distFromSunLY)} from Sun
+        </div>
+        <div className="rounded-md border border-white/5 bg-space-950/50 px-2.5 py-0.5 text-white/50 backdrop-blur">
+          {state.frameTier === "solar"
+            ? "1 unit = 1 AU"
+            : "1 unit = 1 LY"}
+        </div>
+      </div>
+
+      {/* Top bar — fades to 30% opacity when the user is idle so the
+          3D canvas owns the stage. Popovers inside are unaffected.
+          Hidden entirely in focus mode (F). */}
+      <div
+        className={`${chromeCls} pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-2 p-3 ${
+          idle ? "opacity-30" : ""
         }`}
       >
         <div className="pointer-events-auto flex items-center gap-2">
@@ -502,14 +532,16 @@ export function Universe({ onExit }: Props) {
       </div>
 
       {/* Left rail — sectioned navigation panel (layers, wavelengths, travel) */}
-      <LeftRail
-        state={state}
-        scene={sceneRef.current}
-        onOpenGuide={() => {
-          window.location.hash = "#guide";
-        }}
-        onOpenTimeMachine={() => setTimeMachineOpen(true)}
-      />
+      <div className={chromeCls}>
+        <LeftRail
+          state={state}
+          scene={sceneRef.current}
+          onOpenGuide={() => {
+            window.location.hash = "#guide";
+          }}
+          onOpenTimeMachine={() => setTimeMachineOpen(true)}
+        />
+      </div>
 
       {timeMachineOpen && (
         <Suspense fallback={null}>
@@ -523,7 +555,7 @@ export function Universe({ onExit }: Props) {
       )}
 
       {/* Cinematic readout (DISTANCE FROM SUN / vicinity / SCREEN SCALE) */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-24 z-[6] flex justify-center">
+      <div className={`${chromeCls} pointer-events-none absolute inset-x-0 bottom-24 z-[6] flex justify-center`}>
         <SceneBottomHud
           topLabel="Distance from Sun"
           distance={formatDistanceLY(state.distFromSunLY)}
@@ -537,7 +569,7 @@ export function Universe({ onExit }: Props) {
       </div>
 
       {/* Bottom bar */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex flex-col items-center gap-2 px-3">
+      <div className={`${chromeCls} pointer-events-none absolute inset-x-0 bottom-3 z-10 flex flex-col items-center gap-2 px-3`}>
         <div className="pointer-events-auto flex flex-wrap items-center gap-2">
           <Chip label="speed" value={`${fmtDist(state.speedLY)}/s`} />
         </div>
@@ -551,7 +583,7 @@ export function Universe({ onExit }: Props) {
         />
         <div className="rounded-full border border-white/5 bg-space-950/60 px-4 py-1 font-mono text-[10px] uppercase tracking-[0.25em] text-white/40 backdrop-blur">
           drag · look · wheel · zoom (shift = fine, ⌘/ctrl = WASD speed) ·
-          W A S D · move · 1-8 · planet · ` home · B GC · N M31 · Q/E · up/down
+          W A S D · move · 1-8 · planet · ` home · B GC · N M31 · F focus · Q/E · up/down
         </div>
       </div>
 
@@ -686,6 +718,24 @@ function buildUniverseHash(state: UniverseState): string {
   if (missions) p.set("missions", missions);
   if (state.trackingTarget) p.set("track", state.trackingTarget);
   return `universe?${p.toString()}`;
+}
+
+/**
+ * Compact distance readout for the bottom-left tier HUD. Mirrors `fmtDist`
+ * but with a tighter unit set tuned for the "X from Sun" message.
+ */
+function fmtDistFromSun(distLY: number): string {
+  if (distLY < 1.5e-5) {
+    const km = distLY * 9.461e12; // LY → km
+    if (km < 1) return `${(km * 1000).toFixed(0)} m`;
+    if (km < 1e6) return `${km.toFixed(0)} km`;
+    return `${(distLY * 63241).toFixed(2)} AU`;
+  }
+  if (distLY < 1) return `${(distLY * 63241).toFixed(1)} AU`;
+  if (distLY < 1000) return `${distLY.toFixed(2)} ly`;
+  if (distLY < 1_000_000) return `${(distLY / 1000).toFixed(2)} kly`;
+  if (distLY < 1_000_000_000) return `${(distLY / 1_000_000).toFixed(2)} Mly`;
+  return `${(distLY / 1_000_000_000).toFixed(2)} Gly`;
 }
 
 function fmtDist(distLY: number): string {

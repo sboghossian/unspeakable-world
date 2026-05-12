@@ -47,6 +47,22 @@ export type MountOptions = {
   sol?: number;
 };
 
+/**
+ * Host-facing API exposed by the mounted layer so React panels can subscribe
+ * to photos without driving the 3D scene. Mirrors the registry handle but
+ * adds the photo subscriber surface.
+ */
+export type MarsRoverIotdApi = {
+  /** Subscribe to photo updates. Returns an unsubscribe fn. The latest cached photos are pushed immediately. */
+  subscribePhotos(cb: IotdSubscriber): () => void;
+  /** Force a re-fetch (e.g. user pressed refresh). */
+  refresh(): Promise<void>;
+  /** Fetch a specific sol for a specific rover and push to subscribers. */
+  fetchSol(rover: IotdRover, sol: number): Promise<IotdPhoto[]>;
+  /** Latest cached photos pushed to subscribers, or `null` if none yet. */
+  getLastPhotos(): ReadonlyArray<IotdPhoto> | null;
+};
+
 export type MountedLayer = {
   setEnabled(v: boolean): void;
   setMode(m: LayerMode): void;
@@ -54,6 +70,8 @@ export type MountedLayer = {
   refresh(): Promise<void>;
   /** Fetch a specific sol for a specific rover and push to subscriber. */
   fetchSol(rover: IotdRover, sol: number): Promise<IotdPhoto[]>;
+  /** Stable host-facing API used by React panels. */
+  getApi(): MarsRoverIotdApi;
   dispose(): void;
 };
 
@@ -71,11 +89,22 @@ export function mountLayer(opts: MountOptions): MountedLayer {
 
   const supports = (m: LayerMode): boolean => m === "solar" || m === "sky";
 
+  const subscribers = new Set<IotdSubscriber>();
+  let lastPhotos: ReadonlyArray<IotdPhoto> | null = null;
+
   const push = (photos: ReadonlyArray<IotdPhoto>): void => {
     if (cancelled) return;
+    lastPhotos = photos;
     if (opts.onPhotos) {
       try {
         opts.onPhotos(photos);
+      } catch (err) {
+        log.warn("[mars-rover-iotd]", "subscriber threw", err);
+      }
+    }
+    for (const cb of subscribers) {
+      try {
+        cb(photos);
       } catch (err) {
         log.warn("[mars-rover-iotd]", "subscriber threw", err);
       }
@@ -90,8 +119,35 @@ export function mountLayer(opts: MountOptions): MountedLayer {
     push(list);
   };
 
+  const fetchSol = (rover: IotdRover, s: number): Promise<IotdPhoto[]> =>
+    fetchMarsIotd(rover, { ...fetchOpts, sol: s }).then((list) => {
+      push(list);
+      return list;
+    });
+
   // Kick off the initial fetch when we're enabled + in a supported mode.
   void refresh();
+
+  const api: MarsRoverIotdApi = {
+    subscribePhotos(cb: IotdSubscriber): () => void {
+      subscribers.add(cb);
+      if (lastPhotos) {
+        try {
+          cb(lastPhotos);
+        } catch (err) {
+          log.warn("[mars-rover-iotd]", "subscriber threw", err);
+        }
+      }
+      return () => {
+        subscribers.delete(cb);
+      };
+    },
+    refresh,
+    fetchSol,
+    getLastPhotos(): ReadonlyArray<IotdPhoto> | null {
+      return lastPhotos;
+    },
+  };
 
   return {
     setEnabled(v: boolean): void {
@@ -105,14 +161,13 @@ export function mountLayer(opts: MountOptions): MountedLayer {
       if (!supports(prev) && supports(currentMode)) void refresh();
     },
     refresh,
-    fetchSol(rover: IotdRover, s: number): Promise<IotdPhoto[]> {
-      return fetchMarsIotd(rover, { ...fetchOpts, sol: s }).then((list) => {
-        push(list);
-        return list;
-      });
+    fetchSol,
+    getApi(): MarsRoverIotdApi {
+      return api;
     },
     dispose(): void {
       cancelled = true;
+      subscribers.clear();
     },
   };
 }

@@ -40,6 +40,19 @@ export type AppSettings = {
   audioMuted: boolean;
   /** Audience register for the "why it matters" body in InfoPanel. */
   explanationTier: ExplanationTier;
+  /**
+   * Renderer backend preference for the Sky Atlas ViewerScene.
+   * - `webgl` — default, WebGL2 only (current behaviour).
+   * - `webgpu` — force WebGPU; if init fails the scene falls back to WebGL2.
+   * - `auto` — prefer WebGPU when available, else WebGL2.
+   *
+   * Other scenes (SolarFlight / Galactic / Universe) ignore this for now.
+   * Override at runtime via:
+   *   localStorage.setItem("uw.settings.v1",
+   *     JSON.stringify({ ...JSON.parse(localStorage.getItem("uw.settings.v1") ?? "{}"),
+   *                       renderer: "webgpu" }))
+   */
+  renderer: "webgl" | "webgpu" | "auto";
 };
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -57,6 +70,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   sonificationVolume: 0.4,
   audioMuted: false,
   explanationTier: "student",
+  renderer: "webgl",
 };
 
 const STORAGE_KEY = "uw.settings.v1";
@@ -99,6 +113,12 @@ function sanitize(raw: unknown): AppSettings {
       partial.explanationTier === "expert"
         ? partial.explanationTier
         : DEFAULT_SETTINGS.explanationTier,
+    renderer:
+      partial.renderer === "webgpu" ||
+      partial.renderer === "auto" ||
+      partial.renderer === "webgl"
+        ? partial.renderer
+        : DEFAULT_SETTINGS.renderer,
   };
 }
 
@@ -138,6 +158,15 @@ export function updateSettings(partial: Partial<AppSettings>): void {
 export function onSettingsChange(cb: (s: AppSettings) => void): () => void {
   listeners.add(cb);
   return () => listeners.delete(cb);
+}
+
+/**
+ * Convenience getter for the renderer-backend preference. Returns one of
+ * `"webgl" | "webgpu" | "auto"` — the scene layer uses this to decide
+ * whether to attempt an async WebGPU swap after construction.
+ */
+export function getRendererPreference(): AppSettings["renderer"] {
+  return current.renderer;
 }
 
 /** React hook returning [settings, update]. Re-renders when any field changes. */

@@ -507,6 +507,16 @@ export class SolarFlightScene {
     return this.extras.listMounted();
   }
 
+  /** Return the host-facing API exposed by a loaded extra layer, if any. */
+  getExtraLayerApi(id: string): unknown {
+    return this.extras.getLayerApi(id);
+  }
+
+  /** Force-load an extra layer module without enabling its visuals. */
+  ensureExtraLayerLoaded(id: string): Promise<void> {
+    return this.extras.ensureLoaded(id);
+  }
+
   subscribe(listener: Listener): () => void {
     this.listeners.add(listener);
     listener(this.state);

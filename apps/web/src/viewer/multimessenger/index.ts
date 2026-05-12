@@ -44,6 +44,8 @@ type MountedLayer = {
   setEnabled(v: boolean): void;
   setSubLayer(id: SubLayerId, on: boolean): void;
   setMode(m: "sky"): void;
+  /** Host-facing helper API (chirp audio, LIGO event list, picker). */
+  getApi(): MultiMessengerApi;
   dispose(): void;
 };
 
@@ -132,12 +134,21 @@ export function mountLayer(opts: {
 
   // Expose helpers on the root group so the host viewer can wire picks.
   // We hang an `mmApi` property the host can read by name without an import.
-  (root as unknown as { mmApi: MultiMessengerApi }).mmApi = {
+  const api: MultiMessengerApi = {
     pickLigo: (ndc, camera) => ligo.pick(ndc, camera),
     playChirp: (m1, m2) => chirp.play(m1, m2),
+    playChirpById: (eventId: string): boolean => {
+      const evt = ligo.list().find((e) => e.id === eventId);
+      if (!evt) return false;
+      return chirp.play(evt.mass1Source, evt.mass2Source);
+    },
     setChirpMuted: (m) => chirp.setMuted(m),
     isChirpMuted: () => chirp.isMuted(),
+    listLigoEvents: () => ligo.list(),
+    isLoaded: () => loaded,
+    ensureLoaded: () => ensureLoaded(),
   };
+  (root as unknown as { mmApi: MultiMessengerApi }).mmApi = api;
 
   return {
     setEnabled(v: boolean): void {
@@ -151,6 +162,9 @@ export function mountLayer(opts: {
     },
     setMode(_m: "sky"): void {
       // Single mode for v1 — no-op. Kept for contract symmetry.
+    },
+    getApi(): MultiMessengerApi {
+      return api;
     },
     dispose(): void {
       disposed = true;
@@ -176,8 +190,15 @@ export type MultiMessengerApi = {
     camera: import("three").Camera,
   ) => LigoEvent | null;
   playChirp: (m1Source: number, m2Source: number) => boolean;
+  /** Play the chirp for a known LIGO event id (e.g. "GW150914"). */
+  playChirpById: (eventId: string) => boolean;
   setChirpMuted: (muted: boolean) => void;
   isChirpMuted: () => boolean;
+  /** Current LIGO event list (empty until data finishes loading). */
+  listLigoEvents: () => LigoEvent[];
+  isLoaded: () => boolean;
+  /** Force the data fetch (idempotent). Resolves when the fetch settles. */
+  ensureLoaded: () => Promise<void>;
 };
 
 export type { AugerEvent, IceCubeEvent, LigoEvent, NanoGravPulsar };

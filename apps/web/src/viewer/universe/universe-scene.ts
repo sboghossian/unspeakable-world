@@ -84,6 +84,13 @@ import { DarkMatterField } from "./dark-matter-field";
 import { AuroraOverlay } from "../space-weather/aurora-overlay";
 import { getSettings, onSettingsChange } from "../../lib/settings";
 import { log } from "../../lib/logger";
+import {
+  adaptiveSpeedLY,
+  pickTier,
+  tierAlphas,
+  type Tier as FrameTier,
+} from "./tiers";
+import { GalacticFrame, SolarFrame } from "./frames";
 
 /**
  * 🌌 Universe Mode — single seamless scene across scales.
@@ -201,6 +208,10 @@ export type UniverseState = {
   };
   /** Tracking target — planet name when locked, else null. */
   trackingTarget: string | null;
+  /** Universe Mode v2 frame tier ("solar" | "galactic"). */
+  frameTier: FrameTier;
+  /** Focus mode (UI hidden). Toggled with F. */
+  focusMode: boolean;
 };
 
 type Listener = (s: UniverseState) => void;
@@ -231,12 +242,19 @@ export class UniverseScene {
   private extras!: ExtrasController;
 
   // Three coordinate frames, each anchored so the camera stays at world (0,0,0):
-  //   - solarGroup: 1 unit = 1 AU, recentered on the Sun-relative offset
-  //   - galacticGroup: 1 unit = 1 LY, recentered on the camera's logical pos
+  //   - solarFrame (1 unit = 1 AU, recentered on the Sun)
+  //   - galacticFrame (1 unit = 1 LY, recentered on the camera's logical pos)
   //   - hipsGroup: HiPS sky-tile celestial sphere (skybox, follows camera)
-  private solarGroup = new Group();
-  private galacticGroup = new Group();
+  // The frames own their underlying Group. We keep the legacy property
+  // names (`solarGroup`, `galacticGroup`) for back-compat with the rest
+  // of the class — they alias `frame.group`.
+  private solarFrame = new SolarFrame();
+  private galacticFrame = new GalacticFrame();
+  private solarGroup = this.solarFrame.group;
+  private galacticGroup = this.galacticFrame.group;
   private hipsGroup = new Group();
+  // Focus mode — hides UI overlays when true. Toggled via F.
+  private focusMode = false;
   private hipsSphere: HipsSphere;
   private hipsOverlay: HipsSphere | null = null;
   private hipsOverlayId: string | null = null;
@@ -303,6 +321,14 @@ export class UniverseScene {
   private yaw = Math.PI;
   private pitch = -0.55; // tilt down toward the ecliptic (~31°)
   private speed = 0.25 / AU_PER_LY; // ~0.25 AU/s — comfortable for inner SS
+  /**
+   * Universe Mode v2 adaptive-speed multiplier. `this.speed` is
+   * recomputed from `adaptiveSpeedLY(distLY, speedFactor)` each tick when
+   * the user hasn't manually overridden via Ctrl+wheel within the last
+   * `MANUAL_SPEED_HOLD_MS` window.
+   */
+  private speedFactor = 0.05;
+  private manualSpeedUntilMs = 0;
   private heldKeys = new Set<string>();
   private dragging = false;
   private dragStart = { x: 0, y: 0 };
@@ -1415,6 +1441,16 @@ export class UniverseScene {
     if (e.ctrlKey || e.metaKey) {
       const factor = Math.exp(-e.deltaY * 0.0008);
       this.speed = Math.max(1e-9, Math.min(1e6, this.speed * factor));
+      // Suspend adaptive-speed override for ~10 s so the user's manual
+      // wheel adjustment sticks while they fine-tune.
+      this.manualSpeedUntilMs = performance.now() + 10_000;
+      // Recompute speedFactor so adaptive speed picks up where the user
+      // left off when the hold window expires.
+      const distLY = this.logicalPos.distanceTo(SUN_LY);
+      this.speedFactor = Math.max(
+        1e-4,
+        Math.min(100, this.speed / Math.max(1e-9, distLY)),
+      );
       this.publishState();
       return;
     }
@@ -1459,6 +1495,10 @@ export class UniverseScene {
     }
     if (e.key === "n" || e.key === "N") {
       this.flyTo("M31");
+      return;
+    }
+    if (e.key === "f" || e.key === "F") {
+      this.setFocusMode(!this.focusMode);
       return;
     }
     const n = parseInt(e.key, 10);
@@ -1548,6 +1588,8 @@ export class UniverseScene {
       lightConeOpacity: this.lightConeOpacity,
       lightConeTargetName: this.lightConeTargetName,
       trackingTarget: this.trackingTarget,
+      frameTier: pickTier(distLY),
+      focusMode: this.focusMode,
     };
   }
 
@@ -1651,6 +1693,17 @@ export class UniverseScene {
     for (const l of this.listeners) l(this.state);
   }
 
+  /** Toggle the F-key "focus mode" (UI chrome hidden). */
+  setFocusMode(on: boolean): void {
+    this.focusMode = on;
+    this.publishState();
+  }
+
+  /** Read the current focus-mode flag. */
+  focusModeOn(): boolean {
+    return this.focusMode;
+  }
+
   private handleResize(): void {
     const w = this.canvas.clientWidth;
     const h = this.canvas.clientHeight;
@@ -1737,6 +1790,14 @@ export class UniverseScene {
       }
     }
 
+    // Adaptive WASD speed: scales with distance from the Sun so the same
+    // keypress feels comfortable near a planet and crossing the cosmic
+    // web. Skipped while the user is actively manual-tuning via Ctrl+wheel.
+    if (now >= this.manualSpeedUntilMs && !this.flyTween) {
+      const distLYNow = this.logicalPos.distanceTo(SUN_LY);
+      this.speed = adaptiveSpeedLY(distLYNow, this.speedFactor);
+    }
+
     // WASD movement (in local axes derived from current yaw/pitch).
     if (this.heldKeys.size > 0) {
       this.lastInteractionMs = now;
@@ -1763,28 +1824,17 @@ export class UniverseScene {
     this.camera.lookAt(fwd);
 
     // Re-anchor groups so the camera sits near the local origin in
-    // whichever frame is dominant. Solar group is in AU.
+    // whichever frame is dominant. Frames own their own offset math
+    // (tier-aware; AU vs LY) — see `frames.ts`.
     const distLY = this.logicalPos.distanceTo(SUN_LY);
-    // Camera-to-Sun in LY:
-    const sunRelLY = SUN_LY.clone().sub(this.logicalPos);
-    // Solar group AU position = sunRelLY * AU_PER_LY (Sun sits at this
-    // offset relative to the camera in AU units).
-    this.solarGroup.position.set(
-      sunRelLY.x * AU_PER_LY,
-      sunRelLY.y * AU_PER_LY,
-      sunRelLY.z * AU_PER_LY,
-    );
-    // Galactic group offset = -logicalPos (camera at world origin in LY).
-    this.galacticGroup.position.set(
-      -this.logicalPos.x,
-      -this.logicalPos.y,
-      -this.logicalPos.z,
-    );
+    this.solarFrame.setCameraOffset(this.logicalPos);
+    this.galacticFrame.setCameraOffset(this.logicalPos);
 
-    // Layer visibility
-    const solarOpacity = ramp(distLY, 1e-3, 0.2, 1.0, 0.0);
-    const galaxyOpacity = ramp(distLY, 0.5, 50, 0.0, 1.0);
-    const cosmicOpacity = ramp(distLY, 50_000, 5_000_000, 0.0, 1.0);
+    // Tier-driven layer visibility — single source of truth in `tiers.ts`.
+    const alphas = tierAlphas(distLY);
+    const solarOpacity = alphas.solar;
+    const galaxyOpacity = alphas.galacticDisk;
+    const cosmicOpacity = alphas.cosmicWeb;
 
     (this.sunMesh.material as MeshBasicMaterial).opacity = 1.0;
     (this.sunMesh.material as MeshBasicMaterial).transparent = true;

@@ -46,6 +46,27 @@ export class VoyagerControls {
     this.applyToCamera();
   }
 
+  /**
+   * Toggle whether this control responds to pointer / wheel input. AR Sky
+   * mode pauses Voyager input while the gyroscope drives the camera, then
+   * re-enables on exit. We keep listeners bound so re-enabling is instant.
+   */
+  setActive(active: boolean): void {
+    this.active = active;
+    if (!active) {
+      this.dragging = false;
+      this.pointers.clear();
+      this.velYaw = 0;
+      this.velPitch = 0;
+      this.drifting = false;
+    }
+  }
+
+  /** Whether input is currently being processed. */
+  isActive(): boolean {
+    return this.active;
+  }
+
   setForward(dir: Vector3): void {
     // Convert the unit forward vector to YXZ Euler so we keep our (yaw, pitch).
     // forward = (sin(yaw)*cos(pitch), sin(pitch), -cos(yaw)*cos(pitch))   [YXZ, no roll]
