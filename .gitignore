@@ -21,3 +21,10 @@ coverage
 .gstack/
 .claude/worktrees/
 .claude/scheduled_tasks.lock
+
+# iCloud sync artifacts (Mac/iCloud appends " 2" to duplicates)
+*\ 2.yaml
+*\ 2.json
+*\ 2.md
+*\ 2.lock
+unspeakable-world-backups/
