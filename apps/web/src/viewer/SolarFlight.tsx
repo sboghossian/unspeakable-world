@@ -16,6 +16,7 @@ import { SatellitesPanel } from "./ui/SatellitesPanel";
 import { AchievementsPanel } from "./ui/AchievementsPanel";
 import { ColorLegend } from "./ui/ColorLegend";
 import { ShortcutsOverlay } from "./ui/ShortcutsOverlay";
+import { ReportBugButton } from "./ui/ReportBugButton";
 import { recordPlanetVisit, unlock } from "../lib/achievements";
 import { SettingsPanel } from "./ui/SettingsPanel";
 import { SnapshotButton } from "./ui/SnapshotButton";
@@ -566,6 +567,8 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
       )}
 
       {!focusMode && <ColorLegend />}
+
+      {!focusMode && <ReportBugButton />}
 
       {shortcutsOpen && (
         <ShortcutsOverlay onClose={() => setShortcutsOpen(false)} />
