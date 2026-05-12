@@ -1,11 +1,14 @@
 import { useEffect, useRef } from "react";
 
 /**
- * Starfield — pure-Canvas2D twinkling background.
- * Pre-renders ~600 stars at random magnitudes; animates twinkle on a
- * lightweight rAF that pauses when the document is hidden.
+ * Starfield — pure-Canvas2D twinkling background with shooting stars
+ * and a slow horizontal drift so the sky actually feels like it's
+ * rotating overhead.
  *
- * Day 2-3 will replace this with the real Three.js HEALPix renderer.
+ * Pre-renders ~900 stars at random magnitudes; animates twinkle on a
+ * lightweight rAF that pauses when the document is hidden. Meteors
+ * spawn every ~5–10 s and trail across the field on a short fading
+ * gradient line.
  */
 export function Starfield() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -24,6 +27,20 @@ export function Starfield() {
       phase: number;
       speed: number;
     }> = [];
+    type Meteor = {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      life: number;
+      maxLife: number;
+    };
+    const meteors: Meteor[] = [];
+    let lastSpawn = 0;
+    let nextSpawnDelay = 4000 + Math.random() * 6000;
+    let lastT = 0;
+    let driftPx = 0; // accumulated x-drift in CSS px
+
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
     const resize = () => {
@@ -42,9 +59,40 @@ export function Starfield() {
       }));
     };
 
+    const spawnMeteor = (w: number, h: number) => {
+      // Bias to upper portion + 30°-ish downward angle to read as a
+      // typical Perseid streak.
+      const angle = Math.PI * 0.78 + (Math.random() - 0.5) * 0.5;
+      const speed = 480 + Math.random() * 360; // px/sec
+      const startX = Math.random() * w - 60;
+      const startY = Math.random() * h * 0.4 - 40;
+      meteors.push({
+        x: startX,
+        y: startY,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 0,
+        maxLife: 0.7 + Math.random() * 0.6, // seconds
+      });
+    };
+
     const draw = (t: number) => {
       const w = canvas.clientWidth;
       const h = canvas.clientHeight;
+      const dtSec = lastT === 0 ? 0 : Math.min(0.05, (t - lastT) / 1000);
+      lastT = t;
+
+      // Sky drift — ~3 px / second horizontally. Wraps so stars never
+      // disappear off the edge.
+      driftPx = (driftPx + dtSec * 3) % w;
+
+      // Spawn timer.
+      if (t - lastSpawn > nextSpawnDelay) {
+        spawnMeteor(w, h);
+        lastSpawn = t;
+        nextSpawnDelay = 4000 + Math.random() * 6000;
+      }
+
       // gradient backdrop — deep space + a faint plasma glow toward bottom-right
       const grad = ctx.createRadialGradient(
         w * 0.7,
@@ -66,10 +114,43 @@ export function Starfield() {
         ctx.globalAlpha = 0.25 + 0.75 * tw;
         ctx.fillStyle = "#e2e8f0";
         ctx.beginPath();
-        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        const x = (s.x + driftPx) % w;
+        ctx.arc(x, s.y, s.r, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.restore();
+
+      // Meteors — short trail rendered as a fading gradient line.
+      for (let i = meteors.length - 1; i >= 0; i--) {
+        const m = meteors[i]!;
+        m.life += dtSec;
+        if (m.life > m.maxLife) {
+          meteors.splice(i, 1);
+          continue;
+        }
+        const p = m.life / m.maxLife;
+        m.x += m.vx * dtSec;
+        m.y += m.vy * dtSec;
+        const tailLen = 60 + (1 - p) * 40;
+        const tx = m.x - (m.vx / Math.hypot(m.vx, m.vy)) * tailLen;
+        const ty = m.y - (m.vy / Math.hypot(m.vx, m.vy)) * tailLen;
+        const fade = Math.sin(Math.PI * p); // bell curve over lifetime
+        const lineGrad = ctx.createLinearGradient(tx, ty, m.x, m.y);
+        lineGrad.addColorStop(0, "rgba(255,240,200,0)");
+        lineGrad.addColorStop(1, `rgba(255,240,200,${0.85 * fade})`);
+        ctx.strokeStyle = lineGrad;
+        ctx.lineWidth = 1.4;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(tx, ty);
+        ctx.lineTo(m.x, m.y);
+        ctx.stroke();
+        // Bright head.
+        ctx.fillStyle = `rgba(255,250,230,${0.95 * fade})`;
+        ctx.beginPath();
+        ctx.arc(m.x, m.y, 1.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
       raf = requestAnimationFrame(draw);
     };
 
