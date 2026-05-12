@@ -2,7 +2,13 @@ import { useEffect, useState, type ReactElement } from "react";
 
 import { fetchGroundedSummary, type GroundedSummary } from "../info/grounded-summary";
 import { getPulsarAudio } from "../sonification/pulsar-audio";
-import { getSettings, onSettingsChange } from "../../lib/settings";
+import {
+  getSettings,
+  onSettingsChange,
+  updateSettings,
+  type ExplanationTier,
+} from "../../lib/settings";
+import { pickWhyMatters, type TieredText } from "../data/object-citations";
 
 /**
  * Unified inspector card. Shared between Universe Mode, Solar Flight, and
@@ -55,8 +61,13 @@ export type InfoSection =
     }
   | {
       kind: "references";
-      /** Editorial "why does this matter?" paragraph. */
-      whyMatters: string;
+      /**
+       * Editorial "why does this matter?" copy. Either a single string
+       * (rendered for every tier) or a tiered record. The InfoPanel
+       * surfaces a Curious / Student / Expert toggle when tiered text
+       * is provided.
+       */
+      whyMatters: TieredText;
       /** Optional archive shortcuts — SIMBAD, Wikipedia, NASA ADS. */
       archives?: Array<{ label: string; href: string }>;
       /** Optional landmark primary papers. */
@@ -297,14 +308,74 @@ function renderBody(
   }
 }
 
+/**
+ * Visual tokens for the Curious / Student / Expert pill toggle.
+ * Curious is gold (warm, inviting), Student cyan (default, neutral),
+ * Expert violet (precision). Kept inline so the block stays self-contained.
+ */
+const TIER_TONE: Record<
+  ExplanationTier,
+  { active: string; inactive: string; label: string }
+> = {
+  curious: {
+    active: "border-amber-300/60 bg-amber-300/15 text-amber-100",
+    inactive: "border-white/10 bg-white/5 text-white/55 hover:bg-white/10",
+    label: "curious",
+  },
+  student: {
+    active: "border-cyan-400/60 bg-cyan-400/15 text-cyan-100",
+    inactive: "border-white/10 bg-white/5 text-white/55 hover:bg-white/10",
+    label: "student",
+  },
+  expert: {
+    active: "border-violet-400/60 bg-violet-400/15 text-violet-100",
+    inactive: "border-white/10 bg-white/5 text-white/55 hover:bg-white/10",
+    label: "expert",
+  },
+};
+
+const TIERS: readonly ExplanationTier[] = ["curious", "student", "expert"];
+
 function ReferencesBlock({
   section,
 }: {
   section: Extract<InfoSection, { kind: "references" }>;
 }): ReactElement {
+  const [tier, setTier] = useState<ExplanationTier>(
+    getSettings().explanationTier,
+  );
+  useEffect(() => onSettingsChange((s) => setTier(s.explanationTier)), []);
+  const tiered = typeof section.whyMatters !== "string";
+  const body = pickWhyMatters(section.whyMatters, tier);
   return (
     <div className="space-y-3">
-      <p className="text-sm leading-relaxed text-white/80">{section.whyMatters}</p>
+      {tiered && (
+        <div
+          role="tablist"
+          aria-label="Explanation tier"
+          className="flex gap-1"
+        >
+          {TIERS.map((t) => {
+            const active = t === tier;
+            const tone = TIER_TONE[t];
+            return (
+              <button
+                key={t}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => updateSettings({ explanationTier: t })}
+                className={`flex-1 rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest transition ${
+                  active ? tone.active : tone.inactive
+                }`}
+              >
+                {tone.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+      <p className="text-sm leading-relaxed text-white/80">{body}</p>
       {section.archives && section.archives.length > 0 && (
         <div>
           <div className="mb-1 font-mono text-[9px] uppercase tracking-widest text-white/35">

@@ -1,5 +1,9 @@
 import { idb } from "../../lib/idb-cache";
-import { useSettings, type AppSettings } from "../../lib/settings";
+import {
+  useSettings,
+  type AppSettings,
+  type ExplanationTier,
+} from "../../lib/settings";
 
 /**
  * ⚙ Shared settings popover.
@@ -126,6 +130,41 @@ export function SettingsPanel({ open, onClose, anchor = "left-rail" }: Props) {
           on={s.showNames}
           onChange={(v) => update({ showNames: v })}
         />
+      </Section>
+
+      <Section label="Explanations">
+        <div className="mb-1 font-mono text-[10px] uppercase tracking-widest text-white/40">
+          reader register
+        </div>
+        <div className="mb-1 flex gap-1">
+          {(["curious", "student", "expert"] as const).map((t) => {
+            const active = s.explanationTier === t;
+            const tone: Record<ExplanationTier, string> = {
+              curious: active
+                ? "border-amber-300/60 bg-amber-300/15 text-amber-100"
+                : "border-white/10 bg-white/5 text-white/65 hover:bg-white/10",
+              student: active
+                ? "border-cyan-400/60 bg-cyan-400/15 text-cyan-100"
+                : "border-white/10 bg-white/5 text-white/65 hover:bg-white/10",
+              expert: active
+                ? "border-violet-400/60 bg-violet-400/15 text-violet-100"
+                : "border-white/10 bg-white/5 text-white/65 hover:bg-white/10",
+            };
+            return (
+              <button
+                key={t}
+                type="button"
+                onClick={() => update({ explanationTier: t })}
+                className={`flex-1 rounded-md border px-2 py-1 font-mono text-[11px] uppercase tracking-widest transition ${tone[t]}`}
+              >
+                {t}
+              </button>
+            );
+          })}
+        </div>
+        <div className="font-mono text-[9px] text-white/35">
+          voice for the "why it matters" body in the inspector.
+        </div>
       </Section>
 
       <Section label="Sonification">
