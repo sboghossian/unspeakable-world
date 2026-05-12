@@ -4,6 +4,7 @@ import { SceneBottomHud } from "./ui/SceneBottomHud";
 import { SnapshotButton } from "./ui/SnapshotButton";
 import { ShareButton } from "./ui/ShareButton";
 import { BookmarksPanel } from "./ui/BookmarksPanel";
+import { ExtraLayersPanel } from "./ui/ExtraLayersPanel";
 import { addBookmark } from "../lib/bookmarks";
 
 /**
@@ -84,6 +85,7 @@ export function Galactic({ onExit }: Props) {
           />
           <ShareButton onPrepare={() => buildGalacticHash(state)} />
           <BookmarksPanel />
+          <ExtraLayersPanel scene={sceneRef.current} />
           <button
             type="button"
             onClick={() => {

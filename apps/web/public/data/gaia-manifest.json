@@ -1,0 +1,9 @@
+{
+  "source": "ESA Gaia DR3 via ESAC TAP",
+  "license": "CC-BY 4.0",
+  "version": 1,
+  "count": 1000000,
+  "magLimit": 11,
+  "binFile": "gaia-1m.bin",
+  "fetched": "2026-05-12T19:59:13.824Z"
+}

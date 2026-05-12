@@ -31,6 +31,11 @@ import {
 } from "three";
 import { Body, HelioVector, GeoVector, JupiterMoons } from "astronomy-engine";
 import {
+  mountExtrasInto,
+  type ExtrasController,
+} from "../extra-layers/mount";
+import type { LayerMeta } from "../extra-layers/registry";
+import {
   makeEarthAtmosphereMaterial,
   makeEarthDayNightMaterial,
   makePlanetTexture,
@@ -205,6 +210,8 @@ export class SolarFlightScene {
   private renderer: WebGLRenderer;
   private camera: PerspectiveCamera;
   private scene = new Scene();
+  /** Federated extra-layer overlays (solar mode). Mounted in constructor. */
+  private extras!: ExtrasController;
 
   // Camera control
   private focusName = "Sun";
@@ -482,7 +489,22 @@ export class SolarFlightScene {
       starBrightness: this.starBrightness,
     };
 
+    // Federated extra layers (NEOCP risk, Starlink opt-in, Globe at
+    // Night, OPAL Jupiter/Saturn, Mars Rover photo-of-the-day, plus
+    // the catalog layers that opt into solar mode).
+    this.extras = mountExtrasInto(this.scene, "solar");
+
     this.tick();
+  }
+
+  /** Toggle a federated-data extra layer by its registry id. */
+  setExtraLayer(id: string, enabled: boolean): void {
+    this.extras.setEnabled(id, enabled);
+  }
+
+  /** Metadata for every extra layer mounted in this scene. */
+  listExtraLayers(): LayerMeta[] {
+    return this.extras.listMounted();
   }
 
   subscribe(listener: Listener): () => void {
@@ -1779,6 +1801,7 @@ export class SolarFlightScene {
     this.disposed = true;
     cancelAnimationFrame(this.rafHandle);
     this.resizeObs?.disconnect();
+    this.extras?.dispose();
     this.canvas.removeEventListener("pointerdown", this.onPointerDown);
     this.canvas.removeEventListener("pointermove", this.onPointerMove);
     this.canvas.removeEventListener("pointerup", this.onPointerUp);

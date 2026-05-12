@@ -10,8 +10,18 @@
     "typecheck": "tsc -b --noEmit",
     "lint": "echo 'lint: TODO'",
     "bake:asteroids": "node --experimental-strip-types --no-warnings ../../scripts/bake-asteroids.ts",
+    "bake:gaia": "node --experimental-strip-types --no-warnings ../../scripts/bake-gaia.ts",
     "bake:missions": "node --experimental-strip-types --no-warnings ../../scripts/bake-missions.ts",
     "bake:eclipses": "node --experimental-strip-types --no-warnings ../../scripts/bake-eclipses.ts",
+    "bake:exoplanets:full": "node --experimental-strip-types --no-warnings ../../scripts/bake-exoplanets-full.ts",
+    "bake:phl": "node --experimental-strip-types --no-warnings ../../scripts/bake-phl-hwc.ts",
+    "bake:multimessenger": "node --experimental-strip-types --no-warnings ../../scripts/bake-multimessenger.ts",
+    "bake:galaxy-cone": "node --experimental-strip-types --no-warnings ../../scripts/bake-galaxy-cone.ts",
+    "bake:chandra": "node --experimental-strip-types --no-warnings ../../scripts/bake-chandra.ts",
+    "bake:variables": "node --experimental-strip-types --no-warnings ../../scripts/bake-variables.ts",
+    "bake:planck-polarization": "node --experimental-strip-types --no-warnings ../../scripts/bake-planck-polarization.ts",
+    "bake:cosmicflows4": "node --experimental-strip-types --no-warnings ../../scripts/bake-cosmicflows4.ts",
+    "bake:sky-cultures-extended": "node --experimental-strip-types --no-warnings ../../scripts/bake-sky-cultures-extended.ts",
     "verify:imagery": "node --experimental-strip-types --no-warnings ../../scripts/verify-imagery.ts"
   },
   "dependencies": {

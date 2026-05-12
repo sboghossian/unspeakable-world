@@ -20,6 +20,11 @@ import { Landmarks } from "./landmarks";
 import { zenithWorldDirection } from "../observer/zenith";
 import { VoyagerControls } from "./voyager-controls";
 import { log } from "../../lib/logger";
+import {
+  mountExtrasInto,
+  type ExtrasController,
+} from "../extra-layers/mount";
+import type { LayerMeta } from "../extra-layers/registry";
 
 /**
  * Observable view-state the UI can subscribe to (loading veil, log-scale chip,
@@ -105,6 +110,8 @@ export class ViewerScene {
   private coordGrid: CoordGrid;
   private landmarks: Landmarks;
   private controls: VoyagerControls;
+  /** Federated extra-layer overlays mounted via the extra-layers registry. */
+  private extras: ExtrasController;
 
   private dirty = true;
   private rafHandle = 0;
@@ -239,6 +246,11 @@ export class ViewerScene {
       })
       .catch((err) => log.warn("[constellations] load failed", err));
 
+    // Mount every "extra layer" whose meta declares mode `sky`.
+    // Each is off by default; the React layer toggles them via setExtraLayer.
+    this.extras = mountExtrasInto(this.scene, "sky");
+    this.extras.setTime(this.simTime.getTime());
+
     this.controls = new VoyagerControls(this.camera, canvas);
     this.controls.onChange = () => {
       this.dirty = true;
@@ -369,6 +381,7 @@ export class ViewerScene {
     this.simTime = new Date(time.getTime());
     this.solar.update(this.simTime);
     this.spacecraft.update(this.simTime);
+    this.extras.setTime(this.simTime.getTime());
     this.dirty = true;
     this.publishState();
   }
@@ -516,6 +529,23 @@ export class ViewerScene {
     this.publishState();
   }
 
+  /** Toggle a federated-data extra layer by its registry id. */
+  setExtraLayer(id: string, enabled: boolean): void {
+    this.extras.setEnabled(id, enabled);
+    this.dirty = true;
+  }
+
+  /** Toggle a sub-layer inside a composite extra layer (e.g. IceCube inside Multi-messenger). */
+  setExtraSubLayer(layerId: string, subId: string, on: boolean): void {
+    this.extras.setSubLayer(layerId, subId, on);
+    this.dirty = true;
+  }
+
+  /** Metadata for every extra layer mounted in this scene (sky mode). */
+  listExtraLayers(): LayerMeta[] {
+    return this.extras.listMounted();
+  }
+
   exoplanetList(): ReturnType<ExoplanetField["list"]> {
     return this.exoplanets.list();
   }
@@ -587,6 +617,7 @@ export class ViewerScene {
       this.simTime = new Date(this.simTime.getTime() + simElapsedMs);
       this.solar.update(this.simTime);
       this.spacecraft.update(this.simTime);
+      this.extras.setTime(this.simTime.getTime());
       this.dirty = true;
       this.publishState();
     }
@@ -712,6 +743,7 @@ export class ViewerScene {
     this.pulsars.dispose();
     this.cosmicLandmarks.dispose();
     this.iss.dispose();
+    this.extras.dispose();
     this.renderer.dispose();
     this.listeners.clear();
   }

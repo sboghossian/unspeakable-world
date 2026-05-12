@@ -47,6 +47,7 @@ import { SettingsPanel } from "./ui/SettingsPanel";
 import { SnapshotButton } from "./ui/SnapshotButton";
 import { ShareButton } from "./ui/ShareButton";
 import { BookmarksPanel } from "./ui/BookmarksPanel";
+import { ExtraLayersPanel } from "./ui/ExtraLayersPanel";
 import { addBookmark } from "../lib/bookmarks";
 import { getSettings, useSettings } from "../lib/settings";
 
@@ -296,6 +297,14 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
           <CollectionsPanel
             onFlyTo={(item) => sceneRef.current?.setFocus(item.id)}
           />
+        </>
+      ),
+    },
+    {
+      label: "Federated data",
+      children: (
+        <>
+          <ExtraLayersPanel scene={sceneRef.current} />
         </>
       ),
     },

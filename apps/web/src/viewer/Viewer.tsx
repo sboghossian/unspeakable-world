@@ -41,6 +41,7 @@ import { WavelengthBar, type SkyCultureChoice } from "./ui/WavelengthBar";
 import { getSettings, updateSettings } from "../lib/settings";
 import type { SkyProjection } from "./sky-atlas/projection-shader";
 import { SkyInfoPanel } from "./ui/SkyInfoPanel";
+import { ExtraLayersPanel } from "./ui/ExtraLayersPanel";
 import {
   candidatesFromSimbad,
   wikipediaSummary,
@@ -718,6 +719,7 @@ export function Viewer() {
             }}
           />
           <NeoPanel />
+          <ExtraLayersPanel scene={sceneRef.current} />
           <SkyTonightPanel observer={observer} />
           <SpaceWeatherPanel observer={observer} />
           {searchIndex && (

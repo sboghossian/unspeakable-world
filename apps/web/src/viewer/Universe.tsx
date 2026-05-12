@@ -45,6 +45,7 @@ import { ShortcutsOverlay } from "./ui/ShortcutsOverlay";
 import { ReportBugButton } from "./ui/ReportBugButton";
 import { SupportRibbon } from "./ui/SupportRibbon";
 import { ExploreDrawer, type Group } from "./ui/ExploreDrawer";
+import { ExtraLayersPanel } from "./ui/ExtraLayersPanel";
 import { SceneEditorPanel } from "./ui/SceneEditorPanel";
 import { SceneLinkToast } from "./scene-editor/SceneLinkToast";
 import {
@@ -393,6 +394,14 @@ export function Universe({ onExit }: Props) {
           <CollectionsPanel
             onFlyTo={(item) => sceneRef.current?.flyTo(item.id)}
           />
+        </>
+      ),
+    },
+    {
+      label: "Federated data",
+      children: (
+        <>
+          <ExtraLayersPanel scene={sceneRef.current} />
         </>
       ),
     },

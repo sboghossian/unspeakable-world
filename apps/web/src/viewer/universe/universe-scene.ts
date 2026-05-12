@@ -27,6 +27,11 @@ import {
 import { Body, HelioVector } from "astronomy-engine";
 import { Raycaster, Vector2 } from "three";
 import {
+  mountExtrasInto,
+  type ExtrasController,
+} from "../extra-layers/mount";
+import type { LayerMeta } from "../extra-layers/registry";
+import {
   makePlanetTexture,
   makeSdoLiveTexture,
   paintCanvas,
@@ -222,6 +227,8 @@ export class UniverseScene {
   private renderer: WebGLRenderer;
   private camera: PerspectiveCamera;
   private scene = new Scene();
+  /** Federated extra-layer overlays (universe mode). Mounted in constructor. */
+  private extras!: ExtrasController;
 
   // Three coordinate frames, each anchored so the camera stays at world (0,0,0):
   //   - solarGroup: 1 unit = 1 AU, recentered on the Sun-relative offset
@@ -530,7 +537,22 @@ export class UniverseScene {
     this.state = this.computeState();
     this.applyDisplaySettings();
     this.settingsUnsub = onSettingsChange(() => this.applyDisplaySettings());
+
+    // Federated extra layers — universe mode picks up galaxy cone,
+    // cosmicflows-4, plus catalog layers that opt into universe mode.
+    this.extras = mountExtrasInto(this.scene, "universe");
+
     this.tick();
+  }
+
+  /** Toggle a federated-data extra layer by its registry id. */
+  setExtraLayer(id: string, enabled: boolean): void {
+    this.extras.setEnabled(id, enabled);
+  }
+
+  /** Metadata for every extra layer mounted in this scene. */
+  listExtraLayers(): LayerMeta[] {
+    return this.extras.listMounted();
   }
 
   /** Read global settings + push them onto solar materials. Idempotent. */
@@ -1839,6 +1861,7 @@ export class UniverseScene {
     this.settingsUnsub();
     cancelAnimationFrame(this.rafHandle);
     this.resizeObs?.disconnect();
+    this.extras?.dispose();
     this.canvas.removeEventListener("pointerdown", this.onPointerDown);
     this.canvas.removeEventListener("pointermove", this.onPointerMove);
     this.canvas.removeEventListener("pointerup", this.onPointerUp);

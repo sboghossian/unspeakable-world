@@ -1,0 +1,1364 @@
+{
+  "attribution": "Stellarium sky-cultures · cultural data CC BY-SA 4.0 · upstream https://github.com/Stellarium/stellarium-skycultures",
+  "note": "Curated subset of Stellarium's cultural-data line figures; star coordinates are J2000 ICRS from Hipparcos / Yale BSC (public domain).",
+  "cultures": [
+    {
+      "id": "arab",
+      "label": "Arab (medieval)",
+      "region": "Arabia · 9th–13th c.",
+      "attribution": "Stellarium sky-cultures · Arabic Moon Mansions (manazil al-qamar) · CC BY-SA 4.0",
+      "figures": [
+        {
+          "name": "Banat na'sh (Daughters of the Bier)",
+          "detail": "The Big Dipper as the bier of a slain father and his three daughters following.",
+          "lines": [
+            [
+              [
+                165.46,
+                61.75
+              ],
+              [
+                165.93,
+                56.38
+              ],
+              [
+                178.46,
+                53.69
+              ],
+              [
+                183.86,
+                57.03
+              ],
+              [
+                193.51,
+                55.96
+              ],
+              [
+                200.98,
+                54.93
+              ],
+              [
+                206.89,
+                49.31
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Al-Jabbar (the Giant)",
+          "detail": "Orion. The belt is the giant's three-jewelled girdle.",
+          "lines": [
+            [
+              [
+                88.79,
+                7.4
+              ],
+              [
+                83,
+                -0.3
+              ],
+              [
+                84.05,
+                -1.2
+              ],
+              [
+                85.19,
+                -1.94
+              ],
+              [
+                78.63,
+                -8.2
+              ]
+            ],
+            [
+              [
+                88.79,
+                7.4
+              ],
+              [
+                78.63,
+                -8.2
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Al-Aqrab (the Scorpion)",
+          "detail": "Scorpius — claws, heart (Antares) and the curving tail.",
+          "lines": [
+            [
+              [
+                240.08,
+                -22.62
+              ],
+              [
+                241.36,
+                -19.81
+              ],
+              [
+                247.35,
+                -26.43
+              ],
+              [
+                252.97,
+                -34.29
+              ],
+              [
+                262.69,
+                -37.1
+              ],
+              [
+                263.4,
+                -37.1
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Al-Faras al-A'zam (the Greater Horse)",
+          "detail": "Pegasus — the Great Square of the celestial winged horse.",
+          "lines": [
+            [
+              [
+                346.19,
+                15.21
+              ],
+              [
+                3.34,
+                15.18
+              ],
+              [
+                2.1,
+                29.09
+              ],
+              [
+                345.94,
+                28.08
+              ],
+              [
+                346.19,
+                15.21
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Al-Mar'a al-Musalsala (the Chained Woman)",
+          "detail": "Andromeda — the chained princess linked to Pegasus.",
+          "lines": [
+            [
+              [
+                2.1,
+                29.09
+              ],
+              [
+                17.43,
+                35.62
+              ],
+              [
+                30.97,
+                42.33
+              ]
+            ]
+          ]
+        }
+      ],
+      "stars": [
+        {
+          "name": "Aldebaran (al-Dabaran)",
+          "ref": "α Tau",
+          "raDeg": 68.98,
+          "decDeg": 16.51
+        },
+        {
+          "name": "Betelgeuse (yad al-jauza)",
+          "ref": "α Ori",
+          "raDeg": 88.79,
+          "decDeg": 7.4
+        },
+        {
+          "name": "Rigel (rijl al-jauza)",
+          "ref": "β Ori",
+          "raDeg": 78.63,
+          "decDeg": -8.2
+        },
+        {
+          "name": "Vega (an-nasr al-waqi')",
+          "ref": "α Lyr",
+          "raDeg": 279.23,
+          "decDeg": 38.78
+        },
+        {
+          "name": "Altair (an-nasr at-ta'ir)",
+          "ref": "α Aql",
+          "raDeg": 297.7,
+          "decDeg": 8.87
+        },
+        {
+          "name": "Deneb (dhanab ad-dajaja)",
+          "ref": "α Cyg",
+          "raDeg": 310.36,
+          "decDeg": 45.28
+        },
+        {
+          "name": "Fomalhaut (fam al-hut)",
+          "ref": "α PsA",
+          "raDeg": 344.41,
+          "decDeg": -29.62
+        }
+      ]
+    },
+    {
+      "id": "inuit",
+      "label": "Inuit",
+      "region": "Arctic · MacDonald 1998",
+      "attribution": "Stellarium sky-cultures · Inuit (after John MacDonald, 'The Arctic Sky') · CC BY-SA 4.0",
+      "figures": [
+        {
+          "name": "Tukturjuit (the Caribou)",
+          "detail": "The Big Dipper — caribou ranging the polar sky.",
+          "lines": [
+            [
+              [
+                165.46,
+                61.75
+              ],
+              [
+                165.93,
+                56.38
+              ],
+              [
+                178.46,
+                53.69
+              ],
+              [
+                183.86,
+                57.03
+              ],
+              [
+                193.51,
+                55.96
+              ],
+              [
+                200.98,
+                54.93
+              ],
+              [
+                206.89,
+                49.31
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Aagjuuk (the Two Sunbeams)",
+          "detail": "Altair + Tarazed — heralds the returning sun after polar night.",
+          "lines": [
+            [
+              [
+                297.7,
+                8.87
+              ],
+              [
+                296.56,
+                10.61
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Sivulliik (the First Ones)",
+          "detail": "Pollux + Castor + the Auriga arc — first stars of the evening sky.",
+          "lines": [
+            [
+              [
+                113.65,
+                31.89
+              ],
+              [
+                116.33,
+                28.03
+              ],
+              [
+                79.17,
+                45.998
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Qimmiit (the Dogs)",
+          "detail": "The Hyades attacking a bear — V-shape of stars near Aldebaran.",
+          "lines": [
+            [
+              [
+                68.98,
+                16.51
+              ],
+              [
+                67.16,
+                15.87
+              ],
+              [
+                64.95,
+                15.63
+              ],
+              [
+                68.98,
+                16.51
+              ]
+            ]
+          ]
+        }
+      ],
+      "stars": [
+        {
+          "name": "Aagjuuk (Altair)",
+          "ref": "α Aql",
+          "raDeg": 297.7,
+          "decDeg": 8.87
+        },
+        {
+          "name": "Ullaktut (Orion's belt)",
+          "ref": "δε ζ Ori",
+          "raDeg": 84.05,
+          "decDeg": -1.2
+        }
+      ]
+    },
+    {
+      "id": "egyptian",
+      "label": "Egyptian",
+      "region": "Dendera zodiac · c. 50 BCE",
+      "attribution": "Stellarium sky-cultures · Egyptian (after the Dendera ceiling) · CC BY-SA 4.0",
+      "figures": [
+        {
+          "name": "Sah (Osiris)",
+          "detail": "Orion as Osiris striding across the southern sky.",
+          "lines": [
+            [
+              [
+                88.79,
+                7.4
+              ],
+              [
+                83,
+                -0.3
+              ],
+              [
+                78.63,
+                -8.2
+              ]
+            ],
+            [
+              [
+                83,
+                -0.3
+              ],
+              [
+                84.05,
+                -1.2
+              ],
+              [
+                85.19,
+                -1.94
+              ],
+              [
+                86.94,
+                -9.67
+              ],
+              [
+                78.63,
+                -8.2
+              ]
+            ],
+            [
+              [
+                88.79,
+                7.4
+              ],
+              [
+                81.28,
+                6.35
+              ],
+              [
+                83,
+                -0.3
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Sopdet (Sirius / Isis)",
+          "detail": "Sirius — heralded the Nile flood at its heliacal rising.",
+          "lines": [
+            [
+              [
+                101.29,
+                -16.72
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Meskhetyu (the Bull's Foreleg)",
+          "detail": "The Big Dipper as the foreleg of a bull, struck and chained.",
+          "lines": [
+            [
+              [
+                165.46,
+                61.75
+              ],
+              [
+                165.93,
+                56.38
+              ],
+              [
+                178.46,
+                53.69
+              ],
+              [
+                183.86,
+                57.03
+              ],
+              [
+                193.51,
+                55.96
+              ],
+              [
+                200.98,
+                54.93
+              ],
+              [
+                206.89,
+                49.31
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Hippopotamus",
+          "detail": "Draco + parts of Ursa Minor — the hippo guarding the bull's foreleg.",
+          "lines": [
+            [
+              [
+                222.68,
+                74.16
+              ],
+              [
+                230.18,
+                71.83
+              ],
+              [
+                244.93,
+                75.45
+              ],
+              [
+                257.2,
+                65.71
+              ],
+              [
+                269.15,
+                51.49
+              ]
+            ]
+          ]
+        }
+      ],
+      "stars": [
+        {
+          "name": "Sopdet (Sirius)",
+          "ref": "α CMa",
+          "raDeg": 101.29,
+          "decDeg": -16.72
+        },
+        {
+          "name": "Sah (Orion)",
+          "ref": "δ Ori",
+          "raDeg": 83,
+          "decDeg": -0.3
+        }
+      ]
+    },
+    {
+      "id": "maya",
+      "label": "Maya",
+      "region": "Mesoamerica · pre-Columbian",
+      "attribution": "Stellarium sky-cultures · Maya (after Tedlock, Aveni) · CC BY-SA 4.0",
+      "figures": [
+        {
+          "name": "Ek' Balam (the Jaguar)",
+          "detail": "Gemini stars as the celestial jaguar.",
+          "lines": [
+            [
+              [
+                113.65,
+                31.89
+              ],
+              [
+                116.33,
+                28.03
+              ],
+              [
+                101.32,
+                20.57
+              ],
+              [
+                99.43,
+                16.4
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Tres Piedras (the Three Hearthstones)",
+          "detail": "Three stars of Orion's belt — the cosmic hearth at creation.",
+          "lines": [
+            [
+              [
+                83,
+                -0.3
+              ],
+              [
+                84.05,
+                -1.2
+              ],
+              [
+                85.19,
+                -1.94
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Tzab-ek (the Rattlesnake's Rattle)",
+          "detail": "The Pleiades — the rattle warning of the coming rains.",
+          "lines": [
+            [
+              [
+                56.87,
+                24.1
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Way Pop (Scorpion)",
+          "detail": "Scorpius — the celestial scorpion, marker of the Milky Way crossing.",
+          "lines": [
+            [
+              [
+                240.08,
+                -22.62
+              ],
+              [
+                241.36,
+                -19.81
+              ],
+              [
+                247.35,
+                -26.43
+              ],
+              [
+                252.97,
+                -34.29
+              ],
+              [
+                263.4,
+                -37.1
+              ]
+            ]
+          ]
+        }
+      ],
+      "stars": [
+        {
+          "name": "Tzab-ek (Pleiades)",
+          "ref": "η Tau",
+          "raDeg": 56.87,
+          "decDeg": 24.1
+        }
+      ]
+    },
+    {
+      "id": "boorong",
+      "label": "Boorong (Aboriginal)",
+      "region": "Wergaia (NW Victoria) · Stanbridge 1857",
+      "attribution": "Stellarium sky-cultures · Boorong / Wergaia (after W. Stanbridge) · CC BY-SA 4.0",
+      "figures": [
+        {
+          "name": "Marpean-Kurrk (Arcturus)",
+          "detail": "Arcturus — mother of Djuit; brings the ant larvae season.",
+          "lines": [
+            [
+              [
+                213.92,
+                19.18
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Neilloan (Vega) and Nest",
+          "detail": "Vega — the malleefowl tending her great nest.",
+          "lines": [
+            [
+              [
+                279.23,
+                38.78
+              ],
+              [
+                282.52,
+                33.36
+              ],
+              [
+                284.74,
+                32.69
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Bunya (Fomalhaut)",
+          "detail": "Fomalhaut — the ringtail possum at the foot of the great tree.",
+          "lines": [
+            [
+              [
+                344.41,
+                -29.62
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Kulkunbulla (Orion's belt)",
+          "detail": "Three young dancing men — Orion's belt.",
+          "lines": [
+            [
+              [
+                83,
+                -0.3
+              ],
+              [
+                84.05,
+                -1.2
+              ],
+              [
+                85.19,
+                -1.94
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Yurree and Wanjel (Castor & Pollux)",
+          "detail": "Two hunters chasing Purra (kangaroo).",
+          "lines": [
+            [
+              [
+                113.65,
+                31.89
+              ],
+              [
+                116.33,
+                28.03
+              ]
+            ]
+          ]
+        }
+      ],
+      "stars": [
+        {
+          "name": "Marpean-Kurrk (Arcturus)",
+          "ref": "α Boo",
+          "raDeg": 213.92,
+          "decDeg": 19.18
+        },
+        {
+          "name": "Neilloan (Vega)",
+          "ref": "α Lyr",
+          "raDeg": 279.23,
+          "decDeg": 38.78
+        }
+      ]
+    },
+    {
+      "id": "norse",
+      "label": "Norse",
+      "region": "Scandinavia · pre-Christian",
+      "attribution": "Stellarium sky-cultures · Norse (after Bjørn Jónsson, Snorra Edda) · CC BY-SA 4.0",
+      "figures": [
+        {
+          "name": "Karlavagnen (the Churl's Wagon)",
+          "detail": "The Big Dipper as a four-wheeled wagon.",
+          "lines": [
+            [
+              [
+                165.46,
+                61.75
+              ],
+              [
+                165.93,
+                56.38
+              ],
+              [
+                178.46,
+                53.69
+              ],
+              [
+                183.86,
+                57.03
+              ],
+              [
+                193.51,
+                55.96
+              ],
+              [
+                200.98,
+                54.93
+              ],
+              [
+                206.89,
+                49.31
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Frigg's Distaff (Frigg's Spinning Wheel)",
+          "detail": "Orion's belt as the spindle of the goddess Frigg.",
+          "lines": [
+            [
+              [
+                83,
+                -0.3
+              ],
+              [
+                84.05,
+                -1.2
+              ],
+              [
+                85.19,
+                -1.94
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Aurvandil's Toe",
+          "detail": "A single bright star (Rigel) — the frozen toe of Aurvandil tossed to the sky by Thor.",
+          "lines": [
+            [
+              [
+                78.63,
+                -8.2
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Loki's Brand",
+          "detail": "Sirius — Loki's burning torch chasing the wolf.",
+          "lines": [
+            [
+              [
+                101.29,
+                -16.72
+              ]
+            ]
+          ]
+        }
+      ],
+      "stars": [
+        {
+          "name": "Aurvandil's Toe (Rigel)",
+          "ref": "β Ori",
+          "raDeg": 78.63,
+          "decDeg": -8.2
+        }
+      ]
+    },
+    {
+      "id": "maori",
+      "label": "Maori",
+      "region": "Aotearoa / New Zealand",
+      "attribution": "Stellarium sky-cultures · Maori (after Pauline Harris et al.) · CC BY-SA 4.0",
+      "figures": [
+        {
+          "name": "Matariki (Pleiades)",
+          "detail": "Seven stars marking the Maori new year (Puanga in some iwi).",
+          "lines": [
+            [
+              [
+                56.87,
+                24.1
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Te Waka o Tama Rereti (Tama Rereti's Canoe)",
+          "detail": "Scorpius — the canoe in which Tama Rereti gathered the stars.",
+          "lines": [
+            [
+              [
+                240.08,
+                -22.62
+              ],
+              [
+                241.36,
+                -19.81
+              ],
+              [
+                247.35,
+                -26.43
+              ],
+              [
+                252.97,
+                -34.29
+              ],
+              [
+                263.4,
+                -37.1
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Te Punga (the Anchor)",
+          "detail": "The Southern Cross as the anchor of the great star-canoe.",
+          "lines": [
+            [
+              [
+                186.65,
+                -63.1
+              ],
+              [
+                187.79,
+                -57.11
+              ]
+            ],
+            [
+              [
+                191.93,
+                -59.69
+              ],
+              [
+                193,
+                -57.11
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Te Ra (the Sun's Path)",
+          "detail": "Bright equatorial markers — Aldebaran, Orion's belt, Sirius — the sun's annual road.",
+          "lines": [
+            [
+              [
+                68.98,
+                16.51
+              ],
+              [
+                83,
+                -0.3
+              ],
+              [
+                101.29,
+                -16.72
+              ]
+            ]
+          ]
+        }
+      ],
+      "stars": [
+        {
+          "name": "Matariki (Pleiades)",
+          "ref": "η Tau",
+          "raDeg": 56.87,
+          "decDeg": 24.1
+        },
+        {
+          "name": "Atutahi (Canopus)",
+          "ref": "α Car",
+          "raDeg": 95.99,
+          "decDeg": -52.7
+        },
+        {
+          "name": "Puanga (Rigel)",
+          "ref": "β Ori",
+          "raDeg": 78.63,
+          "decDeg": -8.2
+        }
+      ]
+    },
+    {
+      "id": "japanese-moon-stations",
+      "label": "Japanese (28 Sukuyō)",
+      "region": "Heian Japan · Sukuyō-dō",
+      "attribution": "Stellarium sky-cultures · Japanese 28 Moon Stations (sukuyō) · CC BY-SA 4.0",
+      "figures": [
+        {
+          "name": "Subaru (Pleiades)",
+          "detail": "The Pleiades — the heart of the autumn Heian sky.",
+          "lines": [
+            [
+              [
+                56.87,
+                24.1
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Mitsuboshi (the Three Stars)",
+          "detail": "Orion's belt as a row of three lanterns.",
+          "lines": [
+            [
+              [
+                83,
+                -0.3
+              ],
+              [
+                84.05,
+                -1.2
+              ],
+              [
+                85.19,
+                -1.94
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Hokuto Shichisei (the Northern Dipper)",
+          "detail": "The Big Dipper, lord of mortal lifespan in Sukuyō tradition.",
+          "lines": [
+            [
+              [
+                165.46,
+                61.75
+              ],
+              [
+                165.93,
+                56.38
+              ],
+              [
+                178.46,
+                53.69
+              ],
+              [
+                183.86,
+                57.03
+              ],
+              [
+                193.51,
+                55.96
+              ],
+              [
+                200.98,
+                54.93
+              ],
+              [
+                206.89,
+                49.31
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Tanabata (Vega & Altair)",
+          "detail": "Vega (Orihime) and Altair (Hikoboshi) across the river of stars.",
+          "lines": [
+            [
+              [
+                279.23,
+                38.78
+              ],
+              [
+                297.7,
+                8.87
+              ]
+            ]
+          ]
+        }
+      ],
+      "stars": [
+        {
+          "name": "Subaru (Pleiades)",
+          "ref": "η Tau",
+          "raDeg": 56.87,
+          "decDeg": 24.1
+        },
+        {
+          "name": "Orihime (Vega)",
+          "ref": "α Lyr",
+          "raDeg": 279.23,
+          "decDeg": 38.78
+        },
+        {
+          "name": "Hikoboshi (Altair)",
+          "ref": "α Aql",
+          "raDeg": 297.7,
+          "decDeg": 8.87
+        }
+      ]
+    },
+    {
+      "id": "korean",
+      "label": "Korean",
+      "region": "Joseon · Cheonsang Yeolcha Bunyajido",
+      "attribution": "Stellarium sky-cultures · Korean (after Cheonsang Yeolcha Bunyajido, 1395) · CC BY-SA 4.0",
+      "figures": [
+        {
+          "name": "Bukdu Chilseong (Northern Dipper, 北斗七星)",
+          "detail": "The seven stars of the Big Dipper — guardians of fate in Korean tradition.",
+          "lines": [
+            [
+              [
+                165.46,
+                61.75
+              ],
+              [
+                165.93,
+                56.38
+              ],
+              [
+                178.46,
+                53.69
+              ],
+              [
+                183.86,
+                57.03
+              ],
+              [
+                193.51,
+                55.96
+              ],
+              [
+                200.98,
+                54.93
+              ],
+              [
+                206.89,
+                49.31
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Samtae (Three Towers, 三台)",
+          "detail": "Three pairs of stars in Ursa Major below the dipper bowl.",
+          "lines": [
+            [
+              [
+                154.27,
+                41.5
+              ],
+              [
+                165.46,
+                61.75
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Gyeon-u and Jingnyeo (the Cowherd and Weaver)",
+          "detail": "Altair and Vega, separated by the Milky Way.",
+          "lines": [
+            [
+              [
+                279.23,
+                38.78
+              ],
+              [
+                297.7,
+                8.87
+              ]
+            ]
+          ]
+        }
+      ],
+      "stars": [
+        {
+          "name": "Bukdu (Big Dipper)",
+          "ref": "α UMa",
+          "raDeg": 165.46,
+          "decDeg": 61.75
+        }
+      ]
+    },
+    {
+      "id": "sami",
+      "label": "Sami",
+      "region": "Sápmi · Lars Levi Læstadius",
+      "attribution": "Stellarium sky-cultures · Sami (after Læstadius, Lundius) · CC BY-SA 4.0",
+      "figures": [
+        {
+          "name": "Sarva (the Elk)",
+          "detail": "Cassiopeia + Andromeda + part of Perseus — the great cosmic elk Sarva.",
+          "lines": [
+            [
+              [
+                2.29,
+                59.15
+              ],
+              [
+                10.13,
+                56.54
+              ],
+              [
+                14.18,
+                60.72
+              ],
+              [
+                21.45,
+                60.24
+              ],
+              [
+                28.6,
+                63.67
+              ]
+            ],
+            [
+              [
+                2.1,
+                29.09
+              ],
+              [
+                17.43,
+                35.62
+              ],
+              [
+                30.97,
+                42.33
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Boahjenásti (Polaris, the World Nail)",
+          "detail": "Polaris — the celestial nail around which the heavens turn.",
+          "lines": [
+            [
+              [
+                37.95,
+                89.26
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Favtna (Orion's belt)",
+          "detail": "The hunter Faavn'a, who shot at Sarva with an arrow.",
+          "lines": [
+            [
+              [
+                83,
+                -0.3
+              ],
+              [
+                84.05,
+                -1.2
+              ],
+              [
+                85.19,
+                -1.94
+              ]
+            ]
+          ]
+        }
+      ],
+      "stars": [
+        {
+          "name": "Boahjenásti (Polaris)",
+          "ref": "α UMi",
+          "raDeg": 37.95,
+          "decDeg": 89.26
+        }
+      ]
+    },
+    {
+      "id": "tongan",
+      "label": "Tongan",
+      "region": "Tonga · navigational tradition",
+      "attribution": "Stellarium sky-cultures · Tongan (after Kirch & Green) · CC BY-SA 4.0",
+      "figures": [
+        {
+          "name": "Toloa (the Duck)",
+          "detail": "The Southern Cross as a flying duck.",
+          "lines": [
+            [
+              [
+                186.65,
+                -63.1
+              ],
+              [
+                187.79,
+                -57.11
+              ]
+            ],
+            [
+              [
+                191.93,
+                -59.69
+              ],
+              [
+                193,
+                -57.11
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Houmatoloa (Orion's belt)",
+          "detail": "Three brothers of the chief — Orion's belt.",
+          "lines": [
+            [
+              [
+                83,
+                -0.3
+              ],
+              [
+                84.05,
+                -1.2
+              ],
+              [
+                85.19,
+                -1.94
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Kapakau-'o-Tafahi",
+          "detail": "Sirius and surrounding stars — sky guide for sea voyages south from Tafahi.",
+          "lines": [
+            [
+              [
+                101.29,
+                -16.72
+              ],
+              [
+                114.83,
+                5.22
+              ]
+            ]
+          ]
+        }
+      ],
+      "stars": [
+        {
+          "name": "Toloa (Acrux)",
+          "ref": "α Cru",
+          "raDeg": 186.65,
+          "decDeg": -63.1
+        }
+      ]
+    },
+    {
+      "id": "tukano",
+      "label": "Tukano",
+      "region": "Northwest Amazon · Reichel-Dolmatoff",
+      "attribution": "Stellarium sky-cultures · Tukano (after Reichel-Dolmatoff) · CC BY-SA 4.0",
+      "figures": [
+        {
+          "name": "Nyokoaro (the Manioc Squeezer)",
+          "detail": "Pleiades — emergence marks the start of the manioc-planting season.",
+          "lines": [
+            [
+              [
+                56.87,
+                24.1
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Bairo (the Snake)",
+          "detail": "Scorpius — the great anaconda of the southern Milky Way.",
+          "lines": [
+            [
+              [
+                240.08,
+                -22.62
+              ],
+              [
+                241.36,
+                -19.81
+              ],
+              [
+                247.35,
+                -26.43
+              ],
+              [
+                252.97,
+                -34.29
+              ],
+              [
+                262.69,
+                -37.1
+              ],
+              [
+                263.4,
+                -37.1
+              ]
+            ]
+          ]
+        },
+        {
+          "name": "Yebá Yebó (the Hunter)",
+          "detail": "Orion — hunter pursuing the celestial tapir.",
+          "lines": [
+            [
+              [
+                88.79,
+                7.4
+              ],
+              [
+                83,
+                -0.3
+              ],
+              [
+                78.63,
+                -8.2
+              ]
+            ],
+            [
+              [
+                83,
+                -0.3
+              ],
+              [
+                84.05,
+                -1.2
+              ],
+              [
+                85.19,
+                -1.94
+              ],
+              [
+                86.94,
+                -9.67
+              ]
+            ]
+          ]
+        }
+      ],
+      "stars": [
+        {
+          "name": "Nyokoaro (Pleiades)",
+          "ref": "η Tau",
+          "raDeg": 56.87,
+          "decDeg": 24.1
+        },
+        {
+          "name": "Bairo (Antares)",
+          "ref": "α Sco",
+          "raDeg": 247.35,
+          "decDeg": -26.43
+        }
+      ]
+    }
+  ]
+}

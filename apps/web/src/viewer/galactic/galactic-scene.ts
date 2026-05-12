@@ -20,6 +20,11 @@ import {
   Vector3,
   WebGLRenderer,
 } from "three";
+import {
+  mountExtrasInto,
+  type ExtrasController,
+} from "../extra-layers/mount";
+import type { LayerMeta } from "../extra-layers/registry";
 
 /**
  * 🌌 Galactic-scale scene.
@@ -114,6 +119,8 @@ export class GalacticScene {
   private renderer: WebGLRenderer;
   private camera: PerspectiveCamera;
   private scene = new Scene();
+  /** Federated extra-layer overlays (galactic mode). Mounted in constructor. */
+  private extras!: ExtrasController;
 
   private galaxyGroup = new Group();
   private bulge: Mesh;
@@ -280,7 +287,22 @@ export class GalacticScene {
       starHalo: this.haloVisible,
     };
 
+    // Federated extra layers (galaxy cone, cosmic flows 4, plus catalog
+    // layers that opt into galactic mode — Gaia DR3, Chandra, Variables,
+    // Exoplanets).
+    this.extras = mountExtrasInto(this.scene, "galactic");
+
     this.tick();
+  }
+
+  /** Toggle a federated-data extra layer by its registry id. */
+  setExtraLayer(id: string, enabled: boolean): void {
+    this.extras.setEnabled(id, enabled);
+  }
+
+  /** Metadata for every extra layer mounted in this scene. */
+  listExtraLayers(): LayerMeta[] {
+    return this.extras.listMounted();
   }
 
   subscribe(listener: Listener): () => void {
@@ -510,6 +532,7 @@ export class GalacticScene {
     this.disposed = true;
     cancelAnimationFrame(this.rafHandle);
     this.resizeObs?.disconnect();
+    this.extras?.dispose();
     this.canvas.removeEventListener("pointerdown", this.onPointerDown);
     this.canvas.removeEventListener("pointermove", this.onPointerMove);
     this.canvas.removeEventListener("pointerup", this.onPointerUp);
