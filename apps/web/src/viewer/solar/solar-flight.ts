@@ -212,9 +212,14 @@ export class SolarFlightScene {
 
     this.camera = new PerspectiveCamera(50, 1, 0.001, 20000);
 
-    // Sun at origin — emissive sphere + sprite glow
-    const sunGeom = new SphereGeometry(SUN_DRAW_SIZE, 32, 32);
-    const sunMat = new MeshBasicMaterial({ color: 0xffeb91 });
+    // Sun at origin — emissive sphere + sprite glow. The sphere wears a
+    // granulation texture (convection cells) so it doesn't read as a
+    // flat yellow ball; the sprite glow on top adds the corona halo.
+    const sunGeom = new SphereGeometry(SUN_DRAW_SIZE, 48, 48);
+    const sunMat = new MeshBasicMaterial({
+      map: paintCanvas(1024, 512, paintSun),
+      color: 0xffffff,
+    });
     this.sun = new Mesh(sunGeom, sunMat);
     this.scene.add(this.sun);
 
@@ -1550,6 +1555,60 @@ function makeEarthDayNightMaterial(
       }
     `,
   });
+}
+
+function paintSun(ctx: CanvasRenderingContext2D, w: number, h: number): void {
+  // Base: hot yellow-white core fading toward orange-red toward the edges.
+  // Reads as the photosphere temperature gradient even before any
+  // granulation lands on top.
+  const base = ctx.createLinearGradient(0, 0, 0, h);
+  base.addColorStop(0, "#ffbf5a");
+  base.addColorStop(0.5, "#fff1a6");
+  base.addColorStop(1, "#ffb050");
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, w, h);
+
+  // Convection cell granulation — clusters of bright cores rimmed by
+  // darker lanes. We layer a few thousand small bright spots over a
+  // slightly larger dark-lane background so the eye reads "boiling
+  // plasma" rather than a flat texture.
+  const seed = mulberry32(0xfa17);
+  // Dark intergranular lanes — larger, fewer, low-opacity.
+  for (let i = 0; i < 600; i++) {
+    const cx = seed() * w;
+    const cy = seed() * h;
+    const r = 4 + seed() * 14;
+    ctx.fillStyle = `rgba(180,80,30,${0.08 + seed() * 0.18})`;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, r, r * (0.7 + seed() * 0.6), 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // Bright granule cores — many, small, warm-white.
+  for (let i = 0; i < 2400; i++) {
+    const cx = seed() * w;
+    const cy = seed() * h;
+    const r = 1.2 + seed() * 3.2;
+    ctx.fillStyle = `rgba(255,245,200,${0.35 + seed() * 0.45})`;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // Sunspots — a small number of dark, sharper-edged blobs.
+  for (let i = 0; i < 8; i++) {
+    const cx = seed() * w;
+    const cy = h * 0.2 + seed() * h * 0.6; // bias to the activity belt
+    const r = 6 + seed() * 12;
+    // Umbra
+    ctx.fillStyle = "rgba(45,15,5,0.85)";
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, r * 0.4, r * 0.3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Penumbra ring
+    ctx.fillStyle = "rgba(160,70,30,0.45)";
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, r, r * 0.7, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
 }
 
 function paintMercury(ctx: CanvasRenderingContext2D, w: number, h: number): void {
