@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { GalacticScene, type GalacticState } from "./galactic/galactic-scene";
+import { SceneBottomHud } from "./ui/SceneBottomHud";
 import { SnapshotButton } from "./ui/SnapshotButton";
 import { ShareButton } from "./ui/ShareButton";
 import { BookmarksPanel } from "./ui/BookmarksPanel";
@@ -137,18 +138,27 @@ export function Galactic({ onExit }: Props) {
         />
       </div>
 
+      {/* Cinematic readout */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-24 z-[6] flex justify-center">
+        <SceneBottomHud
+          topLabel="Distance from Sun"
+          distance={
+            state.cameraDistance < 1000
+              ? `${state.cameraDistance.toFixed(1)} kly`
+              : `${(state.cameraDistance / 1000).toFixed(2)} Mly`
+          }
+          vicinity={state.scaleLabel}
+          screenScale={
+            state.cameraDistance < 1000
+              ? `${(state.cameraDistance * 0.933).toFixed(1)} kly`
+              : `${((state.cameraDistance * 0.933) / 1000).toFixed(2)} Mly`
+          }
+        />
+      </div>
+
       {/* Bottom bar */}
       <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex flex-col items-center gap-2 px-3">
         <div className="pointer-events-auto flex flex-wrap items-center gap-2">
-          <Chip label="vicinity" value={state.scaleLabel} accent />
-          <Chip
-            label="distance from Sun"
-            value={
-              state.cameraDistance < 1000
-                ? `${state.cameraDistance.toFixed(1)} kly`
-                : `${(state.cameraDistance / 1000).toFixed(2)} Mly`
-            }
-          />
         </div>
         <div className="rounded-full border border-white/5 bg-space-950/60 px-4 py-1 font-mono text-[10px] uppercase tracking-[0.25em] text-white/40 backdrop-blur">
           W A S D · move · drag · look · wheel · adjust speed · Q/E · up/down
@@ -222,26 +232,3 @@ function Toggle({
   );
 }
 
-function Chip({
-  label,
-  value,
-  accent = false,
-}: {
-  label: string;
-  value: string;
-  accent?: boolean;
-}) {
-  const cls = accent
-    ? "border-violet-400/40 bg-violet-400/10 text-violet-200"
-    : "border-white/10 bg-space-950/70 text-white/80";
-  return (
-    <div
-      className={`flex items-baseline gap-1.5 rounded-lg border px-3 py-1.5 backdrop-blur ${cls}`}
-    >
-      <span className="font-mono text-[10px] uppercase tracking-widest opacity-60">
-        {label}
-      </span>
-      <span className="font-mono text-xs">{value}</span>
-    </div>
-  );
-}
