@@ -33,6 +33,13 @@ import { ColorLegend } from "./ui/ColorLegend";
 import { ShortcutsOverlay } from "./ui/ShortcutsOverlay";
 import { ReportBugButton } from "./ui/ReportBugButton";
 import { ExploreDrawer, type Group } from "./ui/ExploreDrawer";
+import { SceneEditorPanel } from "./ui/SceneEditorPanel";
+import { SceneLinkToast } from "./scene-editor/SceneLinkToast";
+import {
+  applySolarCamera,
+  captureSolarCamera,
+} from "./scene-editor/solar-bridge";
+import { saveScene } from "../lib/scene-editor";
 import { useIdle } from "../lib/use-idle";
 import { recordPlanetVisit, unlock } from "../lib/achievements";
 import { SettingsPanel } from "./ui/SettingsPanel";
@@ -131,8 +138,14 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
     };
   }, []);
 
-  // Write camera state to hash on change (debounced).
+  // While a scene is playing, suspend the hash-state hydration so the
+  // URL hash updater doesn't fight playback for camera authority.
+  const [scenePlaying, setScenePlaying] = useState(false);
+
+  // Write camera state to hash on change (debounced). Skipped during
+  // scene playback.
   useEffect(() => {
+    if (scenePlaying) return;
     const handle = window.setTimeout(() => {
       const hash = buildSolarHash(state);
       if (window.location.hash !== `#${hash}`) {
@@ -140,7 +153,7 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
       }
     }, 500);
     return () => window.clearTimeout(handle);
-  }, [state]);
+  }, [state, scenePlaying]);
 
   // Push global settings into the scene whenever they change.
   const [settings] = useSettings();
@@ -370,6 +383,18 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
           ))}
           <PlanetCrossSection focus={state.focus} />
           <ExploreDrawer groups={exploreGroups} />
+          <SceneEditorPanel
+            mode="solar"
+            onCapture={() => {
+              const s = sceneRef.current;
+              return s ? captureSolarCamera(s) : {};
+            }}
+            onApply={(c) => {
+              const s = sceneRef.current;
+              if (s) applySolarCamera(s, c);
+            }}
+            onPlayingChange={setScenePlaying}
+          />
           <MusicPanel />
           <AchievementsPanel />
           <TopBarActions
@@ -661,6 +686,19 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
       {shortcutsOpen && (
         <ShortcutsOverlay onClose={() => setShortcutsOpen(false)} />
       )}
+
+      <SceneLinkToast
+        mode="solar"
+        onPlay={(scene) => {
+          // Persist the shared scene so it shows up in the picker, then
+          // apply the first keyframe immediately so the user sees the
+          // intended starting view.
+          saveScene(scene);
+          const first = scene.keyframes[0];
+          const s = sceneRef.current;
+          if (first && s) applySolarCamera(s, first.camera);
+        }}
+      />
     </div>
   );
 }
