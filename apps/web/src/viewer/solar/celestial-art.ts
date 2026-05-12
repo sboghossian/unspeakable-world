@@ -1,4 +1,6 @@
 import {
+  AdditiveBlending,
+  BackSide,
   CanvasTexture,
   LinearFilter,
   ShaderMaterial,
@@ -248,6 +250,59 @@ export function makeSaturnRingShadowMaterial(
         }
 
         gl_FragColor = vec4(lit, 1.0);
+      }
+    `,
+  });
+}
+
+/** Earth atmosphere shader: a back-side hemisphere that approximates
+ *  Rayleigh-style scattering instead of the flat additive halo we had
+ *  before. The rim brightens as the fragment normal approaches
+ *  perpendicular to the view ray (Fresnel-style edge), and warms toward
+ *  golden sunset on the side facing the Sun. */
+export function makeEarthAtmosphereMaterial(): ShaderMaterial {
+  return new ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    side: BackSide,
+    blending: AdditiveBlending,
+    uniforms: {},
+    vertexShader: `
+      varying vec3 vWorldPos;
+      varying vec3 vWorldNormal;
+      void main() {
+        vWorldNormal = normalize(mat3(modelMatrix) * normal);
+        vec4 wp = modelMatrix * vec4(position, 1.0);
+        vWorldPos = wp.xyz;
+        gl_Position = projectionMatrix * viewMatrix * wp;
+      }
+    `,
+    fragmentShader: `
+      varying vec3 vWorldPos;
+      varying vec3 vWorldNormal;
+      void main() {
+        vec3 viewDir = normalize(cameraPosition - vWorldPos);
+        // We're on the back side so the outward-facing normal points
+        // away from the camera; invert it for the Fresnel calculation.
+        vec3 N = -vWorldNormal;
+        float ndv = clamp(dot(N, viewDir), 0.0, 1.0);
+        // Stronger glow at the limb (ndv → 0) than head-on.
+        float rim = pow(1.0 - ndv, 2.4);
+
+        // Sun lights world origin → light direction at this point.
+        vec3 ld = normalize(-vWorldPos);
+        float sunSide = clamp(dot(N, ld), -1.0, 1.0);
+        // Day-side rim glows blue, terminator sunset warms toward gold,
+        // night side fades to nearly nothing.
+        vec3 daySky = vec3(0.32, 0.55, 1.0);
+        vec3 sunset = vec3(1.0, 0.55, 0.25);
+        vec3 night = vec3(0.04, 0.06, 0.18);
+        float warm = smoothstep(-0.3, 0.05, sunSide); // 0 on night, 1 on day
+        float twilight = exp(-pow(sunSide, 2.0) * 18.0); // narrow band at terminator
+        vec3 col = mix(night, daySky, warm) + sunset * twilight * 0.55;
+
+        float alpha = rim * (0.18 + warm * 0.55);
+        gl_FragColor = vec4(col, alpha);
       }
     `,
   });

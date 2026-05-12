@@ -1,7 +1,6 @@
 import {
   AdditiveBlending,
   AmbientLight,
-  BackSide,
   BufferAttribute,
   BufferGeometry,
   CanvasTexture,
@@ -32,6 +31,7 @@ import {
 } from "three";
 import { Body, HelioVector, GeoVector, JupiterMoons } from "astronomy-engine";
 import {
+  makeEarthAtmosphereMaterial,
   makeEarthDayNightMaterial,
   makePlanetTexture,
   makeSaturnRingShadowMaterial,
@@ -502,16 +502,12 @@ export class SolarFlightScene {
           },
         );
 
-        // Atmosphere — back-side hemisphere with additive blending.
+        // Atmosphere — back-side hemisphere with a custom shader doing
+        // Fresnel-style rim brightening + a warm twilight band along
+        // the terminator. Reads as a real atmosphere rather than a flat
+        // additive halo.
         const atmoGeom = new SphereGeometry(spec.drawSize * 1.22, 32, 32);
-        const atmoMat = new MeshBasicMaterial({
-          color: 0x6ea4ff,
-          transparent: true,
-          opacity: 0.32,
-          side: BackSide,
-          depthWrite: false,
-          blending: AdditiveBlending,
-        });
+        const atmoMat = makeEarthAtmosphereMaterial();
         const atmo = new Mesh(atmoGeom, atmoMat);
         group.add(atmo);
 
