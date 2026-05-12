@@ -84,6 +84,24 @@ export const ACHIEVEMENTS: readonly Achievement[] = [
     body: "Played a curated cinematic tour to completion.",
     emoji: "🎬",
   },
+  {
+    id: "scholar",
+    title: "Scholar",
+    body: "Completed your first curriculum lesson with the quiz.",
+    emoji: "🎓",
+  },
+  {
+    id: "honors-student",
+    title: "Honors student",
+    body: "Aced every quiz in a single lesson.",
+    emoji: "🏅",
+  },
+  {
+    id: "mythbuster",
+    title: "Mythbuster",
+    body: "Browsed the common-myths panel — separating fact from folklore.",
+    emoji: "🔍",
+  },
 ];
 
 const STORAGE_KEY = "uw.achievements.v1";

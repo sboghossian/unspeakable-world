@@ -7,6 +7,7 @@ import {
   markStarted,
   markStepIdx,
 } from "../../lib/lesson-progress";
+import { unlock } from "../../lib/achievements";
 
 /**
  * Web Speech API helpers. Voice narration is opt-in (persists per
@@ -97,12 +98,16 @@ export function LessonRunner({ lesson, onClose }: Props) {
       if (next >= lesson.steps.length) {
         setFinished(true);
         markCompleted(lesson.id);
+        unlock("scholar");
+        if (totalQuizzes > 0 && correctCount >= totalQuizzes) {
+          unlock("honors-student");
+        }
         return idx;
       }
       markStepIdx(lesson.id, next);
       return next;
     });
-  }, [lesson]);
+  }, [lesson, correctCount, totalQuizzes]);
 
   // Auto-advance for narrate/scene/wait steps.
   // When voice narration is on, the narrate step is driven by the
