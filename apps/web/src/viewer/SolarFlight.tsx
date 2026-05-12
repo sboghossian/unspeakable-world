@@ -14,6 +14,7 @@ import {
 import { TopBarActions } from "./ui/TopBarActions";
 import { SatellitesPanel } from "./ui/SatellitesPanel";
 import { AchievementsPanel } from "./ui/AchievementsPanel";
+import { PlanetCrossSection } from "./ui/PlanetCrossSection";
 import { ColorLegend } from "./ui/ColorLegend";
 import { ShortcutsOverlay } from "./ui/ShortcutsOverlay";
 import { ReportBugButton } from "./ui/ReportBugButton";
@@ -283,6 +284,7 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
             </button>
           ))}
           <SatellitesPanel />
+          <PlanetCrossSection focus={state.focus} />
           <AchievementsPanel />
           <TopBarActions
             focusActive={focusMode}
