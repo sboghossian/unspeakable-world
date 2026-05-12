@@ -863,6 +863,59 @@ export const GUIDE_PAGES: GuidePage[] = [
     lede:
       "Release log for the Unspeakable World. New entries land when a substantial feature batch hits main.",
     body: [
+      { kind: "h2", text: "May 2026 — educational reference release" },
+      { kind: "h3", text: "The comprehension layer" },
+      {
+        kind: "ul",
+        items: [
+          "🎓 8-lesson curriculum with narrated camera tours + end-of-lesson quizzes + progress save (Where are we standing → How far is the nearest star)",
+          "🔊 Web Speech API voice narration on lessons — auto-advances when the voice finishes, watchdog clamp at 25 s",
+          "📜 100 named objects ship with a one-paragraph 'why this matters' + SIMBAD / Wikipedia / ADS / primary-source links",
+          "📖 98-term glossary with hover-to-define tooltips on technical terms",
+          "🎚 Tiered Curious / Student / Expert register toggle on 30+ flagship objects",
+        ],
+      },
+      { kind: "h3", text: "Everything observable, on one map" },
+      {
+        kind: "ul",
+        items: [
+          "👽 SETI / aliens / UAP / biosignatures: 5 signal candidates + 3 interstellar visitors + 6 biosignature exoplanets + Drake-equation sliders + 5 UAP cases (skeptically framed) + 9 Fermi-paradox answers",
+          "🔍 52 common space-myths debunked across 6 categories, each cited",
+          "⚖ Side-by-side scale comparator — 54 objects from a human (1.7 m) to IC 1101 (6 Mly)",
+          "📅 Today in Space History — 283 dated events with prev/next/calendar nav",
+          "📰 Live news + launches via Spaceflight News API + Launch Library 2 with T-minus countdown",
+          "🚨 Live transient streams: ALeRCE ZTF + GraceDB + GCN + ATel",
+          "🌌 Cosmicflows-4 peculiar-velocity streamlines — Local Group falling toward Shapley",
+          "🛐 Sky cultures toggle: Western IAU · Chinese · Polynesian · Lakota",
+          "🪐 Procedural surface textures for all 15 named moons (Mimas's Herschel · Enceladus's tiger stripes · Iapetus's walnut seam · Triton's cantaloupe)",
+          "🌟 13 named star-cluster 3D point fields (Pleiades · Hyades · M13 · Omega Cen · 47 Tuc · …)",
+          "🕳 Black-hole lensing visual: Doppler-beamed accretion disk + Einstein-ring halo",
+          "🌃 Bortle light-pollution scale filter on Tonight's targets",
+        ],
+      },
+      { kind: "h3", text: "Tools & UX" },
+      {
+        kind: "ul",
+        items: [
+          "🔭 Notion-style Explore drawer — 27 buttons → 9 inline + 5 groups (Learn / Live / Imagery / Tools / Catalog)",
+          "💤 Idle-fade chrome: the top bar fades to 30% opacity after 3.5s of inactivity",
+          "🎵 Ambient music panel with 5 NASA tracks (Voyager Golden Record / Saturn radio / Jupiter aurora) + 'bring your own URL'",
+          "🎬 Scene Editor — keyframed cinematic camera walks, save/load/share via URL hash",
+          "📐 Distance ruler — two-click great-circle measurement with 'X full moons' equivalents",
+          "✨ Long-exposure star trails (15 min → 8 h) — every star sweeps a constant-Dec arc",
+          "🧬 Planet cross-section panel for all 10 solar bodies",
+          "📱 Mobile gyroscope AR mode",
+          "🌐 5-language i18n (ES / FR / DE / JA / ZH)",
+          "🔗 Embed mode (?embed=1) — chrome-less iframe for classrooms + blogs",
+          "📸 Screenshot gallery + Playwright capture script at tools/screenshot.mjs",
+        ],
+      },
+      { kind: "h3", text: "Achievements (13)" },
+      {
+        kind: "p",
+        text:
+          "first-light · voyager · lunar-visitor · time-traveller · cosmologist · multi-wavelength · pulsar-listener · iss-spotter · eclipse-watcher · tour-guide · scholar · honors-student · mythbuster",
+      },
       { kind: "h2", text: "May 2026 — visual & UX parity pass" },
       { kind: "h3", text: "Solar system" },
       {

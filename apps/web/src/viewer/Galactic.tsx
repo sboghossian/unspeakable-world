@@ -107,7 +107,13 @@ export function Galactic({ onExit }: Props) {
             fly to
           </span>
           {(
-            ["Sun", "Galactic Center", "M31", "Local Group"] as const
+            [
+              "Sun",
+              "Galactic Center",
+              "Galactic Warp",
+              "M31",
+              "Local Group",
+            ] as const
           ).map((t) => (
             <button
               key={t}

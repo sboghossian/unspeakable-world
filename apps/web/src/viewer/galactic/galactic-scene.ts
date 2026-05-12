@@ -315,12 +315,30 @@ export class GalacticScene {
     this.publishState();
   }
 
-  flyTo(target: "Sun" | "Galactic Center" | "M31" | "Local Group"): void {
+  flyTo(
+    target:
+      | "Sun"
+      | "Galactic Center"
+      | "Galactic Warp"
+      | "M31"
+      | "Local Group",
+  ): void {
     let dest: Vector3;
     let dist: number;
+    // Camera direction (from dest back to camera position). The "Galactic
+    // Warp" preset deliberately looks at the disk edge-on so the famous
+    // Gaia-era warp of the outer Milky Way is visible.
+    let dir = new Vector3(-1, 0.4, -1);
     if (target === "Galactic Center") {
       dest = GALACTIC_CENTER.clone();
       dist = 12;
+    } else if (target === "Galactic Warp") {
+      // Pull back to ~40 kly, framing the whole disk, and tilt the camera
+      // so we look edge-on. The warp's outer arms bend up on one side
+      // and down on the other — most visible from this vantage.
+      dest = GALACTIC_CENTER.clone();
+      dist = 40;
+      dir = new Vector3(0, 0.02, -1);
     } else if (target === "M31") {
       dest = new Vector3(2540, 0, 0);
       dist = 200;
@@ -331,8 +349,7 @@ export class GalacticScene {
       dest = SUN_POS.clone();
       dist = 5;
     }
-    // Place camera behind dest along (-1, 0.4, -1).
-    const dir = new Vector3(-1, 0.4, -1).normalize();
+    dir = dir.normalize();
     this.camPos = dest.clone().add(dir.clone().multiplyScalar(dist));
     // Camera looks along -dir (back toward dest).
     const fwd = dir.clone().negate();

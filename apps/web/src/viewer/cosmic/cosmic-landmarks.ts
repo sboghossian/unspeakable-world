@@ -368,6 +368,26 @@ export const COSMIC_LANDMARKS: CosmicLandmark[] = [
     detail: "Radio galaxy · brightest extragalactic radio source · z=0.056",
   },
 
+  // ─── Solar neighborhood — the gas we're flying through ────────────
+  {
+    name: "Local Interstellar Cloud",
+    kind: "exotic",
+    // Apex of the Sun's motion through the LIC — roughly RA 271°, Dec
+    // +25° (Hercules), per Lallement et al. (2003) and Frisch (2006).
+    raDeg: 271.0,
+    decDeg: 25.0,
+    detail:
+      "The wispy ~30-ly cloud of warm partially-ionized hydrogen + helium the Sun has been traversing for ~60,000 years",
+  },
+  {
+    name: "G-cloud",
+    kind: "exotic",
+    raDeg: 224.0,
+    decDeg: -15.0,
+    detail:
+      "Neighbouring interstellar cloud · the Sun will cross into it in a few thousand years",
+  },
+
   // ─── Exotic / multi-messenger ──────────────────────────────────────
   {
     name: "FRB 121102",
