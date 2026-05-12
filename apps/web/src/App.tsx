@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Starfield } from "./landing/Starfield";
 import { Hero } from "./landing/Hero";
 import { OpenData } from "./landing/OpenData";
@@ -147,13 +147,56 @@ export function App() {
 }
 
 function ViewerLoadingVeil() {
+  // AstroGrid-style phase indicator: a sequence of named subsystems
+  // ("Core systems · Camera · Background · Solar system" → "Building
+  // star field" → "Loading Milky Way & nebulae" → "Preparing deep
+  // sky") that cycles while the lazy-loaded scene chunk resolves.
+  const PHASES: Array<{ label: string; sublabel: string }> = [
+    { label: "Core systems", sublabel: "Camera · scene · background" },
+    { label: "Building star field", sublabel: "120,000 HYG stars · constellations" },
+    { label: "Loading Milky Way", sublabel: "Galaxy disk · arm field · nebulae" },
+    { label: "Preparing deep sky", sublabel: "Pulsars · exoplanets · cosmic web" },
+    { label: "Calibrating optics", sublabel: "HiPS tiles · multi-wavelength" },
+  ];
+  const [phaseIdx, setPhaseIdx] = useState(0);
+  useEffect(() => {
+    const handle = window.setInterval(() => {
+      setPhaseIdx((i) => Math.min(i + 1, PHASES.length - 1));
+    }, 650);
+    return () => window.clearInterval(handle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const pct = ((phaseIdx + 1) / PHASES.length) * 100;
+  const phase = PHASES[phaseIdx]!;
   return (
-    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-space-950 backdrop-blur">
-      <div className="mb-4 font-mono text-xs uppercase tracking-[0.3em] text-white/50">
+    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-space-950 backdrop-blur">
+      <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-white/40">
         loading the universe
       </div>
-      <div className="h-0.5 w-48 overflow-hidden rounded-full bg-white/10">
-        <div className="h-full w-1/3 animate-pulse bg-plasma-500" />
+      <div className="font-display text-2xl text-emerald-200">
+        {phase.label}
+      </div>
+      <div className="font-mono text-[11px] tracking-widest text-white/55">
+        {phase.sublabel}
+      </div>
+      <div className="mt-2 h-1 w-72 overflow-hidden rounded-full bg-white/10">
+        <div
+          className="h-full bg-emerald-400 transition-all duration-500 ease-out"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <div className="font-mono text-[9px] uppercase tracking-[0.3em] text-white/30">
+        {PHASES.map((p, i) => (
+          <span
+            key={p.label}
+            className={
+              i <= phaseIdx ? "text-emerald-300/80" : "text-white/25"
+            }
+          >
+            {i > 0 ? " · " : ""}
+            {p.label}
+          </span>
+        ))}
       </div>
     </div>
   );
