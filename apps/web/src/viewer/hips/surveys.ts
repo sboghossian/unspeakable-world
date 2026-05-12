@@ -213,6 +213,85 @@ export const SURVEYS: Record<string, Survey> = {
     maxOrder: 5,
     attribution: "AKARI FIS · JAXA / ISAS / CDS",
   },
+  // -------------------------------------------------------------------------
+  // Federated expansion: deep-optical + radio surveys verified against each
+  // node's Norder3/Dir0/Npix0 tile (HTTP 200) with permissive CORS for the
+  // browser. JWST and DECaPS2 are intentionally absent — JWST has no public
+  // all-sky composite (only sparse outreach mosaics + per-program coverage),
+  // and DECaPS2 covers only the southern Galactic plane (no Npix0 tile).
+  // -------------------------------------------------------------------------
+  panstarrs: {
+    id: "panstarrs",
+    label: "Pan-STARRS DR1 color",
+    wavelength: "visible",
+    // PS1 3π Steradian Survey, color composite from z, zg, g bands.
+    // Covers the sky north of dec ≈ -30°. Deep optical (mag ~22-23).
+    baseUrl: "https://alasky.cds.unistra.fr/Pan-STARRS/DR1/color-z-zg-g",
+    format: "jpg",
+    maxOrder: 11,
+    attribution: "Pan-STARRS1 DR1 · IfA Hawaii / STScI / CDS",
+  },
+  sdss9: {
+    id: "sdss9",
+    label: "SDSS9 color",
+    wavelength: "visible",
+    // SDSS DR9 color composite (g, r, i bands). ~35% sky coverage,
+    // ~14000 sq deg, deep optical.
+    baseUrl: "https://alasky.cds.unistra.fr/SDSS/DR9/color",
+    format: "jpg",
+    maxOrder: 10,
+    attribution: "SDSS DR9 · SDSS-III / CDS",
+  },
+  "desi-legacy": {
+    id: "desi-legacy",
+    label: "DESI Legacy DR10",
+    wavelength: "visible",
+    // DESI Legacy Imaging Surveys DR10 color (g, r, i, z bands).
+    // Combination of DECaLS, BASS, MzLS + extra DECam data — ~20000 sq deg.
+    // PNG tiles only (no JPG variant published).
+    baseUrl:
+      "https://alasky.cds.unistra.fr/DESI-legacy-surveys/DR10/CDS_P_DESI-Legacy-Surveys_DR10_color",
+    format: "png",
+    maxOrder: 11,
+    attribution: "DESI Legacy Imaging Surveys DR10 · NOIRLab / CDS",
+  },
+  vlass: {
+    id: "vlass",
+    label: "VLASS Quicklook 3 GHz",
+    wavelength: "radio",
+    // VLA Sky Survey Quicklook Median Stack — 3 GHz (S-band), ~82% sky
+    // (dec > -40°), sub-arcsec resolution. Served direct from NRAO with
+    // permissive CORS. PNG tiles.
+    baseUrl: "https://vlass-dl.nrao.edu/vlass/HiPS/MedianStack/Quicklook",
+    format: "png",
+    maxOrder: 9,
+    attribution: "VLASS Quicklook · U.S. NSF / NRAO / AUI",
+  },
+  tgss: {
+    id: "tgss",
+    label: "TGSS ADR1 150 MHz",
+    wavelength: "radio",
+    // TIFR GMRT Sky Survey Alternative Data Release 1 — 150 MHz
+    // low-frequency radio, sky north of dec -53°. PNG tiles.
+    // Served from ASTRON's mirror (CORS open); the Leiden master node
+    // ships the same data but without CORS headers.
+    baseUrl: "https://hips.astron.nl/ASTRON/P/tgssadr",
+    format: "png",
+    maxOrder: 7,
+    attribution: "TGSS ADR1 · GMRT / NCRA-TIFR / ASTRON",
+  },
+  hst: {
+    id: "hst",
+    label: "HST color composite",
+    wavelength: "visible",
+    // HST color HiPS — experimental composite stitched by CDS from
+    // archival HST filters (B, V, R, I, J, H, Y, SDSSg/r/z, Hα, OIII…).
+    // Partial-sky but extremely deep where it covers (mag ~28-30).
+    baseUrl: "https://alasky.cds.unistra.fr/HST-hips/color",
+    format: "png",
+    maxOrder: 13,
+    attribution: "HST archival color · STScI / NASA / ESA / CDS",
+  },
 };
 
 /**
