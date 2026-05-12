@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { Starfield } from "./landing/Starfield";
 import { Hero } from "./landing/Hero";
+import { Highlights } from "./landing/Highlights";
 import { OpenData } from "./landing/OpenData";
 import { Roadmap } from "./landing/Roadmap";
 import { Footer } from "./landing/Footer";
@@ -136,6 +137,7 @@ export function App() {
       <Starfield />
       <div className="relative z-10 flex min-h-full flex-col">
         <Hero />
+        <Highlights />
         <OpenData />
         <Roadmap />
         <Footer />
