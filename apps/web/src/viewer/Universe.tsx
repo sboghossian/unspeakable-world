@@ -24,6 +24,7 @@ import {
 } from "./ui/SceneBottomHud";
 import { TopBarActions } from "./ui/TopBarActions";
 import { AchievementsPanel } from "./ui/AchievementsPanel";
+import { SurpriseButton } from "./ui/SurpriseButton";
 import { unlock } from "../lib/achievements";
 import {
   LightConeControls,
@@ -353,6 +354,7 @@ export function Universe({ onExit }: Props) {
             }}
             onZenith={() => sceneRef.current?.flyTo("Sun")}
           />
+          <SurpriseButton onPick={(name) => sceneRef.current?.flyTo(name)} />
           <AchievementsPanel />
           <TopBarActions />
         </div>
