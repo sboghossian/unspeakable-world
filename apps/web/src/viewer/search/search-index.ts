@@ -197,6 +197,11 @@ export class SearchIndex {
   search(query: string, limit = 8): SearchEntry[] {
     const q = query.trim().toLowerCase();
     if (!q) return [];
+    // Catalog-aware loose match: collapse the spaces / hyphens that
+    // commonly drift between "M 31" / "M-31" / "M31", "NGC 1234" /
+    // "NGC1234", "HD 12345" / "hd12345", "3C 273" / "3c273". The
+    // normalized form is used as a second pass below.
+    const qNorm = normalizeCatalogToken(q);
 
     const dynamic = this.dynamicProvider ? this.dynamicProvider() : [];
     const all = [...dynamic, ...this.entries];
@@ -209,6 +214,14 @@ export class SearchIndex {
       else if (lower.startsWith(q))
         score = 100 + (q.length / lower.length) * 50;
       else if (lower.includes(q)) score = 30 + (q.length / lower.length) * 10;
+      else if (qNorm.length >= 2) {
+        const norm = normalizeCatalogToken(lower);
+        if (norm.startsWith(qNorm)) {
+          score = 80 + (qNorm.length / norm.length) * 40;
+        } else if (norm.includes(qNorm)) {
+          score = 25 + (qNorm.length / norm.length) * 10;
+        }
+      }
       if (score > 0) {
         // Slight kind-based tiebreaker so planets and Messier objects float to top.
         if (e.kind === "planet") score += 5;
@@ -220,6 +233,18 @@ export class SearchIndex {
     matches.sort((a, b) => b.score - a.score);
     return matches.slice(0, limit).map((m) => m.entry);
   }
+}
+
+/** Strip the punctuation drift that astronomical catalogs are infamous for:
+ *  "M 31" / "M-31" / "M31" all share the canonical form "m31". Same trick
+ *  for "NGC 1234", "HD 12345", "3C 273", "BD+30 3639", etc. We also drop
+ *  parenthetical aliases like "M31 (Andromeda)" so they don't bias the
+ *  startsWith score against single-token queries. */
+function normalizeCatalogToken(input: string): string {
+  return input
+    .toLowerCase()
+    .replace(/\s+/g, "")
+    .replace(/[-_]/g, "");
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
