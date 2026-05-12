@@ -253,6 +253,14 @@ export class SolarFlightScene {
     null;
   /** Stylized 3D JWST model, parked at Sun-Earth L2 in solar flight. */
   private jwstModel: JwstModel | null = null;
+  /** Sun-Earth Lagrange-point markers L1-L5. Each is a sprite label
+   *  plus a small dot, positioned each frame from Earth's heliocentric
+   *  state. */
+  private lagrange: Array<{
+    name: "L1" | "L2" | "L3" | "L4" | "L5";
+    dot: Mesh;
+    label: Sprite;
+  }> = [];
   private orbits: LineLoop[] = [];
   private solarZones: LineLoop[] = [];
   private starPoints: Points | null = null;
@@ -329,6 +337,7 @@ export class SolarFlightScene {
     this.buildGalileanMoons();
     this.buildMarsMoons();
     this.buildEarthsMoon();
+    this.buildLagrangePoints();
     this.buildSolarZones();
 
     // Background star field on a giant sphere (radius STAR_RADIUS).
@@ -796,6 +805,57 @@ export class SolarFlightScene {
       }
     }
 
+    // Sun-Earth Lagrange points — L1 / L2 along the Sun-Earth line
+    // (±0.01 AU from Earth), L3 opposite Earth across the Sun (~1 AU
+    // on the far side), L4 / L5 60° ahead/behind Earth on its orbit.
+    if (this.lagrange.length > 0) {
+      const rE = Math.hypot(earthX, earthY, earthZ);
+      if (rE > 1e-6) {
+        const ex = earthX / rE;
+        const ey = earthY / rE;
+        const ez = earthZ / rE;
+        // Perpendicular vector in the ecliptic plane (around scene-Y).
+        const px = -ez;
+        const pz = ex;
+        const cos60 = 0.5;
+        const sin60 = 0.8660254;
+        const POSITIONS: Record<string, [number, number, number]> = {
+          L1: [earthX - ex * 0.01, earthY - ey * 0.01, earthZ - ez * 0.01],
+          L2: [earthX + ex * 0.01, earthY + ey * 0.01, earthZ + ez * 0.01],
+          L3: [-earthX - ex * 0.01, -earthY - ey * 0.01, -earthZ - ez * 0.01],
+          L4: [
+            rE * (cos60 * ex - sin60 * px),
+            earthY,
+            rE * (cos60 * ez - sin60 * pz),
+          ],
+          L5: [
+            rE * (cos60 * ex + sin60 * px),
+            earthY,
+            rE * (cos60 * ez + sin60 * pz),
+          ],
+        };
+        const camWorld = this.camera.position;
+        const camToEarth = Math.hypot(
+          camWorld.x - earthX,
+          camWorld.y - earthY,
+          camWorld.z - earthZ,
+        );
+        // Visible inside the inner solar system; faded when zoomed out
+        // to galactic scales where they'd just be five dots stacked
+        // on Earth.
+        const t = Math.max(0, Math.min(1, (2 - camToEarth) / 1.5));
+        for (const lp of this.lagrange) {
+          const [lx, ly, lz] = POSITIONS[lp.name]!;
+          lp.dot.position.set(lx, ly, lz);
+          lp.label.position.set(lx, ly + 0.008, lz);
+          (lp.dot.material as MeshBasicMaterial).opacity = t * 0.85;
+          (lp.label.material as SpriteMaterial).opacity = t * 0.8;
+          lp.dot.visible = t > 0.03;
+          lp.label.visible = t > 0.03;
+        }
+      }
+    }
+
     // JWST at Sun-Earth L2 — Earth's heliocentric position pushed
     // ~0.01 AU farther from the Sun along the Sun-Earth line.
     if (this.jwstModel) {
@@ -1102,6 +1162,41 @@ export class SolarFlightScene {
         a: m.a,
         period: m.period,
       });
+    }
+  }
+
+  private buildLagrangePoints(): void {
+    const names: Array<"L1" | "L2" | "L3" | "L4" | "L5"> = [
+      "L1",
+      "L2",
+      "L3",
+      "L4",
+      "L5",
+    ];
+    for (const name of names) {
+      const dotMat = new MeshBasicMaterial({
+        color: 0x9ad2ff,
+        transparent: true,
+        opacity: 0.85,
+        depthTest: false,
+      });
+      const dot = new Mesh(new SphereGeometry(0.0015, 8, 8), dotMat);
+      dot.renderOrder = 5;
+      this.scene.add(dot);
+      const labelTex = makeLabelTexture(name);
+      const labelMat = new SpriteMaterial({
+        map: labelTex,
+        transparent: true,
+        depthWrite: false,
+        depthTest: false,
+        opacity: 0.85,
+      });
+      const label = new Sprite(labelMat);
+      const aspect = labelTex.image.width / labelTex.image.height;
+      const h = 0.012;
+      label.scale.set(h * aspect, h, 1);
+      this.scene.add(label);
+      this.lagrange.push({ name, dot, label });
     }
   }
 
