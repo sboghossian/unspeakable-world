@@ -25,6 +25,7 @@ import {
 import { TopBarActions } from "./ui/TopBarActions";
 import { AchievementsPanel } from "./ui/AchievementsPanel";
 import { MeasurePanel } from "./ui/MeasurePanel";
+import { MythsPanel } from "./ui/MythsPanel";
 import { NewsPanel } from "./ui/NewsPanel";
 import { LessonPanel } from "./ui/LessonPanel";
 import { SetiPanel } from "./ui/SetiPanel";
@@ -384,6 +385,7 @@ export function Universe({ onExit }: Props) {
           <LessonPanel />
           <SetiPanel />
           <NewsPanel />
+          <MythsPanel />
           <AchievementsPanel />
           <TopBarActions />
         </div>
