@@ -14,11 +14,13 @@ export type Route =
   | "surface"
   | "galactic"
   | "universe"
+  | "sandbox"
   | "guide";
 
 function getRoute(): Route {
   const hash = typeof window === "undefined" ? "" : window.location.hash;
   if (hash.startsWith("#guide")) return "guide";
+  if (hash.startsWith("#sandbox")) return "sandbox";
   if (hash.startsWith("#universe")) return "universe";
   if (hash.startsWith("#galactic")) return "galactic";
   if (hash.startsWith("#surface")) return "surface";
@@ -63,6 +65,10 @@ export function navigate(route: Route, planet?: "Earth" | "Mars" | "Moon"): void
   }
   if (route === "guide") {
     window.location.hash = "#guide";
+    return;
+  }
+  if (route === "sandbox") {
+    window.location.hash = "#sandbox";
     return;
   }
   window.location.hash =

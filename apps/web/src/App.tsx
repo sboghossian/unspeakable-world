@@ -27,6 +27,9 @@ const Galactic = lazy(() =>
 const Universe = lazy(() =>
   import("./viewer/Universe").then((m) => ({ default: m.Universe })),
 );
+const Sandbox = lazy(() =>
+  import("./viewer/Sandbox").then((m) => ({ default: m.Sandbox })),
+);
 const Guide = lazy(() =>
   import("./guide/Guide").then((m) => ({ default: m.Guide })),
 );
@@ -52,6 +55,16 @@ export function App() {
           <Universe onExit={() => navigate("landing")} />
         </Suspense>
         <PwaInstallBanner />
+      </main>
+    );
+  }
+
+  if (route === "sandbox") {
+    return (
+      <main className="relative h-full w-full bg-space-950">
+        <Suspense fallback={<ViewerLoadingVeil />}>
+          <Sandbox onExit={() => navigate("landing")} />
+        </Suspense>
       </main>
     );
   }

@@ -107,6 +107,19 @@ export function Hero() {
               <div className="border-t border-white/5" />
               <button
                 type="button"
+                onClick={() => navigate("sandbox")}
+                className="block w-full px-4 py-3 text-left transition hover:bg-white/5"
+              >
+                <div className="font-display text-sm text-orange-200">
+                  🪐 Gravity Sandbox
+                </div>
+                <div className="font-mono text-[10px] text-white/45">
+                  n-body playground · launch comets, stars, black holes
+                </div>
+              </button>
+              <div className="border-t border-white/5" />
+              <button
+                type="button"
                 onClick={() => (window.location.hash = "#surface/earth")}
                 className="block w-full px-4 py-3 text-left transition hover:bg-white/5"
               >
