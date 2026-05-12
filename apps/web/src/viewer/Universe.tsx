@@ -25,6 +25,9 @@ import {
 import { TopBarActions } from "./ui/TopBarActions";
 import { AchievementsPanel } from "./ui/AchievementsPanel";
 import { MeasurePanel } from "./ui/MeasurePanel";
+import { NewsPanel } from "./ui/NewsPanel";
+import { LessonPanel } from "./ui/LessonPanel";
+import { SetiPanel } from "./ui/SetiPanel";
 import { StarTrailsPanel } from "./ui/StarTrailsPanel";
 import { SurpriseButton } from "./ui/SurpriseButton";
 import { ShortcutsOverlay } from "./ui/ShortcutsOverlay";
@@ -378,6 +381,9 @@ export function Universe({ onExit }: Props) {
           <SurpriseButton onPick={(name) => sceneRef.current?.flyTo(name)} />
           <MeasurePanel scene={sceneRef.current} />
           <StarTrailsPanel scene={sceneRef.current} />
+          <LessonPanel />
+          <SetiPanel />
+          <NewsPanel />
           <AchievementsPanel />
           <TopBarActions />
         </div>
