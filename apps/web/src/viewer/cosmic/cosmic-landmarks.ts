@@ -30,7 +30,9 @@ type LandmarkKind =
   | "supernova-remnant"
   | "quasar"
   | "agn"
-  | "exotic";
+  | "exotic"
+  | "open-cluster"
+  | "globular-cluster";
 
 export type CosmicLandmark = {
   name: string;
@@ -506,6 +508,101 @@ export const COSMIC_LANDMARKS: CosmicLandmark[] = [
     detail: "~30 galaxies · centered between Milky Way & Andromeda",
   },
 
+  // ─── Open star clusters (young, loose, in the galactic disk) ─────
+  {
+    name: "Pleiades (M45)",
+    kind: "open-cluster",
+    raDeg: 56.75,
+    decDeg: 24.117,
+    detail: "Open cluster · 1,000+ stars · 444 ly · Subaru / Seven Sisters",
+  },
+  {
+    name: "Hyades",
+    kind: "open-cluster",
+    raDeg: 66.75,
+    decDeg: 15.867,
+    detail: "Open cluster · nearest at 153 ly · forms the V of Taurus",
+  },
+  {
+    name: "Praesepe (M44)",
+    kind: "open-cluster",
+    raDeg: 130.05,
+    decDeg: 19.683,
+    detail: "Open cluster · Beehive · 1,000 stars · 577 ly · in Cancer",
+  },
+  {
+    name: "Coma Berenices Cluster",
+    kind: "open-cluster",
+    raDeg: 186.0,
+    decDeg: 26.0,
+    detail: "Open cluster · 280 ly · close + sparse",
+  },
+  {
+    name: "Double Cluster (NGC 869 / 884)",
+    kind: "open-cluster",
+    raDeg: 35.5,
+    decDeg: 57.133,
+    detail: "Two open clusters · ~7,500 ly · h + χ Persei",
+  },
+  {
+    name: "Wild Duck Cluster (M11)",
+    kind: "open-cluster",
+    raDeg: 282.77,
+    decDeg: -6.27,
+    detail: "Open cluster · ~6,200 ly · 2,900 stars · in Scutum",
+  },
+
+  // ─── Globular clusters (old, dense, in the galactic halo) ────────
+  {
+    name: "M13 (Great Hercules Cluster)",
+    kind: "globular-cluster",
+    raDeg: 250.42,
+    decDeg: 36.46,
+    detail: "Globular cluster · 145,000 stars · 22,200 ly · 11.65 Gyr",
+  },
+  {
+    name: "M22 (Sagittarius Cluster)",
+    kind: "globular-cluster",
+    raDeg: 279.1,
+    decDeg: -23.9,
+    detail: "Globular cluster · 70,000 stars · 10,400 ly · nearest big globular",
+  },
+  {
+    name: "Omega Centauri (NGC 5139)",
+    kind: "globular-cluster",
+    raDeg: 201.7,
+    decDeg: -47.48,
+    detail: "Largest Milky Way globular · 10M stars · 17,090 ly · ex-dwarf-galaxy core",
+  },
+  {
+    name: "47 Tucanae",
+    kind: "globular-cluster",
+    raDeg: 6.024,
+    decDeg: -72.083,
+    detail: "Globular cluster · 13,000 ly · second-brightest in the sky",
+  },
+  {
+    name: "M3",
+    kind: "globular-cluster",
+    raDeg: 205.55,
+    decDeg: 28.38,
+    detail: "Globular cluster · 500,000 stars · 33,900 ly · in Canes Venatici",
+  },
+  {
+    name: "M5",
+    kind: "globular-cluster",
+    raDeg: 229.64,
+    decDeg: 2.08,
+    detail: "Globular cluster · 100,000 stars · 24,500 ly · in Serpens",
+  },
+  {
+    name: "M15",
+    kind: "globular-cluster",
+    raDeg: 322.49,
+    decDeg: 12.17,
+    detail: "Globular cluster · core-collapse · 33,600 ly · in Pegasus",
+  },
+
   // ─── More gravitational-wave events (LIGO/Virgo, well-localized) ──
   {
     name: "GW190521",
@@ -586,6 +683,8 @@ const COLOR_BY_KIND: Record<LandmarkKind, string> = {
   quasar: "rgba(190, 220, 255, 0.95)",
   agn: "rgba(120, 220, 255, 0.95)",
   exotic: "rgba(220, 180, 255, 0.95)",
+  "open-cluster": "rgba(255, 235, 180, 0.95)",
+  "globular-cluster": "rgba(255, 215, 130, 0.95)",
 };
 
 export class CosmicLandmarks {
