@@ -82,6 +82,14 @@ const PLANETS: Array<{
   { body: Body.Neptune, name: "Neptune", color: 0x7fa6ff, drawSize: 0.055 },
 ];
 
+/** Saturn ring geometry, shared between the ring mesh and the
+ *  ring-shadow shader on Saturn's body. Tilt rotates a RingGeometry
+ *  (XY plane natively) so it lands ~horizontal in scene-XZ with
+ *  Saturn's ~26.7° obliquity. */
+const SATURN_RING_INNER_MULT = 1.4;
+const SATURN_RING_OUTER_MULT = 2.4;
+const SATURN_RING_TILT = Math.PI / 2 - 0.466;
+
 const ORBIT_COLORS: Record<string, number> = {
   Mercury: 0xc8c1b8,
   Venus: 0xffd57a,
@@ -180,6 +188,9 @@ export class SolarFlightScene {
   private backgroundLabels: Sprite[] = [];
   private satellites: SatelliteField | null = null;
   private auroraOverlay: AuroraOverlay | null = null;
+  /** Saturn's sphere material — kept on hand so updatePlanets() can push
+   *  the planet's current world position into the ring-shadow uniform. */
+  private saturnMat: ShaderMaterial | null = null;
 
   // Gravity sandbox — light n-body projectiles pulled by Sun + planets.
   private projectiles: Projectile[] = [];
@@ -400,6 +411,23 @@ export class SolarFlightScene {
         const nightTex = paintCanvas(1024, 512, paintEarthNight);
         earthMaterial = makeEarthDayNightMaterial(dayTex, nightTex);
         sphere = new Mesh(geom, earthMaterial);
+      } else if (spec.name === "Saturn") {
+        // Saturn: custom shader that does its own Lambert plus an
+        // analytical ring-shadow — for any surface point we ray-cast to
+        // the Sun and darken if that ray crosses the ring annulus.
+        const ringN = new Vector3(
+          0,
+          -Math.sin(SATURN_RING_TILT),
+          Math.cos(SATURN_RING_TILT),
+        ).normalize();
+        const planetTex = makePlanetTexture(spec.name);
+        this.saturnMat = makeSaturnRingShadowMaterial(
+          planetTex,
+          ringN,
+          spec.drawSize * SATURN_RING_INNER_MULT,
+          spec.drawSize * SATURN_RING_OUTER_MULT,
+        );
+        sphere = new Mesh(geom, this.saturnMat);
       } else {
         // Every other planet gets its styled procedural texture
         // (Mercury craters, Jupiter bands, Mars rust + polar caps, etc.)
@@ -450,11 +478,12 @@ export class SolarFlightScene {
       }
 
       // Saturn: textured ring system. RingGeometry is a flat disk; we tilt
-      // it around the X axis so it reads at the body's actual ~26.7°
-      // axial inclination (close enough for visualization).
+      // it so it reads at the body's actual ~26.7° axial inclination. The
+      // body's shader independently casts the ring's analytical shadow
+      // back onto the sphere.
       if (spec.name === "Saturn") {
-        const ringInner = spec.drawSize * 1.4;
-        const ringOuter = spec.drawSize * 2.4;
+        const ringInner = spec.drawSize * SATURN_RING_INNER_MULT;
+        const ringOuter = spec.drawSize * SATURN_RING_OUTER_MULT;
         const ringGeom = new RingGeometry(ringInner, ringOuter, 96);
         const ringMat = new MeshBasicMaterial({
           map: makeRingTexture(),
@@ -465,7 +494,7 @@ export class SolarFlightScene {
           depthWrite: false,
         });
         const ring = new Mesh(ringGeom, ringMat);
-        ring.rotation.x = Math.PI / 2 - 0.466; // ~26.7° tilt
+        ring.rotation.x = SATURN_RING_TILT;
         group.add(ring);
       }
 
@@ -562,6 +591,12 @@ export class SolarFlightScene {
           marsX = sx;
           marsY = sy;
           marsZ = sz;
+        } else if (p.name === "Saturn" && this.saturnMat) {
+          // Push Saturn's current world position into the ring-shadow
+          // shader so per-fragment ray-casts to the Sun know where the
+          // body's center is.
+          const center = this.saturnMat.uniforms["uCenterW"];
+          if (center) (center.value as Vector3).set(sx, sy, sz);
         }
       } catch {
         // ignore
@@ -1498,6 +1533,82 @@ function paintEarthNight(
       ctx.fill();
     }
   }
+}
+
+/** Saturn shader: Lambert shading from the Sun (at world origin) PLUS
+ *  an analytical ring-shadow. For every fragment we cast a ray from the
+ *  surface point toward the Sun; if that ray crosses the ring plane
+ *  inside the ring annulus, we darken the fragment. This gives Saturn
+ *  the characteristic dark equatorial band shadow without shadow maps. */
+function makeSaturnRingShadowMaterial(
+  dayTex: CanvasTexture,
+  ringNormalW: Vector3,
+  ringInner: number,
+  ringOuter: number,
+): ShaderMaterial {
+  return new ShaderMaterial({
+    uniforms: {
+      uMap: { value: dayTex },
+      uRingN: { value: ringNormalW.clone() },
+      uRingInner: { value: ringInner },
+      uRingOuter: { value: ringOuter },
+      uCenterW: { value: new Vector3() },
+    },
+    vertexShader: `
+      varying vec3 vWorldPos;
+      varying vec3 vWorldNormal;
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        vWorldNormal = normalize(mat3(modelMatrix) * normal);
+        vec4 wp = modelMatrix * vec4(position, 1.0);
+        vWorldPos = wp.xyz;
+        gl_Position = projectionMatrix * viewMatrix * wp;
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D uMap;
+      uniform vec3 uRingN;
+      uniform float uRingInner;
+      uniform float uRingOuter;
+      uniform vec3 uCenterW;
+      varying vec3 vWorldPos;
+      varying vec3 vWorldNormal;
+      varying vec2 vUv;
+      void main() {
+        // Lambert from a point light at world origin.
+        vec3 sunPos = vec3(0.0);
+        vec3 sunDir = normalize(sunPos - vWorldPos);
+        float ndl = max(dot(normalize(vWorldNormal), sunDir), 0.0);
+        vec3 base = texture2D(uMap, vUv).rgb;
+        vec3 lit = base * (ndl * 0.9 + 0.15);
+
+        // Ray from this surface point to the Sun: P + t*D where
+        // D = sunPos - P. Find intersection with the ring plane that
+        // passes through Saturn's center with normal uRingN.
+        vec3 d = sunPos - vWorldPos;
+        vec3 toC = uCenterW - vWorldPos;
+        float denom = dot(d, uRingN);
+        if (abs(denom) > 1e-5) {
+          float t = dot(toC, uRingN) / denom;
+          if (t > 0.001 && t < 1.0) {
+            vec3 hit = vWorldPos + t * d;
+            float dist = length(hit - uCenterW);
+            // Soft edges on the annulus so the shadow doesn't have a
+            // razor-sharp boundary.
+            float edge = smoothstep(
+              0.0,
+              0.015,
+              min(dist - uRingInner, uRingOuter - dist)
+            );
+            lit *= mix(1.0, 0.4, edge);
+          }
+        }
+
+        gl_FragColor = vec4(lit, 1.0);
+      }
+    `,
+  });
 }
 
 /** Custom Earth shader: smooth day↔night terminator with city-light
