@@ -51,6 +51,7 @@ import {
   BODY_INFO,
   bodyFactsToPayload,
   cosmicLandmarkFactsToPayload,
+  enrichWithCitation,
   enrichWithImagery,
   missionFactsToPayload,
   moonFactsToPayload,
@@ -1284,11 +1285,13 @@ export class UniverseScene {
       const facts = BODY_INFO[top.name];
       payload = facts
         ? bodyFactsToPayload(top.name, top.kind === "Sun" ? "Sun" : "Planet", facts)
-        : enrichWithImagery({
-            kind: top.kind === "Sun" ? "Sun" : "Planet",
-            name: top.name,
-            sections: [{ kind: "overview", text: top.detail }],
-          });
+        : enrichWithCitation(
+            enrichWithImagery({
+              kind: top.kind === "Sun" ? "Sun" : "Planet",
+              name: top.name,
+              sections: [{ kind: "overview", text: top.detail }],
+            }),
+          );
     }
     return {
       kind: top.kind,
@@ -1806,7 +1809,7 @@ function pulsarPickToPayload(p: PulsarPick): InfoPayload {
       },
     ],
   });
-  return { kind: "Pulsar", name: p.name, sections };
+  return enrichWithCitation({ kind: "Pulsar", name: p.name, sections });
 }
 
 function ramp(x: number, a: number, b: number, ya: number, yb: number): number {
