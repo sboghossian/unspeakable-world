@@ -39,6 +39,7 @@ import { PulsarField, type PulsarPick } from "../cosmic/pulsar-field";
 import { raDecToVec3 } from "../stars/coords";
 import { ExoplanetField } from "../exoplanets/exoplanet-field";
 import { CosmicLandmarks } from "../cosmic/cosmic-landmarks";
+import { MeasureTool, worldDirToRaDec } from "../measure/measure-tool";
 import { StarLabels } from "../stars/star-labels";
 import {
   BODY_INFO,
@@ -226,6 +227,9 @@ export class UniverseScene {
   private pulsars: PulsarField;
   private exoplanets: ExoplanetField;
   private cosmicLandmarks: CosmicLandmarks;
+  private measureTool: MeasureTool;
+  private measureMode = false;
+  private onMeasureChange: (() => void) | null = null;
 
   // Solar small-body layers (live in solarGroup, AU units).
   private asteroids: AsteroidField | null = null;
@@ -390,6 +394,9 @@ export class UniverseScene {
 
     this.cosmicLandmarks = new CosmicLandmarks();
     this.hipsGroup.add(this.cosmicLandmarks.group);
+
+    this.measureTool = new MeasureTool();
+    this.hipsGroup.add(this.measureTool.group);
 
     this.hipsGroup.scale.setScalar(2000); // 2000 scene-unit radius
     this.scene.add(this.hipsGroup);
@@ -1001,17 +1008,65 @@ export class UniverseScene {
       /* ignore */
     }
     this.canvas.style.cursor = "grab";
-    // True click (not a drag) → pick.
-    if (this.dragMaxDist < 4 && this.onClickCb) {
+    // True click (not a drag) → either drop a measure-point or pick.
+    if (this.dragMaxDist < 4) {
       const rect = this.canvas.getBoundingClientRect();
       const ndc = new Vector2(
         ((e.clientX - rect.left) / rect.width) * 2 - 1,
         -((e.clientY - rect.top) / rect.height) * 2 + 1,
       );
-      const hit = this.pick(ndc);
-      if (hit) this.onClickCb(hit);
+      if (this.measureMode) {
+        // Cast a ray from the camera and grab the direction. Sky points
+        // are infinitely far so we just take the ray direction.
+        this.raycaster.setFromCamera(ndc, this.camera);
+        const worldDir = this.raycaster.ray.direction.clone();
+        const { celestial } = worldDirToRaDec(worldDir);
+        this.measureTool.addPoint(celestial);
+        this.onMeasureChange?.();
+      } else if (this.onClickCb) {
+        const hit = this.pick(ndc);
+        if (hit) this.onClickCb(hit);
+      }
     }
   };
+
+  /** Toggle distance-scale measurement mode. The first click drops a
+   *  marker; the second click drops another marker and draws the great-
+   *  circle arc between them. A third click clears and restarts. */
+  setMeasureMode(on: boolean): void {
+    this.measureMode = on;
+    if (!on) this.measureTool.clear();
+    this.canvas.style.cursor = on ? "crosshair" : "grab";
+    this.onMeasureChange?.();
+  }
+
+  measureModeOn(): boolean {
+    return this.measureMode;
+  }
+
+  /** Current angular separation (degrees) — 0 if fewer than 2 points. */
+  measureAngularDeg(): number {
+    return this.measureTool.angularDeg();
+  }
+
+  measurePoints(): { raDeg: number; decDeg: number }[] {
+    return this.measureTool.points.map((d) => {
+      const ra = (Math.atan2(d.y, d.x) * 180) / Math.PI;
+      return {
+        raDeg: ra < 0 ? ra + 360 : ra,
+        decDeg: (Math.asin(Math.max(-1, Math.min(1, d.z))) * 180) / Math.PI,
+      };
+    });
+  }
+
+  setOnMeasureChange(cb: () => void): void {
+    this.onMeasureChange = cb;
+  }
+
+  measureClear(): void {
+    this.measureTool.clear();
+    this.onMeasureChange?.();
+  }
 
   private onClickCb: ((hit: UniverseHit) => void) | null = null;
   setOnClick(cb: (hit: UniverseHit) => void): void {
