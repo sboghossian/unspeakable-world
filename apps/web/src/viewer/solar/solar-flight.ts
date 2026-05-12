@@ -1,5 +1,6 @@
 import {
   AdditiveBlending,
+  AmbientLight,
   BackSide,
   BufferAttribute,
   BufferGeometry,
@@ -13,8 +14,10 @@ import {
   LineLoop,
   Mesh,
   MeshBasicMaterial,
+  MeshLambertMaterial,
   PerspectiveCamera,
   Points,
+  PointLight,
   Raycaster,
   RingGeometry,
   Scene,
@@ -218,6 +221,17 @@ export class SolarFlightScene {
     this.sunGlow = makeGlowSprite(0xffd06a, SUN_DRAW_SIZE * 6);
     this.scene.add(this.sunGlow);
 
+    // Solar lighting — a point light at the Sun's position (origin) lights
+    // the planets so their day/night sides actually read. A faint ambient
+    // term keeps the unlit hemispheres from going pitch black, which would
+    // make moons / outer planets vanish into the background. Earth has its
+    // own shader and ignores these (MeshBasicMaterial for the Sun also
+    // ignores lights, so the Sun stays self-luminous).
+    const sunLight = new PointLight(0xfff2c8, 2.6, 0, 0);
+    sunLight.position.set(0, 0, 0);
+    this.scene.add(sunLight);
+    this.scene.add(new AmbientLight(0xffffff, 0.12));
+
     // Build planets + orbits + Jupiter's Galilean moons
     void this.buildPlanets();
     void this.buildOrbits();
@@ -384,9 +398,10 @@ export class SolarFlightScene {
       } else {
         // Every other planet gets its styled procedural texture
         // (Mercury craters, Jupiter bands, Mars rust + polar caps, etc.)
-        // applied to a simple unlit MeshBasicMaterial.
+        // on a Lambert material so the Sun's point light gives them a
+        // proper day/night gradient as the camera flies around.
         const planetTex = makePlanetTexture(spec.name);
-        const mat = new MeshBasicMaterial({ map: planetTex, color: 0xffffff });
+        const mat = new MeshLambertMaterial({ map: planetTex, color: 0xffffff });
         sphere = new Mesh(geom, mat);
       }
       group.add(sphere);
@@ -761,7 +776,7 @@ export class SolarFlightScene {
     ];
     for (const m of MOONS) {
       const geom = new SphereGeometry(m.drawSize, 12, 12);
-      const mat = new MeshBasicMaterial({
+      const mat = new MeshLambertMaterial({
         color: m.color,
         depthTest: false,
       });
@@ -802,7 +817,7 @@ export class SolarFlightScene {
     ];
     for (const m of MOONS) {
       const geom = new SphereGeometry(0.015, 16, 16);
-      const mat = new MeshBasicMaterial({
+      const mat = new MeshLambertMaterial({
         color: m.color,
         depthTest: false,
       });
