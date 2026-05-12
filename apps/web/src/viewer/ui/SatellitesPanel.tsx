@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as satelliteJs from "satellite.js";
 import { unlock } from "../../lib/achievements";
+import { t, useLanguage } from "../../lib/i18n";
 
 /**
  * 🛰 Satellites panel — searchable catalog of every TLE we ship plus a
@@ -98,6 +99,7 @@ const GROUP_LABEL: Record<string, string> = {
 };
 
 export function SatellitesPanel() {
+  useLanguage();
   const [open, setOpen] = useState(false);
   const [entries, setEntries] = useState<Entry[] | null>(null);
   const [query, setQuery] = useState("");
@@ -149,7 +151,7 @@ export function SatellitesPanel() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        title="Satellites — live SGP4 positions"
+        title={t("panel.satellites", "Satellites — live SGP4 positions")}
         className="pointer-events-auto rounded-lg border border-white/10 bg-space-950/70 px-2.5 py-1.5 font-mono text-[11px] uppercase tracking-widest text-white/70 backdrop-blur transition hover:bg-white/10 hover:text-white"
       >
         🛰 sats

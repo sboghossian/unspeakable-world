@@ -4,6 +4,8 @@ import {
   type AppSettings,
   type ExplanationTier,
 } from "../../lib/settings";
+import { t } from "../../lib/i18n";
+import { LanguagePicker } from "./LanguagePicker";
 
 /**
  * ⚙ Shared settings popover.
@@ -182,6 +184,17 @@ export function SettingsPanel({ open, onClose, anchor = "left-rail" }: Props) {
           step={0.05}
           onChange={(v) => update({ sonificationVolume: v })}
         />
+      </Section>
+
+      <Section label={t("label.language", "Language")}>
+        <LanguagePicker />
+        <div className="mt-1 font-mono text-[9px] text-white/35">
+          {t(
+            "label.language",
+            "Language",
+          )}{" "}
+          · scaffold ~50 strings (more coming).
+        </div>
       </Section>
 
       <Section label="Data">

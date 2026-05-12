@@ -6,6 +6,7 @@ import {
   type Myth,
   type MythCategory,
 } from "../myths/myths-data";
+import { t, useLanguage } from "../../lib/i18n";
 
 /**
  * 🔍 Common Space Myths panel — debunks the most-repeated
@@ -112,6 +113,7 @@ function MythCard({ myth }: { myth: Myth }) {
 }
 
 export function MythsPanel() {
+  useLanguage();
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState<FilterKey>("all");
 
@@ -123,8 +125,8 @@ export function MythsPanel() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        title={`Space Myths (${total})`}
-        aria-label="Space Myths"
+        title={`${t("panel.myths", "Space Myths")} (${total})`}
+        aria-label={t("panel.myths", "Space Myths")}
         className="pointer-events-auto inline-flex h-7 items-center gap-1.5 rounded-md border border-white/10 bg-space-950/70 px-2 text-[12px] text-white/70 backdrop-blur transition hover:bg-white/10 hover:text-white"
       >
         <span aria-hidden>🔍</span>

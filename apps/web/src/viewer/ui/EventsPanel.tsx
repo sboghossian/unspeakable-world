@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { upcomingEvents, type SkyEvent } from "../events/sky-events";
+import { t, useLanguage } from "../../lib/i18n";
 
 /**
  * 🗓 Upcoming sky events button + dropdown.
@@ -24,6 +25,7 @@ export function EventsPanel({
   onFlyToBody,
   onFlyToRadiant,
 }: Props) {
+  useLanguage();
   const events = useMemo<SkyEvent[]>(() => {
     if (!open) return [];
     return upcomingEvents(new Date(), 90);
@@ -38,7 +40,7 @@ export function EventsPanel({
       <button
         type="button"
         onClick={() => onOpenChange(!open)}
-        title="Upcoming sky events (e)"
+        title={`${t("panel.events", "Upcoming sky events")} (e)`}
         className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 font-mono text-xs uppercase tracking-widest backdrop-blur transition ${
           open
             ? "border-amber-400/50 bg-amber-400/15 text-amber-200"
@@ -46,7 +48,7 @@ export function EventsPanel({
         }`}
       >
         <span aria-hidden>🗓</span>
-        <span className="hidden md:inline">events</span>
+        <span className="hidden md:inline">{t("panel.events", "events").toLowerCase()}</span>
         {next && !open && (
           <span className="hidden lg:inline text-[10px] text-white/45">
             · {next.glyph} {fmtRelative(next.time)}

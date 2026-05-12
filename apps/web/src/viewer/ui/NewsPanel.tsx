@@ -5,6 +5,7 @@ import {
 } from "../news/launch-feed";
 import { fetchSpaceNews, type NewsItem } from "../news/space-news";
 import { relativeTime } from "../news/relative-time";
+import { t, useLanguage } from "../../lib/i18n";
 
 /**
  * 📰 Space News panel — mission-clock countdown to the next rocket
@@ -65,6 +66,7 @@ function statusTone(abbrev: string): string {
 }
 
 export function NewsPanel() {
+  useLanguage();
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<Tab>("launches");
   const [launches, setLaunches] = useState<Launch[] | null>(null);
@@ -124,8 +126,8 @@ export function NewsPanel() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        title="Space news & upcoming launches"
-        aria-label="Space news"
+        title={t("panel.news", "Space news & upcoming launches")}
+        aria-label={t("panel.news", "Space news")}
         className="pointer-events-auto inline-flex h-7 items-center gap-1.5 rounded-md border border-white/10 bg-space-950/70 px-2 text-[12px] text-white/70 backdrop-blur transition hover:bg-white/10 hover:text-white"
       >
         <span aria-hidden>📰</span>
@@ -142,7 +144,7 @@ export function NewsPanel() {
                 📰
               </span>
               <div className="font-display text-sm text-white/90">
-                Space news
+                {t("panel.news", "Space news")}
               </div>
               {loading && (
                 <span className="font-mono text-[10px] uppercase tracking-widest text-white/35">

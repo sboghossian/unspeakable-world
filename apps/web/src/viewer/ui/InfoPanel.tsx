@@ -9,6 +9,8 @@ import {
   type ExplanationTier,
 } from "../../lib/settings";
 import { pickWhyMatters, type TieredText } from "../data/object-citations";
+import type { CollectionItem } from "../../lib/collections";
+import { AddToCollectionMenu } from "./CollectionsPanel";
 
 /**
  * Unified inspector card. Shared between Universe Mode, Solar Flight, and
@@ -127,6 +129,21 @@ const KIND_TONE: Record<InfoPayload["kind"], string> = {
   Pulsar: "text-amber-200/90",
 };
 
+const KIND_TO_COLLECTION_TYPE: Record<
+  InfoPayload["kind"],
+  CollectionItem["type"]
+> = {
+  Sun: "body",
+  Planet: "body",
+  Moon: "body",
+  Star: "star",
+  DSO: "dso",
+  Mission: "exotic",
+  Satellite: "exotic",
+  Landmark: "exotic",
+  Pulsar: "exotic",
+};
+
 export function InfoPanel({
   payload,
   onClose,
@@ -181,28 +198,33 @@ export function InfoPanel({
         )}
       </div>
 
-      {(onFlyHere || onSurface) && (
-        <div className="flex gap-2 border-t border-white/5 px-4 py-3">
-          {onFlyHere && (
-            <button
-              type="button"
-              onClick={onFlyHere}
-              className="flex-1 rounded-md border border-emerald-400/40 bg-emerald-400/10 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-emerald-200 hover:bg-emerald-400/25"
-            >
-              ↗ fly here
-            </button>
-          )}
-          {onSurface && (
-            <button
-              type="button"
-              onClick={onSurface}
-              className="rounded-md border border-amber-400/40 bg-amber-400/10 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-amber-200 hover:bg-amber-400/25"
-            >
-              🪐 surface
-            </button>
-          )}
-        </div>
-      )}
+      <div className="flex gap-2 border-t border-white/5 px-4 py-3">
+        {onFlyHere && (
+          <button
+            type="button"
+            onClick={onFlyHere}
+            className="flex-1 rounded-md border border-emerald-400/40 bg-emerald-400/10 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-emerald-200 hover:bg-emerald-400/25"
+          >
+            ↗ fly here
+          </button>
+        )}
+        {onSurface && (
+          <button
+            type="button"
+            onClick={onSurface}
+            className="rounded-md border border-amber-400/40 bg-amber-400/10 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-amber-200 hover:bg-amber-400/25"
+          >
+            🪐 surface
+          </button>
+        )}
+        <AddToCollectionMenu
+          item={{
+            type: KIND_TO_COLLECTION_TYPE[payload.kind],
+            id: payload.name,
+            label: payload.name,
+          }}
+        />
+      </div>
     </aside>
   );
 }

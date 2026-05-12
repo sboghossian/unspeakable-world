@@ -6,6 +6,7 @@ import {
   useAchievements,
   type Achievement,
 } from "../../lib/achievements";
+import { t, useLanguage } from "../../lib/i18n";
 
 /**
  * Trophy icon in the top-bar that opens a popover listing every
@@ -15,6 +16,7 @@ import {
  */
 
 export function AchievementsPanel() {
+  useLanguage();
   const [open, setOpen] = useState(false);
   const state = useAchievements();
   const total = ACHIEVEMENTS.length;
@@ -45,8 +47,8 @@ export function AchievementsPanel() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        title={`Achievements (${got} / ${total})`}
-        aria-label="Achievements"
+        title={`${t("panel.achievements", "Achievements")} (${got} / ${total})`}
+        aria-label={t("panel.achievements", "Achievements")}
         className="pointer-events-auto inline-flex h-7 items-center gap-1.5 rounded-md border border-white/10 bg-space-950/70 px-2 text-[12px] text-white/70 backdrop-blur transition hover:bg-white/10 hover:text-white"
       >
         <span aria-hidden>🏆</span>
@@ -58,7 +60,7 @@ export function AchievementsPanel() {
         <div className="pointer-events-auto absolute right-3 top-12 z-30 w-[min(360px,92vw)] max-h-[70vh] overflow-y-auto rounded-xl border border-white/10 bg-space-950/95 p-3 backdrop-blur">
           <div className="mb-2 flex items-baseline justify-between">
             <div className="font-display text-sm text-white/90">
-              Achievements
+              {t("panel.achievements", "Achievements")}
             </div>
             <div className="font-mono text-[10px] uppercase tracking-widest text-white/45">
               {got} / {total}

@@ -24,6 +24,7 @@ import {
 } from "./ui/SceneBottomHud";
 import { TopBarActions } from "./ui/TopBarActions";
 import { AchievementsPanel } from "./ui/AchievementsPanel";
+import { CollectionsPanel } from "./ui/CollectionsPanel";
 import { MarsPhotosPanel } from "./ui/MarsPhotosPanel";
 import { ApodArchivePanel } from "./ui/ApodArchivePanel";
 import { JwstPanel } from "./ui/JwstPanel";
@@ -399,6 +400,9 @@ export function Universe({ onExit }: Props) {
           <JwstPanel />
           <TransientsPanel scene={sceneRef.current} />
           <AchievementsPanel />
+          <CollectionsPanel
+            onFlyTo={(item) => sceneRef.current?.flyTo(item.id)}
+          />
           <TopBarActions />
         </div>
       </div>
