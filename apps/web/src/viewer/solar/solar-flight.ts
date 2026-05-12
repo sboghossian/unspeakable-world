@@ -41,6 +41,7 @@ import {
   paintSun,
 } from "./celestial-art";
 import { SatelliteField } from "../satellites/satellite-field";
+import { AsteroidField } from "../universe/asteroids";
 import { AuroraOverlay } from "../space-weather/aurora-overlay";
 import { payloadForBody } from "../data/body-info";
 import type { InfoPayload } from "../ui/InfoPanel";
@@ -209,6 +210,10 @@ export class SolarFlightScene {
   private starPoints: Points | null = null;
   private backgroundLabels: Sprite[] = [];
   private satellites: SatelliteField | null = null;
+  /** ~10k main-belt + NEA asteroids propagated GPU-side from their
+   *  Keplerian elements. Same field used in Universe mode; here it sits
+   *  in the same heliocentric ecliptic AU frame as the planets. */
+  private asteroids: AsteroidField | null = null;
   private auroraOverlay: AuroraOverlay | null = null;
   /** Saturn's sphere material — kept on hand so updatePlanets() can push
    *  the planet's current world position into the ring-shadow uniform. */
@@ -288,6 +293,22 @@ export class SolarFlightScene {
     void this.satellites.load("/data/satellites.json").catch(() => {
       // optional layer
     });
+
+    // Main-belt asteroid swarm — GPU Kepler propagation from `/data/asteroids.bin`.
+    // Same binary the Universe scene loads. Shows the actual main belt as
+    // a dust ring between Mars and Jupiter once it arrives over the wire.
+    void fetch("/data/asteroids.bin")
+      .then((res) => (res.ok ? res.arrayBuffer() : null))
+      .then((buf) => {
+        if (!buf || this.disposed) return;
+        this.asteroids = new AsteroidField(buf, this.simTime);
+        this.asteroids.visible = true;
+        this.asteroids.setSimTime(this.simTime);
+        this.scene.add(this.asteroids);
+      })
+      .catch(() => {
+        // optional layer
+      });
 
     // Gravity sandbox layer (initially empty).
     this.scene.add(this.projectileGroup);
@@ -608,6 +629,7 @@ export class SolarFlightScene {
     const J2000_MS = Date.UTC(2000, 0, 1, 12, 0, 0);
     const daysSinceJ2000 = (this.simTime.getTime() - J2000_MS) / 86400000;
     this.sun.rotation.y = ((daysSinceJ2000 / SUN_ROTATION_DAYS) % 1) * Math.PI * 2;
+    if (this.asteroids) this.asteroids.setSimTime(this.simTime);
 
     for (const p of this.planets) {
       try {
