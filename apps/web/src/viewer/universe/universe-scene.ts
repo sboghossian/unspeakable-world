@@ -45,6 +45,8 @@ import { raDecToVec3 } from "../stars/coords";
 import { ExoplanetField } from "../exoplanets/exoplanet-field";
 import { CosmicLandmarks } from "../cosmic/cosmic-landmarks";
 import { CosmicFlowField } from "../cosmicflows/cosmic-flow-field";
+import { TransientField } from "../transients/transient-field";
+import type { Transient } from "../transients/alerce-feed";
 import { MeasureTool, worldDirToRaDec } from "../measure/measure-tool";
 import { StarLabels } from "../stars/star-labels";
 import { StarTrails } from "../stars/star-trails";
@@ -157,6 +159,7 @@ export type UniverseState = {
   exoplanetsOn: boolean;
   cosmicLandmarksOn: boolean;
   cosmicFlowsOn: boolean;
+  transientsOn: boolean;
   /** Time playback. */
   playing: boolean;
   /** Time rate (sim seconds per wall second). */
@@ -240,6 +243,7 @@ export class UniverseScene {
   private exoplanets: ExoplanetField;
   private cosmicLandmarks: CosmicLandmarks;
   private cosmicFlows!: CosmicFlowField;
+  private transients!: TransientField;
   private measureTool: MeasureTool;
   private measureMode = false;
   private onMeasureChange: (() => void) | null = null;
@@ -411,6 +415,12 @@ export class UniverseScene {
 
     this.cosmicLandmarks = new CosmicLandmarks();
     this.hipsGroup.add(this.cosmicLandmarks.group);
+
+    // ALeRCE live transients — sprite markers, populated on demand by the
+    // TransientsPanel via setTransientsData(). Hidden until the panel
+    // toggle is flipped on.
+    this.transients = new TransientField();
+    this.hipsGroup.add(this.transients.group);
 
     this.measureTool = new MeasureTool();
     this.hipsGroup.add(this.measureTool.group);
@@ -645,6 +655,18 @@ export class UniverseScene {
     this.cosmicFlows.setVisible(on);
     this.publishState();
   }
+
+  /** Show/hide the live ALeRCE transient field. */
+  setTransients(on: boolean): void {
+    this.transients.setVisible(on);
+    this.publishState();
+  }
+
+  /** Push a fresh batch of transients into the sky overlay. */
+  setTransientsData(items: Transient[]): void {
+    this.transients.setData(items);
+  }
+
 
   setAsteroids(on: boolean): void {
     if (this.asteroids) this.asteroids.visible = on;
@@ -1440,6 +1462,7 @@ export class UniverseScene {
       exoplanetsOn: this.exoplanets.visible(),
       cosmicLandmarksOn: this.cosmicLandmarks.visible(),
       cosmicFlowsOn: this.cosmicFlows.visible(),
+      transientsOn: this.transients.visible(),
       playing: this.playing,
       rate: this.timeRate,
       asteroidsOn: this.asteroids?.visible ?? false,
@@ -1617,6 +1640,9 @@ export class UniverseScene {
       const camLocal = new Vector3().copy(this.solarGroup.position).negate();
       this.missions.setSimTimeAndTrack(this.simTime, camLocal);
     }
+
+    // Pulse animation for live transient markers.
+    if (this.transients.visible()) this.transients.update();
 
     // Tracking: snap logicalPos to (planetPos + offset) BEFORE WASD so
     // movement edits the offset and survives across frames.

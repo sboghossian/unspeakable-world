@@ -27,6 +27,7 @@ import { AchievementsPanel } from "./ui/AchievementsPanel";
 import { MarsPhotosPanel } from "./ui/MarsPhotosPanel";
 import { ApodArchivePanel } from "./ui/ApodArchivePanel";
 import { JwstPanel } from "./ui/JwstPanel";
+import { TransientsPanel } from "./ui/TransientsPanel";
 import { MeasurePanel } from "./ui/MeasurePanel";
 import { MythsPanel } from "./ui/MythsPanel";
 import { NewsPanel } from "./ui/NewsPanel";
@@ -84,6 +85,7 @@ const DEFAULT_STATE: UniverseState = {
   exoplanetsOn: false,
   cosmicLandmarksOn: false,
   cosmicFlowsOn: false,
+  transientsOn: false,
   playing: true,
   rate: 86400,
   asteroidsOn: false,
@@ -395,6 +397,7 @@ export function Universe({ onExit }: Props) {
           <MarsPhotosPanel />
           <ApodArchivePanel />
           <JwstPanel />
+          <TransientsPanel scene={sceneRef.current} />
           <AchievementsPanel />
           <TopBarActions />
         </div>

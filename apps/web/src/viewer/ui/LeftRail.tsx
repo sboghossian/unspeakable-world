@@ -76,6 +76,7 @@ const WAVES: Array<{ id: string; label: string }> = [
   { id: "integral", label: "X-ray" },
   { id: "nvss", label: "Radio" },
   { id: "fermi", label: "γ-ray" },
+  { id: "gaia", label: "Gaia DR3" },
 ];
 
 export function LeftRail({ state, scene, onOpenGuide, onOpenTimeMachine }: Props) {
