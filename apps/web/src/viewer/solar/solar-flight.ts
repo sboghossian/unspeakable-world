@@ -71,16 +71,25 @@ const PLANETS: Array<{
   name: string;
   color: number;
   drawSize: number;
+  /** Sidereal rotation period in days. Negative = retrograde (Venus,
+   *  Uranus). Drives the textured-sphere spin in updatePlanets so
+   *  continents / cloud bands actually move past the terminator as time
+   *  scrubs forward. */
+  rotPeriodDays: number;
 }> = [
-  { body: Body.Mercury, name: "Mercury", color: 0xc8c1b8, drawSize: 0.025 },
-  { body: Body.Venus, name: "Venus", color: 0xfff0c2, drawSize: 0.04 },
-  { body: Body.Earth, name: "Earth", color: 0x6ea4ff, drawSize: 0.045 },
-  { body: Body.Mars, name: "Mars", color: 0xff8a5e, drawSize: 0.035 },
-  { body: Body.Jupiter, name: "Jupiter", color: 0xffd9a8, drawSize: 0.09 },
-  { body: Body.Saturn, name: "Saturn", color: 0xffe1a3, drawSize: 0.08 },
-  { body: Body.Uranus, name: "Uranus", color: 0xb6e6f0, drawSize: 0.055 },
-  { body: Body.Neptune, name: "Neptune", color: 0x7fa6ff, drawSize: 0.055 },
+  { body: Body.Mercury, name: "Mercury", color: 0xc8c1b8, drawSize: 0.025, rotPeriodDays: 58.646 },
+  { body: Body.Venus, name: "Venus", color: 0xfff0c2, drawSize: 0.04, rotPeriodDays: -243.018 },
+  { body: Body.Earth, name: "Earth", color: 0x6ea4ff, drawSize: 0.045, rotPeriodDays: 0.99727 },
+  { body: Body.Mars, name: "Mars", color: 0xff8a5e, drawSize: 0.035, rotPeriodDays: 1.02595 },
+  { body: Body.Jupiter, name: "Jupiter", color: 0xffd9a8, drawSize: 0.09, rotPeriodDays: 0.41354 },
+  { body: Body.Saturn, name: "Saturn", color: 0xffe1a3, drawSize: 0.08, rotPeriodDays: 0.43958 },
+  { body: Body.Uranus, name: "Uranus", color: 0xb6e6f0, drawSize: 0.055, rotPeriodDays: -0.71833 },
+  { body: Body.Neptune, name: "Neptune", color: 0x7fa6ff, drawSize: 0.055, rotPeriodDays: 0.67125 },
 ];
+
+/** Solar equatorial rotation period in days (~25.4 d at the Sun's
+ *  equator). Differential rotation at higher latitudes is ignored. */
+const SUN_ROTATION_DAYS = 25.4;
 
 /** Saturn ring geometry, shared between the ring mesh and the
  *  ring-shadow shader on Saturn's body. Tilt rotates a RingGeometry
@@ -108,6 +117,7 @@ type PlanetMesh = {
   sphere: Mesh;
   label: Sprite;
   drawSize: number;
+  rotPeriodDays: number;
 };
 
 export type SolarFlightState = {
@@ -521,6 +531,7 @@ export class SolarFlightScene {
         sphere,
         label,
         drawSize: spec.drawSize,
+        rotPeriodDays: spec.rotPeriodDays,
       });
     }
     this.updatePlanets();
@@ -576,6 +587,12 @@ export class SolarFlightScene {
     let marsX = 0;
     let marsY = 0;
     let marsZ = 0;
+    // Days since J2000 epoch (2000-01-01 12:00 TT). Drives axial rotation
+    // for every body so their textures actually spin as time scrubs.
+    const J2000_MS = Date.UTC(2000, 0, 1, 12, 0, 0);
+    const daysSinceJ2000 = (this.simTime.getTime() - J2000_MS) / 86400000;
+    this.sun.rotation.y = ((daysSinceJ2000 / SUN_ROTATION_DAYS) % 1) * Math.PI * 2;
+
     for (const p of this.planets) {
       try {
         const v = HelioVector(p.body, this.simTime);
@@ -583,6 +600,10 @@ export class SolarFlightScene {
         const sy = v.z * AU;
         const sz = -v.y * AU;
         p.group.position.set(sx, sy, sz);
+        // Diurnal spin: each planet ticks through its sidereal day.
+        // Negative period = retrograde rotation (Venus, Uranus).
+        p.sphere.rotation.y =
+          ((daysSinceJ2000 / p.rotPeriodDays) % 1) * Math.PI * 2;
         if (p.name === "Jupiter") {
           jupX = sx;
           jupY = sy;
