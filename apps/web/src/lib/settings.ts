@@ -10,6 +10,14 @@ import { useEffect, useState } from "react";
  * {@link onSettingsChange}.
  */
 
+/**
+ * Reader registers for the "why this matters" body in the inspector.
+ * - `curious` — short, vivid, age-12 voice.
+ * - `student` — mechanism + units, age-16 voice (default).
+ * - `expert` — physical parameters with units + scientific significance.
+ */
+export type ExplanationTier = "curious" | "student" | "expert";
+
 export type AppSettings = {
   orbitOpacity: number; // 0–1
   gridOpacity: number; // 0–1
@@ -30,6 +38,8 @@ export type AppSettings = {
   /** Top-bar mute toggle. When true every audio surface goes silent
    *  regardless of `sonificationOn` — quick global "shhh" button. */
   audioMuted: boolean;
+  /** Audience register for the "why it matters" body in InfoPanel. */
+  explanationTier: ExplanationTier;
 };
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -46,6 +56,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   sonificationOn: true,
   sonificationVolume: 0.4,
   audioMuted: false,
+  explanationTier: "student",
 };
 
 const STORAGE_KEY = "uw.settings.v1";
@@ -82,6 +93,12 @@ function sanitize(raw: unknown): AppSettings {
       typeof partial.audioMuted === "boolean"
         ? partial.audioMuted
         : DEFAULT_SETTINGS.audioMuted,
+    explanationTier:
+      partial.explanationTier === "curious" ||
+      partial.explanationTier === "student" ||
+      partial.explanationTier === "expert"
+        ? partial.explanationTier
+        : DEFAULT_SETTINGS.explanationTier,
   };
 }
 
