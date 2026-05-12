@@ -69,6 +69,9 @@ export class PulsarAudio {
    */
   play(periodSec: number, opts: PulsarAudioOptions = {}): void {
     if (!Number.isFinite(periodSec) || periodSec <= 0) return;
+    // Honor the global mute toggle — playing while muted should be a no-op
+    // so we don't briefly chirp before the gain ramps down.
+    if (isAudioMuted()) return;
     this.stop();
     const { ctx, gain } = this.ensureContext();
     void ctx.resume();
@@ -205,6 +208,24 @@ function makeClickBuffer(ctx: AudioContext): AudioBuffer {
 function clamp01(n: number): number {
   if (!Number.isFinite(n)) return 0;
   return Math.max(0, Math.min(1, n));
+}
+
+/** Read the global mute toggle without taking a hard dependency on the
+ *  settings module from every call site — keeps this audio module
+ *  cleanly stateless if someone later wants to swap settings backends. */
+function isAudioMuted(): boolean {
+  try {
+    // Lazy import via globalThis avoids a circular import in some bundlers.
+    // The settings module sets this on load via setSettings → notify path.
+    const ls = globalThis.localStorage;
+    if (!ls) return false;
+    const raw = ls.getItem("uw.settings.v1");
+    if (!raw) return false;
+    const parsed = JSON.parse(raw) as { audioMuted?: boolean };
+    return parsed.audioMuted === true;
+  } catch {
+    return false;
+  }
 }
 
 /** Module-singleton, shared by Universe + InfoPanel. Lazy. */

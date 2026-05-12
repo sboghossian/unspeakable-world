@@ -27,6 +27,9 @@ export type AppSettings = {
   sonificationOn: boolean;
   /** Master volume for sonification UI (0-1). */
   sonificationVolume: number;
+  /** Top-bar mute toggle. When true every audio surface goes silent
+   *  regardless of `sonificationOn` — quick global "shhh" button. */
+  audioMuted: boolean;
 };
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -42,6 +45,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   skyProjection: "3d",
   sonificationOn: true,
   sonificationVolume: 0.4,
+  audioMuted: false,
 };
 
 const STORAGE_KEY = "uw.settings.v1";
@@ -74,6 +78,10 @@ function sanitize(raw: unknown): AppSettings {
       0,
       1,
     ),
+    audioMuted:
+      typeof partial.audioMuted === "boolean"
+        ? partial.audioMuted
+        : DEFAULT_SETTINGS.audioMuted,
   };
 }
 

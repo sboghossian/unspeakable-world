@@ -22,6 +22,7 @@ import {
   SceneBottomHud,
   formatDistanceLY,
 } from "./ui/SceneBottomHud";
+import { TopBarActions } from "./ui/TopBarActions";
 import {
   LightConeControls,
   type LightConePreset,
@@ -334,6 +335,7 @@ export function Universe({ onExit }: Props) {
             }}
             onZenith={() => sceneRef.current?.flyTo("Sun")}
           />
+          <TopBarActions />
         </div>
       </div>
 
