@@ -44,6 +44,13 @@ import { SurpriseButton } from "./ui/SurpriseButton";
 import { ShortcutsOverlay } from "./ui/ShortcutsOverlay";
 import { ReportBugButton } from "./ui/ReportBugButton";
 import { ExploreDrawer, type Group } from "./ui/ExploreDrawer";
+import { SceneEditorPanel } from "./ui/SceneEditorPanel";
+import { SceneLinkToast } from "./scene-editor/SceneLinkToast";
+import {
+  applyUniverseCamera,
+  captureUniverseCamera,
+} from "./scene-editor/universe-bridge";
+import { saveScene } from "../lib/scene-editor";
 import { useIdle } from "../lib/use-idle";
 import { unlock } from "../lib/achievements";
 import {
@@ -221,7 +228,12 @@ export function Universe({ onExit }: Props) {
     if (params.track) scene.setTrackingTarget(params.track);
   }, []);
 
+  // While a scene is playing, suspend the hash-state hydration so the
+  // URL hash updater doesn't fight playback for camera authority.
+  const [scenePlaying, setScenePlaying] = useState(false);
+
   useEffect(() => {
+    if (scenePlaying) return;
     let timer = 0;
     const handle = window.setInterval(() => {
       // Debounce-style: only write at most every 500 ms by checking elapsed.
@@ -233,7 +245,7 @@ export function Universe({ onExit }: Props) {
       }
     }, 500);
     return () => window.clearInterval(handle);
-  }, [state]);
+  }, [state, scenePlaying]);
 
   // Build the search index once mounted.
   useEffect(() => {
@@ -461,6 +473,18 @@ export function Universe({ onExit }: Props) {
 
         <div className="pointer-events-auto flex max-w-[60vw] flex-wrap items-center justify-end gap-1.5">
           <ExploreDrawer groups={exploreGroups} />
+          <SceneEditorPanel
+            mode="universe"
+            onCapture={() => {
+              const s = sceneRef.current;
+              return s ? captureUniverseCamera(s) : {};
+            }}
+            onApply={(c) => {
+              const s = sceneRef.current;
+              if (s) applyUniverseCamera(s, c);
+            }}
+            onPlayingChange={setScenePlaying}
+          />
           <MusicPanel />
           <AchievementsPanel />
           <TopBarActions />
@@ -572,6 +596,16 @@ export function Universe({ onExit }: Props) {
       {shortcutsOpen && (
         <ShortcutsOverlay onClose={() => setShortcutsOpen(false)} />
       )}
+
+      <SceneLinkToast
+        mode="universe"
+        onPlay={(scene) => {
+          saveScene(scene);
+          const first = scene.keyframes[0];
+          const s = sceneRef.current;
+          if (first && s) applyUniverseCamera(s, first.camera);
+        }}
+      />
     </div>
   );
 }
