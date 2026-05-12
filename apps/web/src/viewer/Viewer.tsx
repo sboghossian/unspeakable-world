@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { log } from "../lib/logger";
 import { Vector3 } from "three";
 import { ViewerScene, type ViewerState } from "./scene/scene";
-import { navigate } from "../router";
+import { isEmbedMode, navigate } from "../router";
+import { EmbedBadge } from "./ui/EmbedBadge";
 import { TimeStrip } from "./ui/TimeStrip";
 import { QuickTargets } from "./ui/QuickTargets";
 import { SearchBar } from "./ui/SearchBar";
@@ -103,6 +104,11 @@ type Inspect = {
 };
 
 export function Viewer() {
+  // Embed mode is computed once at mount. It's driven by the URL the user
+  // landed on and we never expect it to flip mid-session — an embedded
+  // iframe stays embedded. Captured here so every chrome conditional
+  // below reads the same value without an extra subscription.
+  const embed = useRef(isEmbedMode()).current;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const sceneRef = useRef<ViewerScene | null>(null);
   const [status, setStatus] = useState<SceneStatus>("init");
@@ -656,7 +662,8 @@ export function Viewer() {
         aria-label="3D sky viewer"
       />
 
-      {/* Top bar */}
+      {/* Top bar — hidden in embed mode (chrome-less iframe) */}
+      {!embed && (
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-2 p-2 sm:p-4">
         <button
           type="button"
@@ -782,8 +789,10 @@ export function Viewer() {
           </div>
         </div>
       </div>
+      )}
 
       {/* Bottom bar (chips + warnings) — sits above the wavelength + time strips */}
+      {!embed && (
       <div className="pointer-events-none absolute inset-x-0 bottom-32 z-10 flex items-end justify-between gap-2 p-4">
         <div className="pointer-events-auto flex flex-wrap items-center gap-2">
           <Chip label="FOV" value={`${state.fov.toFixed(1)}°`} />
@@ -813,9 +822,10 @@ export function Viewer() {
           ⚠ polar seam crack at lat ±41.81° — known issue
         </div>
       </div>
+      )}
 
       {/* Wavelength bar + Time strip (very bottom, centered) */}
-      {status === "live" && (
+      {!embed && status === "live" && (
         <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex flex-col items-center gap-2 px-2">
           <WavelengthBar
             overlayId={state.overlayId}
@@ -875,7 +885,7 @@ export function Viewer() {
       )}
 
       {/* Hint (top-center) — desktop only; mobile users discover by tapping */}
-      {status === "live" && (
+      {!embed && status === "live" && (
         <div className="pointer-events-none absolute inset-x-0 top-16 z-10 hidden justify-center md:flex">
           <div className="rounded-full border border-white/5 bg-space-950/60 px-4 py-1 font-mono text-[11px] uppercase tracking-widest text-white/40 backdrop-blur">
             drag · pinch · wheel · tap
@@ -884,7 +894,8 @@ export function Viewer() {
       )}
 
       {/* Center-pointing HUD — only when nothing else is grabbing focus */}
-      {status === "live" &&
+      {!embed &&
+        status === "live" &&
         !inspect &&
         !shortcutsOpen &&
         !aboutOpen &&
@@ -898,7 +909,7 @@ export function Viewer() {
         )}
 
       {/* Tour card (top-center; SIMBAD panel hides automatically when tour wins z-30) */}
-      {status === "live" && tourIndex !== null && GRAND_TOUR[tourIndex] && (
+      {!embed && status === "live" && tourIndex !== null && GRAND_TOUR[tourIndex] && (
         <TourCard
           step={GRAND_TOUR[tourIndex]!}
           index={tourIndex}
@@ -910,7 +921,7 @@ export function Viewer() {
       )}
 
       {/* SIMBAD info panel (click on sky) */}
-      {status === "live" && inspect && (
+      {!embed && status === "live" && inspect && (
         <SkyInfoPanel
           raDeg={inspect.raDeg}
           decDeg={inspect.decDeg}
@@ -968,19 +979,22 @@ export function Viewer() {
         />
       )}
 
-      {shortcutsOpen && (
+      {!embed && shortcutsOpen && (
         <ShortcutsOverlay onClose={() => setShortcutsOpen(false)} />
       )}
 
-      {aboutOpen && <AboutOverlay onClose={() => setAboutOpen(false)} />}
+      {!embed && aboutOpen && <AboutOverlay onClose={() => setAboutOpen(false)} />}
 
-      {tutorialOpen && (
+      {!embed && tutorialOpen && (
         <TutorialOverlay onClose={() => setTutorialOpen(false)} />
       )}
 
-      {status === "live" && <FirstRunHint />}
+      {!embed && status === "live" && <FirstRunHint />}
 
-      {status === "live" && <ColorLegend />}
+      {!embed && status === "live" && <ColorLegend />}
+
+      {/* Embed-mode corner attribution — opens full app in a new tab. */}
+      {embed && status === "live" && <EmbedBadge />}
     </div>
   );
 }

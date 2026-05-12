@@ -8,7 +8,7 @@ import { Footer } from "./landing/Footer";
 import { PwaInstallBanner } from "./landing/PwaInstallBanner";
 import { AstronomyToday } from "./landing/AstronomyToday";
 import { ApodCard } from "./landing/ApodCard";
-import { navigate, surfacePlanet, useRoute } from "./router";
+import { isEmbedMode, navigate, surfacePlanet, useRoute } from "./router";
 
 // Lazy: the viewer pulls in Three.js, AstronomyEngine, and ~500 KB of HiPS /
 // catalog code. The landing page should not pay that cost — most first-time
@@ -38,6 +38,9 @@ const Guide = lazy(() =>
 
 export function App() {
   const route = useRoute();
+  // Embed mode hides the PWA install banner across every mode; individual
+  // viewers also gate their own chrome on this flag.
+  const embed = isEmbedMode();
 
   if (route === "guide") {
     return (
@@ -45,7 +48,7 @@ export function App() {
         <Suspense fallback={<ViewerLoadingVeil />}>
           <Guide onExit={() => navigate("landing")} />
         </Suspense>
-        <PwaInstallBanner />
+        {!embed && <PwaInstallBanner />}
       </main>
     );
   }
@@ -56,7 +59,7 @@ export function App() {
         <Suspense fallback={<ViewerLoadingVeil />}>
           <Universe onExit={() => navigate("landing")} />
         </Suspense>
-        <PwaInstallBanner />
+        {!embed && <PwaInstallBanner />}
       </main>
     );
   }
@@ -77,7 +80,7 @@ export function App() {
         <Suspense fallback={<ViewerLoadingVeil />}>
           <Galactic onExit={() => navigate("solar")} />
         </Suspense>
-        <PwaInstallBanner />
+        {!embed && <PwaInstallBanner />}
       </main>
     );
   }
@@ -91,7 +94,7 @@ export function App() {
             onExit={() => navigate("solar")}
           />
         </Suspense>
-        <PwaInstallBanner />
+        {!embed && <PwaInstallBanner />}
       </main>
     );
   }
@@ -117,7 +120,7 @@ export function App() {
             }}
           />
         </Suspense>
-        <PwaInstallBanner />
+        {!embed && <PwaInstallBanner />}
       </main>
     );
   }
@@ -128,7 +131,7 @@ export function App() {
         <Suspense fallback={<ViewerLoadingVeil />}>
           <Viewer />
         </Suspense>
-        <PwaInstallBanner />
+        {!embed && <PwaInstallBanner />}
       </main>
     );
   }
@@ -155,7 +158,7 @@ export function App() {
         <Footer />
       </div>
       <AstronomyToday />
-      <PwaInstallBanner />
+      {!embed && <PwaInstallBanner />}
     </main>
   );
 }
