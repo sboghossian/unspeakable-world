@@ -41,6 +41,8 @@ import {
   paintSun,
 } from "./celestial-art";
 import { SatelliteField } from "../satellites/satellite-field";
+import { IssModel } from "../satellites/iss-model";
+import * as satelliteJs from "satellite.js";
 import { AsteroidField } from "../universe/asteroids";
 import { AuroraOverlay } from "../space-weather/aurora-overlay";
 import { payloadForBody } from "../data/body-info";
@@ -241,6 +243,13 @@ export class SolarFlightScene {
   /** City labels parented to Earth's sphere so they rotate with the
    *  planet. Hidden when the camera is far from Earth. */
   private earthCityLabels: Sprite[] = [];
+  /** Stylized 3D ISS model — visible alongside the satellite point
+   *  cloud once the camera is close enough to Earth. */
+  private issModel: IssModel | null = null;
+  /** Cached SGP4 record for ISS so we can propagate every frame
+   *  without re-parsing the TLE. */
+  private issSatRec: ReturnType<typeof satelliteJs.twoline2satrec> | null =
+    null;
   private orbits: LineLoop[] = [];
   private solarZones: LineLoop[] = [];
   private starPoints: Points | null = null;
@@ -329,6 +338,27 @@ export class SolarFlightScene {
     void this.satellites.load("/data/satellites.json").catch(() => {
       // optional layer
     });
+
+    // Stylized 3D ISS model — built once, positioned each frame from
+    // the same SGP4 propagation the satellite cloud uses.
+    this.issModel = new IssModel();
+    this.scene.add(this.issModel);
+    void fetch("/data/satellites.json")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (this.disposed || !Array.isArray(data)) return;
+        const iss = (data as Array<{ name: string; l1: string; l2: string }>)
+          .find((e) => e.name.includes("ISS (ZARYA)"));
+        if (!iss) return;
+        try {
+          this.issSatRec = satelliteJs.twoline2satrec(iss.l1, iss.l2);
+        } catch {
+          // ignore
+        }
+      })
+      .catch(() => {
+        // optional layer
+      });
 
     // Main-belt asteroid swarm — GPU Kepler propagation from `/data/asteroids.bin`.
     // Same binary the Universe scene loads. Shows the actual main belt as
@@ -757,6 +787,42 @@ export class SolarFlightScene {
       for (const label of this.earthCityLabels) {
         (label.material as SpriteMaterial).opacity = t;
         label.visible = t > 0.02;
+      }
+    }
+
+    // ISS 3D model — propagate its TLE, drape it around Earth at the
+    // same scale used by the satellite point cloud, and fade it out
+    // when the camera is far away (the SatelliteField point still
+    // represents it at that scale).
+    if (this.issModel && this.issSatRec) {
+      try {
+        const out = satelliteJs.propagate(this.issSatRec, this.simTime);
+        if (out && typeof out !== "boolean") {
+          const p = out.position;
+          if (p && typeof p !== "boolean") {
+            // SatelliteField uses km2unit = drawSize / EARTH_RADIUS_KM
+            // (~0.045 / 6371 ≈ 7.06e-6 AU/km) — match it so the ISS
+            // sits on the same shell as the point cloud.
+            const km2unit = 0.045 / 6371;
+            const sx = earthX + p.x * km2unit;
+            const sy = earthY + p.z * km2unit;
+            const sz = earthZ - p.y * km2unit;
+            this.issModel.position.set(sx, sy, sz);
+            const camWorld = this.camera.position;
+            const dist = Math.hypot(
+              camWorld.x - earthX,
+              camWorld.y - earthY,
+              camWorld.z - earthZ,
+            );
+            // Show the model only when it would visibly resolve.
+            this.issModel.visible = dist < 0.02;
+            // Slow tumble for cinematic life.
+            this.issModel.rotation.y =
+              ((daysSinceJ2000 * 4.0) % 1) * Math.PI * 2;
+          }
+        }
+      } catch {
+        // SGP4 sometimes throws on stale TLEs — ignore.
       }
     }
 
