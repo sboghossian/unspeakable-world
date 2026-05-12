@@ -24,6 +24,7 @@ import {
 } from "./ui/SceneBottomHud";
 import { TopBarActions } from "./ui/TopBarActions";
 import { AchievementsPanel } from "./ui/AchievementsPanel";
+import { HistoryPanel } from "./ui/HistoryPanel";
 import { MissionsCatalogPanel } from "./ui/MissionsCatalogPanel";
 import { GyroButton } from "./ui/GyroButton";
 import { CollectionsPanel } from "./ui/CollectionsPanel";
@@ -404,6 +405,7 @@ export function Universe({ onExit }: Props) {
           <TransientsPanel scene={sceneRef.current} />
           <GyroButton scene={sceneRef.current} />
           <MissionsCatalogPanel />
+          <HistoryPanel />
           <AchievementsPanel />
           <CollectionsPanel
             onFlyTo={(item) => sceneRef.current?.flyTo(item.id)}
