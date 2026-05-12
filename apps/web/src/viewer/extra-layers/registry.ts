@@ -196,8 +196,7 @@ export const EXTRA_LAYERS: readonly LayerEntry[] = [
       modes: ["sky"],
       defaultEnabled: false,
       description:
-        "Cosmic microwave background E-mode polarization vectors from Planck's 353 GHz map, drawn as tangent lines on the sky.",
-      synthetic: true,
+        "Planck PR3 SMICA thermal-dust Q/U · NSIDE 16 downgrade of the 353 GHz polarization map.",
     },
   },
   {

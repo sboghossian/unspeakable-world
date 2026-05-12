@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { log } from "../../lib/logger";
 import {
+  CloudflareBackend,
   Copilot,
   pickBestBackend,
   OfflineBackend,
@@ -36,7 +37,7 @@ type StoredMessage = {
 };
 
 type CopilotSettings = {
-  backend: "auto" | "ollama" | "offline";
+  backend: "auto" | "ollama" | "cloudflare" | "offline";
   ollamaUrl: string;
   ollamaModel: string;
 };
@@ -122,6 +123,7 @@ export function CopilotPanel({
   const [backendId, setBackendId] = useState<string>("offline");
   const [backendLabel, setBackendLabel] = useState<string>("Offline (built-in)");
   const [ollamaUp, setOllamaUp] = useState<boolean>(false);
+  const [cloudflareUp, setCloudflareUp] = useState<boolean>(false);
   const [settings, setSettings] = useState<CopilotSettings>(() => loadSettings());
   const [settingsOpen, setSettingsOpen] = useState(false);
   const copilotRef = useRef<Copilot | null>(null);
@@ -146,9 +148,13 @@ export function CopilotPanel({
         model: settings.ollamaModel,
       },
     };
-    const probe = new OllamaBackend(cfg.ollama);
-    const up = await probe.available();
-    setOllamaUp(up);
+    // Probe both hosted options in parallel for the indicator dots.
+    const [ollamaProbe, cloudflareProbe] = await Promise.all([
+      new OllamaBackend(cfg.ollama).available(),
+      new CloudflareBackend().available(),
+    ]);
+    setOllamaUp(ollamaProbe);
+    setCloudflareUp(cloudflareProbe);
 
     let copilot = copilotRef.current;
     if (!copilot) {
@@ -162,6 +168,8 @@ export function CopilotPanel({
 
     if (settings.backend === "ollama") {
       copilot.setBackend(new OllamaBackend(cfg.ollama));
+    } else if (settings.backend === "cloudflare") {
+      copilot.setBackend(new CloudflareBackend());
     } else if (settings.backend === "offline") {
       copilot.setBackend(new OfflineBackend());
     } else {
@@ -305,6 +313,7 @@ export function CopilotPanel({
         <SettingsPane
           settings={settings}
           ollamaUp={ollamaUp}
+          cloudflareUp={cloudflareUp}
           onChange={setSettings}
           onClose={() => setSettingsOpen(false)}
         />
@@ -391,16 +400,27 @@ function BackendDot({
   label: string;
 }) {
   const isOllama = backendId === "ollama";
+  const isCloudflare = backendId === "cloudflare";
+  const isOffline = backendId === "offline";
   const color =
     isOllama && ollamaUp
       ? "bg-emerald-400"
-      : isOllama
-        ? "bg-amber-400"
-        : "bg-white/40";
+      : isCloudflare
+        ? "bg-sky-400"
+        : isOllama
+          ? "bg-amber-400"
+          : "bg-white/40";
+  const short = isOllama
+    ? "Ollama"
+    : isCloudflare
+      ? "Cloudflare AI"
+      : isOffline
+        ? "Offline"
+        : label;
   return (
     <div className="flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[10px] text-white/55">
       <span className={`h-1.5 w-1.5 rounded-full ${color}`} />
-      <span>{isOllama ? "Ollama" : label === "Offline (built-in)" ? "Offline" : label}</span>
+      <span>{short}</span>
     </div>
   );
 }
@@ -544,11 +564,13 @@ function Empty({
 function SettingsPane({
   settings,
   ollamaUp,
+  cloudflareUp,
   onChange,
   onClose,
 }: {
   settings: CopilotSettings;
   ollamaUp: boolean;
+  cloudflareUp: boolean;
   onChange: (next: CopilotSettings) => void;
   onClose: () => void;
 }) {
@@ -582,10 +604,14 @@ function SettingsPane({
           className="w-full rounded-md border border-white/10 bg-space-950/80 px-2 py-1 font-mono text-xs text-white/85 focus:border-plasma-400/50 focus:outline-none"
         >
           <option value="auto">
-            auto (Ollama if up, else offline)
+            auto (Ollama → Cloudflare → offline)
           </option>
           <option value="ollama">
             Ollama {ollamaUp ? "(reachable)" : "(unreachable)"}
+          </option>
+          <option value="cloudflare">
+            Cloudflare Workers AI{" "}
+            {cloudflareUp ? "(reachable)" : "(unreachable)"}
           </option>
           <option value="offline">Offline (built-in)</option>
         </select>

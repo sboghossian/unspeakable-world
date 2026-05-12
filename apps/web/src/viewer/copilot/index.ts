@@ -14,6 +14,11 @@
  */
 
 import { log } from "../../lib/logger";
+import { track } from "../../lib/telemetry";
+import {
+  CloudflareBackend,
+  type CloudflareConfig,
+} from "./backends/cloudflare";
 import { OfflineBackend } from "./backends/offline";
 import { OllamaBackend, type OllamaConfig } from "./backends/ollama";
 import {
@@ -28,18 +33,25 @@ import type {
   SceneContext,
 } from "./types";
 
-export type BackendId = "ollama" | "offline" | "openai-compatible";
+export type BackendId =
+  | "ollama"
+  | "cloudflare"
+  | "offline"
+  | "openai-compatible";
 
 export type CopilotConfig = {
   preferred?: BackendId;
   ollama?: OllamaConfig;
+  cloudflare?: CloudflareConfig;
   openai?: OpenAICompatibleConfig;
 };
 
 /**
  * Probes the available backends and returns the best one for the user's
- * setup. Defaults to Ollama if it answers `/api/tags` in time, otherwise
- * the Offline table.
+ * setup. Default order:
+ *   1. Ollama          — best for local power users (fastest, offline)
+ *   2. Cloudflare      — best for anyone online (free Workers AI, no key)
+ *   3. Offline (32-Q&A table) — always works, last-resort fallback
  */
 export async function pickBestBackend(
   cfg: CopilotConfig = {},
@@ -50,9 +62,19 @@ export async function pickBestBackend(
     const b = new OpenAICompatibleBackend(cfg.openai);
     if (await b.available()) return b;
   }
-  // Default chain: Ollama → Offline.
+  if (cfg.preferred === "ollama") {
+    const b = new OllamaBackend(cfg.ollama);
+    if (await b.available()) return b;
+  }
+  if (cfg.preferred === "cloudflare") {
+    const b = new CloudflareBackend(cfg.cloudflare);
+    if (await b.available()) return b;
+  }
+  // Default chain: Ollama → Cloudflare → Offline.
   const ollama = new OllamaBackend(cfg.ollama);
   if (await ollama.available()) return ollama;
+  const cloudflare = new CloudflareBackend(cfg.cloudflare);
+  if (await cloudflare.available()) return cloudflare;
   return new OfflineBackend();
 }
 
@@ -107,6 +129,13 @@ export class Copilot {
   ): AsyncIterable<string> {
     this.history.push({ role: "user", content: question });
     const messages = withSystemPrompt(this.history, ctx);
+    // Telemetry: capture *only* the length + backend + latency, never
+    // the question text. The text routinely contains user location,
+    // names, etc. — strict privacy floor.
+    const t0 =
+      typeof performance !== "undefined" ? performance.now() : Date.now();
+    const backendId = this.backend.id;
+    const questionLength = question.length;
 
     const queue: string[] = [];
     let resolveNext: (() => void) | null = null;
@@ -148,6 +177,15 @@ export class Copilot {
       });
     }
 
+    const t1 =
+      typeof performance !== "undefined" ? performance.now() : Date.now();
+    track("copilot_ask", {
+      backend: backendId,
+      question_length: questionLength,
+      latency_ms: Math.round(t1 - t0),
+      ok: state.error === null,
+    });
+
     if (state.error) throw state.error;
     if (state.result) {
       this.history.push({ role: "assistant", content: state.result.text });
@@ -159,7 +197,12 @@ export class Copilot {
   lastResult: ChatResult | null = null;
 }
 
-export { OfflineBackend, OllamaBackend, OpenAICompatibleBackend };
+export {
+  CloudflareBackend,
+  OfflineBackend,
+  OllamaBackend,
+  OpenAICompatibleBackend,
+};
 export type {
   Citation,
   CopilotBackend,

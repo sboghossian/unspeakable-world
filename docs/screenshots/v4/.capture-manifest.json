@@ -1,0 +1,42 @@
+[
+  {
+    "name": "gaia-1m-stars",
+    "ok": true,
+    "ms": 9690
+  },
+  {
+    "name": "multi-messenger",
+    "ok": true,
+    "ms": 7136
+  },
+  {
+    "name": "galaxy-cone",
+    "ok": true,
+    "ms": 10493
+  },
+  {
+    "name": "cosmic-copilot",
+    "ok": true,
+    "ms": 5069
+  },
+  {
+    "name": "universe-tiers",
+    "ok": true,
+    "ms": 6041
+  },
+  {
+    "name": "extra-layers-panel",
+    "ok": true,
+    "ms": 5033
+  },
+  {
+    "name": "ar-sky-preview",
+    "ok": true,
+    "ms": 4939
+  },
+  {
+    "name": "planck-cmb",
+    "ok": true,
+    "ms": 5845
+  }
+]

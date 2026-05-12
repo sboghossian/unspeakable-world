@@ -28,3 +28,13 @@ coverage
 *\ 2.md
 *\ 2.lock
 unspeakable-world-backups/
+
+# Test artifacts
+apps/web/test-results/
+apps/web/playwright-report/
+apps/web/tests/screenshots/*.png
+
+# Python bake artefacts
+.venv/
+data/cache/
+*.fits

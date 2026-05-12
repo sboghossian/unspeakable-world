@@ -52,6 +52,8 @@ import type { SkyProjection } from "./sky-atlas/projection-shader";
 import { SkyInfoPanel } from "./ui/SkyInfoPanel";
 import { ExtraLayersPanel } from "./ui/ExtraLayersPanel";
 import { MultimessengerControls } from "./ui/MultimessengerControls";
+import { MobileMenuDrawer, type MobileMenuGroup } from "./ui/MobileMenuDrawer";
+import { WhatsNewV4Toast } from "./ui/TopBarOverflow";
 import {
   candidatesFromSimbad,
   wikipediaSummary,
@@ -732,152 +734,317 @@ export function Viewer() {
         aria-label="3D sky viewer"
       />
 
-      {/* Top bar — hidden in embed mode (chrome-less iframe) */}
-      {!embed && (
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-2 p-2 sm:p-4">
-        <button
-          type="button"
-          onClick={() => navigate("landing")}
-          title="Back to landing"
-          className="pointer-events-auto shrink-0 rounded-lg border border-white/10 bg-space-950/70 px-2.5 py-1.5 font-mono text-xs uppercase tracking-widest text-white/60 backdrop-blur transition hover:bg-white/10 hover:text-white sm:px-3"
-        >
-          <span className="sm:hidden">←</span>
-          <span className="hidden sm:inline">← The Unspeakable World</span>
-        </button>
+      {/* Top bar — hidden in embed mode (chrome-less iframe).
+          On mobile (< 768 px) we surface only the essentials inline
+          (exit · search · ✨ layers · ☰) and stash everything else
+          behind the hamburger drawer. On md+ the original wide layout
+          is preserved exactly. */}
+      {!embed && (() => {
+        const mobileMenuGroups: MobileMenuGroup[] = [
+          {
+            label: "identify · info",
+            children: (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setAboutOpen(true)}
+                  title="About / credits"
+                  className="pointer-events-auto inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-white/10 bg-space-950/70 px-2.5 font-mono text-xs text-white/70 backdrop-blur transition hover:bg-white/10 hover:text-white"
+                >
+                  i · about
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShortcutsOpen(true)}
+                  title="Keyboard shortcuts"
+                  className="pointer-events-auto inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-white/10 bg-space-950/70 px-2.5 font-mono text-xs text-white/70 backdrop-blur transition hover:bg-white/10 hover:text-white"
+                >
+                  ? · shortcuts
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTutorialOpen(true)}
+                  title="Re-open the interactive tutorial"
+                  className="pointer-events-auto inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-2.5 font-mono text-xs text-emerald-200 backdrop-blur transition hover:bg-emerald-400/20"
+                >
+                  🎓 tutorial
+                </button>
+              </>
+            ),
+          },
+          {
+            label: "live · tonight",
+            children: (
+              <>
+                <NeoPanel />
+                <SkyTonightPanel observer={observer} />
+                <SpaceWeatherPanel observer={observer} />
+                {searchIndex && (
+                  <TonightTargetsPanel
+                    entries={searchIndex.allEntries()}
+                    observer={observer}
+                    onSelect={(dir) => sceneRef.current?.flyTo(dir)}
+                  />
+                )}
+                <EventsPanel
+                  open={eventsOpen}
+                  onOpenChange={setEventsOpen}
+                  onFlyToBody={(name) => {
+                    const dir = sceneRef.current?.bodyDirection(name);
+                    if (dir) sceneRef.current?.flyTo(dir);
+                  }}
+                  onFlyToRadiant={(raDeg, decDeg) => {
+                    const raRad = (raDeg * Math.PI) / 180;
+                    const decRad = (decDeg * Math.PI) / 180;
+                    const cdec = Math.cos(decRad);
+                    const dir = new Vector3(
+                      cdec * Math.cos(raRad),
+                      Math.sin(decRad),
+                      -cdec * Math.sin(raRad),
+                    );
+                    sceneRef.current?.flyTo(dir);
+                  }}
+                />
+                <MultimessengerControls scene={sceneRef.current} />
+              </>
+            ),
+          },
+          {
+            label: "tools",
+            children: (
+              <>
+                <GyroButton scene={sceneRef.current} />
+                <ArSkyButton scene={sceneRef.current} />
+                <SnapshotButton
+                  onCapture={() => sceneRef.current?.snapshotPng() ?? null}
+                />
+                <ShareButton />
+                <button
+                  type="button"
+                  onClick={() => openCopilot(null)}
+                  title="Open the Cosmic Copilot"
+                  className="pointer-events-auto inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-violet-400/40 bg-violet-400/10 px-2.5 font-mono text-xs text-violet-200 backdrop-blur transition hover:bg-violet-400/20"
+                >
+                  🧠 ask
+                </button>
+                <TonightSky
+                  location={observer}
+                  onLocationFix={(lat, lon) => {
+                    setObserver({ lat, lon });
+                    try {
+                      localStorage.setItem(
+                        "uw:observer",
+                        JSON.stringify({ lat, lon }),
+                      );
+                    } catch {
+                      // ignore quota / privacy-mode errors
+                    }
+                  }}
+                  onZenith={(lat, lon) =>
+                    sceneRef.current?.flyToZenith(lat, lon)
+                  }
+                />
+                <QuickTargets
+                  hasIssFix={state.iss !== null}
+                  onTarget={(t) => sceneRef.current?.flyToTarget(t)}
+                />
+                <FavoritesMenu
+                  favorites={favorites}
+                  onSelect={(dir) => sceneRef.current?.flyTo(dir)}
+                  onChange={reloadFavorites}
+                />
+              </>
+            ),
+          },
+          {
+            label: "modes",
+            children: (
+              <>
+                <button
+                  type="button"
+                  onClick={() => navigate("solar")}
+                  title="Switch to 3D Solar System Flight Mode"
+                  className="pointer-events-auto inline-flex min-h-[44px] items-center justify-center rounded-lg border border-cyan-400/40 bg-cyan-400/10 px-3 font-mono text-xs uppercase tracking-widest text-cyan-200 backdrop-blur transition hover:bg-cyan-400/20"
+                >
+                  🚀 solar flight
+                </button>
+                {tourIndex === null && (
+                  <button
+                    type="button"
+                    onClick={startTour}
+                    title="Take a guided tour"
+                    className="pointer-events-auto inline-flex min-h-[44px] items-center justify-center rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 font-mono text-xs uppercase tracking-widest text-violet-300 backdrop-blur transition hover:bg-violet-500/20"
+                  >
+                    ▶ tour
+                  </button>
+                )}
+              </>
+            ),
+          },
+        ];
 
-        <div className="pointer-events-auto flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
+        return (
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-2 p-2 sm:p-4">
           <button
             type="button"
-            onClick={() => navigate("solar")}
-            title="Switch to 3D Solar System Flight Mode"
-            className="rounded-lg border border-cyan-400/40 bg-cyan-400/10 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-cyan-200 backdrop-blur transition hover:bg-cyan-400/20"
+            onClick={() => navigate("landing")}
+            title="Back to landing"
+            className="pointer-events-auto inline-flex min-h-[44px] shrink-0 items-center rounded-lg border border-white/10 bg-space-950/70 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-white/60 backdrop-blur transition hover:bg-white/10 hover:text-white"
           >
-            <span className="md:hidden">🚀</span>
-            <span className="hidden md:inline">🚀 solar flight</span>
+            <span className="sm:hidden">←</span>
+            <span className="hidden sm:inline">← The Unspeakable World</span>
           </button>
-          {tourIndex === null && (
+
+          {/* Desktop button cluster — hidden on mobile (< md). Identical to
+              the previous layout so wide-screen experience is untouched. */}
+          <div className="pointer-events-auto hidden flex-wrap items-center justify-end gap-2 md:flex">
             <button
               type="button"
-              onClick={startTour}
-              className="rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-violet-300 backdrop-blur transition hover:bg-violet-500/20"
-              title="Take a guided tour through 9 highlights of the sky"
+              onClick={() => navigate("solar")}
+              title="Switch to 3D Solar System Flight Mode"
+              className="rounded-lg border border-cyan-400/40 bg-cyan-400/10 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-cyan-200 backdrop-blur transition hover:bg-cyan-400/20"
             >
-              <span className="md:hidden">▶</span>
-              <span className="hidden md:inline">▶ tour</span>
+              🚀 solar flight
             </button>
-          )}
-          <EventsPanel
-            open={eventsOpen}
-            onOpenChange={setEventsOpen}
-            onFlyToBody={(name) => {
-              const dir = sceneRef.current?.bodyDirection(name);
-              if (dir) sceneRef.current?.flyTo(dir);
-            }}
-            onFlyToRadiant={(raDeg, decDeg) => {
-              const raRad = (raDeg * Math.PI) / 180;
-              const decRad = (decDeg * Math.PI) / 180;
-              const cdec = Math.cos(decRad);
-              // Match the Z-up → Y-up rotation used elsewhere on the sphere.
-              const dir = new Vector3(
-                cdec * Math.cos(raRad),
-                Math.sin(decRad),
-                -cdec * Math.sin(raRad),
-              );
-              sceneRef.current?.flyTo(dir);
-            }}
-          />
-          <NeoPanel />
-          <ExtraLayersPanel scene={sceneRef.current} />
-          <MultimessengerControls scene={sceneRef.current} />
-          <SkyTonightPanel observer={observer} />
-          <SpaceWeatherPanel observer={observer} />
-          {searchIndex && (
-            <TonightTargetsPanel
-              entries={searchIndex.allEntries()}
-              observer={observer}
-              onSelect={(dir) => sceneRef.current?.flyTo(dir)}
-            />
-          )}
-          <FavoritesMenu
-            favorites={favorites}
-            onSelect={(dir) => sceneRef.current?.flyTo(dir)}
-            onChange={reloadFavorites}
-          />
-          <ShareButton />
-          <button
-            type="button"
-            onClick={() => openCopilot(null)}
-            title="Open the Cosmic Copilot — an AI tutor grounded in what you're looking at"
-            className="pointer-events-auto rounded-lg border border-violet-400/40 bg-violet-400/10 px-2.5 py-1.5 font-mono text-xs uppercase tracking-widest text-violet-200 backdrop-blur transition hover:bg-violet-400/20 sm:px-3"
-          >
-            <span className="md:hidden">🧠</span>
-            <span className="hidden md:inline">🧠 ask</span>
-          </button>
-          <GyroButton scene={sceneRef.current} />
-          <ArSkyButton scene={sceneRef.current} />
-          <SnapshotButton
-            onCapture={() => sceneRef.current?.snapshotPng() ?? null}
-          />
-          <button
-            type="button"
-            onClick={() => setAboutOpen(true)}
-            title="About / credits (press i)"
-            className="pointer-events-auto rounded-lg border border-white/10 bg-space-950/70 px-2.5 py-1.5 font-mono text-xs text-white/60 backdrop-blur transition hover:bg-white/10 hover:text-white"
-          >
-            i
-          </button>
-          <button
-            type="button"
-            onClick={() => setTutorialOpen(true)}
-            title="Re-open the interactive tutorial"
-            className="pointer-events-auto rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1.5 font-mono text-xs text-emerald-200 backdrop-blur transition hover:bg-emerald-400/20"
-          >
-            🎓
-          </button>
-          <button
-            type="button"
-            onClick={() => setShortcutsOpen(true)}
-            title="Keyboard shortcuts (press ?)"
-            className="pointer-events-auto rounded-lg border border-white/10 bg-space-950/70 px-2.5 py-1.5 font-mono text-xs text-white/60 backdrop-blur transition hover:bg-white/10 hover:text-white"
-          >
-            ?
-          </button>
-          <SearchBar
-            index={searchIndex}
-            onSelect={(entry: SearchEntry) =>
-              sceneRef.current?.flyTo(entry.direction)
-            }
-          />
-          <TonightSky
-            location={observer}
-            onLocationFix={(lat, lon) => {
-              setObserver({ lat, lon });
-              try {
-                localStorage.setItem(
-                  "uw:observer",
-                  JSON.stringify({ lat, lon }),
+            {tourIndex === null && (
+              <button
+                type="button"
+                onClick={startTour}
+                className="rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-violet-300 backdrop-blur transition hover:bg-violet-500/20"
+                title="Take a guided tour through 9 highlights of the sky"
+              >
+                ▶ tour
+              </button>
+            )}
+            <EventsPanel
+              open={eventsOpen}
+              onOpenChange={setEventsOpen}
+              onFlyToBody={(name) => {
+                const dir = sceneRef.current?.bodyDirection(name);
+                if (dir) sceneRef.current?.flyTo(dir);
+              }}
+              onFlyToRadiant={(raDeg, decDeg) => {
+                const raRad = (raDeg * Math.PI) / 180;
+                const decRad = (decDeg * Math.PI) / 180;
+                const cdec = Math.cos(decRad);
+                // Match the Z-up → Y-up rotation used elsewhere on the sphere.
+                const dir = new Vector3(
+                  cdec * Math.cos(raRad),
+                  Math.sin(decRad),
+                  -cdec * Math.sin(raRad),
                 );
-              } catch {
-                // ignore quota / privacy-mode errors
+                sceneRef.current?.flyTo(dir);
+              }}
+            />
+            <NeoPanel />
+            <ExtraLayersPanel scene={sceneRef.current} />
+            <MultimessengerControls scene={sceneRef.current} />
+            <SkyTonightPanel observer={observer} />
+            <SpaceWeatherPanel observer={observer} />
+            {searchIndex && (
+              <TonightTargetsPanel
+                entries={searchIndex.allEntries()}
+                observer={observer}
+                onSelect={(dir) => sceneRef.current?.flyTo(dir)}
+              />
+            )}
+            <FavoritesMenu
+              favorites={favorites}
+              onSelect={(dir) => sceneRef.current?.flyTo(dir)}
+              onChange={reloadFavorites}
+            />
+            <ShareButton />
+            <button
+              type="button"
+              onClick={() => openCopilot(null)}
+              title="Open the Cosmic Copilot — an AI tutor grounded in what you're looking at"
+              className="pointer-events-auto rounded-lg border border-violet-400/40 bg-violet-400/10 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-violet-200 backdrop-blur transition hover:bg-violet-400/20"
+            >
+              🧠 ask
+            </button>
+            <GyroButton scene={sceneRef.current} />
+            <ArSkyButton scene={sceneRef.current} />
+            <SnapshotButton
+              onCapture={() => sceneRef.current?.snapshotPng() ?? null}
+            />
+            <button
+              type="button"
+              onClick={() => setAboutOpen(true)}
+              title="About / credits (press i)"
+              className="pointer-events-auto rounded-lg border border-white/10 bg-space-950/70 px-2.5 py-1.5 font-mono text-xs text-white/60 backdrop-blur transition hover:bg-white/10 hover:text-white"
+            >
+              i
+            </button>
+            <button
+              type="button"
+              onClick={() => setTutorialOpen(true)}
+              title="Re-open the interactive tutorial"
+              className="pointer-events-auto rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1.5 font-mono text-xs text-emerald-200 backdrop-blur transition hover:bg-emerald-400/20"
+            >
+              🎓
+            </button>
+            <button
+              type="button"
+              onClick={() => setShortcutsOpen(true)}
+              title="Keyboard shortcuts (press ?)"
+              className="pointer-events-auto rounded-lg border border-white/10 bg-space-950/70 px-2.5 py-1.5 font-mono text-xs text-white/60 backdrop-blur transition hover:bg-white/10 hover:text-white"
+            >
+              ?
+            </button>
+            <SearchBar
+              index={searchIndex}
+              onSelect={(entry: SearchEntry) =>
+                sceneRef.current?.flyTo(entry.direction)
               }
-            }}
-            onZenith={(lat, lon) => sceneRef.current?.flyToZenith(lat, lon)}
-          />
-          <QuickTargets
-            hasIssFix={state.iss !== null}
-            onTarget={(t) => sceneRef.current?.flyToTarget(t)}
-          />
-          <div className="hidden rounded-lg border border-white/10 bg-space-950/70 px-3 py-1.5 font-mono text-xs text-white/60 backdrop-blur lg:block">
-            DSS2 color · CDS / STScI
+            />
+            <TonightSky
+              location={observer}
+              onLocationFix={(lat, lon) => {
+                setObserver({ lat, lon });
+                try {
+                  localStorage.setItem(
+                    "uw:observer",
+                    JSON.stringify({ lat, lon }),
+                  );
+                } catch {
+                  // ignore quota / privacy-mode errors
+                }
+              }}
+              onZenith={(lat, lon) => sceneRef.current?.flyToZenith(lat, lon)}
+            />
+            <QuickTargets
+              hasIssFix={state.iss !== null}
+              onTarget={(t) => sceneRef.current?.flyToTarget(t)}
+            />
+            <div className="hidden rounded-lg border border-white/10 bg-space-950/70 px-3 py-1.5 font-mono text-xs text-white/60 backdrop-blur lg:block">
+              DSS2 color · CDS / STScI
+            </div>
+          </div>
+
+          {/* Mobile button cluster — visible on < md only. Five essentials:
+              search · ✨ layers · ☰ hamburger. The exit button on the
+              left already serves as the fourth above-the-fold button; the
+              time-strip lives at the bottom. */}
+          <div className="pointer-events-auto flex items-center justify-end gap-1.5 md:hidden">
+            <SearchBar
+              index={searchIndex}
+              onSelect={(entry: SearchEntry) =>
+                sceneRef.current?.flyTo(entry.direction)
+              }
+            />
+            <ExtraLayersPanel scene={sceneRef.current} />
+            <MobileMenuDrawer groups={mobileMenuGroups} />
           </div>
         </div>
-      </div>
-      )}
+        );
+      })()}
 
-      {/* Bottom bar (chips + warnings) — sits above the wavelength + time strips */}
+      {/* Bottom bar (chips + warnings) — sits above the wavelength + time strips.
+          Mobile gets a smaller bottom inset + padding so chips don't bleed
+          into the WhatsNewV4 toast or the time strip on 375 px screens. */}
       {!embed && (
-      <div className="pointer-events-none absolute inset-x-0 bottom-32 z-10 flex items-end justify-between gap-2 p-4">
-        <div className="pointer-events-auto flex flex-wrap items-center gap-2">
+      <div className="pointer-events-none absolute inset-x-0 bottom-28 z-10 flex items-end justify-between gap-2 p-2 md:bottom-32 md:p-4">
+        <div className="pointer-events-auto flex flex-wrap items-center gap-1.5 md:gap-2">
           <Chip label="FOV" value={`${state.fov.toFixed(1)}°`} />
           <Chip label="zoom" value={fovToZoomLabel(state.fov)} />
           {state.detailTiles > 0 && (
@@ -1090,6 +1257,10 @@ export function Viewer() {
 
       {!embed && status === "live" && <ColorLegend />}
 
+      {/* One-shot v4 feature awareness — fires once per browser; cheaper
+          than rewiring TutorialOverlay's eight hand-crafted steps. */}
+      {!embed && status === "live" && <WhatsNewV4Toast />}
+
       {/* Embed-mode corner attribution — opens full app in a new tab. */}
       {embed && status === "live" && <EmbedBadge />}
 
@@ -1116,12 +1287,12 @@ function Chip({
     : "border-white/10 bg-space-950/70 text-white/80";
   return (
     <div
-      className={`flex items-baseline gap-1.5 rounded-lg border px-3 py-1.5 backdrop-blur ${cls}`}
+      className={`flex items-baseline gap-1 rounded-lg border px-2 py-1 backdrop-blur md:gap-1.5 md:px-3 md:py-1.5 ${cls}`}
     >
-      <span className="font-mono text-[10px] uppercase tracking-widest opacity-60">
+      <span className="font-mono text-[9px] uppercase tracking-widest opacity-60 md:text-[10px]">
         {label}
       </span>
-      <span className="font-mono text-xs">{value}</span>
+      <span className="font-mono text-[11px] md:text-xs">{value}</span>
     </div>
   );
 }

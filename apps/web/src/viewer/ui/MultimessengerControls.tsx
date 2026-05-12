@@ -3,8 +3,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { log } from "../../lib/logger";
 import type { LigoEvent, MultiMessengerApi } from "../multimessenger";
 import type { ExtraLayersHost } from "./ExtraLayersPanel";
+import { useExtraLayerEnabled } from "../extra-layers/state";
 
-const STORAGE_KEY = "uw:extra-layers:v1";
 const LAYER_ID = "multimessenger";
 
 /**
@@ -20,20 +20,6 @@ export type MultimessengerHost = ExtraLayersHost & {
 type Props = {
   scene: MultimessengerHost | null;
 };
-
-type EnabledMap = Record<string, boolean>;
-
-function readEnabled(): EnabledMap {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw) as unknown;
-    if (parsed && typeof parsed === "object") return parsed as EnabledMap;
-  } catch {
-    // ignore
-  }
-  return {};
-}
 
 function isMultiMessengerApi(v: unknown): v is MultiMessengerApi {
   if (!v || typeof v !== "object") return false;
@@ -65,9 +51,9 @@ type LastChirp = {
  * user must opt in by clicking 🔇 → 🔊 once.
  */
 export function MultimessengerControls({ scene }: Props) {
-  const [enabled, setEnabled] = useState<boolean>(
-    () => readEnabled()[LAYER_ID] === true,
-  );
+  // Subscribes via the zustand store instead of polling localStorage
+  // every 750 ms. Re-renders only when this specific layer flips.
+  const enabled = useExtraLayerEnabled(LAYER_ID);
   const [muted, setMuted] = useState(true);
   const [events, setEvents] = useState<LigoEvent[]>([]);
   const [last, setLast] = useState<LastChirp | null>(null);
@@ -75,29 +61,9 @@ export function MultimessengerControls({ scene }: Props) {
   const apiRef = useRef<MultiMessengerApi | null>(null);
   const pickerRef = useRef<HTMLDivElement | null>(null);
 
-  // Watch localStorage for layer toggles.
-  useEffect(() => {
-    let mounted = true;
-    const tick = () => {
-      if (!mounted) return;
-      const on = readEnabled()[LAYER_ID] === true;
-      setEnabled((prev) => (prev === on ? prev : on));
-    };
-    const id = window.setInterval(tick, 750);
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY) tick();
-    };
-    window.addEventListener("storage", onStorage);
-    return () => {
-      mounted = false;
-      window.clearInterval(id);
-      window.removeEventListener("storage", onStorage);
-    };
-  }, []);
-
   // Resolve mmApi once both the layer is enabled and the module has
   // loaded. Poll the scene briefly because the dynamic import lands a
-  // tick after `setEnabled(true)` returns.
+  // tick after the store flips `enabled` true.
   useEffect(() => {
     if (!enabled || !scene) {
       apiRef.current = null;

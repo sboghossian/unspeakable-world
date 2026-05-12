@@ -6,6 +6,7 @@ import { OpenData } from "./landing/OpenData";
 import { Roadmap } from "./landing/Roadmap";
 import { Footer } from "./landing/Footer";
 import { PwaInstallBanner } from "./landing/PwaInstallBanner";
+import { ConsentBanner } from "./landing/ConsentBanner";
 import { AstronomyToday } from "./landing/AstronomyToday";
 import { ApodCard } from "./landing/ApodCard";
 import { isEmbedMode, navigate, surfacePlanet, useRoute } from "./router";
@@ -37,6 +38,19 @@ const Guide = lazy(() =>
 );
 
 export function App() {
+  return (
+    <>
+      <AppRoutes />
+      {/* ConsentBanner self-hides once a choice is persisted. Rendered
+          here at the top level so it shows on every entry point —
+          landing page, /viewer deep link, embed, etc. The banner reads
+          getConsent() itself and returns null when consent is set. */}
+      <ConsentBanner />
+    </>
+  );
+}
+
+function AppRoutes() {
   const route = useRoute();
   // Embed mode hides the PWA install banner across every mode; individual
   // viewers also gate their own chrome on this flag.

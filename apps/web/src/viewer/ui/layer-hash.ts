@@ -9,6 +9,7 @@
  * comma-joined list of layer ids, capped at MAX_HASH_LAYERS.
  */
 
+import { useExtraLayersStore } from "../extra-layers/state";
 import {
   MAX_HASH_LAYERS,
   parseHash,
@@ -27,6 +28,26 @@ export const LAYER_HASH_DEBOUNCE_MS = 200;
 export function readLayerHash(): string[] | null {
   const parsed = parseHash();
   return parsed.layers ?? null;
+}
+
+/**
+ * Hash-seeding helper: if `location.hash` contains a `layers=…` key,
+ * push the decoded selection into the zustand store via `replace()` so
+ * every subscriber (panel + per-layer cards) sees the URL-derived
+ * selection on first render — and so subsequent reloads without the
+ * hash still keep the shared view (the store persists to localStorage).
+ *
+ * Returns the seeded ids (or `null` if the hash didn't carry any).
+ * Callers can run this once at mount and short-circuit further URL
+ * lookups.
+ */
+export function seedStoreFromHash(): string[] | null {
+  const ids = readLayerHash();
+  if (ids === null) return null;
+  const seeded: Record<string, boolean> = {};
+  for (const id of ids) seeded[id] = true;
+  useExtraLayersStore.getState().replace(seeded);
+  return ids;
 }
 
 /**

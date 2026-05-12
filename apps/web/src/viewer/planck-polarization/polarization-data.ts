@@ -1,23 +1,23 @@
 /**
- * Planck CMB polarization — Q/U Stokes parameters subsampled from the
- * 353 GHz HFI PR3 polarization map.
+ * Planck CMB polarization — Q/U Stokes parameters at HEALPix NSIDE 16
+ * (3072 pixels), downgraded from the SMICA thermal-dust polarization map
+ * (the strongest polarized signal on the sky at 353 GHz).
  *
- * Source upstream (NOT bundled — too large at ~600 MB full sky):
- *   http://pla.esac.esa.int/pla/
- *   HFI_SkyMap_353_2048_R3.01_full.fits  (Q, U columns, HEALPix NSIDE 2048)
+ * Source upstream (NOT bundled — ~384 MB FITS at full NSIDE 2048):
+ *   https://irsa.ipac.caltech.edu/data/Planck/release_3/all-sky-maps/
+ *     maps/component-maps/foregrounds/
+ *     COM_CompMap_QU-thermaldust-smica_2048_R3.00_full.fits
  *
- * The bake script `scripts/bake-planck-polarization.ts` either downloads
- * + degrades the full map to NSIDE 16 (~3072 pixels) or, if the FITS
- * data isn't reachable, emits a synthetic field matching the well-known
- * Planck large-scale polarization morphology:
+ * Bake pipeline (`scripts/bake-planck-real.py`):
+ *   • `hp.read_map(...)` → Q, U at NSIDE 2048 in mK_RJ
+ *   • `hp.ud_grade(..., nside_out=16)` averages each high-resolution
+ *     pixel's children
+ *   • mK_RJ → µK_CMB conversion at 353 GHz (factor 3.30, Planck 2018 IX)
+ *   • Galactic → ICRS pixel-centre conversion via `astropy.SkyCoord`
  *
- *   • Strong horizontal alignment along the galactic plane (b ≈ 0°),
- *     amplitude ramps with sin²(2b) modulation
- *   • Vertical "puddle" features around the north galactic pole
- *   • Random small-scale noise floor at the ~3 µK level
- *
- * Both real and synthetic outputs follow the same JSON shape so the
- * renderer code path is identical.
+ * A pure-TypeScript fallback (`scripts/bake-planck-polarization.ts`)
+ * emits a synthetic field with the same JSON shape — kept for
+ * environments without Python + healpy.
  *
  * Output JSON (apps/web/public/data/planck-polarization.json):
  *   {

@@ -11,7 +11,6 @@
  * here so the next agent can drop in a URL+key input cog.
  */
 
-import { log } from "../../../lib/logger";
 import type {
   ChatOptions,
   ChatResult,
@@ -19,6 +18,7 @@ import type {
   Message,
 } from "../types";
 import { extractCitations } from "../citations";
+import { parseSSEStream } from "../sse";
 
 export type OpenAICompatibleConfig = {
   baseUrl: string;
@@ -68,44 +68,16 @@ export class OpenAICompatibleBackend implements CopilotBackend {
       throw new Error("Upstream response had no body");
     }
 
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let buf = "";
-    let acc = "";
-    try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buf += decoder.decode(value, { stream: true });
-        // SSE: events are separated by "\n\n", lines start with "data: ".
-        let sep = buf.indexOf("\n\n");
-        while (sep >= 0) {
-          const evt = buf.slice(0, sep);
-          buf = buf.slice(sep + 2);
-          sep = buf.indexOf("\n\n");
-          for (const line of evt.split("\n")) {
-            const trimmed = line.trim();
-            if (!trimmed.startsWith("data:")) continue;
-            const payload = trimmed.slice(5).trim();
-            if (payload === "[DONE]") continue;
-            try {
-              const parsed = JSON.parse(payload) as {
-                choices?: Array<{ delta?: { content?: string } }>;
-              };
-              const tok = parsed.choices?.[0]?.delta?.content;
-              if (tok) {
-                acc += tok;
-                opts.onToken?.(tok);
-              }
-            } catch (err) {
-              log.warn("[copilot] openai-compat: bad SSE chunk", err);
-            }
-          }
-        }
-      }
-    } finally {
-      reader.releaseLock();
-    }
+    const acc = await parseSSEStream(res.body, {
+      tag: "openai-compat",
+      ...(opts.onToken ? { onToken: opts.onToken } : {}),
+      extractToken: (payload) => {
+        const p = payload as {
+          choices?: Array<{ delta?: { content?: string } }>;
+        };
+        return p.choices?.[0]?.delta?.content;
+      },
+    });
 
     return {
       text: acc,

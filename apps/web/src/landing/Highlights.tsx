@@ -3,8 +3,10 @@
  * visitor what's inside before they click into the viewer. Lives
  * between the Hero and the OpenData catalog counts.
  *
- * Pure presentational. No 3D — all the visuals are ASCII / emoji
- * glyphs and Tailwind gradients so the landing page stays small.
+ * Mostly presentational. Cards that have a v4 hero shot render a
+ * tiny preview image at the top of the card (image files live in
+ * `apps/web/public/screenshots/v4/`, mirrored from
+ * `docs/screenshots/v4/` by `tools/capture-v4-screenshots.mjs`).
  */
 
 type Highlight = {
@@ -13,6 +15,11 @@ type Highlight = {
   glyph: string;
   tone: string;
   href?: string;
+  /**
+   * Optional v4 screenshot, served from `apps/web/public/screenshots/v4/`.
+   * When set, it renders as a small preview at the top of the card.
+   */
+  image?: string;
 };
 
 const HIGHLIGHTS: ReadonlyArray<Highlight> = [
@@ -22,6 +29,7 @@ const HIGHLIGHTS: ReadonlyArray<Highlight> = [
     glyph: "🌌",
     tone: "text-emerald-200",
     href: "#universe",
+    image: "/screenshots/v4/universe-tiers.png",
   },
   {
     title: "Multi-wavelength sky",
@@ -29,6 +37,7 @@ const HIGHLIGHTS: ReadonlyArray<Highlight> = [
     glyph: "◐",
     tone: "text-amber-200",
     href: "#viewer",
+    image: "/screenshots/v4/planck-cmb.png",
   },
   {
     title: "Gaia DR3 — 1M stars",
@@ -36,6 +45,7 @@ const HIGHLIGHTS: ReadonlyArray<Highlight> = [
     glyph: "✦",
     tone: "text-cyan-200",
     href: "#viewer",
+    image: "/screenshots/v4/gaia-1m-stars.png",
   },
   {
     title: "Galaxy cone — 136K galaxies",
@@ -43,6 +53,7 @@ const HIGHLIGHTS: ReadonlyArray<Highlight> = [
     glyph: "◌",
     tone: "text-violet-200",
     href: "#universe",
+    image: "/screenshots/v4/galaxy-cone.png",
   },
   {
     title: "Multi-messenger sky",
@@ -50,13 +61,15 @@ const HIGHLIGHTS: ReadonlyArray<Highlight> = [
     glyph: "◈",
     tone: "text-rose-300",
     href: "#viewer",
+    image: "/screenshots/v4/multi-messenger.png",
   },
   {
     title: "Cosmic Copilot — AI tutor",
-    body: "Layer 2 brain: ask 'what am I looking at?' with citations. Offline-first 32-answer fallback, optional Ollama backend (qwen3:8b default), pluggable OpenAI-compatible. Threads persist.",
+    body: "Layer 2 brain. Ask 'what am I looking at?' Hosted via Cloudflare Workers AI (Llama 3.1 8B) — or plug in your local Ollama for offline / faster answers. Always-on 32-answer fallback if both fail.",
     glyph: "🧠",
     tone: "text-emerald-300",
     href: "#viewer",
+    image: "/screenshots/v4/cosmic-copilot.png",
   },
   {
     title: "Exoplanets + habitability",
@@ -71,6 +84,7 @@ const HIGHLIGHTS: ReadonlyArray<Highlight> = [
     glyph: "★",
     tone: "text-plasma-300",
     href: "#viewer",
+    image: "/screenshots/v4/extra-layers-panel.png",
   },
   {
     title: "AR Sky on mobile",
@@ -78,6 +92,7 @@ const HIGHLIGHTS: ReadonlyArray<Highlight> = [
     glyph: "📱",
     tone: "text-sky-200",
     href: "#viewer",
+    image: "/screenshots/v4/ar-sky-preview.png",
   },
 ];
 
@@ -101,23 +116,36 @@ export function Highlights() {
             <Wrapper
               key={h.title}
               {...wrapperProps}
-              className="group block rounded-xl border border-white/10 bg-white/[0.03] p-4 transition hover:border-white/25 hover:bg-white/[0.06]"
+              className="group block overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] transition hover:border-white/25 hover:bg-white/[0.06]"
             >
-              <div className="flex items-baseline justify-between">
-                <div className={`text-2xl ${h.tone}`} aria-hidden>
-                  {h.glyph}
+              {h.image && (
+                <div className="relative aspect-[16/10] w-full overflow-hidden border-b border-white/10 bg-space-950">
+                  <img
+                    src={h.image}
+                    alt={`${h.title} — v4 screenshot preview`}
+                    loading="lazy"
+                    decoding="async"
+                    className="absolute inset-0 h-full w-full object-cover opacity-80 transition group-hover:scale-[1.02] group-hover:opacity-100"
+                  />
                 </div>
-                {h.href && (
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-white/30 transition group-hover:text-white/60">
-                    open ↗
-                  </span>
-                )}
-              </div>
-              <div className="mt-3 font-display text-base text-white/90">
-                {h.title}
-              </div>
-              <div className="mt-1 text-[12px] leading-snug text-white/55">
-                {h.body}
+              )}
+              <div className="p-4">
+                <div className="flex items-baseline justify-between">
+                  <div className={`text-2xl ${h.tone}`} aria-hidden>
+                    {h.glyph}
+                  </div>
+                  {h.href && (
+                    <span className="font-mono text-[10px] uppercase tracking-widest text-white/30 transition group-hover:text-white/60">
+                      open ↗
+                    </span>
+                  )}
+                </div>
+                <div className="mt-3 font-display text-base text-white/90">
+                  {h.title}
+                </div>
+                <div className="mt-1 text-[12px] leading-snug text-white/55">
+                  {h.body}
+                </div>
               </div>
             </Wrapper>
           );

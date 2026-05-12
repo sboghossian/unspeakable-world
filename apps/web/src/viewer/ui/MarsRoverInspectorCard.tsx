@@ -6,8 +6,8 @@ import type {
   IotdRover,
   MarsRoverIotdApi,
 } from "../mars-rover-iotd";
+import { useExtraLayerEnabled } from "../extra-layers/state";
 
-const STORAGE_KEY = "uw:extra-layers:v1";
 const LAYER_ID = "mars-rover-iotd";
 
 /**
@@ -24,20 +24,6 @@ type Props = {
   scene: MarsRoverHost | null;
 };
 
-type EnabledMap = Record<string, boolean>;
-
-function readEnabled(): EnabledMap {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw) as unknown;
-    if (parsed && typeof parsed === "object") return parsed as EnabledMap;
-  } catch {
-    // ignore — privacy mode or quota
-  }
-  return {};
-}
-
 function isMarsRoverIotdApi(v: unknown): v is MarsRoverIotdApi {
   if (!v || typeof v !== "object") return false;
   const o = v as Record<string, unknown>;
@@ -53,40 +39,20 @@ function isMarsRoverIotdApi(v: unknown): v is MarsRoverIotdApi {
  * the `mars-rover-iotd` extra layer is enabled. Subscribes to the layer's
  * photo stream and renders the current image with prev/next sol navigation.
  *
- * The card never registers with the 3D scene: it just rides the
- * federated-layer toggle in localStorage. If the layer flips off, the
- * card unmounts on the next poll tick.
+ * The card never registers with the 3D scene: it just subscribes to
+ * the federated-layer zustand store. If the layer flips off, the card
+ * unmounts on the next render.
  */
 export function MarsRoverInspectorCard({ scene }: Props) {
-  const [enabled, setEnabled] = useState<boolean>(
-    () => readEnabled()[LAYER_ID] === true,
-  );
+  // Subscribes via the zustand store — re-renders exactly when this
+  // layer's enabled bit flips. Previously this component polled
+  // localStorage every 750 ms.
+  const enabled = useExtraLayerEnabled(LAYER_ID);
   const [photos, setPhotos] = useState<ReadonlyArray<IotdPhoto>>([]);
   const [photoIndex, setPhotoIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
   const apiRef = useRef<MarsRoverIotdApi | null>(null);
-
-  // Poll localStorage every 750 ms — the Extra Layers panel writes here
-  // when the user toggles a layer; we don't have an event bus.
-  useEffect(() => {
-    let mounted = true;
-    const tick = () => {
-      if (!mounted) return;
-      const on = readEnabled()[LAYER_ID] === true;
-      setEnabled((prev) => (prev === on ? prev : on));
-    };
-    const id = window.setInterval(tick, 750);
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY) tick();
-    };
-    window.addEventListener("storage", onStorage);
-    return () => {
-      mounted = false;
-      window.clearInterval(id);
-      window.removeEventListener("storage", onStorage);
-    };
-  }, []);
 
   // Whenever the layer is enabled + the scene is mounted, ensure the
   // module is loaded, then subscribe to its photo stream.

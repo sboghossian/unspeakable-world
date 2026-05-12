@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { log } from "../../lib/logger";
+import { track } from "../../lib/telemetry";
 import { EXTRA_LAYERS, type LayerMeta } from "../extra-layers/registry";
-import { makeLayerHashWriter, readLayerHash } from "./layer-hash";
-
-const STORAGE_KEY = "uw:extra-layers:v1";
+import { useExtraLayers, useExtraLayersStore } from "../extra-layers/state";
+import { makeLayerHashWriter, seedStoreFromHash } from "./layer-hash";
 
 /**
  * Minimal contract any scene must satisfy to host the panel. Sky /
@@ -18,28 +18,6 @@ export type ExtraLayersHost = {
 type Props = {
   scene: ExtraLayersHost | null;
 };
-
-type Enabled = Record<string, boolean>;
-
-function readEnabled(): Enabled {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw) as unknown;
-    if (parsed && typeof parsed === "object") return parsed as Enabled;
-  } catch {
-    // ignore
-  }
-  return {};
-}
-
-function writeEnabled(v: Enabled): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(v));
-  } catch {
-    // ignore
-  }
-}
 
 /**
  * ✨ Extra Layers — single popover that exposes every federated overlay
@@ -58,21 +36,23 @@ function writeEnabled(v: Enabled): void {
  */
 export function ExtraLayersPanel({ scene }: Props) {
   const [open, setOpen] = useState(false);
-  const [enabled, setEnabled] = useState<Enabled>(() => {
-    // URL hash wins over localStorage so a shared deep-link always
-    // restores the sender's selection on first paint. If the hash key
-    // is absent we fall back to the persisted user preference.
-    const fromHash = readLayerHash();
-    if (fromHash !== null) {
-      const seeded: Enabled = {};
-      for (const id of fromHash) seeded[id] = true;
-      // Persist the URL-derived selection so subsequent reloads without
-      // the hash also keep the shared view sticky.
-      writeEnabled(seeded);
-      return seeded;
-    }
-    return readEnabled();
-  });
+  // The zustand store is the single source of truth for layer toggles.
+  // Initial seed from localStorage happens in the store's create().
+  // URL hash wins over localStorage on first mount — if a `layers=…`
+  // hash is present, we replace the store with that selection so a
+  // shared deep-link restores the sender's view. We only do this once
+  // per panel mount; subsequent toggles flow through the store.
+  const enabled = useExtraLayers();
+  const hashSeededRef = useRef<boolean>(false);
+  if (!hashSeededRef.current) {
+    hashSeededRef.current = true;
+    // `seedStoreFromHash` reads `location.hash` once and pushes any
+    // `layers=…` selection into the store via `replace()`. The store
+    // persists (debounced 200 ms) so subsequent reloads without the
+    // hash keep the shared view sticky — identical semantics to the
+    // prior `writeEnabled` call that lived inline here.
+    seedStoreFromHash();
+  }
   // Per-component debounced writer for the `layers` hash key. Skips the
   // very first sync (we don't want to spawn a history entry just from
   // mounting the panel) — only post-mount toggles write to the URL.
@@ -193,10 +173,13 @@ export function ExtraLayersPanel({ scene }: Props) {
   }, [open]);
 
   function toggle(id: string): void {
-    setEnabled((prev) => {
-      const next = { ...prev, [id]: !prev[id] };
-      writeEnabled(next);
-      return next;
+    const store = useExtraLayersStore.getState();
+    store.toggle(id);
+    // Most important telemetry signal in the app — tells us which
+    // of the 21 federated layers anyone actually flips on. No PII.
+    track("extra_layer_toggle", {
+      id,
+      enabled: useExtraLayersStore.getState().enabled[id] === true,
     });
   }
 

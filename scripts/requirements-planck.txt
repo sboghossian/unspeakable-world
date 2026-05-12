@@ -1,0 +1,14 @@
+# Dependencies for scripts/bake-planck-real.py — Planck PR3 polarization
+# downgrade pipeline. Pinned for reproducibility.
+#
+# All MIT/BSD-compatible:
+#   healpy   — BSD-3
+#   numpy    — BSD-3
+#   astropy  — BSD-3
+#   requests — Apache 2.0 (used transitively by some healpy fetch paths;
+#              we currently use urllib.request, but pinned in case the
+#              script grows resumable downloads)
+healpy==1.16.6
+numpy==1.26.4
+astropy==6.1.0
+requests==2.32.3

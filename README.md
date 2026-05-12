@@ -47,6 +47,60 @@
 
 ---
 
+## 🆕 v4 in pictures
+
+The v4 wave (Gaia DR3, multi-messenger, Cosmic Copilot, Universe Mode v2,
+AR Sky, Planck CMB + polarization, federated extras panel) — captured
+fresh from the live build. Each frame is reproducible from its URL hash;
+see [`docs/screenshots/v4/README.md`](docs/screenshots/v4/README.md).
+
+<table>
+  <tr>
+    <td width="50%">
+      <a href="docs/screenshots/v4/gaia-1m-stars.png"><img src="docs/screenshots/v4/gaia-1m-stars.png" alt="Gaia DR3 — 1M-star instanced point cloud over the Orion region" /></a>
+      <br /><sub><b>Gaia DR3 · 1M stars</b> — BP-RP→RGB shader, parallax-derived 3D positions, GPU-instanced.</sub>
+    </td>
+    <td width="50%">
+      <a href="docs/screenshots/v4/multi-messenger.png"><img src="docs/screenshots/v4/multi-messenger.png" alt="Multi-messenger overlay — IceCube neutrinos, Auger UHECRs, LIGO sky-area rings" /></a>
+      <br /><sub><b>Multi-messenger sky</b> — IceCube ν · Auger UHECR · LIGO GWTC-3 90% rings · NANOGrav PTA, all on one celestial sphere.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <a href="docs/screenshots/v4/galaxy-cone.png"><img src="docs/screenshots/v4/galaxy-cone.png" alt="Universe mode pulled out to hundreds of kly so 136K 2MRS+6dFGS galaxies fill the frame" /></a>
+      <br /><sub><b>Galaxy cone · 136K galaxies</b> — 2MRS + 6dFGS in true 3D, redshift hue gradient.</sub>
+    </td>
+    <td>
+      <a href="docs/screenshots/v4/cosmic-copilot.png"><img src="docs/screenshots/v4/cosmic-copilot.png" alt="Cosmic Copilot panel open with an example M31 question and try-asking suggestions" /></a>
+      <br /><sub><b>Cosmic Copilot</b> — AI tutor grounded in the live view; offline-first, optional Ollama/OpenAI-compatible backend.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <a href="docs/screenshots/v4/universe-tiers.png"><img src="docs/screenshots/v4/universe-tiers.png" alt="Universe Mode v2 mid-zoom — Milky Way disk plus tier HUD reading 'Galactic Tier · 53 ly from Sun'" /></a>
+      <br /><sub><b>Universe Mode v2</b> — one scene, two coordinate frames (AU + LY), bottom-left tier HUD live-reads your distance from the Sun.</sub>
+    </td>
+    <td>
+      <a href="docs/screenshots/v4/extra-layers-panel.png"><img src="docs/screenshots/v4/extra-layers-panel.png" alt="The ✨ federated-data layers popover with several toggles enabled" /></a>
+      <br /><sub><b>✨ Layers panel</b> — 15 federated overlays, each dynamic-imported on first toggle; round-trips via <code>&amp;layers=</code> URL hash.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <a href="docs/screenshots/v4/ar-sky-preview.png"><img src="docs/screenshots/v4/ar-sky-preview.png" alt="Sky view with star names + constellation lines — the vector layer AR Sky paints onto a phone camera feed" /></a>
+      <br /><sub><b>AR Sky preview</b> — the vector layer (constellations + star names) that AR Sky composites onto the rear-camera feed on mobile.</sub>
+    </td>
+    <td>
+      <a href="docs/screenshots/v4/planck-cmb.png"><img src="docs/screenshots/v4/planck-cmb.png" alt="Planck CMB temperature map at 85% mix with the v4 E/B polarization vector layer overlaid" /></a>
+      <br /><sub><b>Planck CMB + polarisation</b> — temperature map plus the v4 E/B polarisation vector layer.</sub>
+    </td>
+  </tr>
+</table>
+
+> Capture them yourself: `node tools/capture-v4-screenshots.mjs --base http://localhost:4173` after `pnpm --filter @unspeakable/web preview`.
+
+---
+
 ## ✨ v4 — Federated data sweep
 
 A 21-dataset push that turns the viewer into a live wide-area data portal.
