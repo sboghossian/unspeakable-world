@@ -1,4 +1,5 @@
 import {
+  AdditiveBlending,
   CanvasTexture,
   Group,
   LinearFilter,
@@ -617,6 +618,7 @@ export class CosmicLandmarks {
   }
 
   private build(): void {
+    const accretionTex = makeAccretionDiskTexture();
     for (const lm of COSMIC_LANDMARKS) {
       const tex = makeLabel(lm.name, COLOR_BY_KIND[lm.kind]);
       const mat = new SpriteMaterial({
@@ -635,8 +637,36 @@ export class CosmicLandmarks {
       sprite.renderOrder = 4;
       this.placed.push({ data: lm, sprite });
       this.group.add(sprite);
+
+      // Black-hole landmarks get an extra glyph: a small accretion-disk
+      // sprite stacked behind the label so each BH reads as more than a
+      // line of text. Photon-ring centre, warm orange disk, fades out
+      // toward the rim — matches the EHT M87* / Sgr A* visual idiom.
+      if (lm.kind === "black-hole") {
+        const diskMat = new SpriteMaterial({
+          map: accretionTex,
+          transparent: true,
+          depthWrite: false,
+          depthTest: false,
+          opacity: 0.85,
+          blending: AdditiveBlending,
+        });
+        const disk = new Sprite(diskMat);
+        const dh = 0.018;
+        disk.scale.set(dh, dh, 1);
+        disk.position.set(x, y, z);
+        disk.renderOrder = 3; // behind the label sprite
+        this.group.add(disk);
+      }
     }
   }
+
+  /** Procedural accretion-disk texture: dark photon-ring centre, warm
+   *  orange annulus, fading to transparent at the rim. Shared across
+   *  every BH marker — one texture, many sprites. */
+  // Note: this is a method-local helper as a defensive measure if the
+  // module is ever side-imported without the constructor running.
+  // It's defined as a free function below.
 
   dispose(): void {
     for (const p of this.placed) {
@@ -702,4 +732,36 @@ function roundRect(
   ctx.arcTo(x, y + h, x, y, r);
   ctx.arcTo(x, y, x + w, y, r);
   ctx.closePath();
+}
+
+/** Procedural accretion-disk: dark photon-ring core surrounded by a
+ *  warm orange annulus that fades out to transparent at the rim.
+ *  Reads as the EHT silhouette idiom (M87*, Sgr A*). One texture
+ *  shared across every BH sprite. */
+function makeAccretionDiskTexture(): CanvasTexture {
+  const SIZE = 256;
+  const canvas = document.createElement("canvas");
+  canvas.width = SIZE;
+  canvas.height = SIZE;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("2d context unavailable");
+  // Transparent base — we want the BH to read against the sky.
+  ctx.clearRect(0, 0, SIZE, SIZE);
+  const cx = SIZE / 2;
+  const cy = SIZE / 2;
+  // Outer warm ring → photon-ring darkening → black core.
+  const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, SIZE / 2);
+  grad.addColorStop(0.0, "rgba(0,0,0,0.95)"); // event-horizon shadow
+  grad.addColorStop(0.18, "rgba(0,0,0,0.85)");
+  grad.addColorStop(0.22, "rgba(255,210,140,0.95)"); // photon ring bright edge
+  grad.addColorStop(0.32, "rgba(255,160,80,0.85)");
+  grad.addColorStop(0.55, "rgba(220,110,40,0.55)");
+  grad.addColorStop(0.85, "rgba(140,60,20,0.18)");
+  grad.addColorStop(1.0, "rgba(140,60,20,0)");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, SIZE, SIZE);
+  const tex = new CanvasTexture(canvas);
+  tex.minFilter = LinearFilter;
+  tex.magFilter = LinearFilter;
+  return tex;
 }
