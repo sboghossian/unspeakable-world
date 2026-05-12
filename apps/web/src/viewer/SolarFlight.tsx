@@ -12,6 +12,7 @@ import {
   formatDistanceAU,
 } from "./ui/SceneBottomHud";
 import { TopBarActions } from "./ui/TopBarActions";
+import { SatellitesPanel } from "./ui/SatellitesPanel";
 import { SettingsPanel } from "./ui/SettingsPanel";
 import { SnapshotButton } from "./ui/SnapshotButton";
 import { ShareButton } from "./ui/ShareButton";
@@ -248,6 +249,7 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
               {t}
             </button>
           ))}
+          <SatellitesPanel />
           <TopBarActions
             focusActive={focusMode}
             onFocusToggle={() => setFocusMode((v) => !v)}
