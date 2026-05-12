@@ -26,6 +26,7 @@ import { TopBarActions } from "./ui/TopBarActions";
 import { AchievementsPanel } from "./ui/AchievementsPanel";
 import { SurpriseButton } from "./ui/SurpriseButton";
 import { ShortcutsOverlay } from "./ui/ShortcutsOverlay";
+import { ReportBugButton } from "./ui/ReportBugButton";
 import { unlock } from "../lib/achievements";
 import {
   LightConeControls,
@@ -476,6 +477,8 @@ export function Universe({ onExit }: Props) {
 
       {/* Color legend (bottom-left) */}
       <ColorLegend />
+
+      <ReportBugButton />
 
       {shortcutsOpen && (
         <ShortcutsOverlay onClose={() => setShortcutsOpen(false)} />
