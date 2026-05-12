@@ -259,7 +259,7 @@ export class MoonField extends Object3D {
     const geom = new BufferGeometry();
     geom.setAttribute("position", new BufferAttribute(positions, 3));
     const mat = new LineBasicMaterial({
-      color: 0x88a4c4,
+      color: hueForMoon(m.name),
       transparent: true,
       opacity: 0,
       depthWrite: false,
@@ -277,6 +277,46 @@ function clamp01(x: number): number {
   if (x < 0) return 0;
   if (x > 1) return 1;
   return x;
+}
+
+/** Per-moon orbit-line hue. Matches AstroGrid v1.1.10's "each moon's orbit
+ *  line uses its own hue so you can tell crowded systems apart at a
+ *  glance" — Saturn's seven moons would be indistinguishable in one tint. */
+function hueForMoon(name: string): number {
+  switch (name) {
+    case "Phobos":
+      return 0xff9c6e;
+    case "Deimos":
+      return 0xd1764e;
+    case "Mimas":
+      return 0x86c1ff;
+    case "Enceladus":
+      return 0xb6e6f5;
+    case "Tethys":
+      return 0xa6ffd3;
+    case "Dione":
+      return 0xffd486;
+    case "Rhea":
+      return 0xffb070;
+    case "Titan":
+      return 0xfff5a3;
+    case "Iapetus":
+      return 0xc89aff;
+    case "Miranda":
+      return 0x9aeaff;
+    case "Ariel":
+      return 0xc4f0ff;
+    case "Umbriel":
+      return 0x8e9fb8;
+    case "Titania":
+      return 0xc1d6f0;
+    case "Oberon":
+      return 0x9bb5c8;
+    case "Triton":
+      return 0x6fa8ff;
+    default:
+      return 0x88a4c4;
+  }
 }
 
 function makeOrbitLoop(
