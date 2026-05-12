@@ -964,6 +964,73 @@ export const GUIDE_PAGES: GuidePage[] = [
   },
 
   {
+    slug: "whoami",
+    section: "About",
+    title: "Who made this",
+    lede:
+      "The Unspeakable World is a one-builder open-source project. Hi 👋 — I'm Stephane.",
+    body: [
+      { kind: "h2", text: "Stephane Boghossian" },
+      {
+        kind: "p",
+        text:
+          "Builder of consumer + AI products. Day job is co-founding HAQQ — a legal-AI startup. Nights & weekends I build emotionally legible tools for the open web. The Unspeakable World is what happens when you give a curious astronomer a browser, a Three.js shader, and a public Virtual-Observatory archive.",
+      },
+      { kind: "h2", text: "Why this exists" },
+      {
+        kind: "p",
+        text:
+          "Astronomy data has been heroically open for thirty years — every photon ever recorded by NASA, ESA, ESO, and friends is one HTTPS request away. The viewer layer hasn't caught up. Stellarium is a desktop install. Aladin Lite is a 2D sky atlas. NASA Eyes is a spacecraft tracker. SpaceEngine is gorgeous and closed. There was no single thing that let a curious person — not a researcher — fly from Earth's day/night terminator to the cosmic web in a browser, for free, with their feet on every dataset that real astronomers use.",
+      },
+      {
+        kind: "p",
+        text:
+          "So I started building one. Federated where possible (the sky tiles stream from CDS Strasbourg, the catalog queries hit SIMBAD live, the satellites come from Celestrak SGP4 every second), self-hosted only where the upstream stops being polite. MIT licensed end to end.",
+      },
+      { kind: "h2", text: "Stack + sources" },
+      {
+        kind: "ul",
+        items: [
+          "Rendering: Three.js (WebGL2) with custom shaders for Earth day/night, Saturn ring shadow, Sun gravity-well grid, atmospheric scattering",
+          "Frontend: Vite 6 + React 19 + TypeScript strict + Tailwind",
+          "Data warehousing: DuckDB-WASM in a Web Worker for the Hipparcos catalog",
+          "Ephemerides: AstronomyEngine (planets, moons, eclipses), satellite.js (SGP4 for live TLE)",
+          "Federation: Cloudflare Workers proxy SIMBAD / NED / VizieR / Wikipedia + cache aggressively",
+          "Hosting: Cloudflare Pages + R2 + Workers (free tier — we pay only when the Hacker News front page happens)",
+        ],
+      },
+      { kind: "h2", text: "Data we draw from" },
+      {
+        kind: "p",
+        text:
+          "Hipparcos-Yale-Gliese (118k stars), Gaia DR3 (nearby subset), OpenNGC (13.9k deep-sky), NASA Exoplanet Archive (6.3k confirmed), Minor Planet Center (10k asteroids + comets), ATNF Pulsar Catalogue (3.9k pulsars), Open Supernova Catalog, Green's SNR catalog, LIGO GWOSC + BlackCAT for black holes, Celestrak TLEs for ~400 live satellites, AstronomyEngine for planetary state vectors, CDS Strasbourg's HiPS tiles for the multi-wavelength sky, NOAA SWPC for live aurora + solar wind, JPL HORIZONS for spacecraft trajectories.",
+      },
+      { kind: "h2", text: "How to support" },
+      {
+        kind: "p",
+        text:
+          "It's free, no account, no tracking, no ads — the work is the contribution. If you want to throw something in the hat: ⭐ the GitHub repo, send a screenshot to your favourite group chat, or tweet a feature you'd like to see. Bug reports via the 🐛 button in the viewer go straight into the public issue tracker.",
+      },
+      {
+        kind: "callout",
+        tone: "tip",
+        text:
+          "If you teach astronomy and want a deep link to a specific lesson view, the share button in the top-bar captures the entire camera + simulation state into a URL. Drop it into Notion / your LMS and the student lands exactly where you were.",
+      },
+      { kind: "h2", text: "Find me" },
+      {
+        kind: "ul",
+        items: [
+          "Email — stephanemboghossian@gmail.com",
+          "GitHub — github.com/sboghossian",
+          "Project — github.com/sboghossian/unspeakable-world",
+        ],
+      },
+    ],
+    prev: "shortcuts-ref",
+  },
+
+  {
     slug: "shortcuts-ref",
     section: "Release notes",
     title: "Keyboard shortcuts",
@@ -1025,5 +1092,6 @@ export const GUIDE_PAGES: GuidePage[] = [
       },
     ],
     prev: "deep-links",
+    next: "whoami",
   },
 ];
