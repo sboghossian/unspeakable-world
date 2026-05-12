@@ -25,6 +25,7 @@ import {
 import { TopBarActions } from "./ui/TopBarActions";
 import { AchievementsPanel } from "./ui/AchievementsPanel";
 import { SurpriseButton } from "./ui/SurpriseButton";
+import { ShortcutsOverlay } from "./ui/ShortcutsOverlay";
 import { unlock } from "../lib/achievements";
 import {
   LightConeControls,
@@ -100,6 +101,7 @@ export function Universe({ onExit }: Props) {
   const [timeMachineOpen, setTimeMachineOpen] = useState(false);
   const [searchIndex, setSearchIndex] = useState<SearchIndex | null>(null);
   const [inspect, setInspect] = useState<UniverseHit | null>(null);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [observer, setObserver] = useState<{ lat: number; lon: number } | null>(
     () => {
       try {
@@ -145,6 +147,21 @@ export function Universe({ onExit }: Props) {
   useEffect(() => {
     if (state.overlayId && state.overlayMix > 0.05) unlock("multi-wavelength");
   }, [state.overlayId, state.overlayMix]);
+
+  // Global `?` opens the shortcuts overlay; `Esc` closes it.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t?.tagName === "INPUT" || t?.tagName === "TEXTAREA") return;
+      if (e.key === "?" || (e.shiftKey && e.key === "/")) {
+        e.preventDefault();
+        setShortcutsOpen((v) => !v);
+      }
+      if (e.key === "Escape") setShortcutsOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   // Hotkeys: `K` zone overlays, `Y` aurora, `T` tracking on last target.
   useEffect(() => {
@@ -459,6 +476,10 @@ export function Universe({ onExit }: Props) {
 
       {/* Color legend (bottom-left) */}
       <ColorLegend />
+
+      {shortcutsOpen && (
+        <ShortcutsOverlay onClose={() => setShortcutsOpen(false)} />
+      )}
     </div>
   );
 }

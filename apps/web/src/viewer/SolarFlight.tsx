@@ -15,6 +15,7 @@ import { TopBarActions } from "./ui/TopBarActions";
 import { SatellitesPanel } from "./ui/SatellitesPanel";
 import { AchievementsPanel } from "./ui/AchievementsPanel";
 import { ColorLegend } from "./ui/ColorLegend";
+import { ShortcutsOverlay } from "./ui/ShortcutsOverlay";
 import { recordPlanetVisit, unlock } from "../lib/achievements";
 import { SettingsPanel } from "./ui/SettingsPanel";
 import { SnapshotButton } from "./ui/SnapshotButton";
@@ -150,6 +151,7 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
   const [sandboxOpen, setSandboxOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
   // AstroGrid-style keyboard shortcuts: ` home, 1-8 planet jump, F focus.
   useEffect(() => {
@@ -162,6 +164,15 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
 
       if (e.key === "`") {
         sceneRef.current?.setFocus("Sun");
+        return;
+      }
+      if (e.key === "?" || (e.shiftKey && e.key === "/")) {
+        e.preventDefault();
+        setShortcutsOpen((v) => !v);
+        return;
+      }
+      if (e.key === "Escape") {
+        setShortcutsOpen(false);
         return;
       }
       if (e.key === "f" || e.key === "F") {
@@ -555,6 +566,10 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
       )}
 
       {!focusMode && <ColorLegend />}
+
+      {shortcutsOpen && (
+        <ShortcutsOverlay onClose={() => setShortcutsOpen(false)} />
+      )}
     </div>
   );
 }
