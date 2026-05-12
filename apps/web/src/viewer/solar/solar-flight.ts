@@ -44,6 +44,7 @@ import { SatelliteField } from "../satellites/satellite-field";
 import { IssModel } from "../satellites/iss-model";
 import { JwstModel } from "../spacecraft/jwst-model";
 import { OortCloud } from "./oort-cloud";
+import { SunGravityWell } from "./gravity-well";
 import * as satelliteJs from "satellite.js";
 import { AsteroidField } from "../universe/asteroids";
 import { AuroraOverlay } from "../space-weather/aurora-overlay";
@@ -257,6 +258,9 @@ export class SolarFlightScene {
   /** Oort Cloud spherical shell — fades in once the camera is past
    *  Neptune so it doesn't clutter the inner-system view. */
   private oortCloud: OortCloud | null = null;
+  /** Faint lattice in the ecliptic plane that dips toward the Sun like
+   *  a stretched rubber sheet. */
+  private gravityWell: SunGravityWell | null = null;
   /** Sun-Earth Lagrange-point markers L1-L5. Each is a sprite label
    *  plus a small dot, positioned each frame from Earth's heliocentric
    *  state. */
@@ -366,6 +370,10 @@ export class SolarFlightScene {
     // Oort Cloud — only readable when zoomed out past Neptune.
     this.oortCloud = new OortCloud();
     this.scene.add(this.oortCloud.points);
+
+    // Gravity-well grid — visible at inner-solar-system scales only.
+    this.gravityWell = new SunGravityWell();
+    this.scene.add(this.gravityWell.mesh);
     void fetch("/data/satellites.json")
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -1605,11 +1613,12 @@ export class SolarFlightScene {
     // frame; turning it off lets the planet drift through the view as it
     // orbits.
     if (this.tracking && this.focusName !== "Sun") this.applyCamera();
-    // Fade the Oort Cloud based on the camera's distance from the Sun
-    // (origin). Cheap — one uniform write per frame.
-    if (this.oortCloud) {
+    // Fade the Oort Cloud + gravity-well grid based on camera distance.
+    if (this.oortCloud || this.gravityWell) {
       const cp = this.camera.position;
-      this.oortCloud.updateForCamera(Math.hypot(cp.x, cp.y, cp.z));
+      const d = Math.hypot(cp.x, cp.y, cp.z);
+      this.oortCloud?.updateForCamera(d);
+      this.gravityWell?.updateForCamera(d);
     }
     // Standby: pause renderer.render when the tab is hidden or the user
     // has been idle for >60s. rAF keeps spinning so the next interaction
