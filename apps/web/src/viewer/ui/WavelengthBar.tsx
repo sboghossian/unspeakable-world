@@ -9,7 +9,11 @@
 const LAYERS = [
   { id: "halpha" as const, label: "Hα", sub: "Finkbeiner H-alpha", accent: "rose" },
   { id: "2mass" as const, label: "2MASS", sub: "near-IR", accent: "orange" },
+  { id: "spitzer" as const, label: "Spitzer", sub: "MIPS 24μm mid-IR", accent: "amber" },
   { id: "allwise" as const, label: "WISE", sub: "mid-IR", accent: "red" },
+  { id: "iris" as const, label: "IRAS", sub: "IRIS color far-IR", accent: "orange" },
+  { id: "akari" as const, label: "AKARI", sub: "FIS far-IR color", accent: "amber" },
+  { id: "herschel" as const, label: "Herschel", sub: "PACS far-IR (partial sky)", accent: "rose" },
   { id: "galex" as const, label: "UV", sub: "GALEX AIS", accent: "blue" },
   {
     id: "integral" as const,
@@ -17,7 +21,15 @@ const LAYERS = [
     sub: "INTEGRAL hard X-ray",
     accent: "purple",
   },
+  { id: "rass" as const, label: "ROSAT", sub: "RASS soft X-ray 0.1-2.4 keV", accent: "purple" },
+  {
+    id: "erosita" as const,
+    label: "eROSITA",
+    sub: "eROSITA-DE DR1 RGB (German half-sky)",
+    accent: "purple",
+  },
   { id: "nvss" as const, label: "Radio", sub: "NVSS 1.4 GHz", accent: "teal" },
+  { id: "hi4pi" as const, label: "HI 21cm", sub: "HI4PI neutral hydrogen", accent: "teal" },
   { id: "fermi" as const, label: "γ-ray", sub: "Fermi LAT 1-300 GeV", accent: "lime" },
   { id: "planck" as const, label: "CMB", sub: "Planck HFI sub-mm", accent: "fuchsia" },
   { id: "gaia" as const, label: "Gaia", sub: "Gaia DR3 Bp·G·Rp flux", accent: "cyan" },
@@ -26,6 +38,10 @@ const LAYERS = [
 const ACCENT: Record<string, { active: string; idle: string }> = {
   orange: {
     active: "border-orange-400/40 bg-orange-400/15 text-orange-300",
+    idle: "border-white/10 bg-white/5 text-white/60 hover:bg-white/10",
+  },
+  amber: {
+    active: "border-amber-400/40 bg-amber-400/15 text-amber-200",
     idle: "border-white/10 bg-white/5 text-white/60 hover:bg-white/10",
   },
   red: {

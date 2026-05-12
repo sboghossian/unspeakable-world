@@ -71,11 +71,19 @@ const TRAVEL: Array<{ label: string; key: string; tone: string }> = [
 const WAVES: Array<{ id: string; label: string }> = [
   { id: "halpha", label: "Hα" },
   { id: "2mass", label: "2MASS" },
+  { id: "spitzer", label: "Spitzer 24μm" },
   { id: "allwise", label: "WISE" },
+  { id: "iris", label: "IRAS IRIS" },
+  { id: "akari", label: "AKARI FIS" },
+  { id: "herschel", label: "Herschel" },
   { id: "galex", label: "UV" },
   { id: "integral", label: "X-ray" },
+  { id: "rass", label: "ROSAT" },
+  { id: "erosita", label: "eROSITA DR1" },
   { id: "nvss", label: "Radio" },
+  { id: "hi4pi", label: "HI 21cm" },
   { id: "fermi", label: "γ-ray" },
+  { id: "planck", label: "CMB" },
   { id: "gaia", label: "Gaia DR3" },
 ];
 
