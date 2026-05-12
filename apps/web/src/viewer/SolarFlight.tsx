@@ -15,6 +15,7 @@ import { TopBarActions } from "./ui/TopBarActions";
 import { SatellitesPanel } from "./ui/SatellitesPanel";
 import { AchievementsPanel } from "./ui/AchievementsPanel";
 import { PlanetCrossSection } from "./ui/PlanetCrossSection";
+import { MythsPanel } from "./ui/MythsPanel";
 import { NewsPanel } from "./ui/NewsPanel";
 import { LessonPanel } from "./ui/LessonPanel";
 import { SetiPanel } from "./ui/SetiPanel";
@@ -291,6 +292,7 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
           <LessonPanel />
           <SetiPanel />
           <NewsPanel />
+          <MythsPanel />
           <AchievementsPanel />
           <TopBarActions
             focusActive={focusMode}
