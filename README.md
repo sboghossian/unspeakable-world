@@ -12,6 +12,41 @@
 
 ---
 
+## 📸 The product, in five frames
+
+<table>
+  <tr>
+    <td width="50%">
+      <a href="docs/screenshots/03-landing.png"><img src="docs/screenshots/03-landing.png" alt="Landing page — a calm gateway into the viewer with APOD, recent astronomy, highlights" /></a>
+      <br /><sub><b>Landing</b> — APOD daily card + astronomy-today rail + feature highlights.</sub>
+    </td>
+    <td width="50%">
+      <a href="docs/screenshots/01-multiwavelength.png"><img src="docs/screenshots/01-multiwavelength.png" alt="Multi-wavelength cross-fade slider revealing infrared dust over the visible sky" /></a>
+      <br /><sub><b>Multi-wavelength cross-fade</b> — drag the slider to morph DSS2 → 2MASS → WISE → INTEGRAL → GALEX → ROSAT/eROSITA → Planck CMB.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <a href="docs/screenshots/04-constellations.png"><img src="docs/screenshots/04-constellations.png" alt="IAU constellation lines + labels on the celestial sphere" /></a>
+      <br /><sub><b>Constellations</b> — all 88 IAU figures + four cultural traditions (Western · Chinese · Polynesian · Lakota).</sub>
+    </td>
+    <td>
+      <a href="docs/screenshots/05-andromeda-2mass.png"><img src="docs/screenshots/05-andromeda-2mass.png" alt="Zoomed-in view of the Andromeda Galaxy with the 2MASS near-infrared survey" /></a>
+      <br /><sub><b>Andromeda · 2MASS</b> — federated HiPS tiles let you zoom into any object at survey resolution.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2">
+      <a href="docs/screenshots/02-wise-ir.png"><img src="docs/screenshots/02-wise-ir.png" alt="The Milky Way plane in WISE mid-infrared, glowing with warm dust and star-forming regions" /></a>
+      <br /><sub><b>WISE mid-infrared</b> — the warm dust lane of the Milky Way and every star-forming region the eye can't see.</sub>
+    </td>
+  </tr>
+</table>
+
+> More screenshots welcome — see [docs/screenshots/README.md](docs/screenshots/README.md) for the shot list and how to capture them automatically with `node tools/screenshot.mjs`.
+
+---
+
 ## 🆕 v3 — the educational reference release
 
 A focused sprint to push UW from "richest viewer in the field" to "first
