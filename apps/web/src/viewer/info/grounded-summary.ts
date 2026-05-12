@@ -4,11 +4,13 @@
  * v1: NO LLM call. We stitch:
  *   1. Wikipedia REST `/page/summary` lead (~100 words)
  *   2. SIMBAD object type / spectral / V-mag, when we already have a hit
- *
- * NASA ADS is intentionally skipped in v1 (requires an API key).
+ *   3. NASA ADS deep-link sorted by citation count — search-by-name link,
+ *      no API key required
  *
  * The output is rendered in InfoPanel as a collapsible section with a
- * "Sources:" list and a small disclaimer footer.
+ * "Sources:" list and a small disclaimer footer. Every claim has a
+ * citable origin: the Wikipedia URL, the SIMBAD object page, and the
+ * top-cited ADS papers about this object.
  */
 
 import { idb } from "../../lib/idb-cache";
@@ -81,6 +83,17 @@ export async function fetchGroundedSummary(
       )}`,
     });
   }
+  // NASA ADS — top-cited papers about this object. No API key needed for
+  // a search-by-name deep link sorted by citation count. The SIMBAD
+  // canonical name is preferred when available — ADS resolves the same
+  // aliases SIMBAD does.
+  const adsQuery = simbadHit?.name ?? name;
+  sources.push({
+    label: "NASA ADS",
+    url: `https://ui.adsabs.harvard.edu/search/q=${encodeURIComponent(
+      `object:"${adsQuery}"`,
+    )}&sort=citation_count%20desc`,
+  });
   const out: GroundedSummary = { summary, sources };
   await idb.put("wikipedia", cacheKey, out, TTL_SEC);
   return out;
