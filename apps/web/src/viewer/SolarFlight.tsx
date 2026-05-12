@@ -7,6 +7,10 @@ import {
 } from "./solar/solar-flight";
 import { TimeStrip } from "./ui/TimeStrip";
 import { InfoPanel } from "./ui/InfoPanel";
+import {
+  SceneBottomHud,
+  formatDistanceAU,
+} from "./ui/SceneBottomHud";
 import { SettingsPanel } from "./ui/SettingsPanel";
 import { SnapshotButton } from "./ui/SnapshotButton";
 import { ShareButton } from "./ui/ShareButton";
@@ -246,7 +250,25 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
         </div>
       </div>
 
-      {/* Bottom bar — chips + time strip (hidden in focus mode) */}
+      {/* Cinematic readout — DISTANCE FROM SUN / vicinity / SCREEN SCALE.
+          Anchors slightly above the action buttons + time strip. */}
+      <div
+        className={`pointer-events-none absolute inset-x-0 bottom-24 z-[6] flex justify-center transition-opacity ${
+          focusMode ? "opacity-0" : "opacity-100"
+        }`}
+      >
+        <SceneBottomHud
+          topLabel={`Distance from ${state.focus === "Sun" ? "Sun" : state.focus}`}
+          distance={formatDistanceAU(state.cameraDistance)}
+          vicinity={state.vicinity}
+          // 2·d·tan(25°) ≈ d·0.933 for 50° vertical FOV. Close enough
+          // for an at-a-glance "how wide am I seeing" readout.
+          screenScale={formatDistanceAU(state.cameraDistance * 0.933)}
+          hidden={focusMode}
+        />
+      </div>
+
+      {/* Bottom bar — action buttons + time strip (hidden in focus mode) */}
       <div
         className={`pointer-events-none absolute inset-x-0 bottom-3 z-10 flex flex-col items-center gap-2 px-3 transition-opacity ${
           focusMode ? "opacity-0" : "opacity-100"
@@ -254,15 +276,6 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
       >
         <div className="pointer-events-auto flex flex-wrap items-center gap-2">
           <Chip label="focus" value={state.focus} accent />
-          <Chip label="vicinity" value={state.vicinity} />
-          <Chip
-            label="distance"
-            value={
-              state.cameraDistance >= 1
-                ? `${state.cameraDistance.toFixed(2)} AU`
-                : `${(state.cameraDistance * 149.6).toFixed(2)} M km`
-            }
-          />
           <button
             type="button"
             onClick={() => sceneRef.current?.setTracking(!state.tracking)}

@@ -19,6 +19,10 @@ import { ColorLegend } from "./ui/ColorLegend";
 import { LeftRail } from "./ui/LeftRail";
 import { InfoPanel } from "./ui/InfoPanel";
 import {
+  SceneBottomHud,
+  formatDistanceLY,
+} from "./ui/SceneBottomHud";
+import {
   LightConeControls,
   type LightConePreset,
 } from "./ui/LightConeControls";
@@ -354,11 +358,23 @@ export function Universe({ onExit }: Props) {
         </Suspense>
       )}
 
+      {/* Cinematic readout (DISTANCE FROM SUN / vicinity / SCREEN SCALE) */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-24 z-[6] flex justify-center">
+        <SceneBottomHud
+          topLabel="Distance from Sun"
+          distance={formatDistanceLY(state.distFromSunLY)}
+          vicinity={state.scaleLabel}
+          // Universe scene's PerspectiveCamera vfov is 50°; tan(25°) ≈ 0.466.
+          // `distFromSunLY` is approximately the camera's distance to the
+          // Sun, which doubles as a reasonable "distance to focus" proxy
+          // at galactic scales.
+          screenScale={formatDistanceLY(state.distFromSunLY * 0.933)}
+        />
+      </div>
+
       {/* Bottom bar */}
       <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex flex-col items-center gap-2 px-3">
         <div className="pointer-events-auto flex flex-wrap items-center gap-2">
-          <Chip label="vicinity" value={state.scaleLabel} accent />
-          <Chip label="distance from Sun" value={fmtDist(state.distFromSunLY)} />
           <Chip label="speed" value={`${fmtDist(state.speedLY)}/s`} />
         </div>
         <TimeStrip
