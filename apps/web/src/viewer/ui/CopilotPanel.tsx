@@ -12,6 +12,7 @@ import {
   DEFAULT_OLLAMA_URL,
 } from "../copilot/backends/ollama";
 import type { Citation, SceneContext } from "../copilot/types";
+import type { CopilotHost, ToolResult } from "../copilot";
 
 /**
  * 🧠 Cosmic Copilot panel — slide-in chat that answers astronomy
@@ -34,6 +35,8 @@ type StoredMessage = {
   role: "user" | "assistant";
   content: string;
   citations?: Citation[];
+  /** Tool calls the model issued during this assistant turn, with status. */
+  tools?: ToolResult[];
 };
 
 type CopilotSettings = {
@@ -107,6 +110,12 @@ export type CopilotPanelProps = {
   seedQuestion?: string | null;
   /** Called when the panel consumes the seed so the parent can clear it. */
   onSeedConsumed?: () => void;
+  /**
+   * Bridge to the viewer's scene. When provided, the Copilot can call
+   * tools ("fly to", "enable layer", "snapshot", etc.). Null means
+   * read-only chat — tool-calling is fully disabled.
+   */
+  host?: CopilotHost | null;
 };
 
 export function CopilotPanel({
@@ -115,11 +124,14 @@ export function CopilotPanel({
   context,
   seedQuestion,
   onSeedConsumed,
+  host,
 }: CopilotPanelProps) {
   const [thread, setThread] = useState<StoredMessage[]>(() => loadThread());
   const [draft, setDraft] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [streamBuf, setStreamBuf] = useState("");
+  /** Tool calls in-flight for the current streaming turn (cleared on commit). */
+  const [streamTools, setStreamTools] = useState<ToolResult[]>([]);
   const [backendId, setBackendId] = useState<string>("offline");
   const [backendLabel, setBackendLabel] = useState<string>("Offline (built-in)");
   const [ollamaUp, setOllamaUp] = useState<boolean>(false);
@@ -204,13 +216,22 @@ export function CopilotPanel({
       setDraft("");
       setStreaming(true);
       setStreamBuf("");
+      setStreamTools([]);
 
       const ctrl = new AbortController();
       abortRef.current = ctrl;
 
+      const liveTools: ToolResult[] = [];
       let acc = "";
       try {
-        for await (const tok of copilot.ask(trimmed, context, ctrl.signal)) {
+        const iter = copilot.ask(trimmed, context, ctrl.signal, {
+          host: host ?? null,
+          onToolResult: (r) => {
+            liveTools.push(r);
+            setStreamTools([...liveTools]);
+          },
+        });
+        for await (const tok of iter) {
           acc += tok;
           setStreamBuf(acc);
         }
@@ -221,6 +242,11 @@ export function CopilotPanel({
           ...(final?.citations && final.citations.length > 0
             ? { citations: final.citations }
             : {}),
+          ...(final?.toolResults && final.toolResults.length > 0
+            ? { tools: final.toolResults }
+            : liveTools.length > 0
+              ? { tools: liveTools }
+              : {}),
         };
         setThread((t) => [...t, assistantMsg]);
       } catch (err) {
@@ -236,10 +262,11 @@ export function CopilotPanel({
       } finally {
         setStreaming(false);
         setStreamBuf("");
+        setStreamTools([]);
         abortRef.current = null;
       }
     },
-    [context, streaming],
+    [context, streaming, host],
   );
 
   // Consume seed question once when the panel opens with one set.
@@ -334,6 +361,7 @@ export function CopilotPanel({
             message={{
               role: "assistant",
               content: streamBuf || "…",
+              ...(streamTools.length > 0 ? { tools: streamTools } : {}),
             }}
             streaming
           />
@@ -444,6 +472,13 @@ function Bubble({
             : "border border-white/10 bg-white/[0.04] text-white/85"
         }`}
       >
+        {message.tools && message.tools.length > 0 && (
+          <div className="mb-2 flex flex-col gap-1">
+            {message.tools.map((t, i) => (
+              <ToolCard key={`${t.name}-${i}`} result={t} />
+            ))}
+          </div>
+        )}
         <Prose text={message.content} />
         {streaming && (
           <span className="ml-0.5 inline-block h-3 w-1.5 animate-pulse bg-white/60 align-middle" />
@@ -470,6 +505,27 @@ function Bubble({
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+/**
+ * Inline pill rendering a tool call's status. Shown above the assistant
+ * prose so the user sees the side-effect that triggered the answer.
+ */
+function ToolCard({ result }: { result: ToolResult }) {
+  const ok = result.ok;
+  const tone = ok
+    ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-200"
+    : "border-amber-400/30 bg-amber-400/10 text-amber-200";
+  const icon = ok ? "✓" : "⚠";
+  return (
+    <div
+      className={`flex items-center gap-2 rounded-md border px-2 py-1 font-mono text-[11px] ${tone}`}
+      title={result.message}
+    >
+      <span className="text-base leading-none">{icon}</span>
+      <span className="truncate">{result.label}</span>
     </div>
   );
 }

@@ -1,8 +1,13 @@
 import { useState } from "react";
 import { LESSONS } from "../curriculum/lessons";
 import type { Lesson } from "../curriculum/types";
-import { useLessonProgress } from "../../lib/lesson-progress";
+import {
+  getOverallProgress,
+  useLessonProgress,
+} from "../../lib/lesson-progress";
 import { LessonRunner } from "./LessonRunner";
+import { CertificatePanel } from "./CertificatePanel";
+import { encodeMyProgress, buildShareSegment } from "../../lib/teacher";
 import { t, useLanguage } from "../../lib/i18n";
 
 /**
@@ -26,9 +31,12 @@ export function LessonPanel() {
   useLanguage();
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState<Lesson | null>(null);
+  const [showCert, setShowCert] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
   const progress = useLessonProgress();
   const total = LESSONS.length;
   const done = LESSONS.filter((l) => progress[l.id]?.completed).length;
+  const overall = getOverallProgress();
 
   return (
     <>
@@ -49,6 +57,45 @@ export function LessonPanel() {
             Short, narrated tours of where we are in the universe. Each one
             takes you somewhere real.
           </p>
+          <div className="mb-3" aria-label={`Overall progress ${overall.percentage}%`}>
+            <div className="mb-1 flex items-baseline justify-between font-mono text-[10px] uppercase tracking-widest text-white/45">
+              <span>Overall</span>
+              <span className="text-emerald-300/85">{overall.percentage}%</span>
+            </div>
+            <div className="h-1 w-full overflow-hidden rounded-full bg-white/10">
+              <div
+                className="h-full bg-emerald-400 transition-all duration-500 ease-out"
+                style={{ width: `${overall.percentage}%` }}
+              />
+            </div>
+            <div className="mt-2 flex items-center gap-2">
+              {overall.percentage >= 100 && (
+                <button
+                  type="button"
+                  onClick={() => setShowCert(true)}
+                  className="inline-flex h-7 items-center rounded-md border border-emerald-400/55 bg-emerald-400/15 px-2.5 font-mono text-[10px] uppercase tracking-widest text-emerald-100 transition hover:bg-emerald-400/25"
+                >
+                  View certificate
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  const segment = buildShareSegment("me", encodeMyProgress());
+                  try {
+                    void navigator.clipboard.writeText(segment);
+                    setShareCopied(true);
+                    window.setTimeout(() => setShareCopied(false), 1500);
+                  } catch {
+                    /* ignore */
+                  }
+                }}
+                className="inline-flex h-7 items-center rounded-md border border-white/15 bg-white/[0.04] px-2.5 font-mono text-[10px] uppercase tracking-widest text-white/75 transition hover:bg-white/10 hover:text-white"
+              >
+                {shareCopied ? "Copied!" : "Share progress"}
+              </button>
+            </div>
+          </div>
           <ul className="space-y-2">
             {LESSONS.map((lesson) => {
               const p = progress[lesson.id];
@@ -111,6 +158,7 @@ export function LessonPanel() {
       {active && (
         <LessonRunner lesson={active} onClose={() => setActive(null)} />
       )}
+      {showCert && <CertificatePanel onClose={() => setShowCert(false)} />}
     </>
   );
 }

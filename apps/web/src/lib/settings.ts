@@ -18,6 +18,17 @@ import { useEffect, useState } from "react";
  */
 export type ExplanationTier = "curious" | "student" | "expert";
 
+/**
+ * Display-font preference for headline / "font-display" surfaces.
+ * - `cosmic`   — Space Grotesk, the current geometric sans (default).
+ * - `editorial` — humanist serif via the system `font-serif` stack.
+ * - `mono`     — full-monospace, retro CRT feel.
+ *
+ * Applied by setting `data-font="<value>"` on `<html>` and matching
+ * CSS selectors in `styles.css` that swap the `font-display` family.
+ */
+export type DisplayFont = "cosmic" | "editorial" | "mono";
+
 export type AppSettings = {
   orbitOpacity: number; // 0–1
   gridOpacity: number; // 0–1
@@ -53,6 +64,8 @@ export type AppSettings = {
    *                       renderer: "webgpu" }))
    */
   renderer: "webgl" | "webgpu" | "auto";
+  /** Display-font preference for headline / "font-display" surfaces. */
+  displayFont: DisplayFont;
 };
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -71,6 +84,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   audioMuted: false,
   explanationTier: "student",
   renderer: "webgl",
+  displayFont: "cosmic",
 };
 
 const STORAGE_KEY = "uw.settings.v1";
@@ -119,6 +133,12 @@ function sanitize(raw: unknown): AppSettings {
       partial.renderer === "webgl"
         ? partial.renderer
         : DEFAULT_SETTINGS.renderer,
+    displayFont:
+      partial.displayFont === "cosmic" ||
+      partial.displayFont === "editorial" ||
+      partial.displayFont === "mono"
+        ? partial.displayFont
+        : DEFAULT_SETTINGS.displayFont,
   };
 }
 

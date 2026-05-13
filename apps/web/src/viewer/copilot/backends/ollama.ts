@@ -60,6 +60,15 @@ export class OllamaBackend implements CopilotBackend {
   }
 
   async chat(messages: Message[], opts: ChatOptions): Promise<ChatResult> {
+    // Ollama small models in the default chain don't reliably emit
+    // OpenAI-style tool JSON. If the panel asked for tool-calling (host
+    // present), surface a one-line refusal up-front so the user knows to
+    // switch backends — then continue with a normal prose answer.
+    const refusalNote = opts.host
+      ? "I can't control the viewer with this backend. " +
+        "Try the Cloudflare backend in settings.\n\n"
+      : "";
+    if (refusalNote) opts.onToken?.(refusalNote);
     const body = JSON.stringify({
       model: this.model,
       messages: messages.map((m) => ({ role: m.role, content: m.content })),
@@ -121,9 +130,10 @@ export class OllamaBackend implements CopilotBackend {
       reader.releaseLock();
     }
 
+    const finalText = refusalNote + acc;
     return {
-      text: acc,
-      citations: extractCitations(acc),
+      text: finalText,
+      citations: extractCitations(finalText),
     };
   }
 }

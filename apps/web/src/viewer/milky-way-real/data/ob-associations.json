@@ -1,0 +1,20 @@
+{
+  "_meta": {
+    "description": "Hand-curated bright OB associations in the Milky Way. Galactic coordinates l, b in degrees; distance in kiloparsecs; size in parsecs.",
+    "attribution": "Compiled from public-domain literature (de Zeeuw+ 1999, Wright+ 2020, Mel'nik & Dambis 2017). CC0.",
+    "version": 1,
+    "note": "Phase 2 will swap to the Wright+ 2020 Gaia DR2 OB-association atlas (~200 entries)."
+  },
+  "associations": [
+    { "id": "Sco-Cen",   "name": "Scorpius-Centaurus",  "l": 313.0, "b":  14.0, "distKpc": 0.140, "sizePc": 160 },
+    { "id": "OriOB1",    "name": "Orion OB1",           "l": 207.0, "b": -17.0, "distKpc": 0.400, "sizePc":  80 },
+    { "id": "CygOB2",    "name": "Cygnus OB2",          "l":  80.2, "b":   0.8, "distKpc": 1.760, "sizePc":  30 },
+    { "id": "CygOB7",    "name": "Cygnus OB7",          "l":  88.0, "b":   1.5, "distKpc": 0.630, "sizePc":  60 },
+    { "id": "PerOB1",    "name": "Perseus OB1 (h&χ)",   "l": 134.7, "b":  -3.1, "distKpc": 2.300, "sizePc":  60 },
+    { "id": "PerOB2",    "name": "Perseus OB2",         "l": 159.0, "b": -17.0, "distKpc": 0.318, "sizePc":  50 },
+    { "id": "Car-OB1",   "name": "Carina OB1",          "l": 287.6, "b":  -0.7, "distKpc": 2.350, "sizePc":  80 },
+    { "id": "Cep-OB2",   "name": "Cepheus OB2",         "l":  96.0, "b":   4.5, "distKpc": 0.900, "sizePc":  80 },
+    { "id": "Vela-OB2",  "name": "Vela OB2",            "l": 263.0, "b":  -7.0, "distKpc": 0.410, "sizePc":  90 },
+    { "id": "LacOB1",    "name": "Lacerta OB1",         "l":  97.0, "b": -15.0, "distKpc": 0.520, "sizePc":  70 }
+  ]
+}

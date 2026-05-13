@@ -6,6 +6,13 @@
  * constellation lines and the equatorial / ecliptic / galactic grid.
  */
 
+import { useEffect, useState } from "react";
+import {
+  listRuntimeSurveys,
+  subscribeRuntimeSurveys,
+} from "../power-user/custom-hips";
+import type { Survey } from "../hips/surveys";
+
 const LAYERS = [
   { id: "halpha" as const, label: "Hα", sub: "Finkbeiner H-alpha", accent: "rose" },
   { id: "2mass" as const, label: "2MASS", sub: "near-IR", accent: "orange" },
@@ -133,6 +140,13 @@ export function WavelengthBar({
   projection,
   onToggleProjection,
 }: Props) {
+  const [runtimeSurveys, setRuntimeSurveys] = useState<Survey[]>(
+    listRuntimeSurveys(),
+  );
+  useEffect(
+    () => subscribeRuntimeSurveys(setRuntimeSurveys),
+    [],
+  );
   return (
     <div className="pointer-events-auto flex flex-col items-center gap-2 rounded-xl border border-white/10 bg-space-950/80 px-3 py-2 backdrop-blur md:flex-row">
       <span className="font-mono text-[10px] uppercase tracking-widest text-white/40">
@@ -165,6 +179,29 @@ export function WavelengthBar({
               title={`${l.label} ${l.sub}`}
             >
               {l.label}
+            </button>
+          );
+        })}
+        {/* User-pasted HiPS — appended after the curated list with a
+            "user" badge so users can distinguish their own surveys. */}
+        {runtimeSurveys.map((s) => {
+          const active = overlayId === s.id;
+          return (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => onSetOverlay(active ? null : s.id)}
+              className={`inline-flex items-center gap-1 rounded-md border px-2.5 py-1 font-mono text-xs uppercase tracking-wider transition ${
+                active
+                  ? "border-cyan-400/40 bg-cyan-400/15 text-cyan-200"
+                  : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10"
+              }`}
+              title={`${s.label} · ${s.attribution}`}
+            >
+              <span className="truncate max-w-[7rem]">{s.label}</span>
+              <span className="rounded-sm border border-cyan-400/40 bg-cyan-400/10 px-1 text-[8px] uppercase tracking-widest text-cyan-200">
+                user
+              </span>
             </button>
           );
         })}

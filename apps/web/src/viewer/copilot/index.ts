@@ -32,6 +32,7 @@ import type {
   Message,
   SceneContext,
 } from "./types";
+import type { CopilotHost, ToolResult } from "./tool-runner";
 
 export type BackendId =
   | "ollama"
@@ -121,11 +122,19 @@ export class Copilot {
    * Ask a question. Yields tokens as they stream in; the final yielded
    * string is the complete answer. Citations are attached to the
    * resolved promise via `lastResult`.
+   *
+   * Pass `host` to opt in to tool-calling. Tool results stream out via
+   * `onToolResult` as soon as each call resolves; the final `lastResult`
+   * also carries the full `toolResults` list.
    */
   async *ask(
     question: string,
     ctx: SceneContext,
     signal?: AbortSignal,
+    askOpts?: {
+      host?: CopilotHost | null;
+      onToolResult?: (result: ToolResult) => void;
+    },
   ): AsyncIterable<string> {
     this.history.push({ role: "user", content: question });
     const messages = withSystemPrompt(this.history, ctx);
@@ -149,6 +158,10 @@ export class Copilot {
       try {
         state.result = await this.backend.chat(messages, {
           ...(signal ? { signal } : {}),
+          ...(askOpts?.host !== undefined ? { host: askOpts.host } : {}),
+          ...(askOpts?.onToolResult
+            ? { onToolResult: askOpts.onToolResult }
+            : {}),
           onToken: (tok) => {
             queue.push(tok);
             resolveNext?.();
@@ -212,3 +225,6 @@ export type {
   ChatOptions,
   ChatResult,
 } from "./types";
+export type { CopilotHost, ToolResult } from "./tool-runner";
+export type { ToolCall, ToolName, ToolDef } from "./tools";
+export { TOOLS } from "./tools";

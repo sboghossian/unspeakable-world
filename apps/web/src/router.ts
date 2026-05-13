@@ -15,10 +15,12 @@ export type Route =
   | "galactic"
   | "universe"
   | "sandbox"
-  | "guide";
+  | "guide"
+  | "class";
 
 function getRoute(): Route {
   const hash = typeof window === "undefined" ? "" : window.location.hash;
+  if (hash.startsWith("#class")) return "class";
   if (hash.startsWith("#guide")) return "guide";
   if (hash.startsWith("#sandbox")) return "sandbox";
   if (hash.startsWith("#universe")) return "universe";
@@ -27,6 +29,33 @@ function getRoute(): Route {
   if (hash.startsWith("#solar")) return "solar";
   if (hash.startsWith("#viewer")) return "viewer";
   return "landing";
+}
+
+/**
+ * Universe Mode v2 is now the front-door experience. When the user lands
+ * on the bare root URL (no hash at all), redirect them to `/#universe`
+ * unless they've explicitly opted into the marketing landing page via
+ * `?landing=1`. The Hero CTA (owned by C1) routes to `/#universe`, so
+ * direct visitors and shared social cards still see the marketing page —
+ * only "naked" loads of the SPA front-door fall through to Universe.
+ *
+ * NOTE: this is intentionally a one-shot side effect, not a render-time
+ * transform. We want existing routes (`/#solar`, `/#galactic`, etc.) to
+ * continue resolving exactly as before — `App.tsx` owns the deprecation
+ * upgrade for those.
+ */
+export function ensureUniverseDefault(): void {
+  if (typeof window === "undefined") return;
+  if (window.location.hash) return;
+  const search = window.location.search;
+  if (search) {
+    const params = new URLSearchParams(search);
+    // Explicit opt-outs for the marketing page and embed flows.
+    if (params.get("landing") === "1") return;
+    if (params.get("embed") === "1") return;
+  }
+  // Use replaceState so the back button doesn't get a phantom `/` entry.
+  window.history.replaceState(null, "", `${window.location.pathname}${search}#universe`);
 }
 
 /** For #surface/<planet>, return the planet name. */

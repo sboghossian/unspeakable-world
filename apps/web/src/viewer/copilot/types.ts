@@ -7,6 +7,9 @@
  * Offline fallback second, OpenAI-compatible stretch third.
  */
 
+import type { ToolCall, ToolDef } from "./tools";
+import type { CopilotHost, ToolResult } from "./tool-runner";
+
 export type Role = "system" | "user" | "assistant";
 
 export type Message = {
@@ -26,11 +29,25 @@ export type ChatOptions = {
   signal?: AbortSignal;
   /** Streaming callback — receives incremental text chunks as they arrive. */
   onToken?: (token: string) => void;
+  /**
+   * Tool-calling. If `host` is provided the backend will pass `tools`
+   * (defaulting to the full TOOLS list) to the model, run any emitted
+   * calls against the host, and continue the chat with the results.
+   * Backends that don't support tool-calling ignore these and reply
+   * with prose only.
+   */
+  host?: CopilotHost | null;
+  tools?: ReadonlyArray<ToolDef>;
+  /** Called whenever a tool call has been run, so the UI can show a card. */
+  onToolResult?: (result: ToolResult) => void;
 };
 
 export type ChatResult = {
   text: string;
   citations: Citation[];
+  /** Tool calls the model emitted during this turn, with their outcomes. */
+  toolCalls?: ToolCall[];
+  toolResults?: ToolResult[];
 };
 
 export type CopilotBackend = {

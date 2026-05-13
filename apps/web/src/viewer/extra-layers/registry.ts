@@ -184,6 +184,68 @@ export const EXTRA_LAYERS: readonly LayerEntry[] = [
     },
   },
   {
+    id: "atel",
+    loader: () => import("../atel") as unknown as Promise<ExtraLayerModule>,
+    meta: {
+      id: "atel",
+      label: "ATel bulletins",
+      icon: "📡",
+      attribution:
+        "Astronomer's Telegram · astronomerstelegram.org · open w/ attribution",
+      modes: ["sky"],
+      defaultEnabled: false,
+      description:
+        "Recent Astronomer's Telegram bulletins whose RA/Dec parses out of the title or first paragraph. Refreshed every 15 minutes.",
+    },
+  },
+  {
+    id: "fxt",
+    loader: () => import("../fxt") as unknown as Promise<ExtraLayerModule>,
+    meta: {
+      id: "fxt",
+      label: "Fast X-ray transients",
+      icon: "💥",
+      attribution:
+        "Einstein Probe / Swift / Chandra · curated from ATel + GCN circulars (open literature)",
+      modes: ["sky"],
+      defaultEnabled: false,
+      description:
+        "Hand-curated catalogue of well-localised fast X-ray transients from Einstein Probe / Swift / Chandra / archival surveys.",
+      synthetic: true,
+    },
+  },
+  {
+    id: "goto",
+    loader: () => import("../goto") as unknown as Promise<ExtraLayerModule>,
+    meta: {
+      id: "goto",
+      label: "GOTO transient alerts",
+      icon: "🛰️",
+      attribution:
+        "GOTO Collaboration · goto-observatory.org · open w/ attribution",
+      modes: ["sky"],
+      defaultEnabled: false,
+      description:
+        "GOTO optical transient discoveries: kilonovae candidates, SNe, TDEs, GRB afterglows. Curated from GCN + TNS circulars (no public JSON yet).",
+      synthetic: true,
+    },
+  },
+  {
+    id: "blackgem",
+    loader: () => import("../blackgem") as unknown as Promise<ExtraLayerModule>,
+    meta: {
+      id: "blackgem",
+      label: "BlackGEM transient alerts",
+      icon: "🔭",
+      attribution: "BlackGEM Consortium · blackgem.org · open w/ attribution",
+      modes: ["sky"],
+      defaultEnabled: false,
+      description:
+        "BlackGEM optical transient discoveries (La Silla southern survey): kilonovae candidates, SNe, TDEs, GRB afterglows. Curated from GCN + TNS circulars.",
+      synthetic: true,
+    },
+  },
+  {
     id: "planck-polarization",
     loader: () =>
       import("../planck-polarization") as unknown as Promise<ExtraLayerModule>,
@@ -249,6 +311,22 @@ export const EXTRA_LAYERS: readonly LayerEntry[] = [
       description:
         "~10 000 nearby galaxies plotted with their measured peculiar-velocity vectors in the supergalactic frame.",
       synthetic: true,
+    },
+  },
+  {
+    id: "milky-way-real",
+    loader: () =>
+      import("../milky-way-real") as unknown as Promise<ExtraLayerModule>,
+    meta: {
+      id: "milky-way-real",
+      label: "Milky Way structure (HII + OB)",
+      icon: "🌀",
+      attribution:
+        "Curated: SIMBAD · Sharpless 1959 · Anderson+ 2014 (WISE HII) · Wright+ 2020 (OB associations) — CC0",
+      modes: ["galactic", "universe"],
+      defaultEnabled: false,
+      description:
+        "Famous HII regions (red H-alpha glow) and OB associations (blue clusters). Curated starter set — full WISE/Gaia DR2 catalogs in Phase 2.",
     },
   },
 
@@ -332,6 +410,22 @@ export const EXTRA_LAYERS: readonly LayerEntry[] = [
       defaultEnabled: false,
       description:
         "Latest rover photos from Curiosity and Perseverance via the NASA Mars Photos API.",
+    },
+  },
+  {
+    id: "sonification",
+    loader: () =>
+      import("../sonification") as unknown as Promise<ExtraLayerModule>,
+    meta: {
+      id: "sonification",
+      label: "Sky Sonification",
+      icon: "🎶",
+      attribution:
+        "Sonification synth · pure Web Audio · The Unspeakable World (MIT)",
+      modes: ["sky"],
+      defaultEnabled: false,
+      description:
+        "Turn the visible sky into music. Bright stars → drone pad, pulsars → kick drum, Messier objects → bell, GW events → bass swell. Muted by default — open the panel and press ▶.",
     },
   },
 ];

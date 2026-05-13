@@ -890,6 +890,50 @@ export class UniverseScene {
     this.publishState();
   }
 
+  /**
+   * Place the camera into one of the Universe Mode v2 named presets that
+   * the legacy hash routes (`#solar`, `#galactic`, `#sandbox`) absorb
+   * into. This is intentionally a thin wrapper around `flyTo()` for
+   * "solar-flight" + "galactic" so existing shareable URLs keep landing
+   * on the matching v2 camera.
+   *
+   * `"sandbox"` is currently deferred — the gravity sandbox owns its
+   * own scene/renderer and the integration was scoped out of this pass
+   * (see the deliverable notes). Calling `setPreset("sandbox")` navigates
+   * back to the legacy standalone Sandbox via `#sandbox?legacy=1` so the
+   * URL keeps working today; a future pass can wire it into the Universe
+   * frame natively without breaking this contract.
+   */
+  setPreset(
+    preset: "solar-flight" | "galactic" | "sandbox" | "free-flight",
+  ): void {
+    switch (preset) {
+      case "solar-flight":
+        // The legacy /#solar scene opens on the inner-solar system seen
+        // from above the ecliptic — the same vantage `flyTo("Sun")` uses.
+        this.flyTo("Sun");
+        return;
+      case "galactic":
+        // /#galactic put you in/near the Milky Way disk — fly to the
+        // Galactic Center so the bulge + spiral arms fill the view.
+        this.flyTo("Galactic Center");
+        return;
+      case "free-flight":
+        // Free-flight = the default Universe Mode entry vantage. Re-use
+        // the Sun preset; from there WASD + drag is unconstrained.
+        this.flyTo("Sun");
+        return;
+      case "sandbox":
+        // Deferred: see the universe-scene method docstring above.
+        // Navigate to the legacy Sandbox so the user still lands on a
+        // working scene rather than seeing an empty preset.
+        if (typeof window !== "undefined") {
+          window.location.hash = "#sandbox?legacy=1";
+        }
+        return;
+    }
+  }
+
   /** Jump to a named target, choosing a sensible camera offset. */
   flyTo(target: string): void {
     // Remember last destination for the T-key tracking shortcut.

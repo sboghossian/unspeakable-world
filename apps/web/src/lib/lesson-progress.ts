@@ -12,12 +12,20 @@
  */
 
 import { useEffect, useState } from "react";
+import { LESSONS } from "../viewer/curriculum/lessons";
 
 export type LessonProgress = {
   lessonId: string;
   started: boolean;
   stepIdx: number;
+  /** Latest attempt's quiz score (kept for backward compatibility). */
   quizScore?: { correct: number; total: number };
+  /** Best score across all attempts, normalised 0..1 (correct / total). */
+  bestScore?: number;
+  /** Total finished attempts (incremented when the lesson is completed). */
+  attempts?: number;
+  /** ISO timestamp of the FIRST completion; never overwritten on re-run. */
+  firstCompletedAt?: string;
   completed: boolean;
   updatedAt: string;
 };
@@ -46,6 +54,12 @@ function read(lessonId: string): LessonProgress | null {
       started: !!parsed.started,
       stepIdx: typeof parsed.stepIdx === "number" ? parsed.stepIdx : 0,
       quizScore: parsed.quizScore,
+      bestScore: typeof parsed.bestScore === "number" ? parsed.bestScore : undefined,
+      attempts: typeof parsed.attempts === "number" ? parsed.attempts : undefined,
+      firstCompletedAt:
+        typeof parsed.firstCompletedAt === "string"
+          ? parsed.firstCompletedAt
+          : undefined,
       completed: !!parsed.completed,
       updatedAt: parsed.updatedAt ?? new Date().toISOString(),
     };
@@ -101,19 +115,29 @@ export function markQuizScore(
   correct: number,
   total: number,
 ): void {
-  upsert(lessonId, (cur) => ({
-    ...cur,
-    started: true,
-    quizScore: { correct, total },
-  }));
+  upsert(lessonId, (cur) => {
+    const normalised = total > 0 ? correct / total : 0;
+    const prevBest = typeof cur.bestScore === "number" ? cur.bestScore : 0;
+    return {
+      ...cur,
+      started: true,
+      quizScore: { correct, total },
+      bestScore: Math.max(prevBest, normalised),
+    };
+  });
 }
 
 export function markCompleted(lessonId: string): void {
-  upsert(lessonId, (cur) => ({
-    ...cur,
-    started: true,
-    completed: true,
-  }));
+  upsert(lessonId, (cur) => {
+    const nowIso = new Date().toISOString();
+    return {
+      ...cur,
+      started: true,
+      completed: true,
+      attempts: (cur.attempts ?? 0) + 1,
+      firstCompletedAt: cur.firstCompletedAt ?? nowIso,
+    };
+  });
 }
 
 /** Returns every known lesson record, keyed by lesson id. */
@@ -157,4 +181,76 @@ export function useLessonProgress(): Record<string, LessonProgress> {
   }, []);
 
   return snap;
+}
+
+/**
+ * Aggregate completion across the whole curriculum. `totalCount` is the
+ * authoritative number of lessons we ship, not the number of keys in
+ * localStorage (which only counts started lessons).
+ */
+export function getOverallProgress(): {
+  completedCount: number;
+  totalCount: number;
+  percentage: number;
+} {
+  const snap = allProgress();
+  const totalCount = LESSONS.length;
+  let completedCount = 0;
+  for (const lesson of LESSONS) {
+    if (snap[lesson.id]?.completed) completedCount += 1;
+  }
+  const percentage =
+    totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
+  return { completedCount, totalCount, percentage };
+}
+
+/** Shape consumed by {@link CertificatePanel} for the printable cert. */
+export type CertificateData = {
+  name: string;
+  lessonsCompleted: Array<{ id: string; title: string; firstCompletedAt: string }>;
+  dateRange: { start: string; end: string };
+};
+
+const CERT_NAME_KEY = "uw:certificate:name";
+
+export function getCertificateName(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return window.localStorage.getItem(CERT_NAME_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+export function setCertificateName(name: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(CERT_NAME_KEY, name);
+  } catch {
+    /* ignore */
+  }
+  notify();
+}
+
+export function getCertificateData(nameOverride?: string): CertificateData {
+  const snap = allProgress();
+  const lessonsCompleted: CertificateData["lessonsCompleted"] = [];
+  for (const lesson of LESSONS) {
+    const p = snap[lesson.id];
+    if (p?.completed) {
+      lessonsCompleted.push({
+        id: lesson.id,
+        title: lesson.title,
+        firstCompletedAt: p.firstCompletedAt ?? p.updatedAt,
+      });
+    }
+  }
+  const dates = lessonsCompleted.map((l) => l.firstCompletedAt).sort();
+  const start = dates[0] ?? new Date().toISOString();
+  const end = dates[dates.length - 1] ?? start;
+  return {
+    name: nameOverride ?? getCertificateName(),
+    lessonsCompleted,
+    dateRange: { start, end },
+  };
 }

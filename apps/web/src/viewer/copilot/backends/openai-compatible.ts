@@ -45,6 +45,15 @@ export class OpenAICompatibleBackend implements CopilotBackend {
   }
 
   async chat(messages: Message[], opts: ChatOptions): Promise<ChatResult> {
+    // Tool-calling is supported by some OpenAI-compat upstreams (Groq,
+    // OpenRouter) but not all — we don't know which without per-endpoint
+    // capability probing. Conservative default: refuse the action and let
+    // the user pick the Cloudflare backend, which we *do* know works.
+    const refusalNote = opts.host
+      ? "I can't control the viewer with this backend. " +
+        "Try the Cloudflare backend in settings.\n\n"
+      : "";
+    if (refusalNote) opts.onToken?.(refusalNote);
     const body = JSON.stringify({
       model: this.cfg.model,
       messages: messages.map((m) => ({ role: m.role, content: m.content })),
@@ -79,9 +88,10 @@ export class OpenAICompatibleBackend implements CopilotBackend {
       },
     });
 
+    const finalText = refusalNote + acc;
     return {
-      text: acc,
-      citations: extractCitations(acc),
+      text: finalText,
+      citations: extractCitations(finalText),
     };
   }
 }

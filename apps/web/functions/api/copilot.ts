@@ -45,7 +45,17 @@ let warnedAboutAi = false;
 type AIBinding = {
   run: (
     model: string,
-    input: { messages: Array<{ role: string; content: string }>; stream?: boolean },
+    input: {
+      messages: Array<{ role: string; content: string }>;
+      stream?: boolean;
+      /**
+       * OpenAI-shape `tools` array. Workers AI's Llama 3.1 8B Instruct
+       * binding supports tool-calling via this field on the non-streaming
+       * code path; switching upstream models (e.g. Hermes-2-Pro-Mistral)
+       * preserves the same field name.
+       */
+      tools?: ReadonlyArray<unknown>;
+    },
   ) => Promise<ReadableStream<Uint8Array> | Record<string, unknown>>;
 };
 
@@ -66,6 +76,19 @@ type CopilotEnv = {
 type CopilotRequestBody = {
   messages?: Array<{ role?: string; content?: string }>;
   model?: string;
+  /**
+   * When set, asks the AI binding to expose tool-calling. The function
+   * passes this straight through to `env.AI.run` — the model decides
+   * whether to emit `tool_calls`. The client (`backends/cloudflare.ts`)
+   * runs those calls against its `CopilotHost` and re-issues the chat.
+   */
+  tools?: ReadonlyArray<unknown>;
+  /**
+   * Default true (legacy behaviour). The client sets `stream: false`
+   * during the tool-probe pass so the function returns a single JSON
+   * blob instead of an SSE stream.
+   */
+  stream?: boolean;
 };
 
 /* eslint-disable no-console */
@@ -274,10 +297,38 @@ export const onRequest: PagesFunction<CopilotEnv> = async (ctx) => {
       ? body.model
       : DEFAULT_MODEL;
 
-  // env.AI.run returns either a ReadableStream (when stream:true) or a
-  // plain object. We only use the streaming path here.
-  const upstream = await ctx.env.AI.run(model, { messages, stream: true });
+  const wantsStream = body.stream !== false;
+  const tools =
+    Array.isArray(body.tools) && body.tools.length > 0 ? body.tools : undefined;
 
+  const runInput: {
+    messages: Array<{ role: string; content: string }>;
+    stream: boolean;
+    tools?: ReadonlyArray<unknown>;
+  } = { messages, stream: wantsStream };
+  if (tools) runInput.tools = tools;
+
+  const upstream = await ctx.env.AI.run(model, runInput);
+
+  // Non-streaming path: hand back the parsed JSON object directly. The
+  // client uses this when probing for tool calls.
+  if (!wantsStream) {
+    if (upstream instanceof ReadableStream) {
+      // The binding chose to stream anyway — collect it into a JSON-ish
+      // response so the contract holds. Best-effort.
+      const text = await streamToText(upstream);
+      return new Response(JSON.stringify({ response: text }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    }
+    return new Response(JSON.stringify(upstream ?? {}), {
+      status: 200,
+      headers: { "content-type": "application/json", "cache-control": "no-store" },
+    });
+  }
+
+  // Streaming path: env.AI.run returns a ReadableStream when stream:true.
   if (!(upstream instanceof ReadableStream)) {
     return new Response(
       JSON.stringify({
@@ -300,3 +351,19 @@ export const onRequest: PagesFunction<CopilotEnv> = async (ctx) => {
     },
   });
 };
+
+async function streamToText(stream: ReadableStream<Uint8Array>): Promise<string> {
+  const reader = stream.getReader();
+  const decoder = new TextDecoder();
+  let out = "";
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      out += decoder.decode(value, { stream: true });
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  return out;
+}

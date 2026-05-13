@@ -6,8 +6,11 @@ import { useSettings } from "../../lib/settings";
 
 type ZoneId = "habitable" | "asteroid" | "frost" | "kuiper" | "oort";
 
+type UniversePreset = "solar-flight" | "galactic" | "sandbox" | "free-flight";
+
 type Scene = {
   flyTo(name: string): void;
+  setPreset(preset: UniversePreset): void;
   setConstellations(on: boolean): void;
   setCoordGrid(on: boolean): void;
   setStarLabels(on: boolean): void;
@@ -35,6 +38,46 @@ type Scene = {
   toggleAllSolarZones(): void;
   setTrackingTarget(name: string | null): void;
 };
+
+/**
+ * Universe Mode v2 camera presets. Each chip seats the camera at the
+ * vantage that used to be the front door of the legacy scene of the
+ * same name — Solar Flight = `flyTo("Sun")` overhead inner-SS,
+ * Galactic = `flyTo("Galactic Center")`, Free Flight = the default
+ * vantage with no tracking lock. "Sandbox" deep-links back to the
+ * standalone legacy Sandbox (see universe-scene.setPreset docstring).
+ */
+const PRESET_CHIPS: Array<{
+  preset: UniversePreset;
+  label: string;
+  glyph: string;
+  hint: string;
+}> = [
+  {
+    preset: "solar-flight",
+    label: "Solar Flight",
+    glyph: "☀",
+    hint: "inner solar system",
+  },
+  {
+    preset: "galactic",
+    label: "Galactic",
+    glyph: "✦",
+    hint: "Milky Way core",
+  },
+  {
+    preset: "sandbox",
+    label: "Sandbox",
+    glyph: "⚛",
+    hint: "n-body sandbox",
+  },
+  {
+    preset: "free-flight",
+    label: "Free Flight",
+    glyph: "✶",
+    hint: "no target lock",
+  },
+];
 
 type Props = {
   state: UniverseState;
@@ -543,6 +586,30 @@ export function LeftRail({ state, scene, onOpenGuide, onOpenTimeMachine }: Props
           onChange={(v) => updateSettings({ flyToDurationSec: v })}
           format={(v) => `${v.toFixed(1)}s`}
         />
+      </div>
+
+      {/* Universe Mode v2 camera-preset chip row. These mirror the
+          legacy `#solar` / `#galactic` / `#sandbox` routes as deep-link
+          camera vantages so users can hop between them inside the
+          Universe scene without leaving the front door. */}
+      <div className="border-t border-white/5 px-2 py-2">
+        <div className="mb-1 px-1 font-mono text-[9px] uppercase tracking-[0.3em] text-white/35">
+          Presets
+        </div>
+        <div className="flex flex-wrap gap-1">
+          {PRESET_CHIPS.map((c) => (
+            <button
+              key={c.preset}
+              type="button"
+              onClick={() => scene.setPreset(c.preset)}
+              title={c.hint}
+              className="flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-white/75 transition hover:border-emerald-400/40 hover:bg-emerald-400/10 hover:text-emerald-200"
+            >
+              <span aria-hidden>{c.glyph}</span>
+              <span>{c.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="border-t border-white/5 p-2">

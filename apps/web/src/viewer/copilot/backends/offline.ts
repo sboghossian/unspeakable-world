@@ -22,6 +22,10 @@ import type {
   Message,
 } from "../types";
 
+const TOOL_REFUSAL_PREFIX =
+  "I can't control the viewer with this backend. " +
+  "Try the Cloudflare backend in settings to enable tool-calling. ";
+
 type Entry = {
   /** Words / short phrases that strongly suggest this entry matches. */
   triggers: string[];
@@ -349,7 +353,12 @@ export class OfflineBackend implements CopilotBackend {
     const lastUser = [...messages].reverse().find((m) => m.role === "user");
     const question = lastUser?.content ?? "";
     const match = lookupAnswer(question);
-    const text = match?.answer ?? FALLBACK_ANSWER;
+    // When the host is connected the user is hoping for an action, not a
+    // canned definition. The offline tier can't tool-call, so we prepend a
+    // one-line apology and still ship the best matching prose underneath.
+    const wantsAction = Boolean(opts.host) && looksActionable(question);
+    const prefix = wantsAction ? TOOL_REFUSAL_PREFIX : "";
+    const text = prefix + (match?.answer ?? FALLBACK_ANSWER);
     const citations = match?.citations ?? FALLBACK_CITATIONS;
 
     // Simulate streaming so the UI behaves the same as the LLM path.
@@ -363,4 +372,14 @@ export class OfflineBackend implements CopilotBackend {
     }
     return { text, citations };
   }
+}
+
+/** Heuristic: did the user ask for an action ("fly to", "show", "enable")? */
+function looksActionable(q: string): boolean {
+  const s = q.toLowerCase();
+  return (
+    /\b(fly|go|take me|show me|jump|move|navigate)\b/.test(s) ||
+    /\b(enable|disable|turn on|turn off|hide|toggle|switch)\b/.test(s) ||
+    /\b(snapshot|screenshot|capture|save view)\b/.test(s)
+  );
 }

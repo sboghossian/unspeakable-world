@@ -47,6 +47,9 @@ import { SupportRibbon } from "./ui/SupportRibbon";
 import { ExploreDrawer, type Group } from "./ui/ExploreDrawer";
 import { ExtraLayersPanel } from "./ui/ExtraLayersPanel";
 import { SceneEditorPanel } from "./ui/SceneEditorPanel";
+import { TourCard } from "./ui/TourCard";
+import { TourRunnerV2, type TourRunnerState } from "./tour/runner-v2";
+import { EXTRA_LAYERS } from "./extra-layers/registry";
 import { SceneLinkToast } from "./scene-editor/SceneLinkToast";
 import {
   applyUniverseCamera,
@@ -136,6 +139,12 @@ export function Universe({ onExit }: Props) {
   const [searchIndex, setSearchIndex] = useState<SearchIndex | null>(null);
   const [inspect, setInspect] = useState<UniverseHit | null>(null);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const tourRunnerRef = useRef<TourRunnerV2 | null>(null);
+  const [tourState, setTourState] = useState<TourRunnerState>({
+    index: null,
+    total: 12,
+    step: null,
+  });
   const [observer, setObserver] = useState<{ lat: number; lon: number } | null>(
     () => {
       try {
@@ -159,7 +168,13 @@ export function Universe({ onExit }: Props) {
     sceneRef.current = scene;
     scene.setOnClick((hit) => setInspect(hit));
     const unsubscribe = scene.subscribe(setState);
+    const runner = new TourRunnerV2(scene);
+    tourRunnerRef.current = runner;
+    const unsubTour = runner.subscribe(setTourState);
     return () => {
+      unsubTour();
+      runner.exit();
+      tourRunnerRef.current = null;
       unsubscribe();
       scene.dispose();
       sceneRef.current = null;
@@ -224,8 +239,14 @@ export function Universe({ onExit }: Props) {
     const scene = sceneRef.current;
     if (!scene) return;
     const params = parseUniverseHash(window.location.hash);
+    // Camera-preset takes priority over explicit coords so the legacy
+    // `#solar` / `#galactic` redirects (which only carry `?preset=…`) land
+    // on the right vantage. Explicit coords win when both are present
+    // — they're how saved shareable URLs round-trip.
     if (params.cx !== null && params.cy !== null && params.cz !== null) {
       scene.setCameraLogical(params.cx, params.cy, params.cz, params.yaw, params.pitch);
+    } else if (params.preset) {
+      scene.setPreset(params.preset);
     }
     if (params.zones) scene.setZonesFromCsv(params.zones);
     if (params.missions) scene.setMissionsFromCsv(params.missions);
@@ -314,8 +335,6 @@ export function Universe({ onExit }: Props) {
       .then(() => setSearchIndex(idx))
       .catch((err) => log.warn("[universe-search] load failed", err));
   }, []);
-
-  void useMemo;
 
   const idle = useIdle(3500);
 
@@ -417,6 +436,15 @@ export function Universe({ onExit }: Props) {
     ? "opacity-0 pointer-events-none transition-opacity duration-300"
     : "opacity-100 transition-opacity duration-300";
 
+  const layerLabelLookup = useMemo(() => {
+    const map = new Map<string, { label: string; icon: string }>();
+    for (const e of EXTRA_LAYERS) {
+      map.set(e.id, { label: e.meta.label, icon: e.meta.icon });
+    }
+    return (id: string): { label: string; icon?: string } =>
+      map.get(id) ?? { label: id };
+  }, []);
+
   return (
     <div className="relative h-full w-full bg-[#020415]">
       <canvas
@@ -482,6 +510,16 @@ export function Universe({ onExit }: Props) {
           />
           <ShareButton onPrepare={() => buildUniverseHash(state)} />
           <BookmarksPanel />
+          {tourState.index === null && (
+            <button
+              type="button"
+              onClick={() => tourRunnerRef.current?.start(0)}
+              title="Start the 12-step Grand Tour through Universe Mode v2"
+              className="pointer-events-auto rounded-lg border border-violet-500/40 bg-violet-500/15 px-3 py-1.5 font-mono text-[11px] uppercase tracking-widest text-violet-200 backdrop-blur transition hover:bg-violet-500/25"
+            >
+              ▶ grand tour
+            </button>
+          )}
           <button
             type="button"
             onClick={() => {
@@ -509,6 +547,21 @@ export function Universe({ onExit }: Props) {
                 🪐 surfaces
               </a>
             )}
+          {/* Sandbox capability — n-body launch controls. The Sandbox
+              currently owns its own renderer + scene (gravity Verlet
+              integrator + projectile mass table), so this button
+              deep-links to the legacy Sandbox via setPreset("sandbox")
+              instead of mounting an in-universe overlay. A future pass
+              will merge the projectile-launch API into UniverseScene
+              and flip this to a slide-in panel. */}
+          <button
+            type="button"
+            onClick={() => sceneRef.current?.setPreset("sandbox")}
+            title="Gravity sandbox — launch comets, planets, black holes"
+            className="rounded-lg border border-violet-400/40 bg-violet-400/10 px-3 py-1.5 font-mono text-[11px] uppercase tracking-widest text-violet-200 backdrop-blur transition hover:bg-violet-400/20"
+          >
+            ⚛ sandbox
+          </button>
         </div>
 
         <div className="pointer-events-auto flex max-w-[60vw] flex-wrap items-center justify-end gap-1.5">
@@ -649,9 +702,35 @@ export function Universe({ onExit }: Props) {
           if (first && s) applyUniverseCamera(s, first.camera);
         }}
       />
+
+      {/* Grand Tour v2 card — rendered while the runner is active. The
+          runner owns camera + layer state; we just plumb the controls. */}
+      {tourState.step && tourState.index !== null && (
+        <TourCard
+          step={tourState.step}
+          index={tourState.index}
+          total={tourState.total}
+          onPrev={() => tourRunnerRef.current?.prev()}
+          onNext={() => tourRunnerRef.current?.next()}
+          onExit={() => tourRunnerRef.current?.exit()}
+          onJump={(i) => tourRunnerRef.current?.jump(i)}
+          layerLabel={layerLabelLookup}
+          onCapture={() => {
+            const c = canvasRef.current;
+            if (!c) return;
+            const dataUrl = c.toDataURL("image/png");
+            const a = document.createElement("a");
+            a.href = dataUrl;
+            a.download = `unspeakable-tour-${tourState.step?.id ?? "step"}.png`;
+            a.click();
+          }}
+        />
+      )}
     </div>
   );
 }
+
+type UniversePreset = "solar-flight" | "galactic" | "sandbox" | "free-flight";
 
 type UniverseHashParams = {
   cx: number | null;
@@ -662,6 +741,8 @@ type UniverseHashParams = {
   zones: string | null;
   missions: string | null;
   track: string | null;
+  /** Universe Mode v2 camera preset (`?preset=solar-flight|galactic|...`). */
+  preset: UniversePreset | null;
 };
 
 function parseUniverseHash(hash: string): UniverseHashParams {
@@ -674,6 +755,7 @@ function parseUniverseHash(hash: string): UniverseHashParams {
     zones: null,
     missions: null,
     track: null,
+    preset: null,
   };
   const m = hash.match(/^#universe\?(.+)$/);
   if (!m || !m[1]) return empty;
@@ -687,6 +769,14 @@ function parseUniverseHash(hash: string): UniverseHashParams {
   const cx = num("cx");
   const cy = num("cy");
   const cz = num("cz");
+  const rawPreset = params.get("preset");
+  const preset: UniversePreset | null =
+    rawPreset === "solar-flight" ||
+    rawPreset === "galactic" ||
+    rawPreset === "sandbox" ||
+    rawPreset === "free-flight"
+      ? rawPreset
+      : null;
   return {
     cx: Number.isFinite(cx) ? cx : null,
     cy: Number.isFinite(cy) ? cy : null,
@@ -696,6 +786,7 @@ function parseUniverseHash(hash: string): UniverseHashParams {
     zones: params.get("zones"),
     missions: params.get("missions"),
     track: params.get("track"),
+    preset,
   };
 }
 

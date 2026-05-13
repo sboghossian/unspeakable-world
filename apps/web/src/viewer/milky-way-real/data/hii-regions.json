@@ -1,0 +1,30 @@
+{
+  "_meta": {
+    "description": "Hand-curated bright HII regions in the Milky Way. Galactic coordinates l, b in degrees; distance in kiloparsecs; size in parsecs (typical apparent diameter at the listed distance).",
+    "attribution": "Compiled from public-domain sources: SIMBAD, Sharpless 1959, Anderson+ 2014 WISE HII catalog. CC0.",
+    "version": 1,
+    "note": "This is a curated starter set of 20 famous HII regions. Phase 2 will swap to the full WISE Catalog of Galactic HII Regions (~8000 objects)."
+  },
+  "regions": [
+    { "id": "M42",      "name": "Orion Nebula",        "l": 209.0, "b":  -19.4, "distKpc": 0.41, "sizePc":  12 },
+    { "id": "NGC2244",  "name": "Rosette Nebula",      "l": 206.4, "b":   -2.1, "distKpc": 1.55, "sizePc":  65 },
+    { "id": "M16",      "name": "Eagle Nebula",        "l":  16.95,"b":    0.79,"distKpc": 1.74, "sizePc":  30 },
+    { "id": "M17",      "name": "Omega Nebula",        "l":  15.05,"b":   -0.69,"distKpc": 1.73, "sizePc":  25 },
+    { "id": "NGC3372",  "name": "Carina Nebula",       "l": 287.6, "b":   -0.6, "distKpc": 2.30, "sizePc": 230 },
+    { "id": "NGC6334",  "name": "Cat's Paw Nebula",    "l": 351.2, "b":    0.7, "distKpc": 1.70, "sizePc":  50 },
+    { "id": "NGC6357",  "name": "Lobster Nebula",      "l": 353.2, "b":    0.9, "distKpc": 1.70, "sizePc":  60 },
+    { "id": "W49A",     "name": "W49A",                "l":  43.17,"b":    0.00,"distKpc":11.10, "sizePc": 100 },
+    { "id": "W51",      "name": "W51",                 "l":  49.5, "b":   -0.4, "distKpc": 5.40, "sizePc": 100 },
+    { "id": "RCW38",    "name": "RCW 38",              "l": 267.9, "b":   -1.1, "distKpc": 1.70, "sizePc":   8 },
+    { "id": "RCW49",    "name": "RCW 49",              "l": 284.3, "b":   -0.3, "distKpc": 4.20, "sizePc":  60 },
+    { "id": "SagB2",    "name": "Sagittarius B2",      "l":   0.66,"b":   -0.04,"distKpc": 8.20, "sizePc":  40 },
+    { "id": "Sh2-106",  "name": "Sharpless 2-106",     "l":  76.4, "b":   -0.6, "distKpc": 1.10, "sizePc":   3 },
+    { "id": "Sh2-155",  "name": "Cave Nebula",         "l": 110.1, "b":    2.4, "distKpc": 0.78, "sizePc":  10 },
+    { "id": "IC1396",   "name": "Elephant's Trunk",    "l":  99.3, "b":    3.7, "distKpc": 0.86, "sizePc":  40 },
+    { "id": "NGC7000",  "name": "North America Nebula","l":  85.6, "b":   -0.6, "distKpc": 0.79, "sizePc":  35 },
+    { "id": "NGC1499",  "name": "California Nebula",   "l": 160.6, "b":  -12.0, "distKpc": 0.50, "sizePc":  30 },
+    { "id": "30Dor",    "name": "Tarantula Nebula",    "l": 279.5, "b":  -31.7, "distKpc":49.97, "sizePc": 200 },
+    { "id": "NGC604",   "name": "NGC 604 (M33)",       "l": 133.6, "b":  -31.3, "distKpc": 840.0,"sizePc":1500 },
+    { "id": "Cyg-X",    "name": "Cygnus X complex",    "l":  79.5, "b":    0.5, "distKpc": 1.40, "sizePc": 200 }
+  ]
+}

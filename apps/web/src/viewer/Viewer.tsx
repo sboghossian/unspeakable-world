@@ -2,8 +2,10 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { log } from "../lib/logger";
 import { Vector3 } from "three";
 import type { SceneContext } from "./copilot/types";
+import type { CopilotHost } from "./copilot";
 import { ViewerScene, type ViewerState } from "./scene/scene";
 import { isEmbedMode, navigate } from "../router";
+import { EXTRA_LAYERS } from "./extra-layers/registry";
 
 // Lazy-load the copilot UI — keeps the LLM-y chat code out of the main
 // viewer chunk so first paint stays snappy.
@@ -52,8 +54,10 @@ import type { SkyProjection } from "./sky-atlas/projection-shader";
 import { SkyInfoPanel } from "./ui/SkyInfoPanel";
 import { ExtraLayersPanel } from "./ui/ExtraLayersPanel";
 import { MultimessengerControls } from "./ui/MultimessengerControls";
+import { SonificationControls } from "./ui/SonificationControls";
 import { MobileMenuDrawer, type MobileMenuGroup } from "./ui/MobileMenuDrawer";
 import { WhatsNewV4Toast } from "./ui/TopBarOverflow";
+import { PowerUserPanel } from "./ui/PowerUserPanel";
 import {
   candidatesFromSimbad,
   wikipediaSummary,
@@ -237,6 +241,111 @@ export function Viewer() {
       observer,
     };
   }, [state, inspect, observer]);
+
+  /**
+   * Bridge from the Cosmic Copilot's tool-calling layer to the live
+   * scene. Every method is best-effort: if the current scene mode
+   * doesn't support a capability, we return false and the Copilot
+   * apologises in prose. The host is rebuilt when the search index
+   * settles so the panel can resolve names against it.
+   */
+  const copilotHost = useMemo<CopilotHost>(() => {
+    return {
+      flyTo: async (target: string) => {
+        const scene = sceneRef.current;
+        if (!scene) return false;
+        // 1. Direct solar-body / ISS match — fastest path.
+        const direct = scene.bodyDirection(target);
+        if (direct) {
+          scene.flyTo(direct);
+          return true;
+        }
+        // 2. Local search index (named stars, Messier/NGC, constellations).
+        if (searchIndex) {
+          const hits = searchIndex.search(target, 1);
+          const top = hits[0];
+          if (top) {
+            scene.flyTo(top.direction);
+            return true;
+          }
+        }
+        // 3. No remote name resolver is wired here. The search index
+        // covers >1,300 named objects (Messier, NGC, IC, bright stars,
+        // constellations); if a name isn't in it we let the Copilot
+        // apologise in prose rather than block on a SIMBAD lookup.
+        return false;
+      },
+      setLayer: (layerId: string, enabled: boolean) => {
+        const scene = sceneRef.current;
+        if (!scene) return false;
+        // Built-in catalog toggles live on the scene directly; everything
+        // else routes through the EXTRA_LAYERS registry.
+        const builtin: Record<string, (v: boolean) => void> = {
+          constellations: scene.setConstellations.bind(scene),
+          "coord-grid": scene.setCoordGrid.bind(scene),
+          "star-labels": scene.setStarLabels.bind(scene),
+          spacecraft: scene.setSpacecraft.bind(scene),
+          exoplanets: scene.setExoplanets.bind(scene),
+          "cosmic-landmarks": scene.setCosmicLandmarks.bind(scene),
+          pulsars: scene.setPulsars.bind(scene),
+        };
+        const builtinFn = builtin[layerId];
+        if (builtinFn) {
+          builtinFn(enabled);
+          return true;
+        }
+        const known = EXTRA_LAYERS.some((e) => e.id === layerId);
+        if (!known) return false;
+        scene.setExtraLayer(layerId, enabled);
+        return true;
+      },
+      setTime: (iso: string) => {
+        const scene = sceneRef.current;
+        if (!scene) return false;
+        const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) return false;
+        scene.setTime(d);
+        return true;
+      },
+      setOverlay: (surveyId: string | null) => {
+        const scene = sceneRef.current;
+        if (!scene) return false;
+        scene.setOverlay(surveyId);
+        if (surveyId) scene.setOverlayMix(0.55);
+        return true;
+      },
+      takeSnapshot: () => {
+        const scene = sceneRef.current;
+        if (!scene) return null;
+        const url = scene.snapshotPng();
+        try {
+          window.open(url, "_blank", "noopener,noreferrer");
+        } catch {
+          // Pop-up blocked is fine — the result message confirms capture.
+        }
+        return url;
+      },
+      setMode: (mode) => {
+        try {
+          // The copilot tool exposes 'sky' as the all-sky planetarium;
+          // internally that's the `viewer` route. Other modes map 1:1.
+          const route =
+            mode === "sky"
+              ? "viewer"
+              : mode === "solar"
+                ? "solar"
+                : mode === "galactic"
+                  ? "galactic"
+                  : "universe";
+          navigate(route);
+          return true;
+        } catch (err) {
+          log.warn("[copilot] setMode navigate failed", err);
+          return false;
+        }
+      },
+    };
+  }, [searchIndex]);
 
   const runTourStep = useCallback((idx: number) => {
     const scene = sceneRef.current;
@@ -786,26 +895,12 @@ export function Viewer() {
                     onSelect={(dir) => sceneRef.current?.flyTo(dir)}
                   />
                 )}
-                <EventsPanel
-                  open={eventsOpen}
-                  onOpenChange={setEventsOpen}
-                  onFlyToBody={(name) => {
-                    const dir = sceneRef.current?.bodyDirection(name);
-                    if (dir) sceneRef.current?.flyTo(dir);
-                  }}
-                  onFlyToRadiant={(raDeg, decDeg) => {
-                    const raRad = (raDeg * Math.PI) / 180;
-                    const decRad = (decDeg * Math.PI) / 180;
-                    const cdec = Math.cos(decRad);
-                    const dir = new Vector3(
-                      cdec * Math.cos(raRad),
-                      Math.sin(decRad),
-                      -cdec * Math.sin(raRad),
-                    );
-                    sceneRef.current?.flyTo(dir);
-                  }}
-                />
+                {/* EventsPanel is rendered inline at the top-bar (both
+                    desktop and mobile) so the global `e` keybind stays
+                    wired to its single mount point. Intentionally NOT
+                    duplicated in this group. */}
                 <MultimessengerControls scene={sceneRef.current} />
+                <SonificationControls scene={sceneRef.current} />
               </>
             ),
           },
@@ -853,6 +948,13 @@ export function Viewer() {
                   onSelect={(dir) => sceneRef.current?.flyTo(dir)}
                   onChange={reloadFavorites}
                 />
+                <PowerUserPanel
+                  group={sceneRef.current?.powerUserGroup() ?? null}
+                  onMarkDirty={() => sceneRef.current?.markDirty()}
+                  onActivateOverlay={(id) =>
+                    sceneRef.current?.setOverlay(id)
+                  }
+                />
               </>
             ),
           },
@@ -878,6 +980,16 @@ export function Viewer() {
                     ▶ tour
                   </button>
                 )}
+                {tourIndex === null && (
+                  <button
+                    type="button"
+                    onClick={() => navigate("universe")}
+                    title="Open Universe Mode v2 and run the new 12-step Grand Tour (Earth → CMB → heat death)"
+                    className="pointer-events-auto inline-flex min-h-[44px] items-center justify-center rounded-lg border border-emerald-400/40 bg-emerald-400/10 px-3 font-mono text-[10px] uppercase tracking-widest text-emerald-200 backdrop-blur transition hover:bg-emerald-400/20"
+                  >
+                    Try Tour v2 in Universe →
+                  </button>
+                )}
               </>
             ),
           },
@@ -895,27 +1007,23 @@ export function Viewer() {
             <span className="hidden sm:inline">← The Unspeakable World</span>
           </button>
 
-          {/* Desktop button cluster — hidden on mobile (< md). Identical to
-              the previous layout so wide-screen experience is untouched. */}
+          {/* Desktop button cluster — declutter pass: only the most-used
+              actions stay inline (search · ✨ layers · share · favorites ·
+              🧠 ask). Everything else moves into the "more ▾" popover
+              powered by MobileMenuDrawer in desktop mode (same groups as
+              mobile). The exit button on the left + the bottom time strip
+              are already always-on, so the top-bar cap stays at ~8. */}
           <div className="pointer-events-auto hidden flex-wrap items-center justify-end gap-2 md:flex">
-            <button
-              type="button"
-              onClick={() => navigate("solar")}
-              title="Switch to 3D Solar System Flight Mode"
-              className="rounded-lg border border-cyan-400/40 bg-cyan-400/10 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-cyan-200 backdrop-blur transition hover:bg-cyan-400/20"
-            >
-              🚀 solar flight
-            </button>
-            {tourIndex === null && (
-              <button
-                type="button"
-                onClick={startTour}
-                className="rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-violet-300 backdrop-blur transition hover:bg-violet-500/20"
-                title="Take a guided tour through 9 highlights of the sky"
-              >
-                ▶ tour
-              </button>
-            )}
+            <SearchBar
+              index={searchIndex}
+              onSelect={(entry: SearchEntry) =>
+                sceneRef.current?.flyTo(entry.direction)
+              }
+            />
+            <ExtraLayersPanel scene={sceneRef.current} />
+            {/* EventsPanel stays inline on desktop because the global
+                `e` keyboard shortcut toggles it via external state — the
+                panel needs to be mounted to react. Small footprint. */}
             <EventsPanel
               open={eventsOpen}
               onOpenChange={setEventsOpen}
@@ -927,7 +1035,6 @@ export function Viewer() {
                 const raRad = (raDeg * Math.PI) / 180;
                 const decRad = (decDeg * Math.PI) / 180;
                 const cdec = Math.cos(decRad);
-                // Match the Z-up → Y-up rotation used elsewhere on the sphere.
                 const dir = new Vector3(
                   cdec * Math.cos(raRad),
                   Math.sin(decRad),
@@ -936,24 +1043,12 @@ export function Viewer() {
                 sceneRef.current?.flyTo(dir);
               }}
             />
-            <NeoPanel />
-            <ExtraLayersPanel scene={sceneRef.current} />
-            <MultimessengerControls scene={sceneRef.current} />
-            <SkyTonightPanel observer={observer} />
-            <SpaceWeatherPanel observer={observer} />
-            {searchIndex && (
-              <TonightTargetsPanel
-                entries={searchIndex.allEntries()}
-                observer={observer}
-                onSelect={(dir) => sceneRef.current?.flyTo(dir)}
-              />
-            )}
+            <ShareButton />
             <FavoritesMenu
               favorites={favorites}
               onSelect={(dir) => sceneRef.current?.flyTo(dir)}
               onChange={reloadFavorites}
             />
-            <ShareButton />
             <button
               type="button"
               onClick={() => openCopilot(null)}
@@ -962,69 +1057,18 @@ export function Viewer() {
             >
               🧠 ask
             </button>
-            <GyroButton scene={sceneRef.current} />
-            <ArSkyButton scene={sceneRef.current} />
-            <SnapshotButton
-              onCapture={() => sceneRef.current?.snapshotPng() ?? null}
+            <PowerUserPanel
+              group={sceneRef.current?.powerUserGroup() ?? null}
+              onMarkDirty={() => sceneRef.current?.markDirty()}
+              onActivateOverlay={(id) => sceneRef.current?.setOverlay(id)}
             />
-            <button
-              type="button"
-              onClick={() => setAboutOpen(true)}
-              title="About / credits (press i)"
-              className="pointer-events-auto rounded-lg border border-white/10 bg-space-950/70 px-2.5 py-1.5 font-mono text-xs text-white/60 backdrop-blur transition hover:bg-white/10 hover:text-white"
-            >
-              i
-            </button>
-            <button
-              type="button"
-              onClick={() => setTutorialOpen(true)}
-              title="Re-open the interactive tutorial"
-              className="pointer-events-auto rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1.5 font-mono text-xs text-emerald-200 backdrop-blur transition hover:bg-emerald-400/20"
-            >
-              🎓
-            </button>
-            <button
-              type="button"
-              onClick={() => setShortcutsOpen(true)}
-              title="Keyboard shortcuts (press ?)"
-              className="pointer-events-auto rounded-lg border border-white/10 bg-space-950/70 px-2.5 py-1.5 font-mono text-xs text-white/60 backdrop-blur transition hover:bg-white/10 hover:text-white"
-            >
-              ?
-            </button>
-            <SearchBar
-              index={searchIndex}
-              onSelect={(entry: SearchEntry) =>
-                sceneRef.current?.flyTo(entry.direction)
-              }
-            />
-            <TonightSky
-              location={observer}
-              onLocationFix={(lat, lon) => {
-                setObserver({ lat, lon });
-                try {
-                  localStorage.setItem(
-                    "uw:observer",
-                    JSON.stringify({ lat, lon }),
-                  );
-                } catch {
-                  // ignore quota / privacy-mode errors
-                }
-              }}
-              onZenith={(lat, lon) => sceneRef.current?.flyToZenith(lat, lon)}
-            />
-            <QuickTargets
-              hasIssFix={state.iss !== null}
-              onTarget={(t) => sceneRef.current?.flyToTarget(t)}
-            />
-            <div className="hidden rounded-lg border border-white/10 bg-space-950/70 px-3 py-1.5 font-mono text-xs text-white/60 backdrop-blur lg:block">
-              DSS2 color · CDS / STScI
-            </div>
+            <MobileMenuDrawer desktop groups={mobileMenuGroups} />
           </div>
 
           {/* Mobile button cluster — visible on < md only. Five essentials:
-              search · ✨ layers · ☰ hamburger. The exit button on the
-              left already serves as the fourth above-the-fold button; the
-              time-strip lives at the bottom. */}
+              search · ✨ layers · 🗓 events · ☰ hamburger. EventsPanel is
+              inline (rather than inside the drawer) so the global `e`
+              keybind has a single mount point on both viewports. */}
           <div className="pointer-events-auto flex items-center justify-end gap-1.5 md:hidden">
             <SearchBar
               index={searchIndex}
@@ -1208,6 +1252,7 @@ export function Viewer() {
             context={sceneContext}
             seedQuestion={copilotSeed}
             onSeedConsumed={() => setCopilotSeed(null)}
+            host={copilotHost}
           />
         </Suspense>
       )}

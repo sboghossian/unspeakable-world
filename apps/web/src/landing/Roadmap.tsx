@@ -199,6 +199,13 @@ const PHASES: Phase[] = [
     title: "AR Sky + WebGPU + URL deep-link",
     detail:
       "Mobile AR with rear-camera passthrough + gyro fusion + tap-to-identify · opt-in WebGPU renderer behind a flag (WebGL2 fallback on failure) · every layer toggle round-trips via `&layers=` URL hash.",
+    status: "shipped",
+  },
+  {
+    day: "v4.F",
+    title: "Universe v2 as front door + horizon polish",
+    detail:
+      "Universe Mode is now the primary landing CTA — fly from a planet to the cosmic web in one camera. Plus tagline rework, public manifesto, hashtag-led distribution, and a friendlier support nudge.",
     status: "now",
   },
 ];
@@ -223,8 +230,8 @@ export function Roadmap() {
       <div className="mb-10 flex flex-col items-start justify-between gap-3 md:flex-row md:items-end">
         <div>
           <h2 className="font-display text-3xl font-semibold md:text-4xl">
-            29 phases shipped.{" "}
-            <span className="text-white/40">Building in public.</span>
+            30 phases, building in public.{" "}
+            <span className="text-white/40">29 shipped, 1 live now.</span>
           </h2>
           <p className="mt-2 text-sm text-white/50">
             Every commit on{" "}

@@ -42,3 +42,27 @@
 .twinkle {
   animation: twinkle 4s ease-in-out infinite;
 }
+
+/* Display-font picker — swap the family Tailwind's `font-display`
+   resolves to (and the body face for full coverage) when the user
+   chooses Editorial or Mono in the settings panel. Defaults
+   (data-font="cosmic" / unset) keep Space Grotesk untouched. */
+html[data-font="editorial"] .font-display {
+  font-family: ui-serif, "Iowan Old Style", "Apple Garamond", "Palatino Linotype",
+    "Times New Roman", Georgia, serif;
+  letter-spacing: 0;
+}
+html[data-font="editorial"] body {
+  font-family: ui-serif, "Iowan Old Style", "Apple Garamond", "Palatino Linotype",
+    "Times New Roman", Georgia, serif;
+}
+
+html[data-font="mono"] .font-display {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas,
+    monospace;
+  letter-spacing: 0.01em;
+}
+html[data-font="mono"] body {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas,
+    monospace;
+}

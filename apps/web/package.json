@@ -27,6 +27,7 @@
     "bake:cosmicflows4": "node --experimental-strip-types --no-warnings ../../scripts/bake-cosmicflows4.ts",
     "bake:jwst-mosaics": "node --experimental-strip-types --no-warnings ../../scripts/bake-jwst-mosaics.ts",
     "bake:sky-cultures-extended": "node --experimental-strip-types --no-warnings ../../scripts/bake-sky-cultures-extended.ts",
+    "bake:spice": "node --experimental-strip-types --no-warnings ../../scripts/bake-spice.ts",
     "verify:imagery": "node --experimental-strip-types --no-warnings ../../scripts/verify-imagery.ts"
   },
   "dependencies": {

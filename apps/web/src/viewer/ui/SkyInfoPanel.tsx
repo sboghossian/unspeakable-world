@@ -2,6 +2,7 @@ import type { SimbadHit } from "../info/simbad";
 import { describeType } from "../info/simbad";
 import type { WikiSummary } from "../info/wikipedia";
 import { computeRiseSet, currentAltitude } from "../observer/rise-set";
+import { CitizenSciencePrompt } from "./CitizenSciencePrompt";
 
 type Props = {
   raDeg: number;
@@ -178,6 +179,8 @@ export function SkyInfoPanel({
               )}
             </div>
           )}
+
+          <CitizenSciencePrompt typeOrId={hit.type} targetLabel={hit.name} />
 
           {onAskCopilot && (
             <button

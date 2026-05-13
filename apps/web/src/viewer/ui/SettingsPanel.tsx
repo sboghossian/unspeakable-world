@@ -5,6 +5,7 @@ import {
   type ExplanationTier,
 } from "../../lib/settings";
 import { t } from "../../lib/i18n";
+import { FontPicker } from "./FontPicker";
 import { LanguagePicker } from "./LanguagePicker";
 
 /**
@@ -184,6 +185,13 @@ export function SettingsPanel({ open, onClose, anchor = "left-rail" }: Props) {
           step={0.05}
           onChange={(v) => update({ sonificationVolume: v })}
         />
+      </Section>
+
+      <Section label="Typography">
+        <FontPicker />
+        <div className="mt-1 font-mono text-[9px] text-white/35">
+          swaps headline + body face. Applies app-wide.
+        </div>
       </Section>
 
       <Section label={t("label.language", "Language")}>

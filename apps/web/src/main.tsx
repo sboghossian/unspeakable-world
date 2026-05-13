@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { App } from "./App";
 import { getConsent } from "./lib/consent";
 import { initErrorTracking } from "./lib/error-tracking";
+import { getSettings, onSettingsChange } from "./lib/settings";
 import { initTelemetry } from "./lib/telemetry";
 import "./styles.css";
 
@@ -11,6 +12,22 @@ import "./styles.css";
 // `lib/telemetry.ts` and `lib/error-tracking.ts`.
 initErrorTracking();
 initTelemetry({ optOut: !getConsent()?.telemetry });
+
+// Apply the persisted display-font preference to <html data-font="…">
+// before React mounts so first paint doesn't flash the default face.
+// Subsequent changes flow via onSettingsChange so the picker updates
+// the whole tree without a remount.
+(function applyDisplayFont() {
+  try {
+    const root = document.documentElement;
+    root.setAttribute("data-font", getSettings().displayFont);
+    onSettingsChange((s) => {
+      root.setAttribute("data-font", s.displayFont);
+    });
+  } catch {
+    /* ignore — SSR / very old browsers */
+  }
+})();
 
 const rootElement = document.getElementById("root");
 if (!rootElement) {

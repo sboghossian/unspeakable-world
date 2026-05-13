@@ -13,21 +13,24 @@ export function Hero() {
       </div>
 
       <h1 className="text-balance font-display text-5xl font-semibold leading-[1.05] glow md:text-7xl">
-        The first emotionally legible
+        The entire universe
         <br />
-        front-end to{" "}
+        in{" "}
         <span className="bg-gradient-to-br from-plasma-400 via-plasma-500 to-violet-400 bg-clip-text text-transparent">
-          the entire universe
+          one browser tab
         </span>
         .
       </h1>
 
       <p className="mx-auto mt-6 max-w-2xl text-balance text-lg text-white/70 md:text-xl">
-        Every wavelength of every sky survey. 1 million Gaia stars. 136K
-        galaxies in 3D. Live transients, gravitational-wave chirps, the
-        full multi-messenger sky. Earth's surface to the cosmic web. In a
-        browser. 60 fps. Open source from commit one.
+        Every wavelength, every probe, every alert — one seamless camera,
+        free forever.
       </p>
+
+      <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-1.5 text-xs uppercase tracking-[0.18em] text-white/65 backdrop-blur">
+        <span className="h-1 w-1 rounded-full bg-plasma-400" />
+        Visible space, finally in a browser
+      </div>
 
       {/* Single primary CTA */}
       <div className="mt-10 flex flex-col items-center gap-3">
@@ -156,7 +159,15 @@ export function Hero() {
       <p className="mt-12 text-sm text-white/40">
         Live at{" "}
         <span className="font-mono text-white/60">unspeakable-world.dashable.dev</span> · still
-        building in public
+        building in public ·{" "}
+        <a
+          href="https://twitter.com/search?q=%23unspeakable-world&src=typed_query"
+          target="_blank"
+          rel="noreferrer"
+          className="font-mono text-plasma-300/80 hover:text-plasma-300 hover:underline"
+        >
+          #unspeakable-world
+        </a>
       </p>
     </section>
   );

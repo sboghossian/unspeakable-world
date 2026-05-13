@@ -4,12 +4,25 @@ import { Hero } from "./landing/Hero";
 import { Highlights } from "./landing/Highlights";
 import { OpenData } from "./landing/OpenData";
 import { Roadmap } from "./landing/Roadmap";
+import { Manifesto } from "./landing/Manifesto";
 import { Footer } from "./landing/Footer";
+import { SupportRibbon } from "./viewer/ui/SupportRibbon";
 import { PwaInstallBanner } from "./landing/PwaInstallBanner";
 import { ConsentBanner } from "./landing/ConsentBanner";
 import { AstronomyToday } from "./landing/AstronomyToday";
 import { ApodCard } from "./landing/ApodCard";
-import { isEmbedMode, navigate, surfacePlanet, useRoute } from "./router";
+import {
+  ensureUniverseDefault,
+  isEmbedMode,
+  navigate,
+  surfacePlanet,
+  useRoute,
+} from "./router";
+import { CertificatePanel } from "./viewer/ui/CertificatePanel";
+import {
+  getOverallProgress,
+  useLessonProgress,
+} from "./lib/lesson-progress";
 
 // Lazy: the viewer pulls in Three.js, AstronomyEngine, and ~500 KB of HiPS /
 // catalog code. The landing page should not pay that cost — most first-time
@@ -36,11 +49,60 @@ const Sandbox = lazy(() =>
 const Guide = lazy(() =>
   import("./guide/Guide").then((m) => ({ default: m.Guide })),
 );
+const TeacherDashboard = lazy(() =>
+  import("./viewer/ui/TeacherDashboard").then((m) => ({
+    default: m.TeacherDashboard,
+  })),
+);
+
+// Universe Mode v2 is now the front-door experience. A bare load of the
+// SPA (no hash, no `?landing=1`, no `?embed=1`) is rewritten to
+// `/#universe` BEFORE React reads the initial route — so the very first
+// render lands in Universe rather than flashing the marketing page. The
+// Hero CTA (owned by Hero.tsx) routes explicitly to `#universe`, and the
+// marketing page itself is reachable via `?landing=1` for share cards
+// and link previews.
+ensureUniverseDefault();
+
+/**
+ * Legacy hashes (`/#solar`, `/#galactic`, `/#sandbox`) now route into
+ * Universe Mode v2 with a camera preset, UNLESS the user opted into the
+ * old standalone scenes via `?legacy=1`. We detect the legacy opt-in
+ * once here so every render in this load picks the same branch — the
+ * toast and the route table both read this flag.
+ */
+function wantsLegacy(): boolean {
+  if (typeof window === "undefined") return false;
+  const search = window.location.search;
+  if (search) {
+    const params = new URLSearchParams(search);
+    if (params.get("legacy") === "1") return true;
+  }
+  // Also honour `?legacy=1` inside the hash query string.
+  const hash = window.location.hash;
+  const qIdx = hash.indexOf("?");
+  if (qIdx !== -1) {
+    const subParams = new URLSearchParams(hash.slice(qIdx + 1));
+    if (subParams.get("legacy") === "1") return true;
+  }
+  return false;
+}
+
+/** Map a legacy route name → Universe Mode v2 camera preset name. */
+const LEGACY_PRESET: Record<"solar" | "galactic" | "sandbox", string> = {
+  solar: "solar-flight",
+  galactic: "galactic",
+  sandbox: "sandbox",
+};
+
+const DEPRECATED_TOAST_KEY = "uw:deprecation-toast:v1";
 
 export function App() {
   return (
     <>
       <AppRoutes />
+      <DeprecatedRouteToast />
+      <CertificateAutoModal />
       {/* ConsentBanner self-hides once a choice is persisted. Rendered
           here at the top level so it shows on every entry point —
           landing page, /viewer deep link, embed, etc. The banner reads
@@ -50,11 +112,116 @@ export function App() {
   );
 }
 
+/**
+ * Auto-open the certificate modal the first time the learner reaches
+ * 100% lesson completion. The dismissal is remembered per browser so we
+ * don't nag on every load — they can still re-open it from the lessons
+ * panel later. The TeacherDashboard route is excluded: a teacher
+ * reviewing a class shouldn't get the student's cert popping up.
+ */
+const CERT_DISMISSED_KEY = "uw:certificate:dismissed";
+
+function CertificateAutoModal() {
+  const route = useRoute();
+  useLessonProgress();
+  const [open, setOpen] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    if (window.location.hash.startsWith("#class")) return false;
+    try {
+      if (window.localStorage.getItem(CERT_DISMISSED_KEY) === "1") return false;
+    } catch {
+      /* ignore */
+    }
+    const { percentage } = getOverallProgress();
+    return percentage >= 100;
+  });
+
+  useEffect(() => {
+    if (route === "class") return;
+    const { percentage } = getOverallProgress();
+    if (percentage < 100) return;
+    try {
+      if (window.localStorage.getItem(CERT_DISMISSED_KEY) === "1") return;
+    } catch {
+      /* ignore */
+    }
+    setOpen(true);
+  }, [route]);
+
+  if (!open || route === "class") return null;
+  return (
+    <CertificatePanel
+      onClose={() => {
+        try {
+          window.localStorage.setItem(CERT_DISMISSED_KEY, "1");
+        } catch {
+          /* ignore */
+        }
+        setOpen(false);
+      }}
+    />
+  );
+}
+
 function AppRoutes() {
   const route = useRoute();
   // Embed mode hides the PWA install banner across every mode; individual
   // viewers also gate their own chrome on this flag.
   const embed = isEmbedMode();
+  const legacy = wantsLegacy();
+
+  // Universe Mode v2 absorption: if we're on a legacy scene route AND the
+  // user did NOT opt into the legacy view via `?legacy=1`, rewrite the
+  // hash to the matching Universe preset and bail out — the next render
+  // (after the hashchange) will mount Universe. This preserves every
+  // existing shareable URL (`/#solar`, `/#galactic`, `/#sandbox`) while
+  // moving everyone onto the v2 front door by default.
+  useEffect(() => {
+    if (legacy) return;
+    const target =
+      route === "solar" || route === "galactic" || route === "sandbox"
+        ? LEGACY_PRESET[route]
+        : null;
+    if (!target) return;
+    // Suppress duplicate toasts on the same browser; the toast component
+    // reads localStorage too, but flagging here avoids a flash on the
+    // very first hit of a deprecated link.
+    try {
+      const fired = localStorage.getItem(DEPRECATED_TOAST_KEY);
+      if (!fired) {
+        localStorage.setItem(
+          DEPRECATED_TOAST_KEY,
+          JSON.stringify({ from: route, at: Date.now() }),
+        );
+      }
+    } catch {
+      /* localStorage disabled — toast just won't gate itself */
+    }
+    window.location.hash = `#universe?preset=${target}`;
+  }, [route, legacy]);
+
+  // If we're about to redirect a legacy route to Universe v2, paint the
+  // loading veil instead of flashing the deprecated scene for one frame.
+  if (
+    !legacy &&
+    (route === "solar" || route === "galactic" || route === "sandbox")
+  ) {
+    return (
+      <main className="relative h-full w-full bg-space-950">
+        <ViewerLoadingVeil />
+      </main>
+    );
+  }
+
+  if (route === "class") {
+    return (
+      <main className="relative h-full w-full bg-space-950">
+        <Suspense fallback={<ViewerLoadingVeil />}>
+          <TeacherDashboard onExit={() => navigate("landing")} />
+        </Suspense>
+      </main>
+    );
+  }
 
   if (route === "guide") {
     return (
@@ -167,13 +334,94 @@ function AppRoutes() {
           </div>
           <ApodCard />
         </section>
+        <Manifesto />
         <OpenData />
         <Roadmap />
         <Footer />
       </div>
       <AstronomyToday />
       {!embed && <PwaInstallBanner />}
+      {!embed && <SupportRibbon />}
     </main>
+  );
+}
+
+/**
+ * One-time toast shown when a user lands on a legacy route (Solar Flight,
+ * Galactic, Sandbox) and we've absorbed them into Universe Mode v2. The
+ * toast offers a "Use legacy view" escape hatch that re-navigates with
+ * `?legacy=1` so the original standalone scene mounts. Dismissed once
+ * per browser via `localStorage`.
+ */
+function DeprecatedRouteToast() {
+  const [info, setInfo] = useState<{ label: string; href: string } | null>(
+    null,
+  );
+  useEffect(() => {
+    let raw: string | null = null;
+    try {
+      raw = localStorage.getItem(DEPRECATED_TOAST_KEY);
+    } catch {
+      return;
+    }
+    if (!raw) return;
+    type Stored = { from?: string; at?: number; shown?: boolean };
+    let parsed: Stored | null = null;
+    try {
+      parsed = JSON.parse(raw) as Stored;
+    } catch {
+      return;
+    }
+    if (!parsed || parsed.shown) return;
+    // Only fire while the user is still in Universe (i.e. immediately
+    // after the redirect). If they've navigated elsewhere by hand,
+    // suppress the toast.
+    if (!window.location.hash.startsWith("#universe")) return;
+    const from = parsed.from;
+    if (from !== "solar" && from !== "galactic" && from !== "sandbox") return;
+    const label =
+      from === "solar"
+        ? "Solar Flight"
+        : from === "galactic"
+          ? "Galactic"
+          : "Sandbox";
+    setInfo({ label, href: `#${from}?legacy=1` });
+    try {
+      localStorage.setItem(
+        DEPRECATED_TOAST_KEY,
+        JSON.stringify({ ...parsed, shown: true }),
+      );
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  if (!info) return null;
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="pointer-events-auto fixed bottom-6 left-1/2 z-[60] flex max-w-md -translate-x-1/2 items-center gap-3 rounded-xl border border-emerald-400/30 bg-space-950/90 px-4 py-3 font-mono text-[11px] text-white/85 shadow-2xl backdrop-blur"
+    >
+      <span className="text-emerald-200">{info.label}</span>
+      <span className="text-white/65">
+        now lives inside Universe Mode v2 — same camera, same controls.
+      </span>
+      <a
+        href={info.href}
+        className="rounded-md border border-white/15 px-2 py-1 text-emerald-200 transition hover:bg-white/10"
+      >
+        Use legacy view
+      </a>
+      <button
+        type="button"
+        onClick={() => setInfo(null)}
+        title="Dismiss"
+        className="rounded-md px-1.5 py-1 text-white/40 transition hover:bg-white/10 hover:text-white"
+      >
+        ✕
+      </button>
+    </div>
   );
 }
 

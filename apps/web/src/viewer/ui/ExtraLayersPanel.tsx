@@ -20,6 +20,97 @@ type Props = {
 };
 
 /**
+ * Sub-tab grouping for the 15 federated layers. Catalogs/3D/Live/Imagery
+ * keeps each tab small enough to scan without scrolling, and lets each
+ * tab show its own on-count for quick triage.
+ */
+type LayerTabId = "catalogs" | "structure" | "alerts" | "imagery";
+
+type LayerTabDef = {
+  id: LayerTabId;
+  label: string;
+  icon: string;
+  layerIds: readonly string[];
+};
+
+const LAYER_TABS: readonly LayerTabDef[] = [
+  {
+    id: "catalogs",
+    label: "Catalogs",
+    icon: "📚",
+    layerIds: [
+      "gaia-stars",
+      "exoplanets-full",
+      "chandra",
+      "variables",
+      "neocp-risk",
+    ],
+  },
+  {
+    id: "structure",
+    label: "3D structure",
+    icon: "🧭",
+    layerIds: ["galaxy-cone", "cosmicflows4"],
+  },
+  {
+    id: "alerts",
+    label: "Live alerts",
+    icon: "📡",
+    layerIds: [
+      "multimessenger",
+      "ztf-alerts",
+      "atel",
+      "fxt",
+      "goto",
+      "blackgem",
+      "starlink-optin",
+    ],
+  },
+  {
+    id: "imagery",
+    label: "Imagery & culture",
+    icon: "🎨",
+    layerIds: [
+      "planck-polarization",
+      "sky-cultures-extended",
+      "globe-at-night",
+      "opal-giants",
+      "mars-rover-iotd",
+      "sonification",
+    ],
+  },
+];
+
+const ACTIVE_TAB_STORAGE_KEY = "uw:extra-layers:active-tab";
+
+function readActiveTab(): LayerTabId {
+  if (typeof window === "undefined") return "catalogs";
+  try {
+    const raw = window.localStorage.getItem(ACTIVE_TAB_STORAGE_KEY);
+    if (
+      raw === "catalogs" ||
+      raw === "structure" ||
+      raw === "alerts" ||
+      raw === "imagery"
+    ) {
+      return raw;
+    }
+  } catch {
+    /* ignore */
+  }
+  return "catalogs";
+}
+
+function writeActiveTab(tab: LayerTabId): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(ACTIVE_TAB_STORAGE_KEY, tab);
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+
+/**
  * ✨ Extra Layers — single popover that exposes every federated overlay
  * advertised by the extra-layers registry (Gaia DR3, Chandra, multi-
  * messenger, planck polarization, sky cultures extended, ZTF alerts, …).
@@ -36,6 +127,13 @@ type Props = {
  */
 export function ExtraLayersPanel({ scene }: Props) {
   const [open, setOpen] = useState(false);
+  const [activeTab, setActiveTabState] = useState<LayerTabId>(() =>
+    readActiveTab(),
+  );
+  const setActiveTab = (next: LayerTabId): void => {
+    setActiveTabState(next);
+    writeActiveTab(next);
+  };
   // The zustand store is the single source of truth for layer toggles.
   // Initial seed from localStorage happens in the store's create().
   // URL hash wins over localStorage on first mount — if a `layers=…`
@@ -186,6 +284,36 @@ export function ExtraLayersPanel({ scene }: Props) {
   const anyOn = metas.some((m) => enabled[m.id]);
   const onCount = metas.filter((m) => enabled[m.id]).length;
 
+  // Bucket the live metas by sub-tab once per (metas, activeTab) change.
+  // Anything unmapped (future registry additions) lands in "catalogs" so
+  // it stays discoverable instead of disappearing from the UI.
+  const tabBuckets = useMemo(() => {
+    const byId = new Map<string, LayerMeta>();
+    for (const meta of metas) byId.set(meta.id, meta);
+    const seen = new Set<string>();
+    const buckets = new Map<LayerTabId, LayerMeta[]>();
+    for (const tab of LAYER_TABS) {
+      const list: LayerMeta[] = [];
+      for (const id of tab.layerIds) {
+        const m = byId.get(id);
+        if (m) {
+          list.push(m);
+          seen.add(id);
+        }
+      }
+      buckets.set(tab.id, list);
+    }
+    // Drop unmapped layers into the first tab so a registry addition can't
+    // silently vanish from the UI before the grouping is updated.
+    const fallback = buckets.get("catalogs") ?? [];
+    for (const meta of metas) {
+      if (!seen.has(meta.id)) fallback.push(meta);
+    }
+    return buckets;
+  }, [metas]);
+
+  const activeMetas = tabBuckets.get(activeTab) ?? [];
+
   return (
     <div className="relative">
       <button
@@ -242,8 +370,49 @@ export function ExtraLayersPanel({ scene }: Props) {
             </div>
           )}
 
+          {metas.length > 0 && (
+            <div
+              role="tablist"
+              aria-label="Layer groups"
+              className="mb-2 flex flex-wrap gap-1 border-b border-white/5 pb-2"
+            >
+              {LAYER_TABS.map((tab) => {
+                const bucket = tabBuckets.get(tab.id) ?? [];
+                if (bucket.length === 0) return null;
+                const tabOnCount = bucket.filter((m) => enabled[m.id]).length;
+                const isActive = tab.id === activeTab;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 font-mono text-[10px] uppercase tracking-[0.15em] transition ${
+                      isActive
+                        ? "border-violet-400/50 bg-violet-400/15 text-violet-100"
+                        : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+                    }`}
+                  >
+                    <span aria-hidden>{tab.icon}</span>
+                    <span>{tab.label}</span>
+                    <span
+                      className={`rounded-sm px-1 text-[9px] ${
+                        tabOnCount > 0
+                          ? "bg-emerald-400/25 text-emerald-100"
+                          : "bg-white/10 text-white/45"
+                      }`}
+                    >
+                      {tabOnCount}/{bucket.length}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           <ul className="space-y-1.5">
-            {metas.map((meta) => {
+            {activeMetas.map((meta) => {
               const on = enabled[meta.id] === true;
               const isLoading = loading.has(meta.id);
               return (

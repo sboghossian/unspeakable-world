@@ -1,4 +1,4 @@
-import { PerspectiveCamera, Scene, Vector3 } from "three";
+import { Group, PerspectiveCamera, Scene, Vector3 } from "three";
 import {
   createWebGLRenderer,
   tryCreateWebGPURenderer,
@@ -6,6 +6,7 @@ import {
 } from "./renderer-factory";
 import { getRendererPreference } from "../../lib/settings";
 import { SURVEYS } from "../hips/surveys";
+import { getSurveyAnywhere } from "../power-user/custom-hips";
 import { HipsSphere } from "./hips-sphere";
 import { StarField } from "../stars/star-field";
 import { StarLabels } from "../stars/star-labels";
@@ -135,6 +136,13 @@ export class ViewerScene {
   private controls: VoyagerControls;
   /** Federated extra-layer overlays mounted via the extra-layers registry. */
   private extras: ExtrasController;
+  /**
+   * Mount point for power-user runtime objects (projected FITS images,
+   * ADQL point clouds, …). Rotated to celestial Z-up like the HiPS sphere
+   * so consumers can supply Z-up world directions and have them line up
+   * with the rest of the sky layers. The group is initially empty.
+   */
+  private powerUser = new Group();
 
   private dirty = true;
   private rafHandle = 0;
@@ -266,6 +274,12 @@ export class ViewerScene {
     // Each is off by default; the React layer toggles them via setExtraLayer.
     this.extras = mountExtrasInto(this.scene, "sky");
     this.extras.setTime(this.simTime.getTime());
+
+    // Power-user attachment point (FITS textures, ADQL points). Rotated so
+    // Z-up celestial coords line up with the rest of the sky stack.
+    this.powerUser.name = "PowerUserGroup";
+    this.powerUser.rotation.x = -Math.PI / 2;
+    this.scene.add(this.powerUser);
 
     this.controls = new VoyagerControls(this.camera, canvas);
     this.controls.onChange = () => {
@@ -511,7 +525,7 @@ export class ViewerScene {
       this.publishState();
       return;
     }
-    const survey = SURVEYS[surveyId];
+    const survey = getSurveyAnywhere(surveyId);
     if (!survey) return;
     if (!this.overlaySphere) {
       // renderOrderOffset=5 pushes overlay tiles to renderOrder -5 (base)
@@ -655,6 +669,21 @@ export class ViewerScene {
   /** Force-load an extra layer module without enabling its visuals. */
   ensureExtraLayerLoaded(id: string): Promise<void> {
     return this.extras.ensureLoaded(id);
+  }
+
+  /**
+   * Mount point for power-user runtime objects (FITS projections, ADQL
+   * point clouds). Children are expected to use Z-up celestial coords —
+   * the parent group already applies the −π/2 X rotation to land them
+   * Y-up alongside the rest of the sky.
+   */
+  powerUserGroup(): Group {
+    return this.powerUser;
+  }
+
+  /** Force a redraw after the caller mutates the power-user group. */
+  markDirty(): void {
+    this.dirty = true;
   }
 
   exoplanetList(): ReturnType<ExoplanetField["list"]> {
@@ -883,6 +912,25 @@ export class ViewerScene {
     this.cosmicLandmarks.dispose();
     this.iss.dispose();
     this.extras.dispose();
+    // Caller-owned power-user children: dispose geometries/materials/textures
+    // bolted on by the FITS / ADQL panels so a Viewer remount doesn't leak.
+    this.powerUser.traverse((obj) => {
+      const maybeGeom = (obj as { geometry?: { dispose?: () => void } }).geometry;
+      maybeGeom?.dispose?.();
+      const maybeMat = (obj as { material?: unknown }).material;
+      if (Array.isArray(maybeMat)) {
+        for (const m of maybeMat) {
+          const mm = m as { map?: { dispose?: () => void }; dispose?: () => void };
+          mm.map?.dispose?.();
+          mm.dispose?.();
+        }
+      } else if (maybeMat) {
+        const mm = maybeMat as { map?: { dispose?: () => void }; dispose?: () => void };
+        mm.map?.dispose?.();
+        mm.dispose?.();
+      }
+    });
+    this.powerUser.clear();
     this.renderer.dispose();
     this.listeners.clear();
   }

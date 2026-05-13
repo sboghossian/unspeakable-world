@@ -71,6 +71,39 @@ export function Footer() {
             </a>
           </span>
         </div>
+
+        <div className="mt-4 flex flex-col items-start gap-2 text-xs text-white/45 md:flex-row md:items-center md:justify-between">
+          <span>
+            Share what you see → tag{" "}
+            <a
+              href="https://twitter.com/search?q=%23unspeakable-world&src=typed_query"
+              target="_blank"
+              rel="noreferrer"
+              className="font-mono text-plasma-300/80 hover:text-plasma-300 hover:underline"
+            >
+              #unspeakable-world
+            </a>{" "}
+            on{" "}
+            <a
+              href="https://twitter.com/search?q=%23unspeakable-world&src=typed_query"
+              target="_blank"
+              rel="noreferrer"
+              className="text-white/65 hover:text-white"
+            >
+              Twitter/X
+            </a>{" "}
+            or{" "}
+            <a
+              href="https://bsky.app/search?q=%23unspeakable-world"
+              target="_blank"
+              rel="noreferrer"
+              className="text-white/65 hover:text-white"
+            >
+              Bluesky
+            </a>
+            .
+          </span>
+        </div>
       </div>
     </footer>
   );
