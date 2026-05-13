@@ -59,7 +59,7 @@ import {
 import { OortCloud } from "./oort-cloud";
 import { SunGravityWell } from "./gravity-well";
 import { MoonField } from "../universe/moons";
-import * as satelliteJs from "satellite.js";
+import { propagate, twoline2satrec } from "satellite.js";
 import { AsteroidField } from "../universe/asteroids";
 import { AuroraOverlay } from "../space-weather/aurora-overlay";
 import { payloadForBody } from "../data/body-info";
@@ -268,8 +268,7 @@ export class SolarFlightScene {
   private issModel: IssModel | null = null;
   /** Cached SGP4 record for ISS so we can propagate every frame
    *  without re-parsing the TLE. */
-  private issSatRec: ReturnType<typeof satelliteJs.twoline2satrec> | null =
-    null;
+  private issSatRec: ReturnType<typeof twoline2satrec> | null = null;
   /** Stylized 3D JWST model, parked at Sun-Earth L2 in solar flight. */
   private jwstModel: JwstModel | null = null;
   /** Oort Cloud spherical shell — fades in once the camera is past
@@ -440,7 +439,7 @@ export class SolarFlightScene {
           .find((e) => e.name.includes("ISS (ZARYA)"));
         if (!iss) return;
         try {
-          this.issSatRec = satelliteJs.twoline2satrec(iss.l1, iss.l2);
+          this.issSatRec = twoline2satrec(iss.l1, iss.l2);
         } catch {
           // ignore
         }
@@ -1082,7 +1081,7 @@ export class SolarFlightScene {
     // represents it at that scale).
     if (this.issModel && this.issSatRec) {
       try {
-        const out = satelliteJs.propagate(this.issSatRec, this.simTime);
+        const out = propagate(this.issSatRec, this.simTime);
         if (out && typeof out !== "boolean") {
           const p = out.position;
           if (p && typeof p !== "boolean") {

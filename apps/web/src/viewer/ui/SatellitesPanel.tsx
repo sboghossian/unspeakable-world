@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import * as satelliteJs from "satellite.js";
+import {
+  eciToGeodetic,
+  gstime,
+  propagate,
+  twoline2satrec,
+} from "satellite.js";
 import { unlock } from "../../lib/achievements";
 import { t, useLanguage } from "../../lib/i18n";
 
@@ -40,16 +45,16 @@ function tickDate(): Date {
 
 function liveFor(entry: Entry, now: Date): LivePos | null {
   try {
-    const satrec = satelliteJs.twoline2satrec(entry.l1, entry.l2);
-    const out = satelliteJs.propagate(satrec, now);
+    const satrec = twoline2satrec(entry.l1, entry.l2);
+    const out = propagate(satrec, now);
     if (!out || typeof out === "boolean") return null;
     const p = out.position;
     const v = out.velocity;
     if (!p || typeof p === "boolean" || !v || typeof v === "boolean") return null;
     const altKm = Math.hypot(p.x, p.y, p.z) - EARTH_R_KM;
     const speedKmS = Math.hypot(v.x, v.y, v.z);
-    const gmst = satelliteJs.gstime(now);
-    const geo = satelliteJs.eciToGeodetic(p, gmst);
+    const gmst = gstime(now);
+    const geo = eciToGeodetic(p, gmst);
     const latDeg = (geo.latitude * 180) / Math.PI;
     const lonDeg = (geo.longitude * 180) / Math.PI;
     return { altKm, speedKmS, latDeg, lonDeg };

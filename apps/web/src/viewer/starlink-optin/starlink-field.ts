@@ -28,7 +28,7 @@ import {
   Points,
   ShaderMaterial,
 } from "three";
-import * as satelliteJs from "satellite.js";
+import { propagate, twoline2satrec } from "satellite.js";
 import { Body, HelioVector } from "astronomy-engine";
 import { log } from "../../lib/logger";
 import type { Tle } from "./celestrak-tle";
@@ -38,7 +38,7 @@ const SCENE_SCALE_AU_PER_KM = 0.045 / 6371;
 
 type SatRecord = {
   tle: Tle;
-  satrec: ReturnType<typeof satelliteJs.twoline2satrec> | null;
+  satrec: ReturnType<typeof twoline2satrec> | null;
 };
 
 export class StarlinkField {
@@ -77,7 +77,7 @@ export class StarlinkField {
     for (const tle of tles) {
       let satrec: SatRecord["satrec"] = null;
       try {
-        satrec = satelliteJs.twoline2satrec(tle.l1, tle.l2);
+        satrec = twoline2satrec(tle.l1, tle.l2);
       } catch {
         // bad TLE — keep the slot but skip propagation later
       }
@@ -118,7 +118,7 @@ export class StarlinkField {
       if (!r.satrec) continue;
       let posEci: { x: number; y: number; z: number } | null = null;
       try {
-        const result = satelliteJs.propagate(r.satrec, simTime);
+        const result = propagate(r.satrec, simTime);
         if (result && typeof result !== "boolean") {
           const p = result.position;
           if (p && typeof p !== "boolean") {

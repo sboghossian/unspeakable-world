@@ -49,6 +49,34 @@ export default defineConfig({
   },
   build: {
     target: "es2022",
-    sourcemap: true,
+    // `hidden` keeps the .map files on disk for Sentry uploads but
+    // skips the `//# sourceMappingURL=` comment in the bundles, so
+    // browsers don't fetch them and casual viewers don't see our
+    // unminified source in the network tab.
+    sourcemap: "hidden",
+    rollupOptions: {
+      output: {
+        // Hand-split the heaviest deps so a Three.js / WebGPU swap
+        // doesn't bust the React cache (and vice-versa). Anything
+        // touching `three.webgpu` lands in its own chunk because the
+        // WebGPU paths haul in ~250 KB of extra code we only want
+        // when the user explicitly opts in.
+        manualChunks: (id) => {
+          if (
+            id.includes("node_modules/three/examples/jsm/webgpu") ||
+            id.includes("three.webgpu")
+          )
+            return "three-webgpu";
+          if (id.includes("node_modules/three")) return "three";
+          if (
+            id.includes("node_modules/react") ||
+            id.includes("node_modules/react-dom") ||
+            id.includes("node_modules/scheduler")
+          )
+            return "react";
+          return undefined;
+        },
+      },
+    },
   },
 });

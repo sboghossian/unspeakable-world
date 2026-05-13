@@ -458,16 +458,27 @@ function TeacherView({
   onStop: () => void;
 }) {
   // QR code for the share URL — rendered as inline SVG so it stays crisp
-  // at any zoom level and prints cleanly. We memoise on shareUrl so we
-  // don't redo encoding on every keystroke in the caption box.
-  const qrSvg = useMemo(() => {
-    if (!shareUrl) return "";
-    try {
-      return makeQrSvg(shareUrl, { cellSize: 6, margin: 2 });
-    } catch (err) {
-      log.warn("[tutor] qr encoding failed", err);
-      return "";
+  // at any zoom level and prints cleanly. `makeQrSvg` is async (the
+  // qrcode-generator lib is lazy-loaded to keep it out of the main
+  // bundle), so we resolve through an effect into state.
+  const [qrSvg, setQrSvg] = useState("");
+  useEffect(() => {
+    if (!shareUrl) {
+      setQrSvg("");
+      return;
     }
+    let cancelled = false;
+    makeQrSvg(shareUrl, { cellSize: 6, margin: 2 })
+      .then((svg) => {
+        if (!cancelled) setQrSvg(svg);
+      })
+      .catch((err: unknown) => {
+        log.warn("[tutor] qr encoding failed", err);
+        if (!cancelled) setQrSvg("");
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [shareUrl]);
   // Detect Web Share API once so we can hide the share button on
   // browsers that would otherwise fall back to clipboard (avoiding the

@@ -6,7 +6,7 @@ import {
   Points,
   ShaderMaterial,
 } from "three";
-import * as satelliteJs from "satellite.js";
+import { propagate, twoline2satrec } from "satellite.js";
 
 /**
  * 🛰 Real-satellite catalog — TLE-driven.
@@ -31,7 +31,7 @@ export type SatelliteEntry = {
 
 type SatRecord = {
   entry: SatelliteEntry;
-  satrec: ReturnType<typeof satelliteJs.twoline2satrec> | null;
+  satrec: ReturnType<typeof twoline2satrec> | null;
 };
 
 export class SatelliteField {
@@ -65,7 +65,7 @@ export class SatelliteField {
     for (const entry of list) {
       let satrec: SatRecord["satrec"] = null;
       try {
-        satrec = satelliteJs.twoline2satrec(entry.l1, entry.l2);
+        satrec = twoline2satrec(entry.l1, entry.l2);
       } catch {
         // skip malformed TLE
       }
@@ -111,7 +111,7 @@ export class SatelliteField {
       if (!r.satrec) continue;
       let posEci: { x: number; y: number; z: number } | null = null;
       try {
-        const result = satelliteJs.propagate(r.satrec, time);
+        const result = propagate(r.satrec, time);
         if (result && typeof result !== "boolean") {
           const p = result.position;
           if (p && typeof p !== "boolean") {

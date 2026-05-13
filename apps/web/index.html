@@ -41,12 +41,40 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Unspeakable" />
     <link rel="apple-touch-icon" href="/favicon.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!--
+      Self-hosted fonts. Google Fonts serves the same variable-axis woff2
+      file for every weight in a family on the `latin` subset, so we ship
+      one woff2 per family and let `font-weight` ranges pick the glyphs.
+      Dropping 500 of Space Grotesk because Tailwind's `font-medium`
+      callers (currently just AstronomyToday.tsx) fall through to 400/600
+      cleanly on a variable axis.
+      Preload only the family that's used above the fold (Space Grotesk
+      for the landing display copy) — JetBrains Mono is for monospace
+      labels deeper in the viewer chrome.
+    -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
-      rel="stylesheet"
+      rel="preload"
+      href="/fonts/space-grotesk.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
     />
+    <style>
+      @font-face {
+        font-family: "Space Grotesk";
+        font-style: normal;
+        font-weight: 400 700;
+        font-display: swap;
+        src: url("/fonts/space-grotesk.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "JetBrains Mono";
+        font-style: normal;
+        font-weight: 400 500;
+        font-display: swap;
+        src: url("/fonts/jetbrains-mono.woff2") format("woff2");
+      }
+    </style>
   </head>
   <body class="bg-space-950 text-white antialiased">
     <div id="root"></div>

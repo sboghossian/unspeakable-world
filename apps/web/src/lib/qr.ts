@@ -11,9 +11,11 @@
  * (typeNumber=0 → auto), uses byte mode, and error-correction level L
  * (recovery of ~7%) — printed certificates are read at close range so
  * the lighter ECC keeps the modules large and the scan reliable.
+ *
+ * Lazy-loaded: `qrcode-generator` is only pulled into the bundle when a
+ * caller actually asks for a QR code (certificate panel, tutor share
+ * panel). Everything else gets to skip the 7 KB.
  */
-
-import qrcode from "qrcode-generator";
 
 export type QrOptions = {
   /** Module pixel size in the generated SVG. Default 4. */
@@ -28,7 +30,11 @@ export type QrOptions = {
  * exceeds the largest QR version (~4 KB binary, far above any URL we
  * encode here).
  */
-export function makeQrSvg(data: string, opts: QrOptions = {}): string {
+export async function makeQrSvg(
+  data: string,
+  opts: QrOptions = {},
+): Promise<string> {
+  const { default: qrcode } = await import("qrcode-generator");
   const qr = qrcode(0, "L");
   qr.addData(data);
   qr.make();

@@ -408,14 +408,26 @@ function CertSignatureCaption({ signature }: { signature: SignatureState }) {
  * the signature check in their own browser, no server in the loop.
  */
 function CertQrBlock({ signature }: { signature: SignatureState }) {
-  const qrHtml = useMemo<string | null>(() => {
-    if (signature.kind !== "ready") return null;
-    try {
-      return makeQrSvg(signature.verifyUrl, { cellSize: 4, margin: 2 });
-    } catch (err) {
-      log.warn("[cert] QR render failed", err);
-      return null;
+  // makeQrSvg is async (it lazy-imports `qrcode-generator`) so we
+  // resolve it through an effect and hold the SVG string in state.
+  const [qrHtml, setQrHtml] = useState<string | null>(null);
+  useEffect(() => {
+    if (signature.kind !== "ready") {
+      setQrHtml(null);
+      return;
     }
+    let cancelled = false;
+    makeQrSvg(signature.verifyUrl, { cellSize: 4, margin: 2 })
+      .then((svg) => {
+        if (!cancelled) setQrHtml(svg);
+      })
+      .catch((err: unknown) => {
+        log.warn("[cert] QR render failed", err);
+        if (!cancelled) setQrHtml(null);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [signature]);
 
   return (

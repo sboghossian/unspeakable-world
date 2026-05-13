@@ -8,14 +8,20 @@
  * Data sources (both MIT-compatible):
  *   - NASA Exoplanet Archive PSCompPars (public domain, IPAC/Caltech)
  *     → bake script: scripts/bake-exoplanets-full.ts
- *     → asset:       public/data/exoplanets-full.json (~1.1 MB / 6.3K rows)
+ *     → assets:
+ *         public/data/exoplanets.json       (slim, ~200 KB, default)
+ *         public/data/exoplanets-full.json  (full, ~1.1 MB / 6.3K rows)
  *   - PHL @ UPR Arecibo Habitable Worlds Catalog (CC-BY 4.0)
  *     → bake script: scripts/bake-phl-hwc.ts
  *     → asset:       public/data/phl-hwc.json
  *
- * Note: the existing slim `exoplanets.json` is still loaded by
- * `viewer/scene/scene.ts` directly via `new ExoplanetField()`; this
- * module is the *new* layer wrapper that ships the full dataset.
+ * Bandwidth strategy: we default to the slim `exoplanets.json` so the
+ * cold-start cost of enabling this layer is ~200 KB instead of ~1.1 MB.
+ * The full catalogue (with stellar/host-system fields needed for ESI
+ * scoring) is only fetched when the user picks the `habitability`
+ * color mode — see `setColorMode` below. The slim file still has
+ * enough columns to render points and basic labels; it's missing
+ * only the host-star physical params that habitability needs.
  */
 
 import type { Group } from "three";
@@ -49,9 +55,10 @@ export type MountOpts = {
   mode: LayerMode;
   enabled: boolean;
   /**
-   * Override catalogue source. Defaults to the baked
-   * `/data/exoplanets-full.json`. Pass the slim `/data/exoplanets.json`
-   * for the legacy dataset.
+   * Override catalogue source. Defaults to the slim
+   * `/data/exoplanets.json` (~200 KB). The full
+   * `/data/exoplanets-full.json` (~1.1 MB) is fetched lazily when the
+   * user switches to the `habitability` color mode.
    */
   catalogueUrl?: string;
   /**
@@ -74,16 +81,38 @@ export function mountLayer(opts: MountOpts): LayerHandle {
   opts.parent.add(field.group);
   field.setVisible(opts.enabled);
 
-  const url = opts.catalogueUrl ?? "/data/exoplanets-full.json";
+  // Default to the slim catalogue (~200 KB). The full catalogue
+  // (~1.1 MB) is only loaded lazily if the caller flips into the
+  // habitability color mode, since that's the only feature that needs
+  // the full host-star physical params.
+  const SLIM_URL = "/data/exoplanets.json";
+  const FULL_URL = "/data/exoplanets-full.json";
+  let url = opts.catalogueUrl ?? SLIM_URL;
 
   let loaded = false;
   let disposed = false;
+  /** Track whether we've upgraded from slim → full. The upgrade is
+   *  irreversible for a given mount; switching back to non-habitability
+   *  modes keeps the richer data on hand. */
+  let loadedFull = url === FULL_URL || opts.catalogueUrl !== undefined;
 
   const ensureLoaded = (): void => {
     if (loaded || disposed) return;
     loaded = true;
     field.load(url).catch((err: unknown) => {
       log.warn("[exoplanets]", "load failed", err);
+    });
+  };
+
+  /** Switch to the full catalogue. Idempotent. Called only when the
+   *  user picks a habitability-flavoured color mode — the slim
+   *  catalogue lacks the host-star fields ESI scoring needs. */
+  const upgradeToFull = (): void => {
+    if (disposed || loadedFull) return;
+    loadedFull = true;
+    url = FULL_URL;
+    field.load(FULL_URL).catch((err: unknown) => {
+      log.warn("[exoplanets]", "full load failed", err);
     });
   };
 
@@ -102,6 +131,10 @@ export function mountLayer(opts: MountOpts): LayerHandle {
     },
     setColorMode(c: ExoplanetColorMode): void {
       if (disposed) return;
+      // Habitability colouring requires fields only present in the
+      // full catalogue; upgrade transparently before applying the
+      // mode so the field has data to score against.
+      if (c === "habitability") upgradeToFull();
       field.setColorMode(c);
     },
     setTime(_ms: number): void {
