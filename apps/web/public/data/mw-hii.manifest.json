@@ -1,0 +1,29 @@
+{
+  "count": 1413,
+  "recordBytes": 20,
+  "schema": [
+    {
+      "name": "glon_rad",
+      "type": "f32"
+    },
+    {
+      "name": "glat_rad",
+      "type": "f32"
+    },
+    {
+      "name": "dist_kpc",
+      "type": "f32"
+    },
+    {
+      "name": "diam_arcmin",
+      "type": "f32"
+    },
+    {
+      "name": "cat_code",
+      "type": "f32"
+    }
+  ],
+  "source": "VizieR J/ApJS/212/1 (K-class only)",
+  "bakedAt": "2026-05-13T12:29:06.537Z",
+  "license": "CC-BY 3.0 (Anderson+ 2014) / Public domain (Sharpless 1959, RCW 1960)"
+}

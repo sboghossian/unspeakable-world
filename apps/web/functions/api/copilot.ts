@@ -55,6 +55,13 @@ type AIBinding = {
        * preserves the same field name.
        */
       tools?: ReadonlyArray<unknown>;
+      /**
+       * Upper bound on generated tokens. Workers AI's Llama binding
+       * defaults to 256, which truncates the long-form responses the
+       * lesson translator needs. Callers (the `translate-lessons.ts`
+       * bake script) may raise this up to the model's hard ceiling.
+       */
+      max_tokens?: number;
     },
   ) => Promise<ReadableStream<Uint8Array> | Record<string, unknown>>;
 };
@@ -89,6 +96,12 @@ type CopilotRequestBody = {
    * blob instead of an SSE stream.
    */
   stream?: boolean;
+  /**
+   * Optional upper bound on the number of tokens the model emits in
+   * response. Capped server-side at 4096 to keep one call from
+   * monopolising the project's free-tier Workers AI quota.
+   */
+  max_tokens?: number;
 };
 
 /* eslint-disable no-console */
@@ -305,8 +318,14 @@ export const onRequest: PagesFunction<CopilotEnv> = async (ctx) => {
     messages: Array<{ role: string; content: string }>;
     stream: boolean;
     tools?: ReadonlyArray<unknown>;
+    max_tokens?: number;
   } = { messages, stream: wantsStream };
   if (tools) runInput.tools = tools;
+  if (typeof body.max_tokens === "number" && Number.isFinite(body.max_tokens)) {
+    // Clamp to a safe range — 64 is roughly one tweet; 4096 is the
+    // typical Llama 3.1 8B context cap on the Cloudflare binding.
+    runInput.max_tokens = Math.max(64, Math.min(4096, Math.floor(body.max_tokens)));
+  }
 
   const upstream = await ctx.env.AI.run(model, runInput);
 

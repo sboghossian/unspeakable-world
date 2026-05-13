@@ -234,6 +234,51 @@ export function upcomingEvents(now: Date, windowDays = 90): SkyEvent[] {
   return out;
 }
 
+export type ActiveMeteorShower = {
+  name: string;
+  zhr: number;
+  raDeg: number;
+  decDeg: number;
+  /** Fractional activity ∈ (0, 1]: 1 at peak, decays with a Gaussian
+   *  whose σ ≈ 3 days (consistent with most major showers). */
+  activity: number;
+};
+
+/**
+ * Return the currently-active meteor shower (peak day ± 7 days), with a
+ * Gaussian activity weight so listeners can scale "pings per hour". When
+ * no shower is active, returns null and callers should fall back to the
+ * sporadic background rate.
+ */
+export function activeMeteorShower(now: Date): ActiveMeteorShower | null {
+  const ms = now.getTime();
+  const sigmaDays = 3;
+  const windowDays = 7;
+  const yr = now.getUTCFullYear();
+  let best: ActiveMeteorShower | null = null;
+  for (const y of [yr - 1, yr, yr + 1]) {
+    for (const sh of METEOR_SHOWERS) {
+      const peak = Date.UTC(y, sh.month - 1, sh.day, 0, 0, 0);
+      const deltaDays = Math.abs(ms - peak) / (24 * 3600 * 1000);
+      if (deltaDays > windowDays) continue;
+      const k = Math.exp(
+        -(deltaDays * deltaDays) / (2 * sigmaDays * sigmaDays),
+      );
+      const effective = sh.zhr * k;
+      if (!best || effective > best.zhr * best.activity) {
+        best = {
+          name: sh.name,
+          zhr: sh.zhr,
+          raDeg: sh.raDeg,
+          decDeg: sh.decDeg,
+          activity: k,
+        };
+      }
+    }
+  }
+  return best;
+}
+
 function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 }

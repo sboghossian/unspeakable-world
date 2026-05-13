@@ -17,10 +17,12 @@ export type Route =
   | "sandbox"
   | "guide"
   | "class"
-  | "whoami";
+  | "whoami"
+  | "verify-cert";
 
 function getRoute(): Route {
   const hash = typeof window === "undefined" ? "" : window.location.hash;
+  if (hash.startsWith("#verify-cert")) return "verify-cert";
   if (hash.startsWith("#whoami")) return "whoami";
   if (hash.startsWith("#class")) return "class";
   if (hash.startsWith("#guide")) return "guide";

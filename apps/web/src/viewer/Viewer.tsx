@@ -57,8 +57,13 @@ import { getSettings, updateSettings } from "../lib/settings";
 import type { SkyProjection } from "./sky-atlas/projection-shader";
 import { SkyInfoPanel } from "./ui/SkyInfoPanel";
 import { ExtraLayersPanel } from "./ui/ExtraLayersPanel";
+import { TutorPanel } from "./ui/TutorPanel";
+import { makeSkyAdapter } from "./tutor/adapters";
+import { useExtraLayersStore } from "./extra-layers/state";
 import { MultimessengerControls } from "./ui/MultimessengerControls";
 import { SonificationControls } from "./ui/SonificationControls";
+import { JwstLiveBadge } from "./ui/JwstLiveBadge";
+import { ObservationLogPanel } from "./ui/ObservationLogPanel";
 import { MobileMenuDrawer, type MobileMenuGroup } from "./ui/MobileMenuDrawer";
 import { WhatsNewV4Toast } from "./ui/TopBarOverflow";
 import { PowerUserPanel } from "./ui/PowerUserPanel";
@@ -354,6 +359,32 @@ export function Viewer() {
       },
     };
   }, [searchIndex]);
+
+  // 🎓 Tutor adapter — feeds the live camera state into the broadcast
+  // module and applies incoming teacher updates back into the scene.
+  // Stable ref so the panel can wire up its publish/poll loops once;
+  // the latest overlay id is plumbed through a closure over the state ref.
+  const latestOverlayIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    latestOverlayIdRef.current = state.overlayId;
+  }, [state.overlayId]);
+  const tutorAdapter = useMemo(
+    () =>
+      makeSkyAdapter(() => sceneRef.current, {
+        getActiveLayers: () => {
+          const enabled = useExtraLayersStore.getState().enabled;
+          return Object.keys(enabled).filter((id) => enabled[id] === true);
+        },
+        setActiveLayers: (ids: string[]) => {
+          const store = useExtraLayersStore.getState();
+          const map: Record<string, boolean> = {};
+          for (const id of ids) map[id] = true;
+          store.replace(map);
+        },
+        getOverlayId: () => latestOverlayIdRef.current,
+      }),
+    [],
+  );
 
   const runTourStep = useCallback((idx: number) => {
     const scene = sceneRef.current;
@@ -914,6 +945,11 @@ export function Viewer() {
                     duplicated in this group. */}
                 <MultimessengerControls scene={sceneRef.current} />
                 <SonificationControls scene={sceneRef.current} />
+                <JwstLiveBadge scene={sceneRef.current} />
+                <ObservationLogPanel
+                  scene={sceneRef.current}
+                  searchIndex={searchIndex}
+                />
               </>
             ),
           },
@@ -1034,6 +1070,8 @@ export function Viewer() {
               }
             />
             <ExtraLayersPanel scene={sceneRef.current} />
+            <JwstLiveBadge scene={sceneRef.current} />
+            <TutorPanel adapter={tutorAdapter} />
             {/* EventsPanel stays inline on desktop because the global
                 `e` keyboard shortcut toggles it via external state — the
                 panel needs to be mounted to react. Small footprint. */}
@@ -1090,6 +1128,7 @@ export function Viewer() {
               }
             />
             <ExtraLayersPanel scene={sceneRef.current} />
+            <TutorPanel adapter={tutorAdapter} />
             <MobileMenuDrawer groups={mobileMenuGroups} />
           </div>
         </div>

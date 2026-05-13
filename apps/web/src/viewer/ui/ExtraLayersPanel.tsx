@@ -44,6 +44,7 @@ const LAYER_TABS: readonly LayerTabDef[] = [
       "chandra",
       "variables",
       "neocp-risk",
+      "obs-log",
     ],
   },
   {
@@ -64,6 +65,7 @@ const LAYER_TABS: readonly LayerTabDef[] = [
       "goto",
       "blackgem",
       "starlink-optin",
+      "jwst-live",
     ],
   },
   {

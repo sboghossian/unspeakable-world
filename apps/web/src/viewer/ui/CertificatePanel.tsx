@@ -1,11 +1,22 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
+  allProgress,
   getCertificateData,
   getCertificateName,
   setCertificateName,
   useLessonProgress,
 } from "../../lib/lesson-progress";
 import { LESSONS } from "../curriculum/lessons";
+import {
+  buildVerifyUrl,
+  getAlg,
+  makeNonce,
+  sign,
+  type CertAlg,
+  type SignedCert,
+} from "../../lib/cert-crypto";
+import { makeQrSvg } from "../../lib/qr";
+import { log } from "../../lib/logger";
 
 /**
  * 🏅 CertificatePanel — printable completion certificate.
@@ -13,6 +24,13 @@ import { LESSONS } from "../curriculum/lessons";
  * Opens as a full-screen modal when the learner has completed 100% of the
  * curriculum. Asks for a display name (no email, no account) once, then
  * renders an A4-portrait certificate styled for both screen and print.
+ *
+ * Every issued certificate is signed with a per-browser Ed25519 keypair
+ * (or ECDSA-P256 fallback on browsers without Ed25519), with the public
+ * key + signature embedded in a QR code at the bottom right. Anyone can
+ * scan the QR and re-verify the signature locally at `#verify-cert` —
+ * no server in the loop. See {@link useSignedCert} for the signing flow
+ * and `cert-crypto.ts` for the cryptographic details.
  *
  * Export uses `window.print()` so we don't pull in a PDF library. The
  * Tailwind `print:` variants hide every chrome element and let the
@@ -37,6 +55,12 @@ export function CertificatePanel({ onClose }: Props) {
     () => getCertificateData(committed ? name : undefined),
     [name, committed],
   );
+
+  const signature = useSignedCert({
+    committed,
+    name: data.name,
+    lessonsCompleted: data.lessonsCompleted,
+  });
 
   const handleSaveName = () => {
     const trimmed = name.trim();
@@ -79,6 +103,7 @@ export function CertificatePanel({ onClose }: Props) {
           name={data.name || "Astronomer"}
           lessonsCompleted={data.lessonsCompleted}
           dateRange={data.dateRange}
+          signature={signature}
           onRename={() => setCommitted(false)}
           onPrint={() => window.print()}
         />
@@ -146,16 +171,92 @@ function NamePrompt({
   );
 }
 
+type SignatureState =
+  | { kind: "idle" }
+  | { kind: "signing" }
+  | { kind: "ready"; cert: SignedCert; verifyUrl: string; alg: CertAlg }
+  | { kind: "error"; reason: string };
+
+/**
+ * Sign the certificate payload via Web Crypto. Re-runs when the name
+ * commits or the set of completed lessons changes. We rebuild a fresh
+ * `nonce` per sign so two prints of the same payload don't share a
+ * signature byte-for-byte — useful if a learner re-prints after an
+ * accidental name typo.
+ */
+function useSignedCert(input: {
+  committed: boolean;
+  name: string;
+  lessonsCompleted: Array<{ id: string; title: string; firstCompletedAt: string }>;
+}): SignatureState {
+  const [state, setState] = useState<SignatureState>({ kind: "idle" });
+  const lessonIdsKey = input.lessonsCompleted.map((l) => l.id).join(",");
+
+  useEffect(() => {
+    if (!input.committed) {
+      setState({ kind: "idle" });
+      return;
+    }
+    if (typeof crypto === "undefined" || !crypto.subtle) {
+      setState({
+        kind: "error",
+        reason: "Web Crypto is unavailable in this browser.",
+      });
+      return;
+    }
+    let cancelled = false;
+    setState({ kind: "signing" });
+    const progress = allProgress();
+    const quizScores: Record<string, number> = {};
+    for (const l of input.lessonsCompleted) {
+      const best = progress[l.id]?.bestScore;
+      if (typeof best === "number") quizScores[l.id] = best;
+    }
+    const payload = {
+      name: input.name,
+      date: new Date().toISOString(),
+      lessons_completed: input.lessonsCompleted.map((l) => l.id),
+      quiz_scores: quizScores,
+      nonce: makeNonce(),
+    };
+    (async () => {
+      try {
+        const cert = await sign(payload);
+        const verifyUrl = buildVerifyUrl(cert);
+        const alg = await getAlg();
+        if (cancelled) return;
+        setState({ kind: "ready", cert, verifyUrl, alg });
+      } catch (err) {
+        log.warn("[cert] sign failed", err);
+        if (cancelled) return;
+        setState({
+          kind: "error",
+          reason: err instanceof Error ? err.message : String(err),
+        });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // Key on lesson set + name; lesson titles don't enter the signed bytes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [input.committed, input.name, lessonIdsKey]);
+
+  return state;
+}
+
 function CertificateSheet({
   name,
   lessonsCompleted,
   dateRange,
+  signature,
   onRename,
   onPrint,
 }: {
   name: string;
   lessonsCompleted: Array<{ id: string; title: string; firstCompletedAt: string }>;
   dateRange: { start: string; end: string };
+  signature: SignatureState;
   onRename: () => void;
   onPrint: () => void;
 }) {
@@ -215,7 +316,7 @@ function CertificateSheet({
           ))}
         </div>
 
-        <div className="mt-auto grid grid-cols-2 items-end gap-12 pt-8">
+        <div className="mt-auto grid grid-cols-[1fr_auto] items-end gap-8 pt-8">
           <div>
             <div className="mb-1 border-b border-stone-700/70" />
             <div className="font-mono text-[10px] uppercase tracking-widest text-stone-500">
@@ -224,16 +325,9 @@ function CertificateSheet({
             <div className="mt-0.5 font-mono text-[10px] text-stone-500">
               Coursework dates {startDate} — {endDate}
             </div>
+            <CertSignatureCaption signature={signature} />
           </div>
-          <div className="text-right">
-            <div className="mb-1 border-b border-stone-700/70" />
-            <div className="font-display text-[14px] italic text-stone-700">
-              The Unspeakable World
-            </div>
-            <div className="font-mono text-[10px] uppercase tracking-widest text-stone-500">
-              Curriculum signature
-            </div>
-          </div>
+          <CertQrBlock signature={signature} />
         </div>
       </div>
 
@@ -252,6 +346,78 @@ function CertificateSheet({
         >
           Print / Save PDF
         </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Bottom-left caption under the awarded date — tells the human reading
+ * the printed cert what the QR is, which algorithm signed it, and the
+ * fallback story if Ed25519 wasn't available in the issuing browser.
+ */
+function CertSignatureCaption({ signature }: { signature: SignatureState }) {
+  if (signature.kind === "idle" || signature.kind === "signing") {
+    return (
+      <div className="mt-2 font-mono text-[9px] uppercase tracking-widest text-stone-400">
+        Signing in browser…
+      </div>
+    );
+  }
+  if (signature.kind === "error") {
+    return (
+      <div className="mt-2 font-mono text-[9px] uppercase tracking-widest text-red-700/70">
+        Unsigned — {signature.reason}
+      </div>
+    );
+  }
+  const algLabel =
+    signature.alg === "ed25519" ? "Ed25519" : "ECDSA-P256 (fallback)";
+  return (
+    <div className="mt-2 space-y-0.5 font-mono text-[9px] uppercase tracking-widest text-stone-500">
+      <div>Signature · {algLabel}</div>
+      <div className="break-all text-[8px] tracking-normal text-stone-400">
+        pubkey {signature.cert.publicKeyB64.slice(0, 24)}…
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Bottom-right QR block. The QR encodes the verification URL — anyone
+ * can scan it with a phone camera, land on `#verify-cert`, and re-run
+ * the signature check in their own browser, no server in the loop.
+ */
+function CertQrBlock({ signature }: { signature: SignatureState }) {
+  const qrHtml = useMemo<string | null>(() => {
+    if (signature.kind !== "ready") return null;
+    try {
+      return makeQrSvg(signature.verifyUrl, { cellSize: 4, margin: 2 });
+    } catch (err) {
+      log.warn("[cert] QR render failed", err);
+      return null;
+    }
+  }, [signature]);
+
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <div className="h-[140px] w-[140px] rounded-md border border-stone-300 bg-white p-1.5">
+        {qrHtml ? (
+          // QR SVG is generated from a trusted local module — no
+          // user-controlled HTML reaches `dangerouslySetInnerHTML`.
+          <div
+            aria-label="Verification QR code"
+            className="h-full w-full [&_svg]:h-full [&_svg]:w-full"
+            dangerouslySetInnerHTML={{ __html: qrHtml }}
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center font-mono text-[9px] uppercase tracking-widest text-stone-400">
+            {signature.kind === "signing" ? "Signing…" : "No QR"}
+          </div>
+        )}
+      </div>
+      <div className="font-mono text-[8px] uppercase tracking-widest text-stone-500">
+        Scan to verify
       </div>
     </div>
   );

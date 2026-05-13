@@ -41,6 +41,7 @@ const INSTRUMENT_DEFS: ReadonlyArray<{
   { id: "pulsarKick", label: "Kick", hint: "Pulsar period" },
   { id: "bell", label: "Bell", hint: "Messier / DSO" },
   { id: "gwSwell", label: "Swell", hint: "GW chirp" },
+  { id: "meteorRadar", label: "Radar", hint: "Meteor pings (live ZHR)" },
 ];
 
 /**

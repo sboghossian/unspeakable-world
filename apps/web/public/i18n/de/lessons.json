@@ -1,0 +1,145 @@
+{
+  "lessons": [
+    {
+      "id": "where-are-we-standing",
+      "title": "Wo stehen wir?",
+      "summary": "Deine Adresse im Universum — Erde, ihre Rotation und warum wir die Jahreszeiten haben.",
+      "ageTier": "teen",
+      "durationMin": 5,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "In diesem Moment bist du auf einem Ball aus Felsen und Wasser, der sich mit etwa 1.670 km/h an der Äquatorregion um die eigene Achse dreht, um einen Zündkopf zu umkreisen, der 150 Millionen Kilometer entfernt ist. Diese Lektion geht um die Frage, wo 'hier' ist."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Earth"
+        },
+        {
+          "kind": "narrate",
+          "text": "Die Erde rotiert west-über-östlich — das ist der Grund, warum die Sonne wie erscheint, wenn sie im Osten aufgeht. Der 23,5°-Achsenneigung ist der Grund, warum wir Jahreszeiten haben. Die Neigung ist im Weltraum festgelegt, sodass für die Hälfte des Jahres der nördliche Hemisphäre sich nach der Sonne neigt, und für die andere Hälfte sie sich davon wegnimmt."
+        },
+        {
+          "kind": "wait",
+          "ms": 4000
+        },
+        {
+          "kind": "quiz",
+          "question": "Die Erde rotiert von Westen nach Osten. In welche Richtung erscheint der Sonne daher über dem Himmel zu bewegen?",
+          "options": [
+            "Osten nach Westen",
+            "Westen nach Osten",
+            "Süden nach Norden",
+            "Norden nach Süden"
+          ],
+          "answerIndex": 0,
+          "explanation": "Da wir ostwärts rotieren, erscheint alles im Himmel in entgegengesetzter Richtung zu bewegen — Osten nach Westen."
+        },
+        {
+          "kind": "narrate",
+          "text": "Beim nächsten Mal, wenn du einen Sonnenuntergang beobachtest, denke daran: die Sonne bewegt sich nicht. Du bewegst dich."
+        }
+      ]
+    },
+    {
+      "id": "how-big-is-the-sun",
+      "title": "Wie groß ist die Sonne?",
+      "summary": "Ein Besuch des Sterns im Zentrum von allem — und ein Gefühl für seine enorme Größe.",
+      "ageTier": "teen",
+      "durationMin": 6,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Wenn die Erde ein Marmorstein wäre, wäre die Sonne ein Strandball 30 Meter entfernt. Lassen Sie uns tatsächlich hingehen."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Sun"
+        },
+        {
+          "kind": "narrate",
+          "text": "Die Sonne ist 1,4 Millionen km breit — das sind 109 Erde nebeneinander an der Kante. Durch Volumen könnten Sie etwa 1,3 Millionen Erde in ihr unterbringen. Die Sonne enthält 99,86 % aller Masse im Sonnensystem."
+        },
+        {
+          "kind": "quiz",
+          "question": "Wie viele Erde könnten ungefähr in die Sonne durch Volumen passen?",
+          "options": [
+            "13",
+            "1.300",
+            "1,3 Millionen",
+            "130 Millionen"
+          ],
+          "answerIndex": 2,
+          "explanation": "Der Volumen wächst mit dem Kubus des Radius. Der Radius der Sonne beträgt ~109 mal der Erde, also ist ihr Volumen ~109³ ≈ 1,3 Millionen."
+        },
+        {
+          "kind": "narrate",
+          "text": "Jeden Sekunden wandelt die Sonne 4 Millionen Tonnen Materie in reine Energie um via Fusion. Diese Energie erreicht die Erde acht Minuten später als Sonnenlicht — und macht so möglich, dass jedes Pflanze, jedes Tier, jedes Foto, das du je gemacht hast, existiert."
+        }
+      ]
+    },
+    {
+      "id": "solar-system-true-scale",
+      "title": "Das Sonnensystem in wahrer Skala",
+      "summary": "Ein Flug von Merkur zu Neptun, der zeigt, wie leer das Nachbarschaft wirklich ist.",
+      "ageTier": "teen",
+      "durationMin": 7,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Die meisten Diagramme des Sonnensystems lügen. Sie drücken die Planeten nahe zusammen, damit man sie alle auf einer Seite sehen kann. Die Wahrheit ist, dass das Sonnensystem hauptsächlich leeres Raum ist."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Mercury"
+        },
+        {
+          "kind": "narrate",
+          "text": "Das Licht vom Sonnen erreicht Merkur in drei Minuten. Von hier aus sieht die Erde wie ein heller blauer Stern aus."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Earth"
+        },
+        {
+          "kind": "narrate",
+          "text": "Die Sonnenstrahlen erreichen die Erde in 8 Minuten 20 Sekunden. Dies ist der nächste Punkt, an dem sich die Sonne uns fühlt."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Jupiter"
+        },
+        {
+          "kind": "narrate",
+          "text": "Jetzt sind wir fünfmal weiter von der Sonne entfernt als die Erde. Die Sonnenstrahlen brauchten 43 Minuten, um hier zu sein. Jupiter hat alleine 2,5-mal das Mass aller anderen Planeten zusammen."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Neptune"
+        },
+        {
+          "kind": "narrate",
+          "text": "Neptun ist 30 AU entfernt. Die Sonnenstrahlung benötigt 4 Stunden und 10 Minuten, um hier zu erreichen. Von Neptun aus ist die Sonne nur das helleste Stern im Himmel."
+        },
+        {
+          "kind": "quiz",
+          "question": "Wie lange dauert es ungefähr, bis Sonnenstrahlung die Erde vom Sonnen erreicht?",
+          "options": [
+            "8 Sekunden",
+            "8 Minuten",
+            "8 Stunden",
+            "8 Tage"
+          ],
+          "answerIndex": 1,
+          "explanation": "Licht reist 299.792 km pro Sekunde. Die Sonne ist etwa 150 Millionen km entfernt, die Reise dauert also etwa 8 Minuten und 20 Sekunden."
+        },
+        {
+          "kind": "narrate",
+          "text": "Der nächste Halt nach Neptun ist der Kuiper-Gürtel, dann der Oort-Cloud, dann vier Lichtjahre leerer Raum bis zur nächsten Sterne. Wir leben in einem sehr, sehr großen Nachbarschaft."
+        }
+      ]
+    }
+  ],
+  "generatedAt": "2026-05-13T12:42:00.799Z",
+  "source": "lessons.ts"
+}

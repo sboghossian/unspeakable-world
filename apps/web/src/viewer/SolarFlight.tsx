@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 // Using useState below.
 import {
   SolarFlightScene,
@@ -52,6 +52,9 @@ import { SnapshotButton } from "./ui/SnapshotButton";
 import { ShareButton } from "./ui/ShareButton";
 import { BookmarksPanel } from "./ui/BookmarksPanel";
 import { ExtraLayersPanel } from "./ui/ExtraLayersPanel";
+import { TutorPanel } from "./ui/TutorPanel";
+import { makeSolarAdapter } from "./tutor/adapters";
+import { useExtraLayersStore } from "./extra-layers/state";
 import { MarsRoverInspectorCard } from "./ui/MarsRoverInspectorCard";
 import { addBookmark } from "../lib/bookmarks";
 import { getSettings, useSettings } from "../lib/settings";
@@ -250,6 +253,44 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
 
   const idle = useIdle(3500);
 
+  // 🎓 Tutor adapter — broadcasts the live solar-flight camera + focus +
+  // time-rate. Captures the live state via a ref so the adapter is
+  // stable for the lifetime of the panel.
+  const liveStateRef = useRef(state);
+  useEffect(() => {
+    liveStateRef.current = state;
+  }, [state]);
+  const tutorAdapter = useMemo(
+    () =>
+      makeSolarAdapter(
+        () => sceneRef.current,
+        () => {
+          const s = liveStateRef.current;
+          return {
+            focus: s.focus,
+            yaw: s.yaw,
+            pitch: s.pitch,
+            cameraDistance: s.cameraDistance,
+            time: s.time,
+            timeRate: s.timeRate,
+          };
+        },
+        {
+          getActiveLayers: () => {
+            const enabled = useExtraLayersStore.getState().enabled;
+            return Object.keys(enabled).filter((id) => enabled[id] === true);
+          },
+          setActiveLayers: (ids: string[]) => {
+            const store = useExtraLayersStore.getState();
+            const map: Record<string, boolean> = {};
+            for (const id of ids) map[id] = true;
+            store.replace(map);
+          },
+        },
+      ),
+    [],
+  );
+
   // Drawer groups — mirrors Universe.tsx but with the panels relevant
   // to solar-flight (no SkyTonight / SpaceWeather / TonightSky which
   // are sky-mode features, plus Satellites + Spacecraft for in-system).
@@ -366,6 +407,7 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
             }}
           />
           <ShareButton onPrepare={() => buildSolarHash(state)} />
+          <TutorPanel adapter={tutorAdapter} />
           <BookmarksPanel />
           <button
             type="button"

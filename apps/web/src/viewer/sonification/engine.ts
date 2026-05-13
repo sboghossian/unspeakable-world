@@ -1,7 +1,7 @@
 /**
- * 🎛 SonificationEngine — orchestrates the four sonification instruments
- * (drone, pulsar-kick, bell, gw-swell) behind a single Web Audio
- * graph.
+ * 🎛 SonificationEngine — orchestrates the five sonification instruments
+ * (drone, pulsar-kick, bell, gw-swell, meteor-radar) behind a single
+ * Web Audio graph.
  *
  * Audio graph (top-down):
  *
@@ -32,9 +32,11 @@
  * proximity) — exposed as no-op hooks the future host can drive.
  */
 
+import { activeMeteorShower } from "../events/sky-events";
 import { BellInstrument } from "./instruments/bell";
 import { DroneInstrument } from "./instruments/drone";
 import { GwSwellInstrument } from "./instruments/gw-swell";
+import { MeteorRadarInstrument } from "./instruments/meteor-radar";
 import { PulsarKickInstrument } from "./instruments/pulsar-kick";
 import {
   bvToScaleDegree,
@@ -45,7 +47,12 @@ import {
 
 export const MAX_MASTER_GAIN = 0.5;
 
-export type InstrumentId = "drone" | "pulsarKick" | "bell" | "gwSwell";
+export type InstrumentId =
+  | "drone"
+  | "pulsarKick"
+  | "bell"
+  | "gwSwell"
+  | "meteorRadar";
 
 export type SceneState = {
   /** Brightest visible star's B-V color index. null = no star in view. */
@@ -88,6 +95,8 @@ export class SonificationEngine {
   private pulsarKick: PulsarKickInstrument | null = null;
   private bell: BellInstrument | null = null;
   private gwSwell: GwSwellInstrument | null = null;
+  private meteorRadar: MeteorRadarInstrument | null = null;
+  private meteorRadarTimer: ReturnType<typeof setInterval> | null = null;
 
   private playing = false;
   private masterMuted = true; // mute by default
@@ -99,6 +108,8 @@ export class SonificationEngine {
     pulsarKick: false,
     bell: false,
     gwSwell: false,
+    // Off by default — radar audio is opt-in (it's loud and grainy).
+    meteorRadar: true,
   };
   private dsoSeen = new Set<string>();
   private lastGwTrigger = 0;
@@ -200,8 +211,9 @@ export class SonificationEngine {
       }
     }
     if (this.playing) {
-      // Start/stop the periodic instruments (drone, pulsar kick) so
-      // muting them frees the audio thread instead of just silencing.
+      // Start/stop the periodic instruments (drone, pulsar kick, meteor
+      // radar) so muting them frees the audio thread instead of just
+      // silencing.
       if (id === "drone" && this.drone) {
         if (muted) this.drone.stop();
         else this.drone.start();
@@ -210,9 +222,20 @@ export class SonificationEngine {
         if (muted) this.pulsarKick.stop();
         else this.pulsarKick.start();
       }
+      if (id === "meteorRadar" && this.meteorRadar) {
+        if (muted) {
+          this.meteorRadar.stop();
+          this.stopMeteorRadarTracking();
+        } else {
+          this.meteorRadar.start();
+          this.startMeteorRadarTracking();
+        }
+      }
     }
     if (this.bell) this.bell.setMuted(this.instrumentMuted.bell);
     if (this.gwSwell) this.gwSwell.setMuted(this.instrumentMuted.gwSwell);
+    if (this.meteorRadar)
+      this.meteorRadar.setMuted(this.instrumentMuted.meteorRadar);
     this.notify();
   }
 
@@ -268,6 +291,7 @@ export class SonificationEngine {
 
   dispose(): void {
     this.pause();
+    this.stopMeteorRadarTracking();
     if (this.ctx && this.ctx.state !== "closed") {
       void this.ctx.close();
     }
@@ -279,7 +303,32 @@ export class SonificationEngine {
     this.pulsarKick = null;
     this.bell = null;
     this.gwSwell = null;
+    this.meteorRadar = null;
     this.subscribers.clear();
+  }
+
+  /**
+   * Drive the meteor-radar instrument's effective ZHR from the live
+   * ephemeris. Re-checks every minute — the active shower changes on a
+   * day-scale, so once per minute is plenty.
+   */
+  private startMeteorRadarTracking(): void {
+    if (this.meteorRadarTimer !== null) return;
+    const push = (): void => {
+      if (!this.meteorRadar) return;
+      const sh = activeMeteorShower(new Date());
+      const effectiveZhr = sh ? sh.zhr * sh.activity : 0;
+      this.meteorRadar.setShowerZhr(effectiveZhr);
+    };
+    push();
+    this.meteorRadarTimer = setInterval(push, 60 * 1000);
+  }
+
+  private stopMeteorRadarTracking(): void {
+    if (this.meteorRadarTimer !== null) {
+      clearInterval(this.meteorRadarTimer);
+      this.meteorRadarTimer = null;
+    }
   }
 
   // --- internal ---------------------------------------------------------
@@ -311,14 +360,19 @@ export class SonificationEngine {
     const kickBus = ctx.createGain();
     const bellBus = ctx.createGain();
     const swellBus = ctx.createGain();
+    const meteorBus = ctx.createGain();
     droneBus.gain.value = 1;
     kickBus.gain.value = 1;
     bellBus.gain.value = 1;
     swellBus.gain.value = 1;
+    // Meteor radar starts at 0 when it's still muted; setInstrumentMuted
+    // ramps the bus to 1 when the user un-mutes it.
+    meteorBus.gain.value = this.instrumentMuted.meteorRadar ? 0 : 1;
     droneBus.connect(master);
     kickBus.connect(master);
     bellBus.connect(master);
     swellBus.connect(master);
+    meteorBus.connect(master);
 
     this.ctx = ctx;
     this.masterGainNode = master;
@@ -328,11 +382,13 @@ export class SonificationEngine {
       pulsarKick: kickBus,
       bell: bellBus,
       gwSwell: swellBus,
+      meteorRadar: meteorBus,
     };
     this.drone = new DroneInstrument({ ctx, out: droneBus });
     this.pulsarKick = new PulsarKickInstrument({ ctx, out: kickBus });
     this.bell = new BellInstrument({ ctx, out: bellBus });
     this.gwSwell = new GwSwellInstrument({ ctx, out: swellBus });
+    this.meteorRadar = new MeteorRadarInstrument({ ctx, out: meteorBus });
     return true;
   }
 
@@ -341,6 +397,13 @@ export class SonificationEngine {
     if (!this.instrumentMuted.pulsarKick) this.pulsarKick?.start();
     if (this.bell) this.bell.setMuted(this.instrumentMuted.bell);
     if (this.gwSwell) this.gwSwell.setMuted(this.instrumentMuted.gwSwell);
+    if (this.meteorRadar) {
+      this.meteorRadar.setMuted(this.instrumentMuted.meteorRadar);
+      if (!this.instrumentMuted.meteorRadar) {
+        this.meteorRadar.start();
+        this.startMeteorRadarTracking();
+      }
+    }
   }
 
   private stopInstruments(): void {
@@ -348,6 +411,9 @@ export class SonificationEngine {
     this.pulsarKick?.stop();
     if (this.bell) this.bell.setMuted(true);
     if (this.gwSwell) this.gwSwell.setMuted(true);
+    this.meteorRadar?.stop();
+    this.stopMeteorRadarTracking();
+    if (this.meteorRadar) this.meteorRadar.setMuted(true);
   }
 
   private applyMasterGain(): void {

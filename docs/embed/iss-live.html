@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Embed — Live ISS tracker · The Unspeakable World</title>
+    <meta
+      name="description"
+      content="Drop-in iframe embed of the International Space Station's live position above Earth."
+    />
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      body {
+        background: #03050a;
+        color: #e0f2fe;
+        font-family: ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+        margin: 0;
+        padding: 32px;
+        max-width: 880px;
+        margin-inline: auto;
+      }
+      h1 {
+        font-size: 28px;
+        margin: 0 0 8px;
+      }
+      p {
+        line-height: 1.6;
+        color: #cbd5e1;
+      }
+      pre {
+        background: #0c1322;
+        border: 1px solid #1e293b;
+        border-radius: 10px;
+        padding: 14px 16px;
+        overflow-x: auto;
+        color: #7dd3fc;
+        font-size: 13px;
+        line-height: 1.55;
+      }
+      .preview {
+        margin: 24px 0;
+        border: 1px solid #1e293b;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      iframe {
+        display: block;
+        width: 100%;
+        height: 480px;
+        border: 0;
+        background: #03050a;
+      }
+      footer {
+        margin-top: 40px;
+        font-size: 12px;
+        color: #64748b;
+      }
+      a {
+        color: #7dd3fc;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Live ISS tracker — drop-in embed</h1>
+    <p>
+      Live position of the International Space Station, propagated from
+      current TLE data via SGP4 every animation frame. Tap any visible
+      pass to fly toward it. Updates automatically — no need to refresh
+      the host page.
+    </p>
+
+    <h2>Copy this snippet</h2>
+    <pre><code>&lt;iframe
+  src=&quot;https://unspeakable-world.dashable.dev/#viewer?embed=1&amp;object=ISS&amp;track=1&quot;
+  width=&quot;600&quot; height=&quot;480&quot;
+  loading=&quot;lazy&quot;
+  referrerpolicy=&quot;no-referrer-when-downgrade&quot;
+  allow=&quot;fullscreen; xr-spatial-tracking&quot;
+  sandbox=&quot;allow-scripts allow-same-origin allow-popups&quot;
+  title=&quot;Live ISS tracker — The Unspeakable World&quot;
+  style=&quot;border: 0; border-radius: 12px; background: #03050a;&quot;&gt;
+  &lt;a href=&quot;https://unspeakable-world.dashable.dev/#viewer?object=ISS&amp;track=1&quot;&gt;
+    &lt;img src=&quot;https://unspeakable-world.dashable.dev/og-card.png&quot;
+         alt=&quot;Live ISS tracker — The Unspeakable World&quot; /&gt;
+  &lt;/a&gt;
+&lt;/iframe&gt;</code></pre>
+
+    <h2>Live preview</h2>
+    <div class="preview">
+      <iframe
+        src="https://unspeakable-world.dashable.dev/#viewer?embed=1&amp;object=ISS&amp;track=1"
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+        allow="fullscreen; xr-spatial-tracking"
+        sandbox="allow-scripts allow-same-origin allow-popups"
+        title="Live ISS tracker — The Unspeakable World"
+      >
+        <a href="https://unspeakable-world.dashable.dev/#viewer?object=ISS&amp;track=1">
+          <img
+            src="https://unspeakable-world.dashable.dev/og-card.png"
+            alt="Live ISS tracker — The Unspeakable World"
+          />
+        </a>
+      </iframe>
+    </div>
+
+    <footer>
+      Orbital state propagated from NORAD TLE via SGP4 inside the
+      embed. Position accurate to the kilometre for current epoch.
+      Imagery © NASA / Blue Marble. Embed code MIT licensed.
+    </footer>
+  </body>
+</html>

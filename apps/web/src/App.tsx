@@ -55,6 +55,11 @@ const TeacherDashboard = lazy(() =>
     default: m.TeacherDashboard,
   })),
 );
+const CertificateVerifyPanel = lazy(() =>
+  import("./viewer/ui/CertificateVerifyPanel").then((m) => ({
+    default: m.CertificateVerifyPanel,
+  })),
+);
 
 // Universe Mode v2 is now the front-door experience. A bare load of the
 // SPA (no hash, no `?landing=1`, no `?embed=1`) is rewritten to
@@ -128,6 +133,7 @@ function CertificateAutoModal() {
   const [open, setOpen] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     if (window.location.hash.startsWith("#class")) return false;
+    if (window.location.hash.startsWith("#verify-cert")) return false;
     try {
       if (window.localStorage.getItem(CERT_DISMISSED_KEY) === "1") return false;
     } catch {
@@ -138,7 +144,7 @@ function CertificateAutoModal() {
   });
 
   useEffect(() => {
-    if (route === "class") return;
+    if (route === "class" || route === "verify-cert") return;
     const { percentage } = getOverallProgress();
     if (percentage < 100) return;
     try {
@@ -149,7 +155,7 @@ function CertificateAutoModal() {
     setOpen(true);
   }, [route]);
 
-  if (!open || route === "class") return null;
+  if (!open || route === "class" || route === "verify-cert") return null;
   return (
     <CertificatePanel
       onClose={() => {
@@ -210,6 +216,16 @@ function AppRoutes() {
     return (
       <main className="relative h-full w-full bg-space-950">
         <ViewerLoadingVeil />
+      </main>
+    );
+  }
+
+  if (route === "verify-cert") {
+    return (
+      <main className="relative h-full w-full bg-space-950">
+        <Suspense fallback={<ViewerLoadingVeil />}>
+          <CertificateVerifyPanel />
+        </Suspense>
       </main>
     );
   }

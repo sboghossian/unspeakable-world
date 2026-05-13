@@ -2,13 +2,17 @@ import { useState } from "react";
 import { LESSONS } from "../curriculum/lessons";
 import type { Lesson } from "../curriculum/types";
 import {
+  isMachineTranslated,
+  useLocalisedLessons,
+} from "../curriculum/lesson-loader";
+import {
   getOverallProgress,
   useLessonProgress,
 } from "../../lib/lesson-progress";
 import { LessonRunner } from "./LessonRunner";
 import { CertificatePanel } from "./CertificatePanel";
 import { encodeMyProgress, buildShareSegment } from "../../lib/teacher";
-import { t, useLanguage } from "../../lib/i18n";
+import { t } from "../../lib/i18n";
 
 /**
  * 🎓 Lessons — top-bar entry into the curriculum.
@@ -28,12 +32,14 @@ import { t, useLanguage } from "../../lib/i18n";
  */
 
 export function LessonPanel() {
-  useLanguage();
+  const { lessons, locale, loading } = useLocalisedLessons();
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState<Lesson | null>(null);
   const [showCert, setShowCert] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const progress = useLessonProgress();
+  // Progress + total are keyed off the English source-of-truth ids so a
+  // language swap never resets completion or makes the curriculum size drift.
   const total = LESSONS.length;
   const done = LESSONS.filter((l) => progress[l.id]?.completed).length;
   const overall = getOverallProgress();
@@ -96,10 +102,16 @@ export function LessonPanel() {
               </button>
             </div>
           </div>
+          {loading && (
+            <div className="mb-2 font-mono text-[10px] uppercase tracking-widest text-white/45">
+              loading {locale}…
+            </div>
+          )}
           <ul className="space-y-2">
-            {LESSONS.map((lesson) => {
+            {lessons.map((lesson) => {
               const p = progress[lesson.id];
               const status = statusOf(p);
+              const translated = isMachineTranslated(lesson, locale);
               return (
                 <li
                   key={lesson.id}
@@ -114,8 +126,16 @@ export function LessonPanel() {
                       {status.glyph}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <div className="font-display text-[13px] text-white/90">
-                        {lesson.title}
+                      <div className="flex items-baseline gap-1.5 font-display text-[13px] text-white/90">
+                        <span>{lesson.title}</span>
+                        {translated && (
+                          <span
+                            title="Machine-translated by Llama 3.1 8B"
+                            className="rounded border border-cyan-400/40 px-1 font-mono text-[8px] uppercase tracking-widest text-cyan-200/85"
+                          >
+                            {locale}
+                          </span>
+                        )}
                       </div>
                       <div className="mt-0.5 font-mono text-[10px] leading-snug text-white/50">
                         {lesson.summary}

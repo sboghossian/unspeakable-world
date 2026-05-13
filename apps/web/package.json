@@ -28,6 +28,7 @@
     "bake:jwst-mosaics": "node --experimental-strip-types --no-warnings ../../scripts/bake-jwst-mosaics.ts",
     "bake:sky-cultures-extended": "node --experimental-strip-types --no-warnings ../../scripts/bake-sky-cultures-extended.ts",
     "bake:spice": "node --experimental-strip-types --no-warnings ../../scripts/bake-spice.ts",
+    "bake:translate": "node --experimental-strip-types --no-warnings ../../scripts/translate-lessons.ts",
     "verify:imagery": "node --experimental-strip-types --no-warnings ../../scripts/verify-imagery.ts"
   },
   "dependencies": {
@@ -36,6 +37,7 @@
     "astronomy-engine": "^2.1.19",
     "dexie": "^4.4.2",
     "posthog-js": "^1.373.4",
+    "qrcode-generator": "^2.0.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "satellite.js": "^5",

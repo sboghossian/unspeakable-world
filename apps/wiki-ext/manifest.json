@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "The Unspeakable World — Fly To",
+  "version": "0.1.0",
+  "description": "Adds a 'Fly to in The Unspeakable World' button to Wikipedia astronomy articles — opens the page's celestial object in a live, multi-wavelength sky viewer.",
+  "author": "Stephane Boghossian",
+  "homepage_url": "https://unspeakable-world.dashable.dev",
+  "icons": {
+    "16": "icon-16.png",
+    "48": "icon-48.png",
+    "128": "icon-128.png"
+  },
+  "action": {
+    "default_title": "The Unspeakable World — Fly To",
+    "default_icon": {
+      "16": "icon-16.png",
+      "48": "icon-48.png",
+      "128": "icon-128.png"
+    }
+  },
+  "host_permissions": [
+    "*://en.wikipedia.org/*",
+    "*://*.wikipedia.org/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "*://en.wikipedia.org/wiki/*",
+        "*://*.wikipedia.org/wiki/*"
+      ],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

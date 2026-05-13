@@ -50,6 +50,9 @@ import { ReportBugButton } from "./ui/ReportBugButton";
 import { SupportRibbon } from "./ui/SupportRibbon";
 import { ExploreDrawer, type Group } from "./ui/ExploreDrawer";
 import { ExtraLayersPanel } from "./ui/ExtraLayersPanel";
+import { TutorPanel } from "./ui/TutorPanel";
+import { makeUniverseAdapter } from "./tutor/adapters";
+import { useExtraLayersStore } from "./extra-layers/state";
 import { SceneEditorPanel } from "./ui/SceneEditorPanel";
 import { TourCard } from "./ui/TourCard";
 import { TourRunnerV2, type TourRunnerState } from "./tour/runner-v2";
@@ -184,6 +187,43 @@ export function Universe({ onExit }: Props) {
       sceneRef.current = null;
     };
   }, []);
+
+  // 🎓 Tutor adapter — broadcasts the live Universe camera (logical pos
+  // + yaw/pitch + tracking target). Stable for the panel lifetime;
+  // pulls the latest scene state via a ref so we don't re-create the
+  // adapter on every render.
+  const liveUniverseStateRef = useRef(state);
+  useEffect(() => {
+    liveUniverseStateRef.current = state;
+  }, [state]);
+  const tutorAdapter = useMemo(
+    () =>
+      makeUniverseAdapter(
+        () => sceneRef.current,
+        () => {
+          const s = liveUniverseStateRef.current;
+          return {
+            cameraLogicalPos: s.cameraLogicalPos,
+            yaw: s.yaw,
+            pitch: s.pitch,
+            trackingTarget: s.trackingTarget,
+          };
+        },
+        {
+          getActiveLayers: () => {
+            const enabled = useExtraLayersStore.getState().enabled;
+            return Object.keys(enabled).filter((id) => enabled[id] === true);
+          },
+          setActiveLayers: (ids: string[]) => {
+            const store = useExtraLayersStore.getState();
+            const map: Record<string, boolean> = {};
+            for (const id of ids) map[id] = true;
+            store.replace(map);
+          },
+        },
+      ),
+    [],
+  );
 
   // First-light achievement on mount.
   useEffect(() => {
@@ -520,6 +560,7 @@ export function Universe({ onExit }: Props) {
             }}
           />
           <ShareButton onPrepare={() => buildUniverseHash(state)} />
+          <TutorPanel adapter={tutorAdapter} />
           <BookmarksPanel />
           {tourState.index === null && (
             <button

@@ -1,0 +1,761 @@
+{
+  "lessons": [
+    {
+      "id": "where-are-we-standing",
+      "title": "¿Dónde estamos parados?",
+      "summary": "Tu dirección en el universo — Tierra, su rotación y por qué tenemos estaciones.",
+      "ageTier": "teen",
+      "durationMin": 5,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "En este momento, estás en una bola de roca y agua, girando a aproximadamente 1,670 km/h en el ecuador, orbitando una fusión reactor a 150 millones de kilómetros de distancia. Esta lección es sobre dónde está 'aquí'."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Earth"
+        },
+        {
+          "kind": "narrate",
+          "text": "La Tierra gira de oeste a este — eso es por qué el Sol parece levantarse en el este. El 23,5° de inclinación axial es por qué tenemos estaciones. La inclinación está fija en el espacio, por lo que durante la mitad del año el hemisferio norte se inclina hacia el Sol, y durante la otra mitad se inclina hacia atrás."
+        },
+        {
+          "kind": "wait",
+          "ms": 4000
+        },
+        {
+          "kind": "quiz",
+          "question": "La Tierra gira desde el oeste hacia el este. En consecuencia, en qué dirección parece moverse el Sol a través del cielo?",
+          "options": [
+            "Este a oeste",
+            "Oeste a este",
+            "Sur a norte",
+            "Norte a sur"
+          ],
+          "answerIndex": 0,
+          "explanation": "Porque estamos rotando hacia el este, todo en el cielo parece moverse en la dirección opuesta — este a oeste."
+        },
+        {
+          "kind": "narrate",
+          "text": "La próxima vez que veas un atardecer, recuerda: el Sol no se mueve. Tú lo haces."
+        }
+      ]
+    },
+    {
+      "id": "how-big-is-the-sun",
+      "title": "¿Cuán grande es el Sol?",
+      "summary": "Un viaje a la estrella en el centro de todo — y una sensación de justamente cuán masivo es.",
+      "ageTier": "teen",
+      "durationMin": 6,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Si la Tierra fuera una bala de marfil, el Sol sería una pelota de playa de 30 metros de distancia. Vamos a ir a verlo realmente."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Sun"
+        },
+        {
+          "kind": "narrate",
+          "text": "El Sol mide 1,4 millones de km de ancho — eso es 109 Tierras alineadas de borde a borde. Por volumen, podrías ajustar alrededor de 1,3 millones de Tierras dentro de él. El Sol contiene el 99,86% de toda la masa en el sistema solar."
+        },
+        {
+          "kind": "quiz",
+          "question": "Aproximadamente cuántas Tierras podrían caber dentro del Sol por volumen?",
+          "options": [
+            "13",
+            "1.300",
+            "1,3 millones",
+            "130 millones"
+          ],
+          "answerIndex": 2,
+          "explanation": "El volumen escala con el cubo del radio. El radio del Sol es ~109× el de la Tierra, por lo que su volumen es ~109³ ≈ 1,3 millones."
+        },
+        {
+          "kind": "narrate",
+          "text": "Cada segundo el Sol convierte 4 millones de toneladas de materia en energía pura a través de fusión. Esa energía es lo que llega a la Tierra como luz solar ocho minutos después — lo que hace posible cada planta, cada animal, cada fotografía que has tomado en tu vida."
+        }
+      ]
+    },
+    {
+      "id": "solar-system-true-scale",
+      "title": "El Sistema Solar a escala verdadera",
+      "summary": "Un vuelo desde Mercurio a Neptuno que muestra cómo la vecindad realmente está vacía.",
+      "ageTier": "teen",
+      "durationMin": 7,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "La mayoría de los diagramas del sistema solar mienten. Empujan a los planetas hacia arriba para que puedan verse todos en una página. La verdad es que el sistema solar está principalmente vacío de espacio."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Mercury"
+        },
+        {
+          "kind": "narrate",
+          "text": "La luz del Sol llega a Mercurio en tres minutos. Desde aquí la Tierra parece una estrella azul brillante."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Earth"
+        },
+        {
+          "kind": "narrate",
+          "text": "La luz solar llega a la Tierra en 8 minutos 20 segundos. Este es el momento más cercano en que el Sol se siente a nosotros."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Jupiter"
+        },
+        {
+          "kind": "narrate",
+          "text": "Ahora estamos cinco veces más lejos del Sol que la Tierra. La luz solar tardó 43 minutos en llegar aquí. Júpiter solo tiene 2,5 veces la masa de cada otro planeta combinado."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Neptune"
+        },
+        {
+          "kind": "narrate",
+          "text": "Neptuno se encuentra a 30 AU de distancia. La luz del Sol tarda 4 horas y 10 minutos en llegar aquí. Desde Neptuno, el Sol es solo la estrella más brillante en el cielo."
+        },
+        {
+          "kind": "quiz",
+          "question": "¿Cuánto tiempo aproximadamente tarda la luz del Sol en llegar a la Tierra desde el Sol?",
+          "options": [
+            "8 segundos",
+            "8 minutos",
+            "8 horas",
+            "8 días"
+          ],
+          "answerIndex": 1,
+          "explanation": "La luz viaja 299.792 km cada segundo. El Sol está a ~150 millones de km de distancia, por lo que el viaje dura aproximadamente 8 minutos y 20 segundos."
+        },
+        {
+          "kind": "narrate",
+          "text": "La siguiente parada después de Neptuno es el Cinturón de Kuiper, luego la Nube de Oort, luego cuatro años luz de espacio vacío hasta la estrella más cercana. Vivimos en un vecindario muy, muy grande."
+        }
+      ]
+    },
+    {
+      "id": "keplers-laws",
+      "title": "Leyes de Kepler sobre el movimiento de los planetas",
+      "summary": "Tres reglas — derivadas de los datos de Tycho — que convirtieron los cielos en geometría.",
+      "ageTier": "teen",
+      "durationMin": 9,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Durante décadas, Tycho Brahe midió las posiciones planetarias desde una isla danesa, a simple vista, con una precisión de una minuto de arco. Cuando murió en 1601 dejó una montaña de datos a su asistente, Johannes Kepler. Kepler pasó ocho años luchando con la órbita de Marte antes de verlo: los planetas no se mueven en círculos."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Mars"
+        },
+        {
+          "kind": "narrate",
+          "text": "Ley 1 — cada planeta órbita al Sol en una elipse, con el Sol en uno de los focos. Marte es el más excéntrico de los planetas brillantes: su distancia al Sol varía en 42 millones de km entre el perihelio y el afelio. Los círculos eran una prejuiciosa de 2,000 años. Las elipses encajan en los datos."
+        },
+        {
+          "kind": "quiz",
+          "question": "¿Cuál forma describe mejor una órbita planetaria?",
+          "options": [
+            "Círculo",
+            "Parábola",
+            "Elipse",
+            "Helix"
+          ],
+          "answerIndex": 2,
+          "explanation": "La primera ley de Kepler: los planetas trazan elipses con el Sol en uno de sus focos. Un círculo es un caso especial en el que ambos focos coinciden, pero los órbitas reales siempre son al menos ligeramente elípticas."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Earth"
+        },
+        {
+          "kind": "narrate",
+          "text": "Ley 2 — una línea trazada desde el Sol a un planeta recorre áreas iguales en tiempos iguales. La Tierra se mueve a una velocidad promedio de 30 km/s, pero es aproximadamente 1 km/s más rápida en el perihelio en enero que en el afelio en julio. Los planetas se aceleran cuando están cerca del Sol y se ralentizan cuando están lejos. Es la gravedad, haciendo su contabilidad."
+        },
+        {
+          "kind": "quiz",
+          "question": "Si un planeta recorre áreas iguales en tiempos iguales, ¿cuándo se mueve más rápido?",
+          "options": [
+            "Afonio",
+            "Perihelio",
+            "Orbita media",
+            "Lo mismo en todas las opciones"
+          ],
+          "answerIndex": 1,
+          "explanation": "En el perihelio el planeta está más cerca del Sol, por lo que la línea radial es más corta — para recorrer la misma área, el planeta debe cubrir más longitud de arco, es decir, moverse más rápido."
+        },
+        {
+          "kind": "narrate",
+          "text": "Ley 3 — el cuadrado del período orbital de un planeta es proporcional al cubo de su semi-eje mayor. T² ∝ a³. Doblar la distancia de un planeta al Sol y su año se hace 2,83× más largo. Esta es la ley que Newton derivó después de la gravedad misma, en 1687."
+        },
+        {
+          "kind": "quiz",
+          "question": "Si el planeta A está 4× más lejos del Sol que el planeta B, el período orbital del planeta A es aproximadamente…",
+          "options": [
+            "4 veces tan largo",
+            "8 veces tan largo",
+            "16 veces tan largo",
+            "64 veces tan largo"
+          ],
+          "answerIndex": 1,
+          "explanation": "T² = a³, entonces T = a^(3/2). Con a = 4, T = 4^1.5 = 8. La distancia se cuadriplica; el año tarda ocho veces más."
+        },
+        {
+          "kind": "narrate",
+          "text": "Kepler nunca supo por qué las leyes funcionaban — eso se debió a Newton y la ley de la gravedad al cuadrado inverso. Pero las tres reglas que extrajo de los números de Tycho siguen siendo exactas hoy en día, y todos los cohetes espaciales que hemos lanzado vuelan según ellas."
+        }
+      ]
+    },
+    {
+      "id": "why-planets-differ",
+      "title": "Por qué los planetas no son todos iguales",
+      "summary": "Un recorrido en sección transversal desde Mercurio a Neptuno — y por qué la composición decide todo.",
+      "ageTier": "teen",
+      "durationMin": 7,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Los planetas se formaron del mismo disco de gas y polvo hace 4,6 mil millones de años, pero no parecen nada entre sí. La razón es simple: el sistema solar interno estaba demasiado caliente para el hielo, y el sistema solar exterior era lo suficientemente frío como para acumular hidrógeno. Abra el panel de sección transversal a medida que vamos — las capas cuentan la historia."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Mercury"
+        },
+        {
+          "kind": "narrate",
+          "text": "Mercurio — un pequeño mundo rocoso, 4.880 km de diámetro, con un núcleo de hierro sorprendentemente grande que ocupa el 85% de su radio. Posiblemente el resto después de un impacto gigante que eliminó la capa más ligera. Sin atmósfera, sin clima, solo cráteres y oscilaciones de 600°C entre día y noche."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Earth"
+        },
+        {
+          "kind": "narrate",
+          "text": "Tierra — rocosa, pero con un océano de agua líquida en la superficie y un núcleo exterior de hierro-níquel fundido que gira como un dinamo, generando un campo magnético lo suficientemente fuerte como para desviar el viento solar. Sin ese campo, la atmósfera habría sido arrancada. Sin la atmósfera, no habríamos existido."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Jupiter"
+        },
+        {
+          "kind": "narrate",
+          "text": "Júpiter — 318 masas terrestres, pero principalmente hidrógeno y helio. La presión en su interior es tan extrema que a 10,000 km de profundidad, el hidrógeno se vuelve metálico y conduce electricidad. Ese metal que se arrastra genera un campo magnético 20,000× más fuerte que el de la Tierra. Hay un pequeño núcleo diluido en algún lugar, pero Júpiter esencialmente es una estrella fallida."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Neptune"
+        },
+        {
+          "kind": "narrate",
+          "text": "Neptuno — un gigante de hielo. El 'hielo' aquí es un término del lenguaje científico planetario para agua, metano y amoníaco, pero a estas presiones y temperaturas existen como un fluido iónico caliente — ni sólido ni gas. El color azul de Neptuno es el metano en la atmósfera superior que absorbe la luz roja. Las velocidades del viento superan los 2,000 km/h, las más rápidas en el sistema solar."
+        },
+        {
+          "kind": "quiz",
+          "question": "¿Qué da a los gigantes gaseosos su estructura estratificada de hidrógeno metálico, hidrógeno molecular y atmósfera?",
+          "options": [
+            "La temperatura sola",
+            "La presión sola",
+            "Ambas presión y composición",
+            "Campos magnéticos"
+          ],
+          "answerIndex": 2,
+          "explanation": "El hidrógeno se comporta de manera diferente a diferentes presiones — molecular en la superficie, metálico en el interior profundo. Unido a la mezcla del planeta de H, He y hielos, ese perfil de presión establece cada capa."
+        },
+        {
+          "kind": "narrate",
+          "text": "Mismo material de partida, resultados muy diferentes — porque la distancia al Sol decidió qué podía condensarse, y la masa decidió qué podía mantenerse. La diversidad planetaria es geometría más química."
+        }
+      ]
+    },
+    {
+      "id": "moons-rings-asteroids",
+      "title": "Lunas, anillos, asteroides — los restos",
+      "summary": "Un recorrido por los cuerpos pequeños del sistema solar — y por qué Hollywood miente sobre los cinturones de asteroides.",
+      "ageTier": "teen",
+      "durationMin": 7,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Los planetas captan la atención, pero el sistema solar está compuesto principalmente por restos — lunas, anillos, asteroides, cometas. Son donde se preserva la verdadera historia, porque son demasiado pequeños como para haberse rederretido."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Saturn"
+        },
+        {
+          "kind": "narrate",
+          "text": "Los anillos de Saturno son el 99% hielo de agua y el 1% polvo, extendidos a lo largo de 280.000 km — pero solo miden unos 10 metros de grosor. Si se escalaran los anillos a la tamaño de un campo de fútbol, serían más delgados que una hoja de papel. Podrían ser los restos de una luna que se acercó demasiado y se desintegró a sí misma."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Jupiter"
+        },
+        {
+          "kind": "narrate",
+          "text": "Júpiter tiene 95 lunas conocidas, pero las cuatro grandes — Io, Europa, Ganímedes, Calisto — fueron vistas por Galileo en 1610 y rompieron el modelo geocéntrico de inmediato. Io es el cuerpo más volcánicamente activo del sistema solar, comprimido por fuerzas tides. Europa tiene un océano subsuperficial con más agua líquida que todas las océanos de la Tierra combinados."
+        },
+        {
+          "kind": "narrate",
+          "text": "Entre Marte y Júpiter se encuentra el cinturón de asteroides — unos millones de rocas más grandes que 1 km. En las películas, los barcos se desvían a través de él. En la realidad, la separación promedio entre asteroides es de alrededor de un millón de kilómetros. Las sondas vuelan rutinariamente a través de él y encuentran absolutamente nada durante miles de kilómetros en todas las direcciones."
+        },
+        {
+          "kind": "narrate",
+          "text": "Fuera de Neptuno se encuentra el Cinturón de Kuiper — un anillo de cuerpos helados que incluye a Plutón, Eris, Makemake y Haumea. Estos son los restos del disco que nunca se unieron a un planeta. Los cometas de período corto — cualquier cosa con una órbita inferior a 200 años — provienen de aquí. El cometa Halley es uno de ellos."
+        },
+        {
+          "kind": "quiz",
+          "question": "Si se encontrara en un asteroide típico de la cinturón de asteroides, ¿cuántos otros asteroides se verían con la vista despejada?",
+          "options": [
+            "Miles",
+            "Cientos",
+            "Décadas",
+            "Ninguno"
+          ],
+          "answerIndex": 3,
+          "explanation": "La cinturón es enorme y los asteroides son pequeños — la separación promedio es de unos millones de kilómetros. Se verían estrellas y el Sol, pero no otros asteroides. Hollywood miente."
+        },
+        {
+          "kind": "narrate",
+          "text": "Dondequiera que apuntamos una nave espacial encontramos más cuerpos pequeños. Son la parte sin terminar del proceso de formación de planetas, y el mejor registro que tenemos de qué estaba compuesto el sistema solar temprano."
+        }
+      ]
+    },
+    {
+      "id": "sun-is-a-star",
+      "title": "El Sol es una estrella. ¿Las otras estrellas son como ella?",
+      "summary": "Un viaje en un diagrama de H-R desde una gigante roja hasta un bestia de secuencia principal azul.",
+      "ageTier": "teen",
+      "durationMin": 8,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "El Sol parece especial porque estamos a tres minutos-luz de él. Desde cualquier otro sistema estelar, nuestro Sol sería solo un punto amarillo — una estrella de secuencia principal G2V perfectamente ordinaria."
+        },
+        {
+          "kind": "scene",
+          "hash": "#sky?ra=86.13&dec=-2.49"
+        },
+        {
+          "kind": "narrate",
+          "text": "Betelgeuse — el hombro rojo de Orión, una supergigante roja de tipo M. Tiene aproximadamente 700 veces el radio del Sol. Si lo intercambiáramos por el Sol, su superficie se extendería más allá de la órbita de Marte. Solo tiene 10 millones de años pero ya casi ha agotado su combustible, y estallará como supernova dentro de los próximos 100.000 años — posiblemente mañana."
+        },
+        {
+          "kind": "scene",
+          "hash": "#sky?ra=78.63&dec=8.20"
+        },
+        {
+          "kind": "narrate",
+          "text": "Bellatrix — hombro izquierdo de Orión, una gigante azul B2 III. Temperatura de superficie alrededor de 22,000 K, seis veces más caliente que el Sol, y 6,400 veces más luminosa. Las estrellas masivas queman su hidrógeno con ferocidad: Bellatrix tiene solo 25 millones de años y ya ha pasado la secuencia principal. Vive rápido, muere joven."
+        },
+        {
+          "kind": "scene",
+          "hash": "#sky?ra=101.27&dec=-16.72"
+        },
+        {
+          "kind": "narrate",
+          "text": "Sirio — la estrella más brillante en nuestro cielo, a solo 8,6 años luz de distancia. Una estrella de secuencia principal A1V, con el doble de masa que el Sol, 25 veces más luminosa, blancos-calientes a 9.940 K. También tiene un pequeño compañero: Sirio B, un enano blanco del tamaño de la Tierra con la masa del Sol. El estado final de estrellas como la nuestra."
+        },
+        {
+          "kind": "quiz",
+          "question": "¿Qué tipo de estrella tiene la VIDA DE SECuencia PRINCIPAL MÁS CORTA?",
+          "options": [
+            "Enanas rojas",
+            "Estrellas amarillas como el Sol",
+            "Gigantes enanas azules O-type",
+            "Enanas blancas"
+          ],
+          "answerIndex": 2,
+          "explanation": "Una mayor masa significa una temperatura y presión de núcleo más altas, por lo que la fusión se produce mucho más rápido. Una gigante O-type de 50 masas solares se agota en unos pocos millones de años; una enana roja puede vivir durante trillones."
+        },
+        {
+          "kind": "narrate",
+          "text": "Dibujar estrellas por color contra brillo y caen en una banda diagonal — la secuencia principal — que ha sido la columna vertebral de la astrofísica estelar durante un siglo. El Sol se sienta modestamente en el medio de ella, y le quedan otros cinco mil millones de años."
+        }
+      ]
+    },
+    {
+      "id": "nearest-star",
+      "title": "¿A cuánta distancia está la estrella más cercana?",
+      "summary": "Proxima Centauri está a 4,24 años luz de distancia. Aquí está lo que eso significa en realidad.",
+      "ageTier": "teen",
+      "durationMin": 6,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "El Sol es una estrella. Hay alrededor de 400 mil millones de otras en nuestra galaxia. La más cercana es llamada Proxima Centauri — un pequeño enana roja, solo el 12% de la masa del Sol, actualmente a 4,24 años luz de distancia."
+        },
+        {
+          "kind": "scene",
+          "hash": "#sky?ra=217.42&dec=-62.68"
+        },
+        {
+          "kind": "narrate",
+          "text": "Proxima es un enana roja M5.5Ve, demasiado débil para ser visible con el ojo desnudo a pesar de ser nuestro vecino estelar más cercano. En 2016, los astrónomos encontraron un planeta alrededor de ella — Proxima b — con aproximadamente la masa de la Tierra, en la zona habitable, aunque probablemente bloqueada por marea y bañada por explosiones estelares."
+        },
+        {
+          "kind": "narrate",
+          "text": "4,24 años luz significa que la luz misma — la cosa más rápida del universo — tarda 4,24 años en hacer el viaje. Voyager 1, la nave espacial más rápida que los humanos han construido, está moviéndose a 17 km/s. A esa velocidad, le tomaría a Voyager unos 73.000 años llegar a Proxima. No hemos sido una especie durante ese tiempo."
+        },
+        {
+          "kind": "narrate",
+          "text": "Aquí está la escala brutal: la distancia desde el Sol a Neptuno es 30 AU. La distancia desde el Sol a Proxima es 268,000 AU. El abismo entre estrellas vecinas es aproximadamente 1,000× el abismo entre el Sol y Neptuno. Las estrellas en una galaxia no están apiñadas. Son manchas de luz en un océano."
+        },
+        {
+          "kind": "quiz",
+          "question": "Si el Sol fuera del tamaño de una canasta de baloncesto, ¿a qué distancia estaría Proxima Centauri a la misma escala?",
+          "options": [
+            "10 m",
+            "1 km",
+            "100 km",
+            "6,300 km"
+          ],
+          "answerIndex": 3,
+          "explanation": "Un Sol de tamaño de canasta de baloncesto coloca a la Tierra a unos 25 m de distancia. A la misma escala, Proxima se encuentra aproximadamente a 6,300 km de distancia —aproximadamente la distancia entre Nueva York y París. Eso es solo hasta el número más cercano."
+        },
+        {
+          "kind": "narrate",
+          "text": "Cada estrella que veas en la noche está al menos a esta distancia. La mayoría están mucho, mucho más lejos. El cielo nocturno es una instantánea de luz que salió de su fuente años, siglos o milenios atrás."
+        }
+      ]
+    },
+    {
+      "id": "constellations-human-invention",
+      "title": "Las constelaciones son una invención humana",
+      "summary": "Las estrellas de Orión parecen vecinas — hasta que se pregunta cuánto tiempo se encuentran realmente lejos.",
+      "ageTier": "teen",
+      "durationMin": 6,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Encienda la capa de superposición de constelaciones y el cielo se convierte en formas — un cazador, un oso, un cisne. Cada cultura ha dibujado su propia. Aquí está el secreto: ninguna de esas formas es físicamente real."
+        },
+        {
+          "kind": "scene",
+          "hash": "#viewer?ra=83.82&dec=-1.20&fov=30&c=1"
+        },
+        {
+          "kind": "narrate",
+          "text": "Este es Orión — la constelación más reconocible en el cielo del norte. La cintura del cazador, sus hombros, su espada — siete estrellas a simple vista conectadas por líneas que los humanos dibujaron. Ahora mire cómo lejos está cada una en realidad."
+        },
+        {
+          "kind": "scene",
+          "hash": "#sky?ra=88.79&dec=7.41"
+        },
+        {
+          "kind": "narrate",
+          "text": "Betelgeuse — el hombro rojo — se encuentra a 642 años luz de nosotros. Bellatrix, el hombro más azulado justo a su lado en el cielo, está a solo 250 años luz de distancia. Están separados por casi 400 años luz a lo largo de nuestra línea de visión. No son vecinos; solo parecen adyacentes porque estamos mirándolos desde un ángulo específico en la galaxia."
+        },
+        {
+          "kind": "narrate",
+          "text": "Vuela a cualquier otro sistema estelar y Orion desaparece. El patrón solo existe desde la Tierra. Las constelaciones son coordenadas que dibujamos en la cúpula del cielo — útiles para la navegación, hermosas como la mitología, pero no grupos físicos. Las estrellas dentro de una no están más relacionadas entre sí que tres personas aleatorias que suceden en una calle de la ciudad."
+        },
+        {
+          "kind": "quiz",
+          "question": "¿Por qué no es una constelación un grupo físico real de estrellas?",
+          "options": [
+            "Las estrellas son demasiado débiles para estar relacionadas",
+            "Las estrellas están a distancias completamente diferentes de nosotros",
+            "Las constelaciones solo contienen una estrella cada una",
+            "Las estrellas se están moviendo demasiado rápido para estar agrupadas"
+          ],
+          "answerIndex": 1,
+          "explanation": "Una constelación es un patrón bidimensional proyectado en el cielo. Las estrellas dentro de ella están a distancias muy diferentes — Betelgeuse y Bellatrix difieren por ~400 al en nuestra línea de visión. Desde cualquier otro punto de vista en la galaxia, el patrón se disuelve."
+        },
+        {
+          "kind": "narrate",
+          "text": "Las formas son nuestras. Las estrellas son simplemente donde están."
+        }
+      ]
+    },
+    {
+      "id": "milky-way-place-we-live",
+      "title": "La Vía Láctea es un lugar en el que vivimos",
+      "summary": "Retrocede desde el Sol hasta que toda nuestra galaxia quepa en el marco — y conoce al agujero negro en su centro.",
+      "ageTier": "teen",
+      "durationMin": 7,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Todo lo que hemos visto hasta ahora — los planetas, el Sol, los pocos cientos de estrellas que puedes nombrar — encaja dentro de una pequeña porción de una galaxia. Es hora de ampliar la perspectiva."
+        },
+        {
+          "kind": "scene",
+          "hash": "#galactic"
+        },
+        {
+          "kind": "narrate",
+          "text": "Esta es la Vía Láctea: un disco espiral barrado aproximadamente 100.000 años luz de ancho, con entre 100 y 400 mil millones de estrellas. Nos encontramos a 26.000 años luz del centro, en una característica espiral menor llamada el Cúmulo de Orión — un suburbio tranquilo entre las brazas de Sagitario y Perseo."
+        },
+        {
+          "kind": "scene",
+          "hash": "#sky?ra=266.4168&dec=-29.0078"
+        },
+        {
+          "kind": "narrate",
+          "text": "En el centro se encuentra Sagitario A* — un agujero negro supermasivo con 4.300.000 masas solares comprimidas en una región menor que el órbita de Mercurio. No podemos verlo en luz visible porque 26.000 años luz de polvo interestelar se interpone en el camino, pero la radiación X y la infrarroja lo atraviesan sin problemas. El Telescopio del Horizonte de Eventos capturó su sombra en 2022."
+        },
+        {
+          "kind": "narrate",
+          "text": "Cada estrella que puedes ver con el ojo desnudo vive dentro de este mismo disco. La delgada banda de luz que llamas 'la Vía Láctea' en una noche oscura es el disco mismo, visto en el ángulo desde dentro de él. Estás literalmente mirando hacia afuera a través del cuerpo de tu propia galaxia."
+        },
+        {
+          "kind": "quiz",
+          "question": "Aproximadamente cuántas estrellas contiene la Vía Láctea?",
+          "options": [
+            "1 billón",
+            "100–400 mil millones",
+            "10 billones",
+            "1 cuatrillón"
+          ],
+          "answerIndex": 1,
+          "explanation": "Las encuestas modernas convergen en 100–400 mil millones de estrellas, dependiendo de cómo se cuenten los enanos rojos de baja masa. La mayoría están demasiado débiles para verse individualmente — están ocultas en la brillantez difusa del disco."
+        },
+        {
+          "kind": "narrate",
+          "text": "Una galaxia por cuenta. Aproximadamente dos trillones por ir."
+        }
+      ]
+    },
+    {
+      "id": "other-galaxies-milky-ways",
+      "title": "Otras galaxias, otras Vías Lácteas",
+      "summary": "Andrómeda está a 2,5 millones de años luz de distancia — y en una colisión con nosotros.",
+      "ageTier": "teen",
+      "durationMin": 6,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "La Vía Láctea es una de las dos trillones de galaxias observables en el universo. La más cercana grande — Andrómeda, M31 — es lo suficientemente cercana que puedes verla con el ojo desnudo en una noche oscura, como una mancha tenue en la constelación del mismo nombre."
+        },
+        {
+          "kind": "scene",
+          "hash": "#sky?ra=10.6847&dec=41.2691"
+        },
+        {
+          "kind": "narrate",
+          "text": "Andrómeda está a 2,5 millones de años luz de distancia. Los fotones que golpean tus ojos cuando miras hacia ella salieron de M31 cuando nuestros antepasados eran Homo habilis, apenas empezaban a descubrir cómo tallar herramientas de piedra. Todo lo que ha sucedido en la historia humana registrada es más joven que la luz de esta una sola galaxia."
+        },
+        {
+          "kind": "narrate",
+          "text": "M31 es más grande que la Vía Láctea — unos 1 billón de estrellas — y se acerca a nosotros. Andrómeda se está moviendo hacia la Vía Láctea a 110 km/s. En 4.500 millones de años las dos galaxias colisionarán, se desplazarán entre sí como un slingshot y durante los próximos 1.000 millones de años se asentarán en una sola galaxia elíptica que los astrónomos ya han apodado Milkomeda."
+        },
+        {
+          "kind": "narrate",
+          "text": "No te preocupes por las estrellas que se chocan. Las galaxias están compuestas principalmente por espacio vacío — la probabilidad de que dos estrellas se choquen es esencialmente cero. Pero el cielo nocturno cambia por completo. El cielo no será negro y estrellado; tendrá el disco de otra galaxia extendido sobre él."
+        },
+        {
+          "kind": "quiz",
+          "question": "¿Cuánto tiempo tarda la luz de Andrómeda en llegar a nosotros?",
+          "options": [
+            "2.5 años",
+            "2,500 años",
+            "2.5 millones de años",
+            "25 millones de años"
+          ],
+          "answerIndex": 2,
+          "explanation": "Andrómeda está a 2,5 millones de años luz de distancia, por lo que su luz tarda 2,5 millones de años en llegar a nosotros. Al mirarla es un viaje en el tiempo literal — estás viéndola como era cuando nuestra especie apareció por primera vez en la Tierra."
+        },
+        {
+          "kind": "narrate",
+          "text": "Cada mancha borrosa en una imagen profunda de un telescopio es otro disco de cien mil millones de soles. El universo está construido a partir de galaxias de la misma manera que una playa está construida a partir de arena."
+        }
+      ]
+    },
+    {
+      "id": "redshift-universe-past",
+      "title": "El universo tiene un pasado que puedes ver",
+      "summary": "El desplazamiento hacia el rojo convierte la color en distancia — y nos permite mirar hacia atrás en el tiempo durante miles de millones de años.",
+      "ageTier": "teen",
+      "durationMin": 7,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Cuando una galaxia se aleja de nosotros, la luz que emite se estira en el camino. Las líneas azules se deslizan hacia el rojo. Cuanto más rápido se aleja la galaxia, mayor es el desplazamiento. Los astrónomos llaman a la relación z — y es cómo medimos el universo."
+        },
+        {
+          "kind": "scene",
+          "hash": "#sky?ra=187.278&dec=2.052"
+        },
+        {
+          "kind": "narrate",
+          "text": "Este es 3C 273, el primer cuásar identificado jamás — Maarten Schmidt descompuso su espectro en 1963. Sus líneas estaban desplazadas tan lejos hacia el rojo que nada cercano podía explicarlo. La única respuesta era la distancia: 3C 273 se encuentra a unos 2,4 mil millones de años luz de distancia, en una galaxia cuyo agujero negro central está devorando materia de manera tan violenta que supera en brillo a la Vía Láctea en un factor de cuatro trillones."
+        },
+        {
+          "kind": "narrate",
+          "text": "Estamos viendo a 3C 273 tal como era hace 2,4 mil millones de años — cuando la Tierra no tenía vida multicelular y la atmósfera apenas estaba comenzando a llenarse de oxígeno. La luz tardó más en cruzar el espacio para llegar a nosotros que la compleja vida ha existido en este planeta."
+        },
+        {
+          "kind": "narrate",
+          "text": "El mayor el desplazamiento hacia el rojo, más atrás estás mirando. El Telescopio Espacial James Webb ha encontrado ahora galaxias en z = 14 — luz que salió de ellas cuando el universo solo tenía 290 millones de años de edad. Los telescopios son máquinas del tiempo que solo apuntan en una dirección: hacia atrás."
+        },
+        {
+          "kind": "quiz",
+          "question": "¿Qué te dice directamente el desplazamiento hacia el rojo z de una galaxia?",
+          "options": [
+            "La temperatura de la galaxia",
+            "¿A cuánta velocidad se está alejando de nosotros",
+            "La edad de la galaxia",
+            "La masa de la galaxia"
+          ],
+          "answerIndex": 1,
+          "explanation": "El desplazamiento hacia el rojo es una medida Doppler: te da directamente la velocidad de recesión. Combinado con la ley de Hubble (v ≈ H₀ × d), esa velocidad se convierte luego en distancia — y la distancia, dividida por la velocidad de la luz, se convierte en tiempo de mirada hacia atrás."
+        },
+        {
+          "kind": "narrate",
+          "text": "Cada espectro es un fósil. Lee las líneas, y lee la historia del cosmos."
+        }
+      ]
+    },
+    {
+      "id": "cosmic-web",
+      "title": "La red cósmica",
+      "summary": "Las galaxias no están dispersas — se agrupan en filamentos separados por inmensas cavidades vacías.",
+      "ageTier": "teen",
+      "durationMin": 7,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Si esparcieras dos trillones de galaxias a través del espacio al azar, el cielo sería una niebla uniforme. En cambio, cuando las mapeamos en tres dimensiones, las galaxias se agrupan en delgadas láminas y filamentos separados por regiones enormemente vacías. La estructura tiene un nombre: la red cósmica."
+        },
+        {
+          "kind": "scene",
+          "hash": "#universe"
+        },
+        {
+          "kind": "narrate",
+          "text": "La estructura más grande que conocemos — la Gran Muralla de Sloan — es una hebra de cúmulos de galaxias de 1,4 mil millones de años luz de largo. La región más grande vacía — el Vacío de Boötes — mide 330 millones de años luz de ancho y contiene solo alrededor de 60 galaxias, donde una región típica de ese tamaño contendría diez mil."
+        },
+        {
+          "kind": "narrate",
+          "text": "No diseñamos estos patrones. Fueron sembrados 380.000 años después del Big Bang como fluctuaciones de densidad diminutas — una parte en 100.000, registradas en el fondo de radiación cósmica — y amplificadas por la gravedad durante 13,8 mil millones de años. La red que estás viendo es la autoensambladura lenta del universo."
+        },
+        {
+          "kind": "narrate",
+          "text": "Y los hilos de la red no están hechos de estrellas. Están hechos de algo que no podemos ver directamente. Las galaxias son simplemente marcadores brillantes pegados a la superficie de vastas hebras invisibles — y esas hebras son materia oscura."
+        },
+        {
+          "kind": "quiz",
+          "question": "¿Qué domina la masa de la red cósmica?",
+          "options": [
+            "Estrellas",
+            "Gas interestelar",
+            "Materia oscura",
+            "Agujeros negros"
+          ],
+          "answerIndex": 2,
+          "explanation": "El material oscuro es aproximadamente el 85% de toda la materia en el universo y aproximadamente el 27% de su presupuesto energético total. Nunca hemos detectado directamente una partícula de material oscuro — solo su pull gravitatorio en galaxias, en la luz, y en la forma de la red misma."
+        },
+        {
+          "kind": "narrate",
+          "text": "Todo lo que has visto alguna vez, cada estrella y cada galaxia, es decoración en una armazón hecha de algo que no podemos ver. El universo visible es la espuma en un océano mucho más oscuro."
+        }
+      ]
+    },
+    {
+      "id": "how-we-know-m87",
+      "title": "¿Cómo sabemos todo esto",
+      "summary": "La primera fotografía de un agujero negro — y el año de trabajo que llevó hacerla.",
+      "ageTier": "teen",
+      "durationMin": 8,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Es justo preguntarse: ¿cómo cmake alguien realmente sabe qué es cierto sobre algo a 55 millones de años luz de distancia? Aquí está un ejemplo, de principio a fin."
+        },
+        {
+          "kind": "scene",
+          "hash": "#sky?ra=187.706&dec=12.391"
+        },
+        {
+          "kind": "narrate",
+          "text": "Esto es M87* — el agujero negro supermasivo en el corazón de la galaxia elíptica M87, en el Cúmulo de Virgo. Pesa 6.5 mil millones de masas solares, más de 1,500× más pesado que el que se encuentra en el centro de nuestra propia galaxia. El 10 de abril de 2019, la colaboración del Telescopio de Horizonte de Evento publicó la primera fotografía de su sombra."
+        },
+        {
+          "kind": "narrate",
+          "text": "No es una fotografía en el sentido de la cámara. El EHT es ocho telescopios de radio repartidos por la Tierra — Hawái a España a la Antártida — observando M87 simultáneamente y combinando sus señales en un plato sintético del tamaño del planeta. La técnica se llama interferometría de muy larga base base, VLBI. La observación duró cinco noches en abril de 2017; la imagen tardó dos años en extraerla."
+        },
+        {
+          "kind": "narrate",
+          "text": "La región central oscura en la imagen EHT es aproximadamente 2,5 veces el radio de Schwarzschild del agujero negro. Eso no es el horizonte de eventos en sí — es el haz de fotones, el radio en el que un haz de luz se dobla exactamente 90° y orbita alrededor del agujero negro. El anillo brillante es la luz que se enrolla alrededor detrás del agujero y se enfoca hacia nosotros."
+        },
+        {
+          "kind": "narrate",
+          "text": "La relatividad general, formulada por Einstein en 1915, predijo que esto es exactamente lo que verías si pudieras resolver la sombra de un agujero negro. Cien y cuatro años después, la medición coincidió con la predicción con un error de unos pocos por ciento. Eso es cómo lo sabemos."
+        },
+        {
+          "kind": "quiz",
+          "question": "¿La imagen de M87* de EHT confirmó directamente cuál predicción de la relatividad general?",
+          "options": [
+            "Ondas gravitacionales",
+            "La curvatura de la luz hacia un anillo de fotones alrededor de un horizonte de eventos",
+            "Radiación de Hawking",
+            "La existencia de materia oscura"
+          ],
+          "answerIndex": 1,
+          "explanation": "La brillante creciente en la imagen es luz forzada a seguir trayectorias curvas alrededor del agujero negro — GR predice un anillo de fotones a 2.5× el radio de Schwarzschild, y la medición se encontró allí. La radiación de Hawking es demasiado débil para detectar de esta manera, y la materia oscura y las ondas gravitacionales son pruebas no relacionadas."
+        },
+        {
+          "kind": "narrate",
+          "text": "Cada afirmación en este currículum es el final de una cadena como esta: una predicción, un instrumento, una medida, una comparación. El universo es conocible. Solo requiere paciencia."
+        }
+      ]
+    },
+    {
+      "id": "what-we-still-dont-know",
+      "title": "Lo que todavía no sabemos",
+      "summary": "La materia oscura, la energía oscura, la pregunta de la vida en otros lugares — el mapa honesto de nuestra ignorancia.",
+      "ageTier": "teen",
+      "durationMin": 8,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Fin de la visita. Es hora de la confesión incómoda: tenemos un mapa bastante bueno del universo, pero no sabemos qué lo compone la mayoría de él."
+        },
+        {
+          "kind": "narrate",
+          "text": "Roughly 5% de la energía del universo es materia ordinaria – átomos, la materia de las que están hechos los estás y las personas. Alrededor del 27% es materia oscura, que se agrupa bajo la gravedad pero no emite, absorbe ni dispersa luz. El resto, un 68%, es energía oscura, una presión uniforme que estira el espacio en sí mismo, acelerando la expansión del cosmos. Hemos detectado ambas solo a través de sus efectos gravitacionales. No sabemos qué son."
+        },
+        {
+          "kind": "narrate",
+          "text": "Próxima pregunta: ¿hay vida en alguna otra parte? A día de hoy, no se ha confirmado ninguna señal de vida en ningún exoplaneta. El candidato más discutido recientemente es la detección tentativa de JWST de dimetil sulfuro en la atmósfera de K2-18 b en 2023 — un compuesto producido solo por organismos vivos en la Tierra — pero el señal es débil, controvertida y está siendo rechequeada."
+        },
+        {
+          "kind": "scene",
+          "hash": "#sky?ra=346.622&dec=-5.041"
+        },
+        {
+          "kind": "narrate",
+          "text": "Esta es TRAPPIST-1, una enana roja a 40 años luz de distancia con siete planetas del tamaño de la Tierra en órbita — tres de ellos en la zona habitable donde el agua líquida podría existir en la superficie. JWST está escaneando sus atmósferas en este momento, buscando agua, metano, oxígeno, cualquier cosa anómala. Podemos tener una respuesta a '¿estamos solos' dentro de la próxima década. Podemos no."
+        },
+        {
+          "kind": "narrate",
+          "text": "Y los problemas más grandes sin resolver por debajo de todo: no tenemos una teoría funcional que combine la mecánica cuántica con la relatividad general. Por qué el energía oscura tiene el valor que tiene es inexplicable. Si nuestro universo es el único es genuinamente desconocido. Estos no son lagunas en un texto de libro — son acantilados en el borde del mapa."
+        },
+        {
+          "kind": "quiz",
+          "question": "¿Cuál de estos es honestamente el PROBLEMA MÁS GRANDE sin resolver en física hoy en día?",
+          "options": [
+            "¿Qué es la energía oscura?",
+            "¿Cómo surge la conciencia?",
+            "¿Cómo unificar la mecánica cuántica y la gravedad?",
+            "¿De dónde vino la vida en la Tierra?"
+          ],
+          "answerIndex": 0,
+          "explanation": "Esta es una llamada de juicio — la gravedad cuántica es una respuesta defendible también, ya que resolverla probablemente nos diría qué es la energía oscura y qué sucede dentro de un agujero negro. La energía oscura es actualmente la cosa más grande medida en el universo que nadie puede explicar. La conciencia y la abiogénesis son preguntas abiertas enormes, pero se encuentran más lejos de la física fundamental."
+        },
+        {
+          "kind": "narrate",
+          "text": "Ahora sabes aproximadamente lo que la especie humana sabe sobre el universo. La mayoría del trabajo todavía está por delante de nosotros. Eso es la buena noticia."
+        }
+      ]
+    }
+  ],
+  "generatedAt": "2026-05-13T12:43:51.565Z",
+  "source": "lessons.ts"
+}

@@ -1,0 +1,761 @@
+{
+  "lessons": [
+    {
+      "id": "where-are-we-standing",
+      "title": "Où sommes-nous?",
+      "summary": "Votre adresse dans l'univers — la Terre, sa rotation et pourquoi nous avons des saisons.",
+      "ageTier": "teen",
+      "durationMin": 5,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "En ce moment, vous êtes sur une boule de roche et d'eau, tournant à environ 1 670 km/h à l'équateur, en orbite autour d'un réacteur de fusion à 150 millions de kilomètres."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Earth"
+        },
+        {
+          "kind": "narrate",
+          "text": "La Terre tourne d&#39;ouest en est — c&#39;est pourquoi le Soleil semble se lever à l&#39;est. Le tilt axial de 23,5° est la raison pour laquelle nous avons des saisons. Le tilt est fixe dans l&#39;espace, donc pendant la moitié de l&#39;année, l&#39;hémisphère nord penche vers le Soleil, et pendant l&#39;autre moitié, il penche à l&#39;éloignement."
+        },
+        {
+          "kind": "wait",
+          "ms": 4000
+        },
+        {
+          "kind": "quiz",
+          "question": "La Terre tourne de l'ouest à l'est. Dans quelle direction apparaît donc le Soleil donc dans le ciel?",
+          "options": [
+            "Est à ouest",
+            "Ouest à est",
+            "Sud au nord",
+            "Nord au sud"
+          ],
+          "answerIndex": 0,
+          "explanation": "Puisque nous sommes en rotation vers l'est, tout dans le ciel apparaît donc en mouvement dans la direction opposée — est à ouest."
+        },
+        {
+          "kind": "narrate",
+          "text": "La prochaine fois que vous regardez un coucher de soleil, souvenez-vous : le Soleil ne bouge pas. Vous le faites."
+        }
+      ]
+    },
+    {
+      "id": "how-big-is-the-sun",
+      "title": "How big is the Sun?",
+      "summary": "A trip to the star at the centre of everything — and a sense of just how massive it is.",
+      "ageTier": "teen",
+      "durationMin": 6,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "If Earth were a marble, the Sun would be a beach ball 30 metres away. Let's actually go look."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Sun"
+        },
+        {
+          "kind": "narrate",
+          "text": "Le Soleil mesure 1,4 million de km de diamètre — soit 109 Terres alignées bord à bord. En volume, vous pourriez y loger environ 1,3 million de Terres. Le Soleil contient 99,86 % de toute la masse du système solaire."
+        },
+        {
+          "kind": "quiz",
+          "question": "Environ combien de Terres pourraient tenir à l'intérieur du Soleil en volume?",
+          "options": [
+            "13",
+            "1 300",
+            "1,3 million",
+            "130 millions"
+          ],
+          "answerIndex": 2,
+          "explanation": "Le volume varie au cube du rayon. Le rayon du Soleil est d'environ 109 fois celui de la Terre, donc son volume est d'environ 109³ ≈ 1,3 million."
+        },
+        {
+          "kind": "narrate",
+          "text": "Tout second, le Soleil convertit 4 millions de tonnes de matière en énergie pure via la fusion. Cette énergie est ce qui atteint la Terre sous forme de lumière huit minutes plus tard — ce qui rend possible chaque plante, chaque animal, chaque photographie que vous avez jamais prise."
+        }
+      ]
+    },
+    {
+      "id": "solar-system-true-scale",
+      "title": "Le Système solaire à l'échelle réelle",
+      "summary": "Un vol de Mercure à Neptune qui montre à quel point le quartier est vraiment vide.",
+      "ageTier": "teen",
+      "durationMin": 7,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "La plupart des diagrammes du système solaire mentent. Ils écrasent les planètes les unes contre les autres pour que vous puissiez les voir toutes sur une même page. La vérité est que le système solaire est majoritairement constitué d'espace vide."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Mercury"
+        },
+        {
+          "kind": "narrate",
+          "text": "La lumière du Soleil atteint Mercure en trois minutes. D&#39;ici, la Terre ressemble à une étoile bleue brillante."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Earth"
+        },
+        {
+          "kind": "narrate",
+          "text": "La lumière du Soleil atteint la Terre en 8 minutes 20 secondes. C&#39;est le moment où le Soleil nous semble le plus proche."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Jupiter"
+        },
+        {
+          "kind": "narrate",
+          "text": "Nous sommes maintenant cinq fois plus loin du Soleil que la Terre. La lumière du Soleil a mis 43 minutes pour arriver ici. Jupiter a seul 2,5 fois la masse de tous les autres planètes combinées."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Neptune"
+        },
+        {
+          "kind": "narrate",
+          "text": "Neptune est à 30 UA. La lumière du Soleil met 4 heures et 10 minutes pour arriver ici. Du point de vue de Neptune, le Soleil est juste la plus brillante étoile du ciel."
+        },
+        {
+          "kind": "quiz",
+          "question": "Approximativement, combien de temps faut-il à la lumière du Soleil pour atteindre la Terre depuis le Soleil?",
+          "options": [
+            "8 secondes",
+            "8 minutes",
+            "8 heures",
+            "8 jours"
+          ],
+          "answerIndex": 1,
+          "explanation": "La lumière se déplace à 299 792 km par seconde. Le Soleil est à environ 150 millions de km, donc le trajet prend environ 8 minutes et 20 secondes."
+        },
+        {
+          "kind": "narrate",
+          "text": "La prochaine étape après Neptune est le Cinturón de Kuiper, puis la Nuée d'Oort, puis quatre années-lumière d'espace vide jusqu'à la plus proche étoile. Nous vivons dans un quartier très, très grand."
+        }
+      ]
+    },
+    {
+      "id": "keplers-laws",
+      "title": "Lois de Kepler sur le mouvement des planètes",
+      "summary": "Trois règles — dérivées des données de Tycho — qui ont transformé les cieux en géométrie.",
+      "ageTier": "teen",
+      "durationMin": 9,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Des décennies durant, Tycho Brahe a mesuré les positions planétaires d'une île danoise, à l'œil nu, avec une précision d'une minute d'arc. Lorsqu'il est décédé en 1601, il a laissé une montagne de données à son assistant, Johannes Kepler. Kepler a passé huit ans à lutter avec l'orbite de Mars avant de la voir : les planètes ne se déplacent pas en cercles."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Mars"
+        },
+        {
+          "kind": "narrate",
+          "text": "Loi 1 — chaque planète orbite autour du Soleil en ellipse, avec le Soleil en un foyer. Mars est le plus excentrique des planètes brillantes : sa distance au Soleil varie de 42 millions de km entre le périhélie et l'aphélie. Les cercles étaient une préjugé de 2 000 ans. Les ellipses s'adaptent aux données."
+        },
+        {
+          "kind": "quiz",
+          "question": "Quelle forme décrit le mieux une orbite planétaire ?",
+          "options": [
+            "Cercle",
+            "Parabole",
+            "Ellipse",
+            "Hélice"
+          ],
+          "answerIndex": 2,
+          "explanation": "La première loi de Kepler : les planètes suivent des ellipses avec le Soleil en un des foyers. Un cercle est un cas particulier où les deux foyers coïncident, mais les orbites réelles sont toujours au moins légèrement elliptiques."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Earth"
+        },
+        {
+          "kind": "narrate",
+          "text": "Loi 2 — une ligne tracée du Soleil à un planète balaye des aires égales en temps égaux. La Terre se déplace à une vitesse moyenne de 30 km/s, mais elle est d'environ 1 km/s plus rapide au périhélie en début janvier qu'au aphélie en juillet. Les planètes accélèrent lorsqu'elles sont proches du Soleil et ralentissent lorsqu'elles sont loin. C'est la gravité, qui fait son compte. "
+        },
+        {
+          "kind": "quiz",
+          "question": "Si un planète balaye des aires égales en temps égaux, quand elle bouge-t-elle le plus vite?",
+          "options": [
+            "Aphélie",
+            "Périmélie",
+            "Moyen-orbite",
+            "Tous les mêmes"
+          ],
+          "answerIndex": 1,
+          "explanation": "À la périmélie le planète est la plus proche du Soleil, donc la ligne radiale est la plus courte — pour balayer la même aire, le planète doit couvrir plus de longueur d'arc, c'est-à-dire se déplacer plus vite."
+        },
+        {
+          "kind": "narrate",
+          "text": "Loi 3 — le carré de la période orbitale d'un planète est proportionnel au cube de son demi-grand axe. T² ∝ a³. Doubler la distance d'un planète au Soleil et son année devient 2,83 fois plus longue. C'est la loi que Newton a dérivée plus tard de la gravité elle-même, en 1687."
+        },
+        {
+          "kind": "quiz",
+          "question": "Si la planète A est 4 fois plus loin du Soleil que la planète B, la période orbitale de la planète A est approximativement…",
+          "options": [
+            "4 fois aussi long",
+            "8 fois aussi long",
+            "16 fois aussi long",
+            "64 fois aussi long"
+          ],
+          "answerIndex": 1,
+          "explanation": "T² = a³, donc T = a^(3/2). Avec a = 4, T = 4^1,5 = 8. La distance quadruple ; l'année prend huit fois plus de temps."
+        },
+        {
+          "kind": "narrate",
+          "text": "Kepler n'a jamais compris pourquoi les lois fonctionnaient — cela a fallu à Newton et la loi de la gravité inverse au carré. Mais les trois règles qu'il a extraites des nombres de Tycho sont toujours exactes aujourd'hui, et tous les lanceurs spatiaux que nous avons jamais lancés volent sur elles."
+        }
+      ]
+    },
+    {
+      "id": "why-planets-differ",
+      "title": "Pourquoi les planètes ne sont pas toutes les mêmes",
+      "summary": "Un tour croisé en section transversale de Mercure à Neptune — et pourquoi la composition décide de tout.",
+      "ageTier": "teen",
+      "durationMin": 7,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Les planètes se sont formées à partir du même disque de gaz et de poussière il y a 4,6 milliards d'années, mais elles ressemblent à rien. La raison est simple : le système solaire intérieur était trop chaud pour l'eau gelée, et le système solaire extérieur était suffisamment froid pour conserver de l'hydrogène. Ouvrez le panneau de section transversale à mesure que nous avançons — les couches racontent l'histoire."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Mercury"
+        },
+        {
+          "kind": "narrate",
+          "text": "Mercure — un monde rocheux petit, de 4 880 km de diamètre, avec un noyau en fer impressionnant qui prend 85 % de son rayon. Peut-être le résidu après un impact géant qui a strié l'écorce plus légère. Pas d'atmosphère, pas de météo, juste des cratères et des oscillations jour-nuit de 600°C."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Earth"
+        },
+        {
+          "kind": "narrate",
+          "text": "Terre — rocheuse, mais avec une océan liquide d'eau à la surface et un noyau externe en fer-nickel fondu qui tourne comme un dynamo, générant un champ magnétique suffisamment fort pour dévier le vent solaire. Sans ce champ, l'atmosphère aurait été éliminée. Sans l'atmosphère, pas de nous."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Jupiter"
+        },
+        {
+          "kind": "narrate",
+          "text": "Jupiter — 318 masses de la Terre, mais principalement de l&#39;hydrogène et de l&#39;hélium. La pression à l&#39;intérieur est si extrême que 10 000 km plus bas, l&#39;hydrogène devient métallique et conduit l&#39;électricité. Ce liquide métallique en mouvement génère un champ magnétique 20 000 fois plus fort que celui de la Terre. Il y a un petit noyau dilué quelque part, mais Jupiter est essentiellement une étoile manquée."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Neptune"
+        },
+        {
+          "kind": "narrate",
+          "text": "Neptune — un géant de glace. Le terme de 'glace' ici est utilisé en astrosciences pour désigner l'eau, le méthane et l'ammoniac, mais à ces pressions et températures, ils existent sous forme de fluide ionique chaud — ni solide ni gazeux. La couleur bleue de Neptune est due au méthane dans l'atmosphère supérieure qui absorbe la lumière rouge. Les vitesses de vent atteignent 2 000 km/h, la plus rapide du système solaire."
+        },
+        {
+          "kind": "quiz",
+          "question": "Quels sont les facteurs qui donnent aux géantes gazeuses leur structure stratifiée d'hydrogène métallique, d'hydrogène moléculaire et d'atmosphère?",
+          "options": [
+            "La température seule",
+            "La pression seule",
+            "La pression et la composition conjointement",
+            "Les champs magnétiques"
+          ],
+          "answerIndex": 2,
+          "explanation": "L'hydrogène se comporte différemment en fonction des pressions — moléculaire à la surface, métallique à l'intérieur profonde. Associé à la profondeur de pression du mélange du planète H, He et des glaces, ce profil détermine chaque couche."
+        },
+        {
+          "kind": "narrate",
+          "text": "Matière de départ identique, des résultats totalement différents — parce que la distance du Soleil a décidé ce qui pouvait se condenser, et la masse a décidé ce qui pouvait être maintenu. La diversité planétaire est la géométrie plus la chimie."
+        }
+      ]
+    },
+    {
+      "id": "moons-rings-asteroids",
+      "title": "Lunes, anneaux, astéroïdes — les déchets laissés derrière",
+      "summary": "Un tour du système solaire des petits corps — et pourquoi Hollywood ment sur les ceintures d'astéroïdes.",
+      "ageTier": "teen",
+      "durationMin": 7,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Les planètes ont les titres d'actualité, mais le système solaire est principalement composé de déchets — lunes, anneaux, astéroïdes, comètes. Ce sont là où l'histoire réelle est préservée, car ils sont trop petits pour avoir fondu à nouveau."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Saturn"
+        },
+        {
+          "kind": "narrate",
+          "text": "Les anneaux de Saturne sont constitués à 99% d&#39;eau gelée et 1% de poussière, répartis sur 280 000 km — mais ils ne sont que d&#39;environ 10 mètres d&#39;épaisseur. Si vous les faisiez correspondre à la taille d&#39;un terrain de football, ils seraient plus minces qu&#39;une feuille de papier. Ils pourraient être les débris d&#39;une lune qui s&#39;est égarée trop près et s&#39;est déchirée elle-même."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Jupiter"
+        },
+        {
+          "kind": "narrate",
+          "text": "Jupiter possède 95 lunes connues, mais les quatre grandes — Io, Europa, Ganymede, Callisto — ont été découvertes par Galilée en 1610 et ont brisé le modèle géocentrique la nuit même. Io est le corps le plus volcaniquement actif du système solaire, comprimé par des forces de marée. Europa possède une océan sous-surface avec plus d'eau liquide que tous les océans de la Terre combinés."
+        },
+        {
+          "kind": "narrate",
+          "text": "Entre Mars et Jupiter se trouve le ceinture d'astéroïdes — environ un million de roches plus grandes que 1 km. Dans les films, les navires évitent de le traverser. En réalité, l'espacement moyen entre les astéroïdes est d'environ un million de kilomètres. Les sondes traversent habituellement et ne trouvent absolument rien pendant des milliers de kilomètres dans toutes les directions."
+        },
+        {
+          "kind": "narrate",
+          "text": "Au-delà de Neptune se trouve le Cinturón de Kuiper — un anneau de corps glaciaux comprenant Pluton, Éris, Makemake et Haumea. Il s'agit des restes du disque qui n'ont jamais fusionné en planète. Les comètes à courte période — tout objet avec une orbite inférieure à 200 ans — proviennent de là. Le comète d'Halley en fait partie."
+        },
+        {
+          "kind": "quiz",
+          "question": "Si vous vous teniez sur un astéroïde typique de la ceinture principale, combien d'autres astéroïdes verriez-vous typiquement avec le regard nu dans le ciel ?",
+          "options": [
+            "Des milliers",
+            "Des centaines",
+            "Des dizaines",
+            "Aucun"
+          ],
+          "answerIndex": 3,
+          "explanation": "La ceinture est immense et les astéroïdes sont minuscules — l'écart moyen est d'environ un million de kilomètres. Vous verriez des étoiles et le Soleil, mais pas d'autres astéroïdes. Hollywood ment."
+        },
+        {
+          "kind": "narrate",
+          "text": "Partout où nous pointons un vaisseau spatial, nous trouvons plus de corps mineurs. Ils sont l'affaire en suspens de la formation des planètes, et le meilleur record que nous ayons de ce que le système solaire primitif était composé de."
+        }
+      ]
+    },
+    {
+      "id": "sun-is-a-star",
+      "title": "Le Soleil est une étoile. Les autres étoiles sont-elles comme elle?",
+      "summary": "Un voyage sur le diagramme H-R d'un géant rouge à une bête de séquence principale bleue.",
+      "ageTier": "teen",
+      "durationMin": 8,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Le Soleil a l'air spécial parce que nous sommes à trois minutes-lumière de distance de lui. À partir d'un autre système stellaire, notre Soleil ne serait qu'un point jaune — une étoile en séquence principale G2V parfaitement ordinaire."
+        },
+        {
+          "kind": "scene",
+          "hash": "#sky?ra=86.13&dec=-2.49"
+        },
+        {
+          "kind": "narrate",
+          "text": "Betelgeuse — l'épaule rouge d'Orion, une supergéante rouge de type M. C'est environ 700 fois le rayon du Soleil. Si on le remplaçait par le Soleil, sa surface s'étendrait au-delà de l'orbite de Mars. Il n'a que 10 millions d'années mais il est déjà presque épuisé de carburant, et il explosera en supernova dans les 100 000 prochaines années — peut-être demain."
+        },
+        {
+          "kind": "scene",
+          "hash": "#sky?ra=78.63&dec=8.20"
+        },
+        {
+          "kind": "narrate",
+          "text": "Bellatrix — l'épaule gauche d'Orion, une géante bleue de type B2 III. Température de surface d'environ 22 000 K, six fois plus chaude que le Soleil, et 6 400 fois plus lumineuse. Les étoiles massives brûlent leur hydrogène avec violence : Bellatrix n'a que 25 millions d'années et est déjà au-delà de la séquence principale. Vive vite, meurt jeune."
+        },
+        {
+          "kind": "scene",
+          "hash": "#sky?ra=101.27&dec=-16.72"
+        },
+        {
+          "kind": "narrate",
+          "text": "Sirius — l&#39;étoile la plus brillante de notre ciel, à seulement 8,6 années-lumière de distance. Une étoile de la séquence principale A1V, deux fois la masse du Soleil, 25 fois plus lumineuse, incandescente à 9 940 K. Elle possède également un petit compagnon : Sirius B, un naine blanche de la taille de la Terre avec la masse du Soleil. L&#39;état final d&#39;étoiles comme la nôtre."
+        },
+        {
+          "kind": "quiz",
+          "question": "Quel type d&#39;étoile a la DURÉE DE VIE la plus COURTE en séquence principale?",
+          "options": [
+            "Naines rouges",
+            "Étoiles jaunes comme le Soleil",
+            "Étoiles bleues de type O, géantes",
+            "Naines blanches"
+          ],
+          "answerIndex": 2,
+          "explanation": "Une plus grande masse signifie une température et une pression de noyau plus élevées, donc la fusion se déroule beaucoup plus rapidement. Une géante bleue de type O de 50 masses solaires s'éteint en quelques millions d'années ; une naine rouge peut vivre pendant des trillions d'années."
+        },
+        {
+          "kind": "narrate",
+          "text": "Tracer les étoiles par couleur contre la brillance et elles tombent sur une bande diagonale — la séquence principale — qui a été l'épine dorsale de l'astrophysique stellaire pendant un siècle. Le Soleil se tient modestement au milieu d'elle, et il lui reste encore cinq milliards d'années à aller."
+        }
+      ]
+    },
+    {
+      "id": "nearest-star",
+      "title": "Combien de distance sépare la plus proche étoile?",
+      "summary": "Proxima Centauri est à 4,24 années-lumière. Voici ce que cela signifie réellement.",
+      "ageTier": "teen",
+      "durationMin": 6,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Le Soleil est une étoile. Il y en a environ 400 milliards d'autres dans notre galaxie. La plus proche est appelée Proxima Centauri — une petite naine rouge, seulement 12% de la masse du Soleil, actuellement à 4,24 années-lumière."
+        },
+        {
+          "kind": "scene",
+          "hash": "#sky?ra=217.42&dec=-62.68"
+        },
+        {
+          "kind": "narrate",
+          "text": "Proxima est une naine rouge M5.5Ve, trop faible pour être visible à l'œil nu malgré son statut de voisin stellaire le plus proche. En 2016, les astronomes ont découvert un planète autour d'elle — Proxima b — d'environ masse terrestre, dans la zone habitable, bien qu'elle soit probablement bloquée par l'effet de marée et baignée dans les éclairs stellaires."
+        },
+        {
+          "kind": "narrate",
+          "text": "4,24 années-lumière signifie que la lumière elle-même — la chose la plus rapide de l'univers — met 4,24 ans pour faire le trajet. Voyager 1, le vaisseau spatial le plus rapide que les humains aient jamais construit, se déplace à 17 km/s. À cette vitesse, il faudrait à Voyager environ 73 000 ans pour atteindre Proxima. Nous n'avons pas été une espèce pendant si longtemps."
+        },
+        {
+          "kind": "narrate",
+          "text": "Voici l&#39;échelle brutale : la distance entre le Soleil et Neptune est de 30 UA. La distance entre le Soleil et Proxima est de 268 000 UA. Le gouffre entre les étoiles voisines est d&#39;environ 1 000 fois le gouffre entre le Soleil et Neptune. Les étoiles dans une galaxie ne sont pas serrées. Ce sont des taches de lumière dans un océan."
+        },
+        {
+          "kind": "quiz",
+          "question": "Si le Soleil était de la taille d'une balle de basket, à quelle distance Proxima Centauri serait-elle sur la même échelle?",
+          "options": [
+            "10 m",
+            "1 km",
+            "100 km",
+            "6 300 km"
+          ],
+          "answerIndex": 3,
+          "explanation": "Un Soleil de la taille d'une balle de basket met la Terre à environ 25 m. Sur la même échelle, Proxima se situe à environ 6 300 km de distance — à peu près la distance entre New York et Paris. C'est juste à l'unité la plus proche."
+        },
+        {
+          "kind": "narrate",
+          "text": "Chaque étoile que vous voyez la nuit est au moins à cette distance. La plupart sont beaucoup, beaucoup plus loin. Le ciel nocturne est un instantané de lumière qui a quitté sa source des années, des siècles ou des millénaires."
+        }
+      ]
+    },
+    {
+      "id": "constellations-human-invention",
+      "title": "Les constellations sont une invention humaine",
+      "summary": "Les étoiles d'Orion semblent être proches les unes des autres — jusqu'à ce que l'on demande combien elles sont éloignées en réalité.",
+      "ageTier": "teen",
+      "durationMin": 6,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Activez l'overlay des constellations et le ciel se transforme en formes — un chasseur, un ours, un cygne. Chaque culture a dessiné ses propres formes. Voici le secret : aucune de ces formes n'est réellement physique."
+        },
+        {
+          "kind": "scene",
+          "hash": "#viewer?ra=83.82&dec=-1.20&fov=30&c=1"
+        },
+        {
+          "kind": "narrate",
+          "text": "C&#39;est Orion — la constellation la plus reconnaissable dans le ciel du nord. La ceinture du chasseur, ses épaules, son épée — sept étoiles à l&#39;œil nu connectées par des lignes que les humains ont tracées. Regardez maintenant à quelle distance chaque une se trouve vraiment."
+        },
+        {
+          "kind": "scene",
+          "hash": "#sky?ra=88.79&dec=7.41"
+        },
+        {
+          "kind": "narrate",
+          "text": "Betelgeuse — l'épaule rouge — est à 642 années-lumière de nous. Bellatrix, l'épaule bleue, juste à côté de lui dans le ciel, est à seulement 250 années-lumière de nous. Ils sont séparés de près de 400 années-lumière le long de notre ligne de champ. Ils ne sont pas des voisins ; ils n'apparaissent que comme des voisins parce que nous les regardons d'un angle spécifique dans la galaxie."
+        },
+        {
+          "kind": "narrate",
+          "text": "Fly to any other star system and Orion vanishes. The pattern only exists from Earth. Constellations are coordinates we drew on the dome of the sky — useful for navigation, beautiful as mythology, but not physical groups. The stars inside one are no more related to each other than three random people who happen to line up on a city street."
+        },
+        {
+          "kind": "quiz",
+          "question": "Pourquoi un constellation n'est-il pas un groupe physique réel d'étoiles?",
+          "options": [
+            "Les étoiles sont trop faibles pour être liées",
+            "Les étoiles sont à des distances complètement différentes de nous",
+            "Les constellations ne contiennent que chaque étoile",
+            "Les étoiles se déplacent trop vite pour être regroupées"
+          ],
+          "answerIndex": 1,
+          "explanation": "Une constellation est un motif bidimensionnel projeté sur le ciel. Les étoiles à l'intérieur d'elle sont à des distances sauvages différentes — Betelgeuse et Bellatrix diffèrent d'environ 400 ans-lumière le long de notre ligne de vue. Depuis tout autre point de vue dans la galaxie, le motif se dissout."
+        },
+        {
+          "kind": "narrate",
+          "text": "Les formes sont les nôtres. Les étoiles sont simplement où elles sont."
+        }
+      ]
+    },
+    {
+      "id": "milky-way-place-we-live",
+      "title": "La Voie lactée est un endroit où nous vivons",
+      "summary": "Reculer jusqu'à partir du Soleil jusqu'à ce que toute notre galaxie rentre dans le cadre — et rencontrez le trou noir au centre.",
+      "ageTier": "teen",
+      "durationMin": 7,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Tout ce que nous avons regardé jusqu'à présent — les planètes, le Soleil, les quelques centaines d'étoiles que vous pouvez nommer — rentre dans une petite zone d'une galaxie."
+        },
+        {
+          "kind": "scene",
+          "hash": "#galactic"
+        },
+        {
+          "kind": "narrate",
+          "text": "Ceci est la Voie lactée : un disque spirale baré de quelques 100 000 années-lumière de diamètre, comportant entre 100 et 400 milliards détoiles. Nous sommes à 26 000 années-lumière du centre, dans une faible caractéristique spirale appelée le bras d'Orion — un quartier calme entre les bras de Sagittaire et de Persée."
+        },
+        {
+          "kind": "scene",
+          "hash": "#sky?ra=266.4168&dec=-29.0078"
+        },
+        {
+          "kind": "narrate",
+          "text": "Au centre se trouve Sagittarius A* — un trou noir supermassif d'une masse de 4,3 millions de masses solaires comprimées dans une région plus petite que l'orbite de Mercure. Nous ne pouvons pas le voir en lumière visible car 26 000 années-lumière de poussière galactique se trouvent en travers, mais les rayons X et l'infrarouge traversent directement. Le télescope à horizon des événements a capturé son ombre en 2022."
+        },
+        {
+          "kind": "narrate",
+          "text": "Chaque étoile que vous pouvez voir avec les yeux nus vit à l'intérieur de ce même disque. La faible bande de lumière que vous appelez 'la Voie lactée' une nuit sombre est le disque lui-même, vu en bordure de l'intérieur. Vous regardez littéralement à travers le corps de votre propre galaxie."
+        },
+        {
+          "kind": "quiz",
+          "question": "Roughlement combien d'étoiles contient la Voie lactée?",
+          "options": [
+            "1 milliard",
+            "100–400 milliards",
+            "10 milliards de milliards",
+            "1 quadrillion"
+          ],
+          "answerIndex": 1,
+          "explanation": "Les relevés modernes convergent sur 100-400 milliards d’étoiles, en fonction de la façon dont on compte les naines rouges de faible masse. La plupart sont trop faibles pour être visibles individuellement — elles sont cachées dans la lueur diffuse du disque."
+        },
+        {
+          "kind": "narrate",
+          "text": "Une galaxie en moins. Environ deux trillions à aller."
+        }
+      ]
+    },
+    {
+      "id": "other-galaxies-milky-ways",
+      "title": "Dés autres galaxies, dés autres Végas décembre",
+      "summary": "L’Andromède est à 2,5 millions dânées-lumieres de distance — et sur une trajectoire de collision avec nous.",
+      "ageTier": "teen",
+      "durationMin": 6,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "La Voie lactée est une galaxie parmi environ deux trillions d'objets observables dans l'univers. La plus proche de grande taille — Andromède, M31 — est suffisamment proche pour qu'on puisse la voir à l'œil nu une nuit sombre, sous forme d'une faible tache dans la constellation du même nom."
+        },
+        {
+          "kind": "scene",
+          "hash": "#sky?ra=10.6847&dec=41.2691"
+        },
+        {
+          "kind": "narrate",
+          "text": "L'Andromède est à 2,5 millions d'années-lumière. Les photons frappant votre œil lorsque vous regardez vers elle ont quitté M31 lorsque nos ancêtres étaient Homo habilis, juste en train de découvrir comment tailler des outils en pierre. Tout ce qui s'est jamais passé dans l'histoire humaine enregistrée est plus jeune que la lumière provenant de cette seule galaxie."
+        },
+        {
+          "kind": "narrate",
+          "text": "M31 est plus grand que la Voie lactée — environ un trillion d'étoiles — et il nous menace. Andromède se déplace vers la Voie lactée à 110 km/s. En 4,5 milliards d'années, les deux galaxies se seront percutées, se seront éjectées les unes des autres, et au cours des milliards d'années suivants s'installeront dans une seule galaxie elliptique que les astronomes ont déjà surnommée Milkomeda."
+        },
+        {
+          "kind": "narrate",
+          "text": "N'ayez pas peur que les étoiles se percutent. Les galaxies sont pour la plupart de l'espace vide — la chance que deux étoiles se frappent est essentiellement zéro. Mais le ciel nocturne change radicalement. Le ciel ne sera plus noir et étoilé ; il aura le disque d'une autre galaxie étalé sur lui."
+        },
+        {
+          "kind": "quiz",
+          "question": "Combien de temps met la lumière d'Andromède pour nous parvenir?",
+          "options": [
+            "2,5 ans",
+            "2 500 ans",
+            "2,5 millions d'années",
+            "25 millions d'années"
+          ],
+          "answerIndex": 2,
+          "explanation": "L'Andromède est à 2,5 millions d'années-lumière, donc sa lumière met 2,5 millions d'années pour nous parvenir. En regardant, c'est un voyage dans le temps littéral — vous voyez cela tel qu'il était lorsque notre genre a apparu sur Terre."
+        },
+        {
+          "kind": "narrate",
+          "text": "Chaque tache floue d'une image de télescope profond est un autre disque de cent milliards de soleils. L'univers est construit à partir d'amas galactiques comme un sable de plage est maximisé."
+        }
+      ]
+    },
+    {
+      "id": "redshift-universe-past",
+      "title": "L'univers a un passé que l'on peut voir",
+      "summary": "Le décalage vers le rouge transforme la couleur en distance — et nous permet de regarder à rebours dans le temps, jusqu'à des milliards d'années.",
+      "ageTier": "teen",
+      "durationMin": 7,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Lorsqu'une galaxie s'éloigne de nous, la lumière qu'elle émet se déforme en chemin. Les lignes bleues glissent vers le rouge. Plus la galaxie se rapproche, plus la dérive est grande. Les astronomes appellent le rapport z — et c'est ainsi que nous mesurons l'univers."
+        },
+        {
+          "kind": "scene",
+          "hash": "#sky?ra=187.278&dec=2.052"
+        },
+        {
+          "kind": "narrate",
+          "text": "Ceci est 3C 273, la première quasar identifiée — Maarten Schmidt a décrypté son spectre en 1963. Ses lignes étaient décalées aussi loin vers le rouge que rien d&#39;autre ne pouvait l&#39;expliquer. La seule réponse était la distance : 3C 273 se trouve à environ 2,4 milliard d&#39;années-lumière, dans une galaxie dont le trou noir central dévore de la matière de manière si violente qu&#39;il éclaire la Voie lactée par un facteur de quatre trillions."
+        },
+        {
+          "kind": "narrate",
+          "text": "Nous observons 3C 273 telle qu'elle était il y a 2,4 milliard d'années — quand la Terre n'avait pas de vie multicellulaire et l'atmosphère commençait à se remplir d'oxygène. La lumière a mis plus de temps à traverser l'espace pour nous parvenir que la vie complexe n'a existé sur ce planète."
+        },
+        {
+          "kind": "narrate",
+          "text": "Le plus grand le redshift, plus loin vous regardez. Le télescope spatial James Webb a maintenant trouvé des galaxies à z = 14 — une lumière qui les a quittées quand l'univers n'avait que 290 millions d'années. Les télescopes sont des machines à voyager dans le temps qui ne pointent qu'une seule direction : vers l'arrière."
+        },
+        {
+          "kind": "quiz",
+          "question": "Qu'est-ce que le redshift z d'une galaxie vous dit directement ?",
+          "options": [
+            "La température de la galaxie",
+            "À quelle vitesse il s&#39;éloigne de nous",
+            "L&#39;âge de la galaxie",
+            "La masse de la galaxie"
+          ],
+          "answerIndex": 1,
+          "explanation": "Le redshift est une mesure de Doppler : il vous donne directement la vitesse de recul. Associé à la loi de Hubble (v ≈ H₀ × d), cette vitesse se convertit ensuite en distance — et la distance, divisée par la vitesse de la lumière, se convertit en temps de recul."
+        },
+        {
+          "kind": "narrate",
+          "text": "Chaque spectre est un fossile. Lisez les lignes, et vous lisez l'histoire du cosmos."
+        }
+      ]
+    },
+    {
+      "id": "cosmic-web",
+      "title": "Le réseau cosmique",
+      "summary": "Les galaxies ne sont pas dispersées — elles se regroupent sur des filaments séparés par de vastes vides vides.",
+      "ageTier": "teen",
+      "durationMin": 7,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Si vous dispersiez deux trillions de galaxies dans l’espace au hasard, le ciel serait une brume uniforme. Au lieu de cela, lorsqu’on les cartographie en trois dimensions, les galaxies se regroupent le long de fines feuilles et de filaments séparés par de vastes régions vides. La structure a un nom : la toile cosmique."
+        },
+        {
+          "kind": "scene",
+          "hash": "#universe"
+        },
+        {
+          "kind": "narrate",
+          "text": "La plus grande structure isolée que nous connaissons — le Grand Mur de Sloan — est un filament de groupes de galaxies de 1,4 milliard d'années-lumière de long. La plus grande région vide — le vide de Boötes — est de 330 millions d'années-lumière de diamètre et ne contient que environ 60 galaxies, où une région de taille similaire aurait généralement dix mille."
+        },
+        {
+          "kind": "narrate",
+          "text": "Nous n'avons pas conçu ces modèles. Ils ont été semés 380 000 ans après le Big Bang sous forme de fluctuations de densité infimes — un pour 100 000, enregistrées dans le fond cosmologique de micro-ondes — et amplifiés par la gravité sur 13,8 milliards d'années. Le réseau que vous regardez est l'auto-assemblage lent de l'univers."
+        },
+        {
+          "kind": "narrate",
+          "text": "Et les fils de la toile ne sont pas faits détoiles. Ils sont faits de quelque chose que nous ne pouvons pas voir directement. Les galaxies sont juste des marqueurs lumineux collés à la surface de vastes filaments invisibles — et ces filaments sont de la matière noire."
+        },
+        {
+          "kind": "quiz",
+          "question": "Quoi qui domine la masse du web cosmique?",
+          "options": [
+            "LES Étoiles",
+            "La gaz interstellaire",
+            "La matière noire",
+            "Les trous noirs"
+          ],
+          "answerIndex": 2,
+          "explanation": "La matière noire représente environ 85% de toute la matière de l'univers et environ 27% de son budget énergétique total. Nous n'avons jamais détecté directement une particule de matière noire — seulement son attrait gravitationnel sur les galaxies, sur la lumière et sur la forme de la toile elle-même."
+        },
+        {
+          "kind": "narrate",
+          "text": "Tout ce que vous avez jamais vu, chaque étoile et chaque galaxie, est une décoration sur un échafaudage fait de matière que nous ne pouvons pas voir. L'univers visible est la mousse sur une mer beaucoup plus sombre."
+        }
+      ]
+    },
+    {
+      "id": "how-we-know-m87",
+      "title": "Comment nous savons tout cela",
+      "summary": "La première photographie d'un trou noir — et l'année de travail qu'il a fallu pour la réaliser.",
+      "ageTier": "teen",
+      "durationMin": 8,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Il est juste de se demander : comment quelqu'un peut-il vraiment savoir ce qui est vrai sur quelque chose qui est à 55 000 000 d'années-lumière de nous ? Voici un exemple, du début à la fin."
+        },
+        {
+          "kind": "scene",
+          "hash": "#sky?ra=187.706&dec=12.391"
+        },
+        {
+          "kind": "narrate",
+          "text": "C&#39;est M87* — le trou noir supermassif au cœur de la galaxie elliptique M87, dans le groupe de la Vierge. Il pèse 6,5 milliards de masses solaires, plus de 1 500 fois plus lourd que le sien du centre de notre propre galaxie. Le 10 avril 2019, la collaboration du télescope à horizon des événements a publié la première photographie de son ombre."
+        },
+        {
+          "kind": "narrate",
+          "text": "Il s'agit en réalité pas d'une photographie au sens classique de la caméra. L'EHT est huit radiotélescopes répartis sur la Terre — Hawaï à l'Espagne à l'Antarctique — observant M87 simultanément et combinant leurs signaux en un plateau synthétique de la tailleLO du planète. La technique s'appelle interférométrie à très longue base de base, VLBI. L'observation a duré cinq nuits en avril 2017 ; l'image a pris deux ans d'analyse pour être extraite."
+        },
+        {
+          "kind": "narrate",
+          "text": "La région centrale sombre dans l'image EHT est d'environ 2,5 fois le rayon de Schwarzschild du trou noir. Ce n'est pas l'horizon des événements lui-même — c'est la sphère de photons, le rayon à partir duquel un faisceau de lumière est dévié de 90° exactement et orbite autour du trou noir. L'anneau brillant est la lumière qui se déroule autour de l'arrière du trou et est focalisée vers nous."
+        },
+        {
+          "kind": "narrate",
+          "text": "La relativité générale, formulée par Einstein en 1915, prédit que c'est exactement ce que vous verriez si vous pouviez résoudre l'ombre d'un trou noir. Cent quatre ans plus tard, la mesure était conforme à la prédiction à quelques pour cent. C'est ainsi que nous le savons."
+        },
+        {
+          "kind": "quiz",
+          "question": "L'image M87* de l'EHT a-t-elle confirmé directement quelle prédiction de la relativité générale ?",
+          "options": [
+            "Ondes gravitationnelles",
+            "La déviation de la lumière vers un anneau photon autour d'un horizon des événements",
+            "Radiation de Hawking",
+            "L'existence de la matière noire"
+          ],
+          "answerIndex": 1,
+          "explanation": "Le brillant croissant dans l'image est la lumière forçée sur des trajectoires courbes autour du trou noir — la GR prédit un anneau de photon à 2,5× le rayon de Schwarzschild, et la mesure s'est arrêtée là. La radiation de Hawking est beaucoup trop faible pour détecter de cette manière, et la matière noire et les ondes gravitationnelles sont des tests sans rapport."
+        },
+        {
+          "kind": "narrate",
+          "text": "Tout prétendu dans ce programme scolaire est la fin d'une chaîne comme celle-ci : une prédiction, un instrument, une mesure, une comparaison. L'univers est connaissable. Il faut juste de la patience."
+        }
+      ]
+    },
+    {
+      "id": "what-we-still-dont-know",
+      "title": "Ce que nous ne savons toujours pas",
+      "summary": "La matière noire, l'énergie noire, la question de la vie ailleurs — le cartographie honnête de notre ignorance.",
+      "ageTier": "teen",
+      "durationMin": 8,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Fin de la visite. Temps pour la confession inconfortable : nous avons une carte assez précise de l'univers, mais nous ne savons pas de quoi la plupart de ce qu'il est composé."
+        },
+        {
+          "kind": "narrate",
+          "text": "Environ 5 % de l’énergie de l’univers est de la matière ordinaire — des atomes, la matière dont sont faits les étoiles et les humains. Environ 27 % est de la matière noire, qui s’agrège sous l’influence de la gravité mais ne émet, ne capte ni ne diffuse pas la lumière. Le reste, 68 %, est de l’énergie noire, une pression uniforme qui étend l’espace lui-même, accélérant l’expansion du cosmos. Nous avons détecté les deux uniquement par leurs effets gravitationnels. Nous ne savons pas ce qu’ils sont."
+        },
+        {
+          "kind": "narrate",
+          "text": "Prochaine question : y a-t-il de la vie ailleurs ? À ce jour, aucune signature biologique n'a été confirmée sur aucun exoplanète. Le candidat le plus discuté récemment est la détection tentante de JWST de diméthyl sulfure dans l'atmosphère de K2-18 b en 2023 — une molécule produite uniquement par des organismes vivants sur Terre — mais le signal est faible, contesté et en cours de re-vérification."
+        },
+        {
+          "kind": "scene",
+          "hash": "#sky?ra=346.622&dec=-5.041"
+        },
+        {
+          "kind": "narrate",
+          "text": "Ceci est TRAPPIST-1, une naine rouge à 40 années-lumière de distance avec sept planètes de taille terrestre en orbite — trois d’entre elles sont dans la zone habitable où l’eau liquide pourrait exister en surface. JWST est en train de scanner leurs atmosphères en ce moment, à la recherche d’eau, de méthane, d’oxygène, de tout ce qui pourrait être anormal. Nous pourrions avoir une réponse à la question « sommes-nous seuls » dans le prochain décennie. Nous pourrions ne pas."
+        },
+        {
+          "kind": "narrate",
+          "text": "Et les plus grands problèmes ouverts en dessous de tout : nous n'avons pas de théorie fonctionnelle qui combine la mécanique quantique avec la relativité générale. Pourquoi l'énergie noire a-t-elle la valeur qu'elle a est inexpliqué. Sachez que notre univers n'est pas le seul est vraiment inconnu. Ce ne sont pas des lacunes dans un manuel - ce sont des falaises au bord de la carte."
+        },
+        {
+          "kind": "quiz",
+          "question": "Quel de ces problèmes est honnêtement le PLUS GRAND problème non résolu en physique aujourd'hui?",
+          "options": [
+            "Qu'est-ce que l'énergie noire est",
+            "Comment l'état de conscience surgit",
+            "Comment unifier la mécanique quantique et la gravité",
+            "D'où vient la vie sur Terre"
+          ],
+          "answerIndex": 0,
+          "explanation": "C'est une décision subjective — la gravité quantique est une réponse défendable aussi, puisque la résolution de ce problème nous dirait probablement ce que l'énergie noire est et ce qui se passe à l'intérieur d'un trou noir. L'énergie noire est actuellement la chose la plus mesurée dans l'univers que personne ne peut expliquer. La conscience et l'abiogenèse sont de grandes questions ouvertes, mais elles se situent plus loin de la physique fondamentale."
+        },
+        {
+          "kind": "narrate",
+          "text": "Vous connaissez maintenant approximativement ce que la espèce humaine sait sur l'univers. La plupart du travail est encore devant nous. C'est la bonne nouvelle."
+        }
+      ]
+    }
+  ],
+  "generatedAt": "2026-05-13T12:48:07.791Z",
+  "source": "lessons.ts"
+}

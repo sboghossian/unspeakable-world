@@ -262,6 +262,37 @@ export const EXTRA_LAYERS: readonly LayerEntry[] = [
     },
   },
   {
+    id: "jwst-live",
+    loader: () =>
+      import("../jwst-live") as unknown as Promise<ExtraLayerModule>,
+    meta: {
+      id: "jwst-live",
+      label: "JWST live pointing",
+      icon: "🔭",
+      attribution:
+        "STScI · NASA JWST Whereabouts · public data (NASA-funded research)",
+      modes: ["sky"],
+      defaultEnabled: false,
+      description:
+        "Live reticle at the James Webb Space Telescope's current target, parsed from the STScI weekly observation plan. Refreshed every 30 minutes.",
+    },
+  },
+  {
+    id: "obs-log",
+    loader: () =>
+      import("../obs-log") as unknown as Promise<ExtraLayerModule>,
+    meta: {
+      id: "obs-log",
+      label: "My observation log",
+      icon: "📒",
+      attribution: "Local-only · stored in your browser · not sent anywhere",
+      modes: ["sky"],
+      defaultEnabled: false,
+      description:
+        "Your personal logbook: telescope, target, date, notes — plotted on the sky as ✦ markers. Saved in localStorage only; export via JSON or CSV.",
+    },
+  },
+  {
     id: "sky-cultures-extended",
     loader: () =>
       import(
