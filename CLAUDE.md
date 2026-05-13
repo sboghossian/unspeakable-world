@@ -7,7 +7,7 @@
 - **License**: MIT for all source files. No GPL/AGPL dependencies, ever.
 - **Timeline**: 7-day sprint. Cut scope, never quality.
 - **Build in public**: every commit lands on `main` and pushes to public GitHub.
-- **No console.log**: use `packages/core/src/logger.ts`.
+- **No console.log**: use `apps/web/src/lib/logger.ts`.
 - **TypeScript strict + `noUncheckedIndexedAccess`**.
 - **Tailwind only**, no inline styles, no CSS modules.
 - **Conventional commits**: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`.

@@ -145,7 +145,7 @@ function CrossSectionSvg({ layers, hovered, onHover }: SvgProps) {
             stroke={isHover ? "#fff" : "rgba(0,0,0,0.35)"}
             strokeWidth={isHover ? 1.5 : 0.5}
             onMouseEnter={() => onHover(layer)}
-            style={{ cursor: "pointer" }}
+            className="cursor-pointer"
           />
         );
       })}

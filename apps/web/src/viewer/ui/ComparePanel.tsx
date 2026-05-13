@@ -405,9 +405,8 @@ function CompareCanvas({ a, b }: { a: CompareItem; b: CompareItem }) {
           x={aCx}
           y={CANVAS_H - 8}
           textAnchor="middle"
-          className="fill-white/45"
+          className="fill-white/45 font-mono"
           fontSize="10"
-          style={{ fontFamily: "JetBrains Mono, ui-monospace, monospace" }}
         >
           ⌀ {formatMeters(a.diameterM)}
         </text>
@@ -415,9 +414,8 @@ function CompareCanvas({ a, b }: { a: CompareItem; b: CompareItem }) {
           x={bCx}
           y={CANVAS_H - 8}
           textAnchor="middle"
-          className="fill-white/45"
+          className="fill-white/45 font-mono"
           fontSize="10"
-          style={{ fontFamily: "JetBrains Mono, ui-monospace, monospace" }}
         >
           ⌀ {formatMeters(b.diameterM)}
         </text>
@@ -522,9 +520,8 @@ function InsetMagnifier({
       <text
         x={x + 8}
         y={y + 14}
-        className="fill-plasma-400"
+        className="fill-plasma-400 font-mono"
         fontSize="9"
-        style={{ fontFamily: "JetBrains Mono, ui-monospace, monospace" }}
       >
         ZOOM ×{formatMultiplier(magnification).replace("×", "")}
       </text>
@@ -548,9 +545,8 @@ function InsetMagnifier({
       <text
         x={x + 60}
         y={y + 48}
-        className="fill-white/45"
+        className="fill-white/45 font-mono"
         fontSize="8"
-        style={{ fontFamily: "JetBrains Mono, ui-monospace, monospace" }}
       >
         ⌀ {formatMeters(item.diameterM)}
       </text>

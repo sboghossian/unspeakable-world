@@ -153,8 +153,7 @@ export function InfoPanel({
 }: Props): ReactElement {
   return (
     <aside
-      className="pointer-events-auto absolute right-3 top-20 z-30 flex w-[min(360px,92vw)] flex-col rounded-xl border border-white/10 bg-space-950/95 shadow-2xl backdrop-blur"
-      style={{ maxHeight: "calc(100vh - 9rem)" }}
+      className="pointer-events-auto absolute right-3 top-20 z-30 flex max-h-[calc(100vh-9rem)] w-[min(360px,92vw)] flex-col rounded-xl border border-white/10 bg-space-950/95 shadow-2xl backdrop-blur"
     >
       <header className="flex items-start justify-between gap-3 border-b border-white/5 px-4 py-3">
         <div>
