@@ -26,14 +26,20 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
 
+      # Deploy gate — install, typecheck and build must all succeed
+      # before we touch the production Pages project. A failure here
+      # short-circuits the workflow so we never ship a broken bundle.
       - name: Install
         run: pnpm install --frozen-lockfile
 
+      - name: Typecheck web
+        run: pnpm --filter @unspeakable/web typecheck
+
       - name: Build web
-        run: pnpm --filter web build
+        run: pnpm --filter @unspeakable/web build
 
       - name: Deploy to Cloudflare Pages
         env:

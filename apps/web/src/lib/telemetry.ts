@@ -56,13 +56,43 @@ async function loadClient(): Promise<PostHogClient | null> {
       const ph = mod.default;
       ph.init(KEY as string, {
         api_host: HOST,
-        // Privacy-first defaults. Session replay defaults OFF — we
-        // collect events only.
+        // Privacy-first defaults. Session replay is OFF and the
+        // anonymous-only flags below double-check that nothing
+        // identifying leaks even if PostHog flips a default upstream.
         capture_pageview: false,
         capture_pageleave: false,
         disable_session_recording: true,
         autocapture: false,
+        // Defense-in-depth: if session recording is ever turned on
+        // (e.g. via the dashboard's remote config), mask everything by
+        // default so we still match the consent copy.
+        session_recording: {
+          maskAllInputs: true,
+          maskTextSelector: "*",
+          maskInputOptions: {
+            password: true,
+            email: true,
+            tel: true,
+            color: true,
+            date: true,
+            "datetime-local": true,
+            month: true,
+            number: true,
+            range: true,
+            search: true,
+            text: true,
+            time: true,
+            url: true,
+            week: true,
+            textarea: true,
+            select: true,
+          },
+        },
+        // No automatic identification — telemetry is anonymous.
+        disable_persistence: false,
         persistence: "localStorage+cookie",
+        // Don't follow redirects to PostHog's session-id endpoint.
+        respect_dnt: true,
         // Honour the opt-out we already have on disk.
         opt_out_capturing_by_default: optedOut,
         loaded: (instance: PostHogClient) => {

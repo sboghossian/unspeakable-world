@@ -14,12 +14,13 @@
  *
  * Sample rates:
  *   - tracesSampleRate: 0 (we don't ship performance tracing)
- *   - replaysSessionSampleRate: 0.1
- *   - replaysOnErrorSampleRate: 1.0 (capture replays when an error fires)
+ *   - replaysSessionSampleRate: 0 (consent copy says "crash reports
+ *     only" — session replay is a separate privacy concern and we
+ *     don't ask for it, so we don't collect it)
+ *   - replaysOnErrorSampleRate: 0 (ditto)
  *
- * NOTE: replay support requires Sentry's replay integration — see the
- * dynamic import below. If the integration import fails we silently
- * drop replay support and keep core error capture.
+ * The replay integration is intentionally NOT loaded — the consent
+ * banner only promises anonymous crash reports.
  */
 import { log } from "./logger";
 
@@ -64,22 +65,17 @@ async function loadClient(): Promise<SentryClient | null> {
       // Sentry's browser SDK ships ESM under the default export +
       // named exports; we hold the named-export object as our client.
       const sentry = (await import("@sentry/browser")) as unknown as SentryClient;
-      const integrations: unknown[] = [];
-      if (typeof sentry.replayIntegration === "function") {
-        try {
-          integrations.push(sentry.replayIntegration({ maskAllText: true, blockAllMedia: true }));
-        } catch (err) {
-          log.warn("[error-tracking] replay integration unavailable", err);
-        }
-      }
+      // Replay intentionally disabled — the consent banner promises
+      // "crash reports only" and session replay would record DOM mutations
+      // beyond that scope. Keep the integration array empty.
       sentry.init({
         dsn: DSN,
         release: RELEASE,
         environment: import.meta.env.PROD ? "production" : "development",
         tracesSampleRate: 0,
-        replaysSessionSampleRate: 0.1,
-        replaysOnErrorSampleRate: 1.0,
-        integrations,
+        replaysSessionSampleRate: 0,
+        replaysOnErrorSampleRate: 0,
+        integrations: [],
         // Strip personally-identifying request headers/queries by default.
         sendDefaultPii: false,
       });

@@ -1,12 +1,31 @@
 # Cloudflare Pages headers — long-cache hashed assets, short-cache the
-# HTML so deploys propagate immediately.
+# HTML so deploys propagate immediately. Security headers applied globally
+# under /*. Connect-src is permissive on purpose: the viewer talks to many
+# federated science archives (CDS/IRSA/STScI/NASA/Cloudflare-CDN/PostHog/Sentry).
 
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
 
+/screenshots/*
+  Cache-Control: public, max-age=2592000, immutable
+
+/fonts/*
+  Cache-Control: public, max-age=2592000, immutable
+
 /data/*
+  Cache-Control: public, max-age=86400, must-revalidate
+
+/sitemap.xml
+  Cache-Control: public, max-age=86400
+
+/robots.txt
   Cache-Control: public, max-age=86400
 
 /*
   Cache-Control: public, max-age=0, must-revalidate
-  X-Frame-Options: SAMEORIGIN
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(self), camera=(self), accelerometer=(self), gyroscope=(self), magnetometer=(self), microphone=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+  Content-Security-Policy: default-src 'self'; img-src 'self' https://alasky.cds.unistra.fr https://alasky.u-strasbg.fr https://*.cds.unistra.fr https://*.harvard.edu https://*.nasa.gov data: blob:; script-src 'self' 'unsafe-eval' https://*.posthog.com https://*.sentry.io; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self' https://alasky.cds.unistra.fr https://*.cds.unistra.fr https://*.nasa.gov https://api.simbad.cds.unistra.fr https://*.cdn.cloudflare.net https://*.posthog.com https://*.sentry.io wss: https:; worker-src 'self' blob:; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'

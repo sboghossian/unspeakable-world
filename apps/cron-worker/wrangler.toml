@@ -2,7 +2,7 @@ name = "unspeakable-cron"
 main = "src/index.ts"
 compatibility_date = "2026-05-13"
 compatibility_flags = ["nodejs_compat"]
-workers_dev = false
+workers_dev = true
 
 # Fire daily at 09:00 UTC — well-timed for the EU morning + early US east coast.
 # CF cron triggers are GMT/UTC only.

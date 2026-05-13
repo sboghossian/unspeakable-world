@@ -134,11 +134,32 @@ async function dispatchPost(env: Env, post: DailyPost): Promise<void> {
   );
 }
 
+/**
+ * Fire-and-forget alert to Discord when the cron blows up. Returns a
+ * Promise the caller can hand to `ctx.waitUntil` so we don't block the
+ * scheduled response on Discord's roundtrip.
+ */
+async function alertDiscord(env: Env, err: unknown): Promise<void> {
+  if (!env.DISCORD_WEBHOOK_URL) return;
+  const message = err instanceof Error ? err.message : String(err);
+  try {
+    await fetch(env.DISCORD_WEBHOOK_URL, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        content: `🚨 cron failed: ${message.slice(0, 1800)}`,
+      }),
+    });
+  } catch {
+    /* swallow — best-effort */
+  }
+}
+
 export default {
   async scheduled(
     _event: ScheduledEvent,
     env: Env,
-    _ctx: ExecutionContext,
+    ctx: ExecutionContext,
   ): Promise<void> {
     try {
       const post = await fetchDailyPost(env);
@@ -160,10 +181,12 @@ export default {
           error: err instanceof Error ? err.message : String(err),
         }),
       );
+      // Don't block the cron response on the alert — fire and forget.
+      ctx.waitUntil(alertDiscord(env, err));
     }
   },
 
-  async fetch(req: Request, env: Env): Promise<Response> {
+  async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const u = new URL(req.url);
     if (u.searchParams.get("run") !== "1") {
       return new Response(
@@ -180,6 +203,7 @@ export default {
         headers: { "content-type": "application/json" },
       });
     } catch (err) {
+      ctx.waitUntil(alertDiscord(env, err));
       return new Response(
         JSON.stringify({
           ok: false,

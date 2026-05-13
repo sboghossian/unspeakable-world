@@ -153,12 +153,17 @@ async function recordWatchHit(kv: KvBinding, code: string): Promise<number> {
   hits.push(now);
   // Cap at 256 entries so a hot session doesn't bloat the value.
   if (hits.length > 256) hits = hits.slice(-256);
-  try {
-    await kv.put(key, JSON.stringify({ hits }), {
-      expirationTtl: WATCH_WINDOW_S * 2,
-    });
-  } catch (err) {
-    warn("watch put failed", err);
+  // KV free tier caps daily writes at 1k — at 2 s polling per student a
+  // single session would blow the budget in < 30 min. Sample writes at
+  // ~1-in-30 so the watcher count stays approximate but cheap.
+  if (Math.random() < 1 / 30) {
+    try {
+      await kv.put(key, JSON.stringify({ hits }), {
+        expirationTtl: WATCH_WINDOW_S * 2,
+      });
+    } catch (err) {
+      warn("watch put failed", err);
+    }
   }
   return uniqueWindowedCount(hits, cutoff);
 }

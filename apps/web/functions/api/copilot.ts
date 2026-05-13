@@ -112,12 +112,12 @@ function warn(...args: unknown[]): void {
 }
 /* eslint-enable no-console */
 
-function clientIp(req: Request): string {
-  return (
-    req.headers.get("cf-connecting-ip") ??
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    "unknown"
-  );
+function clientIp(req: Request): string | null {
+  const cf = req.headers.get("cf-connecting-ip");
+  if (cf && cf.length > 0) return cf;
+  const xff = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  if (xff && xff.length > 0) return xff;
+  return null;
 }
 
 /** True iff the request is same-origin (or has no Origin header at all). */
@@ -272,7 +272,16 @@ export const onRequest: PagesFunction<CopilotEnv> = async (ctx) => {
     );
   }
 
-  const limited = await rateLimit(clientIp(req), ctx.env.RATE_LIMIT_KV);
+  const ip = clientIp(req);
+  if (!ip) {
+    // Without a stable identifier we can't bucket safely. Refuse instead
+    // of letting every anonymous caller share a single "unknown" bucket.
+    return new Response(JSON.stringify({ error: "no_ip" }), {
+      status: 400,
+      headers: { "content-type": "application/json" },
+    });
+  }
+  const limited = await rateLimit(ip, ctx.env.RATE_LIMIT_KV);
   if (limited) return limited;
 
   let body: CopilotRequestBody;

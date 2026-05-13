@@ -1,0 +1,5 @@
+# Cloudflare Pages build settings live in the dashboard; this file pins the compat date in repo. If the Pages project root is not apps/web, mirror these values in Settings → Build & Deploy.
+name = "unspeakable-world"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-05-13"
+compatibility_flags = ["nodejs_compat"]
