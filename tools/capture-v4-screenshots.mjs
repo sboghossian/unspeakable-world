@@ -77,6 +77,10 @@ const ALIASES = {
 function buildLocalStorageSeed(extra = {}) {
   return {
     "uw:tutorial-done": "1",
+    // F2's TutorialOverlayV2 (Wave 7) uses a new storage key; without
+    // this the overlay covers the canvas in every capture. Set both
+    // so legacy + v2 don't fire.
+    "uw:tutorial-v2-done:v1": "1",
     "uw:pwa-install-dismissed": "1",
     "uw:first-run-hint-seen": "1",
     "uw:cosmic-flow-hint-seen": "1",
@@ -345,25 +349,35 @@ const SHOTS = [
     name: "cosmic-copilot-conversation",
     // Conversation is about M31 — but the AI's second turn calls
     // `fly_to` + `set_overlay` to put the camera there in 2MASS.
-    // We frame the shot AT M31 so the panel's claim matches the view.
-    hash: "#viewer?fov=3.5&ra=10.6847&dec=41.269&w=2mass&mix=0.9&c=1&n=1",
+    // Wider FOV (12°) so the dust glow around M31 reads behind the
+    // panel; gaia-stars on for star-field context. mix=0.95 so the
+    // 2MASS overlay dominates and matches the chat's claim.
+    hash: "#viewer?fov=12&ra=10.6847&dec=41.269&w=2mass&mix=0.95&c=1&n=1&layers=gaia-stars",
     extraStorage: { "uw:copilot:thread:v1": buildCopilotThread() },
+    seedLayers: { "gaia-stars": true },
     openPanel: ['button:has-text("🧠 ask")', 'button[title*="Copilot" i]'],
-    finalWaitMs: 1800,
-    postWaitMs: 4000,
+    finalWaitMs: 2800,
+    postWaitMs: 7500,
   },
 
-  // 5. Universe Mode tier handoff — camera at ~50 LY from the Sun in
-  //    the LY frame. SUN_LY = (26000, 0, 0), so cx=26000 cy=50 puts us
-  //    exactly 50 LY above the Sun. At this distance the inner solar
-  //    system has long since blended out and the Milky Way disk is
-  //    starting to build up — perfect tier-handoff frame.
+  // 5. Universe Mode tier handoff — drama at the AU↔LY boundary. The
+  //    Sun sits at SUN_LY = (26000, 0, 0). Park the camera at the
+  //    tier-handoff threshold (~0.1 LY off the Sun on +z), yaw=π so
+  //    we look in -x toward the galactic centre, slight downward
+  //    pitch so the Sun reads as a foreground bright point with the
+  //    galactic disk + cosmic-web filling the upper frame. gaia-stars
+  //    + cosmic-web together make the multi-scale claim concrete:
+  //    stars near, structure far, Sun in the corner. Tier HUD reads
+  //    "Solar Tier ↔ Galactic Tier" at this distance.
   {
     name: "universe-tier-handoff",
-    hash: "#universe?cx=26000&cy=50&cz=0&yaw=3.14159&pitch=-0.45",
-    seedLayers: { "gaia-stars": true },
+    hash: "#universe?cx=26000&cy=0&cz=0.1&yaw=3.14159&pitch=-0.2",
+    seedLayers: {
+      "gaia-stars": true,
+      "cosmic-web": true,
+    },
     collapseLeftRail: true,
-    postWaitMs: 7500,
+    postWaitMs: 12000,
   },
 
   // 6. Layers panel — sky viewer, ✨ layers popover open. Several
@@ -483,6 +497,36 @@ const SHOTS = [
     },
     finalWaitMs: 1800,
     postWaitMs: 4500,
+  },
+
+  // 11. Exoplanets habitability — sky viewer aimed at the Kepler field
+  //     (Cygnus/Lyra, RA ≈ 285°, Dec ≈ +44°) where 2,836 of the 6,286
+  //     confirmed planets live — a 16× density spike vs. any other 30°
+  //     bin on the sky. Wide FOV 110° so the Kepler cluster reads as
+  //     a galactic-plane band of dots spilling out toward the rest of
+  //     the sky. gaia-stars on for star-field depth. Constellations and
+  //     labels OFF so planet dots dominate. The exoplanet field colors
+  //     dots by discovery method by default (Radial Velocity orange,
+  //     Transit blue, Microlensing green, Imaging cyan, …) — a rich
+  //     palette regardless of whether the habitability color-mode pref
+  //     is wired through.
+  {
+    name: "exoplanets-habitability",
+    hash: "#viewer?fov=110&ra=285&dec=44&layers=exoplanets-full,gaia-stars",
+    seedLayers: {
+      "exoplanets-full": true,
+      "gaia-stars": true,
+    },
+    extraStorage: {
+      // Color-mode preference — the field doesn't currently read it,
+      // but seed it so when the prefs hook is wired the shot picks up
+      // ESI gradient automatically.
+      "uw:exoplanets:color-mode": "habitability",
+    },
+    collapseLeftRail: true,
+    // 6,286 planets are a 1.1 MB JSON streamed lazily on enable —
+    // allow ample fetch + GPU upload + first frame before screenshot.
+    postWaitMs: 15000,
   },
 ];
 
@@ -630,9 +674,19 @@ async function main() {
     reducedMotion: "reduce",
   });
 
-  const targets = only ? SHOTS.filter((s) => s.name === only) : SHOTS;
-  if (only && targets.length === 0) {
-    process.stderr.write(`No shot named "${only}".\n`);
+  // --only accepts a single name or a comma-separated list. Trims and
+  // ignores empties so `--only a, b ,c` works.
+  const onlyNames = only
+    ? new Set(
+        only
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
+      )
+    : null;
+  const targets = onlyNames ? SHOTS.filter((s) => onlyNames.has(s.name)) : SHOTS;
+  if (onlyNames && targets.length === 0) {
+    process.stderr.write(`No shots match "${only}".\n`);
     process.exit(1);
   }
 

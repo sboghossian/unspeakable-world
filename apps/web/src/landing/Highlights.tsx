@@ -77,6 +77,7 @@ const HIGHLIGHTS: ReadonlyArray<Highlight> = [
     glyph: "🪐",
     tone: "text-amber-300",
     href: "#viewer",
+    image: "/screenshots/v4/exoplanets-habitability.png",
   },
   {
     title: "Live transients & risk",
