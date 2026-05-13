@@ -86,6 +86,15 @@ export function Manifesto() {
         </a>
         .
       </p>
+
+      <p className="mt-4 text-center text-sm text-white/45">
+        <a
+          href="#whoami"
+          className="font-mono text-white/65 underline-offset-2 hover:text-white hover:underline"
+        >
+          Read the full story →
+        </a>
+      </p>
     </section>
   );
 }

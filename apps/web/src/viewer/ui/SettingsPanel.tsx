@@ -7,6 +7,7 @@ import {
 import { t } from "../../lib/i18n";
 import { FontPicker } from "./FontPicker";
 import { LanguagePicker } from "./LanguagePicker";
+import { QualityPicker } from "./QualityPicker";
 
 /**
  * ⚙ Shared settings popover.
@@ -85,6 +86,10 @@ export function SettingsPanel({ open, onClose, anchor = "left-rail" }: Props) {
       </Section>
 
       <Section label="Quality">
+        <div className="mb-1 font-mono text-[10px] uppercase tracking-widest text-white/40">
+          preset
+        </div>
+        <QualityPicker />
         <div className="mb-2">
           <div className="mb-1 font-mono text-[10px] uppercase tracking-widest text-white/40">
             fps cap

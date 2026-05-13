@@ -233,6 +233,13 @@ export function makeSaturnRingShadowMaterial(
         vec3 base = texture2D(uMap, vUv).rgb;
         vec3 lit = base * (ndl * 0.9 + 0.15);
 
+        // Ray-cast from this surface point toward the Sun. If the ray
+        // crosses the ring plane within the ring annulus, darken the
+        // surface. The two smoothstep terms feather the inner + outer
+        // edges of the ring shadow so the cast shadow has a soft
+        // umbra/penumbra rather than a razor cliff. The Cassini Division
+        // stays sharp because it's baked into the ring *texture's* alpha;
+        // this shader paints the *shadow* of the whole annulus on Saturn.
         vec3 d = sunPos - vWorldPos;
         vec3 toC = uCenterW - vWorldPos;
         float denom = dot(d, uRingN);
@@ -241,12 +248,13 @@ export function makeSaturnRingShadowMaterial(
           if (t > 0.001 && t < 1.0) {
             vec3 hit = vWorldPos + t * d;
             float dist = length(hit - uCenterW);
-            float edge = smoothstep(
-              0.0,
-              0.015,
-              min(dist - uRingInner, uRingOuter - dist)
-            );
-            lit *= mix(1.0, 0.4, edge);
+            // Soft inner + outer falloff for the ring-shadow's umbra.
+            float inner = smoothstep(0.0, 0.025, dist - uRingInner);
+            float outer = smoothstep(0.0, 0.025, uRingOuter - dist);
+            float edge = inner * outer;
+            // Slightly lighter shadow tint (0.45 vs 0.40 before) so the
+            // body still reads cleanly inside the umbra.
+            lit *= mix(1.0, 0.45, edge);
           }
         }
 
@@ -254,6 +262,174 @@ export function makeSaturnRingShadowMaterial(
       }
     `,
   });
+}
+
+/**
+ * Generic photoreal atmospheric rim glow. Tints a back-side hemisphere
+ * with Fresnel-style edge brightening so any planet body reads with a
+ * recognizable colored limb. Reuses the same shape as the Earth-specific
+ * atmosphere shader but with a tunable color so Mars / Venus / Saturn /
+ * Neptune can share one factory without each one carrying a bespoke
+ * GLSL string.
+ *
+ * `rimColor` is the hue of the limb on the day side; `intensity` scales
+ * the alpha (Saturn / Neptune sit ~0.5 of Earth's brightness).
+ */
+export function makePlanetAtmosphereMaterial(
+  rimColor: [number, number, number],
+  intensity = 1.0,
+): ShaderMaterial {
+  return new ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    side: BackSide,
+    blending: AdditiveBlending,
+    uniforms: {
+      uRim: { value: rimColor },
+      uIntensity: { value: intensity },
+    },
+    vertexShader: `
+      varying vec3 vWorldPos;
+      varying vec3 vWorldNormal;
+      void main() {
+        vWorldNormal = normalize(mat3(modelMatrix) * normal);
+        vec4 wp = modelMatrix * vec4(position, 1.0);
+        vWorldPos = wp.xyz;
+        gl_Position = projectionMatrix * viewMatrix * wp;
+      }
+    `,
+    fragmentShader: `
+      uniform vec3 uRim;
+      uniform float uIntensity;
+      varying vec3 vWorldPos;
+      varying vec3 vWorldNormal;
+      void main() {
+        vec3 viewDir = normalize(cameraPosition - vWorldPos);
+        vec3 N = -vWorldNormal;
+        float ndv = clamp(dot(N, viewDir), 0.0, 1.0);
+        // Rim brightening at the silhouette.
+        float rim = pow(1.0 - ndv, 2.6);
+        // Sun at world origin in solar-flight; dim the night side.
+        vec3 ld = normalize(-vWorldPos);
+        float sunSide = clamp(dot(N, ld), -1.0, 1.0);
+        float warm = smoothstep(-0.25, 0.1, sunSide);
+        float alpha = rim * (0.10 + warm * 0.45) * uIntensity;
+        gl_FragColor = vec4(uRim, alpha);
+      }
+    `,
+  });
+}
+
+/**
+ * Procedural cloud layer for Earth. Renders on a sphere at ~1.005 radius
+ * with a procedural noise canvas (low-frequency curl bands + smaller
+ * cumulus pillows). Alpha-blended, depth-write off; the terminator
+ * shadow is preserved because the same sun direction drives a Lambert
+ * darkening term in the fragment shader. Reads as moving weather as
+ * Earth rotates with the diurnal spin.
+ */
+export function makeEarthCloudMaterial(): ShaderMaterial {
+  const tex = paintCanvas(1024, 512, paintEarthClouds);
+  return new ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    uniforms: {
+      uMap: { value: tex },
+    },
+    vertexShader: `
+      varying vec3 vWorldPos;
+      varying vec3 vWorldNormal;
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        vWorldNormal = normalize(mat3(modelMatrix) * normal);
+        vec4 wp = modelMatrix * vec4(position, 1.0);
+        vWorldPos = wp.xyz;
+        gl_Position = projectionMatrix * viewMatrix * wp;
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D uMap;
+      varying vec3 vWorldPos;
+      varying vec3 vWorldNormal;
+      varying vec2 vUv;
+      void main() {
+        vec4 c = texture2D(uMap, vUv);
+        // Sun-direction lambert: dim clouds on the night side so the
+        // terminator stays sharp (rather than wrapping clouds onto the
+        // unlit hemisphere as a bright milky band).
+        vec3 ld = normalize(-vWorldPos);
+        float ndl = max(dot(normalize(vWorldNormal), ld), 0.0);
+        // Cosine-falloff softens the day/night divider over ~5° of
+        // terminator instead of a hard cliff. (Replaces any hard cliff
+        // in earlier passes.)
+        float lit = smoothstep(-0.08, 0.18, dot(normalize(vWorldNormal), ld));
+        float alpha = c.a * (0.18 + ndl * 0.82);
+        gl_FragColor = vec4(c.rgb * (0.4 + lit * 0.6), alpha);
+      }
+    `,
+  });
+}
+
+/** Earth cloud texture: low-frequency curl bands at the trade-wind
+ *  latitudes (~±25°) plus brighter cumulus blobs scattered around the
+ *  globe. Mostly transparent so the surface texture reads through. */
+export function paintEarthClouds(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+): void {
+  // Fully transparent base.
+  ctx.clearRect(0, 0, w, h);
+  const seed = mulberry32(0xc10d);
+
+  // Latitudinal cloud bands — wavy gradients along the trade-wind
+  // latitudes and the polar fronts.
+  const bands: Array<{ lat: number; alpha: number; thickness: number }> = [
+    { lat: 60, alpha: 0.22, thickness: 0.12 },
+    { lat: 25, alpha: 0.18, thickness: 0.1 },
+    { lat: 5, alpha: 0.28, thickness: 0.08 }, // ITCZ
+    { lat: -25, alpha: 0.18, thickness: 0.1 },
+    { lat: -60, alpha: 0.22, thickness: 0.12 },
+  ];
+  for (const b of bands) {
+    const cy = ((90 - b.lat) / 180) * h;
+    const halfPx = b.thickness * h * 0.5;
+    const grad = ctx.createLinearGradient(0, cy - halfPx, 0, cy + halfPx);
+    grad.addColorStop(0, `rgba(245,250,255,0)`);
+    grad.addColorStop(0.5, `rgba(245,250,255,${b.alpha})`);
+    grad.addColorStop(1, `rgba(245,250,255,0)`);
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    for (let x = 0; x <= w; x += 8) {
+      const wobble = Math.sin((x / w) * Math.PI * 8 + b.lat * 0.15) * 6;
+      const y = cy - halfPx + wobble;
+      if (x === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    for (let x = w; x >= 0; x -= 8) {
+      const wobble = Math.sin((x / w) * Math.PI * 8 + b.lat * 0.15) * 6;
+      const y = cy + halfPx + wobble;
+      ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Cumulus blobs — scattered semi-transparent puffs.
+  for (let i = 0; i < 380; i++) {
+    const cx = seed() * w;
+    const cy = seed() * h;
+    const r = 8 + seed() * 28;
+    const alpha = 0.18 + seed() * 0.4;
+    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+    grad.addColorStop(0, `rgba(255,255,255,${alpha})`);
+    grad.addColorStop(1, `rgba(255,255,255,0)`);
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, r, r * (0.5 + seed() * 0.7), 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
 }
 
 /** Earth atmosphere shader: a back-side hemisphere that approximates
@@ -341,7 +517,9 @@ export function makeEarthDayNightMaterial(
       void main() {
         vec3 ld = normalize(-vWorldPos);
         float ndl = dot(normalize(vNormalW), ld);
-        float dayMix = smoothstep(-0.15, 0.15, ndl);
+        // Cosine falloff over ~5° (cos 5° ≈ 0.087) — softer terminator
+        // than the previous ±0.15 (~9°), reads as Rayleigh twilight.
+        float dayMix = smoothstep(-0.087, 0.087, ndl);
 
         vec3 day = texture2D(uDay, vUv).rgb;
         vec3 night = texture2D(uNight, vUv).rgb;

@@ -33,6 +33,10 @@ import { ColorLegend } from "./ui/ColorLegend";
 import { ShortcutsOverlay } from "./ui/ShortcutsOverlay";
 import { ReportBugButton } from "./ui/ReportBugButton";
 import { SupportRibbon } from "./ui/SupportRibbon";
+import {
+  DsoDistancesHud,
+  type DsoSceneSource,
+} from "./ui/DsoDistancesHud";
 import { ExploreDrawer, type Group } from "./ui/ExploreDrawer";
 import { SceneEditorPanel } from "./ui/SceneEditorPanel";
 import { SceneLinkToast } from "./scene-editor/SceneLinkToast";
@@ -187,6 +191,8 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  // DSO Distances HUD visibility — opt-in. Default OFF. Toggled with D.
+  const [dsoHudVisible, setDsoHudVisible] = useState(false);
 
   // AstroGrid-style keyboard shortcuts: ` home, 1-8 planet jump, F focus.
   useEffect(() => {
@@ -212,6 +218,11 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
       }
       if (e.key === "f" || e.key === "F") {
         setFocusMode((v) => !v);
+        return;
+      }
+      if (e.key === "d" || e.key === "D") {
+        // d = "distances" — toggle the DSO Distances HUD.
+        setDsoHudVisible((v) => !v);
         return;
       }
       const n = parseInt(e.key, 10);
@@ -700,6 +711,23 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
 
       {!focusMode && <ReportBugButton />}
       {!focusMode && <SupportRibbon />}
+
+      {/* DSO Distances HUD — opt-in, default OFF. Press D to toggle. */}
+      {!focusMode && (
+        <DsoDistancesHud
+          source={
+            sceneRef.current
+              ? ({
+                  mode: "solar",
+                  unitScaleToMeters: 1.495978707e11,
+                  getCameraWorldPos: () => sceneRef.current!.getCameraWorldPos(),
+                } satisfies DsoSceneSource)
+              : null
+          }
+          visible={dsoHudVisible}
+          onDismiss={() => setDsoHudVisible(false)}
+        />
+      )}
 
       {shortcutsOpen && (
         <ShortcutsOverlay onClose={() => setShortcutsOpen(false)} />

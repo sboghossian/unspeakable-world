@@ -49,55 +49,68 @@
 
 ## 🆕 v4 in pictures
 
-The v4 wave (Gaia DR3, multi-messenger, Cosmic Copilot, Universe Mode v2,
-AR Sky, Planck CMB + polarization, federated extras panel) — captured
-fresh from the live build. Each frame is reproducible from its URL hash;
-see [`docs/screenshots/v4/README.md`](docs/screenshots/v4/README.md).
+Ten hero shots from the v4 wave — captured fresh from production at
+1920×1080 by `tools/capture-v4-screenshots.mjs`. Every frame is
+reproducible from its URL hash + a small localStorage seed; deep-link
+each thumbnail to jump straight to that view.
+
+A long-form walkthrough — what each feature does, how to use it, why
+it matters — lives in [`docs/FEATURES.md`](docs/FEATURES.md).
 
 <table>
   <tr>
     <td width="50%">
-      <a href="docs/screenshots/v4/gaia-1m-stars.png"><img src="docs/screenshots/v4/gaia-1m-stars.png" alt="Gaia DR3 — 1M-star instanced point cloud over the Orion region" /></a>
-      <br /><sub><b>Gaia DR3 · 1M stars</b> — BP-RP→RGB shader, parallax-derived 3D positions, GPU-instanced.</sub>
+      <a href="https://unspeakable-world.dashable.dev/#universe?cx=26000&cy=0.00079&cz=0&yaw=3.14159&pitch=-1.55"><img src="docs/screenshots/v4/gaia-dr3-million-stars.png" alt="Universe Mode 50 AU above the ecliptic — Sun at centre, Gaia DR3 1M-star field across the background, planet-orbit rings" /></a>
+      <br /><sub><b>1,000,000 stars from Gaia DR3</b> — parallax-derived 3D positions, BP-RP→RGB shader, GPU-instanced. Tier HUD reads "Solar Tier · 50.0 AU FROM SUN" — pull out further and the same point cloud restructures into the local stellar neighborhood. → <a href="apps/web/src/viewer/gaia-stars/">source</a></sub>
     </td>
     <td width="50%">
-      <a href="docs/screenshots/v4/multi-messenger.png"><img src="docs/screenshots/v4/multi-messenger.png" alt="Multi-messenger overlay — IceCube neutrinos, Auger UHECRs, LIGO sky-area rings" /></a>
-      <br /><sub><b>Multi-messenger sky</b> — IceCube ν · Auger UHECR · LIGO GWTC-3 90% rings · NANOGrav PTA, all on one celestial sphere.</sub>
+      <a href="https://unspeakable-world.dashable.dev/#viewer?fov=150&ra=180&dec=0&layers=multimessenger&c=1&n=1"><img src="docs/screenshots/v4/multi-messenger-sky.png" alt="Wide-FOV sky with blue IceCube neutrino rings, violet LIGO localization discs, constellation lines and bright star names" /></a>
+      <br /><sub><b>The multi-messenger sky on one sphere</b> — IceCube neutrinos, Pierre Auger UHECRs, LIGO GWTC-3 90% sky areas (with re-synthesised inspiral chirp audio), and NANOGrav pulsar-timing-array sources, all on the same celestial sphere as the constellation art. → <a href="apps/web/src/viewer/multimessenger/">source</a></sub>
     </td>
   </tr>
   <tr>
     <td>
-      <a href="docs/screenshots/v4/galaxy-cone.png"><img src="docs/screenshots/v4/galaxy-cone.png" alt="Universe mode pulled out to hundreds of kly so 136K 2MRS+6dFGS galaxies fill the frame" /></a>
-      <br /><sub><b>Galaxy cone · 136K galaxies</b> — 2MRS + 6dFGS in true 3D, redshift hue gradient.</sub>
+      <a href="https://unspeakable-world.dashable.dev/#universe?cx=26000&cy=10000000&cz=0&yaw=3.14159&pitch=-1.4"><img src="docs/screenshots/v4/136k-galaxy-cone.png" alt="Universe Mode 10 Mly above the Milky Way — Virgo cluster as a bright knot at frame centre surrounded by scattered galaxies of the 2MRS+6dFGS cone" /></a>
+      <br /><sub><b>136,596 galaxies in true 3D</b> — 2MRS + 6dFGS in galactic-LY coordinates, redshift hue gradient, K-band brightness scaling. Fly through the Local Group and the Virgo Cluster scrolls past for real. → <a href="apps/web/src/viewer/galaxy-cone/">source</a></sub>
     </td>
     <td>
-      <a href="docs/screenshots/v4/cosmic-copilot.png"><img src="docs/screenshots/v4/cosmic-copilot.png" alt="Cosmic Copilot panel open with an example M31 question and try-asking suggestions" /></a>
-      <br /><sub><b>Cosmic Copilot</b> — AI tutor grounded in the live view; offline-first, optional Ollama/OpenAI-compatible backend.</sub>
-    </td>
-  </tr>
-  <tr>
-    <td>
-      <a href="docs/screenshots/v4/universe-tiers.png"><img src="docs/screenshots/v4/universe-tiers.png" alt="Universe Mode v2 mid-zoom — Milky Way disk plus tier HUD reading 'Galactic Tier · 53 ly from Sun'" /></a>
-      <br /><sub><b>Universe Mode v2</b> — one scene, two coordinate frames (AU + LY), bottom-left tier HUD live-reads your distance from the Sun.</sub>
-    </td>
-    <td>
-      <a href="docs/screenshots/v4/extra-layers-panel.png"><img src="docs/screenshots/v4/extra-layers-panel.png" alt="The ✨ federated-data layers popover with several toggles enabled" /></a>
-      <br /><sub><b>✨ Layers panel</b> — 15 federated overlays, each dynamic-imported on first toggle; round-trips via <code>&amp;layers=</code> URL hash.</sub>
+      <a href="https://unspeakable-world.dashable.dev/#viewer?fov=3.5&ra=10.6847&dec=41.269&w=2mass&mix=0.9&c=1&n=1"><img src="docs/screenshots/v4/cosmic-copilot-conversation.png" alt="Cosmic Copilot panel mid-conversation — user asks about M31, assistant answers, second turn shows fly_to + set_overlay tool-call pills" /></a>
+      <br /><sub><b>The AI tutor that drives the viewer</b> — Cosmic Copilot answers questions grounded in the live scene. The assistant's second turn fires <code>fly_to</code> + <code>set_overlay</code> tool calls (the green pills) so the camera actually moves and the wavelength actually switches. Offline-first, optional Ollama / OpenAI-compatible. → <a href="apps/web/src/viewer/copilot/">source</a></sub>
     </td>
   </tr>
   <tr>
     <td>
-      <a href="docs/screenshots/v4/ar-sky-preview.png"><img src="docs/screenshots/v4/ar-sky-preview.png" alt="Sky view with star names + constellation lines — the vector layer AR Sky paints onto a phone camera feed" /></a>
-      <br /><sub><b>AR Sky preview</b> — the vector layer (constellations + star names) that AR Sky composites onto the rear-camera feed on mobile.</sub>
+      <a href="https://unspeakable-world.dashable.dev/#universe?cx=26000&cy=50&cz=0&yaw=3.14159&pitch=-0.45"><img src="docs/screenshots/v4/universe-tier-handoff.png" alt="Universe Mode 50 LY above the Sun — Milky Way disk arches across the top of the frame, bottom HUD reads 'Galactic Tier · 50.00 LY FROM SUN'" /></a>
+      <br /><sub><b>One scene, AU↔LY tier handoff</b> — Universe Mode v2 keeps the Solar System and the Milky Way in the same Three.js scene with two coordinate frames re-anchored each tick. The bottom HUD live-reads your tier — pull out and "1.07 AU" smoothly becomes "50.00 LY" becomes "10.00 Mly". → <a href="apps/web/src/viewer/universe/">source</a></sub>
     </td>
     <td>
-      <a href="docs/screenshots/v4/planck-cmb.png"><img src="docs/screenshots/v4/planck-cmb.png" alt="Planck CMB temperature map at 85% mix with the v4 E/B polarization vector layer overlaid" /></a>
-      <br /><sub><b>Planck CMB + polarisation</b> — temperature map plus the v4 E/B polarisation vector layer.</sub>
+      <a href="https://unspeakable-world.dashable.dev/#viewer?fov=60&ra=180&dec=20&c=1&n=1&layers=gaia-stars,multimessenger,planck-polarization,chandra,variables,sky-cultures-extended"><img src="docs/screenshots/v4/layers-panel-with-sub-tabs.png" alt="Sky viewer with the ✨ federated layers popover open on the 'Live alerts' sub-tab — six layers enabled across the four tabs" /></a>
+      <br /><sub><b>✨ Federated layers, sub-tabbed</b> — 21 federated datasets behind one button, grouped into Catalogs · 3D structure · Live alerts · Imagery & culture. Each layer dynamic-imports its module on first toggle so the landing bundle stays at 67 KB gzipped. The full <code>?layers=</code> selection round-trips through the URL hash. → <a href="apps/web/src/viewer/extra-layers/">source</a></sub>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <a href="https://unspeakable-world.dashable.dev/#universe"><img src="docs/screenshots/v4/grand-tour-v2.png" alt="Universe Mode with the Grand Tour v2 card open at step 7 — '7. The Galactic Center' with the 12-step timeline below" /></a>
+      <br /><sub><b>The 12-step Grand Tour v2</b> — Earth → the Sun → the planets → the nearest star → the local neighborhood → Sgr A* (shown here) → multi-messenger → CMB → cosmic web → heat death. Each step nudges layers + wavelength so the right story tells itself. → <a href="apps/web/src/viewer/tour/">source</a></sub>
+    </td>
+    <td>
+      <a href="https://unspeakable-world.dashable.dev/#viewer?fov=1.0&ra=10.6847&dec=41.269&w=2mass&mix=0.5"><img src="docs/screenshots/v4/fits-upload-on-sky.png" alt="Sky viewer with the ⚙ pro tools panel open on the FITS tab — synthetic 256x256 FITS thumbnail visible, WCS header cards parsed, 'project on sky' button armed" /></a>
+      <br /><sub><b>Drop a FITS, project it on the sphere</b> — power-user tools read your file's WCS in the browser (no upload), stretch the pixels, and mount the image at its true (RA, Dec) on the celestial sphere. Side-by-side with ADQL/TAP and custom HiPS root URLs. → <a href="apps/web/src/viewer/power-user/">source</a></sub>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <a href="https://unspeakable-world.dashable.dev/#viewer?fov=90&ra=266.4&dec=-29&w=wise&mix=0.6&layers=planck-polarization"><img src="docs/screenshots/v4/planck-cmb-polarization.png" alt="Galactic-centre sky with the Milky Way disk glowing across the top and cyan polarization vectors streaking across the frame" /></a>
+      <br /><sub><b>Real Planck polarization, vectorised</b> — the v4 polarization layer renders Planck PR3 SMICA Q/U as oriented dashes along the dust-derived field lines. The vectors clearly streak along the galactic plane — exactly the foreground pattern Planck published. → <a href="apps/web/src/viewer/planck-polarization/">source</a></sub>
+    </td>
+    <td>
+      <a href="https://unspeakable-world.dashable.dev/#class"><img src="docs/screenshots/v4/education-certificate.png" alt="Printable Certificate of Completion for 'Stephane Boghossian' — 15 lessons listed with completion dates" /></a>
+      <br /><sub><b>15 lessons, one printable certificate</b> — the curriculum modal opens automatically when the learner finishes lesson 15. No accounts, no email; the name is typed once, persists in localStorage, and prints to A4. → <a href="apps/web/src/viewer/curriculum/">source</a></sub>
     </td>
   </tr>
 </table>
 
-> Capture them yourself: `node tools/capture-v4-screenshots.mjs --base http://localhost:4173` after `pnpm --filter @unspeakable/web preview`.
+> Re-capture: `node tools/capture-v4-screenshots.mjs` (defaults to prod), or `--target http://localhost:4173` after `pnpm --filter @unspeakable/web preview`. `--list` to see the shot names, `--only NAME` for a single shot.
 
 ---
 

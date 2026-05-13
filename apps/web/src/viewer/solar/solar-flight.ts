@@ -37,7 +37,9 @@ import {
 import type { LayerMeta } from "../extra-layers/registry";
 import {
   makeEarthAtmosphereMaterial,
+  makeEarthCloudMaterial,
   makeEarthDayNightMaterial,
+  makePlanetAtmosphereMaterial,
   makePlanetTexture,
   makeSaturnRingShadowMaterial,
   makeSdoLiveTexture,
@@ -63,6 +65,7 @@ import { AuroraOverlay } from "../space-weather/aurora-overlay";
 import { payloadForBody } from "../data/body-info";
 import type { InfoPayload } from "../ui/InfoPanel";
 import { getSettings } from "../../lib/settings";
+import { getActivePreset, subscribeQuality } from "../../lib/quality";
 
 export type SolarFlightHit = {
   kind: "Sun" | "Planet";
@@ -304,6 +307,11 @@ export class SolarFlightScene {
   /** Saturn's sphere material — kept on hand so updatePlanets() can push
    *  the planet's current world position into the ring-shadow uniform. */
   private saturnMat: ShaderMaterial | null = null;
+  /** Earth's cloud-layer mesh + its independent rotation. The clouds
+   *  ride a slightly larger sphere than the body so the day/night
+   *  shader on the body shadows them at the terminator. They drift
+   *  ~30 % slower than the diurnal rotation to fake wind drag. */
+  private earthClouds: { mesh: Mesh; rotation: number } | null = null;
 
   // Gravity sandbox — light n-body projectiles pulled by Sun + planets.
   private projectiles: Projectile[] = [];
@@ -321,18 +329,24 @@ export class SolarFlightScene {
   private disposed = false;
   private listeners = new Set<Listener>();
   private state: SolarFlightState;
+  /** Tear-down for the quality preset subscription. */
+  private qualityUnsub: (() => void) | null = null;
 
   constructor(readonly canvas: HTMLCanvasElement) {
+    const preset = getActivePreset();
     this.renderer = new WebGLRenderer({
       canvas,
-      antialias: true,
+      antialias: preset.msaaSamples > 0,
       powerPreference: "high-performance",
       alpha: false,
       stencil: false,
       preserveDrawingBuffer: true,
     });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, preset.dpr));
     this.renderer.setClearColor(0x000208, 1);
+    this.qualityUnsub = subscribeQuality((p) => {
+      this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, p.dpr));
+    });
 
     this.camera = new PerspectiveCamera(50, 1, 0.001, 20000);
 
@@ -610,12 +624,20 @@ export class SolarFlightScene {
     this.publishState();
   }
 
+  /** Camera position in world (heliocentric AU) coordinates. Used by the
+   *  DSO Distances HUD which polls every scene mode with the same shape
+   *  and converts to whatever physical unit makes the readout legible. */
+  getCameraWorldPos(): Vector3 {
+    return this.camera.getWorldPosition(new Vector3());
+  }
+
   /** Returns the names of all flyable targets. */
   targets(): string[] {
     return ["Sun", ...PLANETS.map((p) => p.name)];
   }
 
   private async buildPlanets(): Promise<void> {
+    const preset = getActivePreset();
     for (const spec of PLANETS) {
       const group = new Group();
       const geom = new SphereGeometry(spec.drawSize, 24, 24);
@@ -693,6 +715,24 @@ export class SolarFlightScene {
         const atmo = new Mesh(atmoGeom, atmoMat);
         group.add(atmo);
 
+        // Cloud layer — procedural noise canvas on a slightly larger
+        // sphere so the terminator shadow casts onto the cloud tops.
+        // Gated to high+ quality to keep the medium preset GPU-light.
+        if (preset.id === "high" || preset.id === "ultra") {
+          const cloudGeom = new SphereGeometry(
+            spec.drawSize * 1.005,
+            preset.planetSegments,
+            preset.planetSegments,
+          );
+          const cloudMat = makeEarthCloudMaterial();
+          const clouds = new Mesh(cloudGeom, cloudMat);
+          clouds.renderOrder = 1; // composite after the planet body
+          group.add(clouds);
+          // Earth's cloud layer inherits the sphere's diurnal spin via
+          // the parent group, then drifts ~30% slower to fake wind drag.
+          this.earthClouds = { mesh: clouds, rotation: 0 };
+        }
+
         // Aurora oval overlay — fetched lazily when first toggled on.
         const aurora = new AuroraOverlay({ earthRadius: spec.drawSize });
         group.add(aurora);
@@ -747,6 +787,34 @@ export class SolarFlightScene {
         const ring = new Mesh(ringGeom, ringMat);
         ring.rotation.x = SATURN_RING_TILT;
         group.add(ring);
+      }
+
+      // Photoreal atmospheric rim glow for the other terrestrial / ice
+      // giant bodies. Color matches the published "true colour" of the
+      // body's atmosphere. Gated to medium+ quality — the BackSide
+      // hemisphere is one extra triangle batch per planet, cheap on
+      // mid-tier GPUs.
+      if (preset.id !== "low") {
+        let rim: [number, number, number] | null = null;
+        let intensity = 1.0;
+        if (spec.name === "Mars") {
+          rim = [1.0, 0.6, 0.45]; // salmon — thin CO2
+          intensity = 0.65;
+        } else if (spec.name === "Venus") {
+          rim = [1.0, 0.92, 0.6]; // pale yellow — sulfuric clouds
+          intensity = 1.1;
+        } else if (spec.name === "Saturn") {
+          rim = [1.0, 0.92, 0.74]; // pale cream
+          intensity = 0.55;
+        } else if (spec.name === "Neptune") {
+          rim = [0.5, 0.78, 1.0]; // cyan-blue methane absorption
+          intensity = 0.85;
+        }
+        if (rim) {
+          const ag = new SphereGeometry(spec.drawSize * 1.18, 32, 32);
+          const am = makePlanetAtmosphereMaterial(rim, intensity);
+          group.add(new Mesh(ag, am));
+        }
       }
 
       const labelTex = makeLabelTexture(spec.name);
@@ -836,6 +904,13 @@ export class SolarFlightScene {
     const J2000_MS = Date.UTC(2000, 0, 1, 12, 0, 0);
     const daysSinceJ2000 = (this.simTime.getTime() - J2000_MS) / 86400000;
     this.sun.rotation.y = ((daysSinceJ2000 / SUN_ROTATION_DAYS) % 1) * Math.PI * 2;
+    // Earth's cloud layer drifts ~30% slower than the surface (Coriolis
+    // + trade winds approximation). Independent rotation lets the
+    // terminator move past the cloud tops as time scrubs forward.
+    if (this.earthClouds) {
+      this.earthClouds.mesh.rotation.y =
+        ((daysSinceJ2000 / (0.99727 / 0.7)) % 1) * Math.PI * 2;
+    }
     if (this.asteroids) this.asteroids.setSimTime(this.simTime);
     if (this.outerMoons) this.outerMoons.setSimTime(this.simTime);
     if (this.trajectories) {
@@ -1810,6 +1885,8 @@ export class SolarFlightScene {
   dispose(): void {
     this.disposed = true;
     cancelAnimationFrame(this.rafHandle);
+    this.qualityUnsub?.();
+    this.qualityUnsub = null;
     this.resizeObs?.disconnect();
     this.extras?.dispose();
     this.canvas.removeEventListener("pointerdown", this.onPointerDown);

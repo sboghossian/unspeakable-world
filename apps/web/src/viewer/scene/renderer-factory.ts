@@ -4,6 +4,7 @@ import { WebGLRenderer } from "three";
 // lives inside `tryCreateWebGPURenderer` and is purely dynamic.
 import type { WebGPURenderer } from "three/webgpu";
 import { log } from "../../lib/logger";
+import { getActivePreset } from "../../lib/quality";
 
 /**
  * Renderer-backend factory for ViewerScene.
@@ -51,9 +52,14 @@ function hasWebGPUAPI(): boolean {
  * button keeps working.
  */
 export function createWebGLRenderer(canvas: HTMLCanvasElement): WebGLRenderer {
+  // Quality preset gates AA + DPR cap. MSAA samples > 0 → antialias=true;
+  // samples === 0 → antialias=false (low-tier mobile). The actual sample
+  // count is advisory — browser MSAA tops out at 4 in practice, but the
+  // preset value is recorded for future post-FX wiring.
+  const preset = getActivePreset();
   const renderer = new WebGLRenderer({
     canvas,
-    antialias: true,
+    antialias: preset.msaaSamples > 0,
     powerPreference: "high-performance",
     alpha: false,
     stencil: false,
@@ -62,7 +68,7 @@ export function createWebGLRenderer(canvas: HTMLCanvasElement): WebGLRenderer {
     // each rAF and the read returns transparent black.
     preserveDrawingBuffer: true,
   });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, preset.dpr));
   renderer.setClearColor(0x03050a, 1);
   return renderer;
 }
@@ -94,13 +100,14 @@ export async function tryCreateWebGPURenderer(
         powerPreference?: GPUPowerPreference;
       }) => WebGPURenderer;
     };
+    const preset = getActivePreset();
     const renderer = new mod.WebGPURenderer({
       canvas,
-      antialias: true,
+      antialias: preset.msaaSamples > 0,
       alpha: false,
       powerPreference: "high-performance",
     });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, preset.dpr));
     // The unified Renderer's setClearColor expects a Color; the number
     // overload only exists on WebGLRenderer. Cast the literal — runtime
     // accepts a ColorRepresentation either way.

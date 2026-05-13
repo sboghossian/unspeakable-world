@@ -297,6 +297,40 @@ export const EXTRA_LAYERS: readonly LayerEntry[] = [
     },
   },
   {
+    id: "cosmic-web",
+    loader: () =>
+      import("../cosmic-web") as unknown as Promise<ExtraLayerModule>,
+    meta: {
+      id: "cosmic-web",
+      label: "Cosmic web structures",
+      icon: "🕸",
+      attribution: "Tully+ 2014 (Laniakea), Pomarède+ 2017 · CC-BY",
+      modes: ["galactic", "universe"],
+      defaultEnabled: false,
+      description:
+        "10-15 named superstructures rendered as labeled 3D particle clouds — Laniakea, Great Attractor, Shapley, CfA2 Great Wall, Bootes Void, and more. Distances and core bodies cited from published catalogs.",
+    },
+  },
+  {
+    id: "galaxies-procedural",
+    loader: () =>
+      import("../galaxies-procedural") as unknown as Promise<ExtraLayerModule>,
+    meta: {
+      id: "galaxies-procedural",
+      label: "Procedural galaxies",
+      icon: "🌀",
+      attribution: "procedural shaders · catalog distances from SIMBAD/NED",
+      modes: ["galactic", "universe"],
+      defaultEnabled: false,
+      description:
+        "30-50 named galaxies rendered as 3D shaped meshes — spiral / " +
+        "elliptical / edge-on / irregular / sombrero — using shaders " +
+        "parameterized by inclination, arm count, dust-lane strength, " +
+        "and Sersic index.",
+      synthetic: false,
+    },
+  },
+  {
     id: "cosmicflows4",
     loader: () =>
       import("../cosmicflows4") as unknown as Promise<ExtraLayerModule>,

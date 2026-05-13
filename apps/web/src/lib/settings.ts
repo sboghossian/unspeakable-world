@@ -66,6 +66,16 @@ export type AppSettings = {
   renderer: "webgl" | "webgpu" | "auto";
   /** Display-font preference for headline / "font-display" surfaces. */
   displayFont: DisplayFont;
+  /**
+   * Quality preset for rendering. `"auto"` resolves to one of the four
+   * concrete buckets at runtime via {@link autoDetectQuality} in
+   * `lib/quality.ts`. The four concrete buckets tune DPR, star count,
+   * Gaia density, planet geometry segments, MSAA / bloom / shadows,
+   * procedural-galaxy detail, HiPS max order, and far-plane distance.
+   * Defaults to `"auto"` so the reader gets the right pick on first
+   * paint without poking at settings.
+   */
+  quality: "auto" | "low" | "medium" | "high" | "ultra";
 };
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -85,6 +95,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   explanationTier: "student",
   renderer: "webgl",
   displayFont: "cosmic",
+  quality: "auto",
 };
 
 const STORAGE_KEY = "uw.settings.v1";
@@ -139,6 +150,14 @@ function sanitize(raw: unknown): AppSettings {
       partial.displayFont === "mono"
         ? partial.displayFont
         : DEFAULT_SETTINGS.displayFont,
+    quality:
+      partial.quality === "auto" ||
+      partial.quality === "low" ||
+      partial.quality === "medium" ||
+      partial.quality === "high" ||
+      partial.quality === "ultra"
+        ? partial.quality
+        : DEFAULT_SETTINGS.quality,
   };
 }
 

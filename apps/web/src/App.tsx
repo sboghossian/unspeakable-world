@@ -6,6 +6,7 @@ import { OpenData } from "./landing/OpenData";
 import { Roadmap } from "./landing/Roadmap";
 import { Manifesto } from "./landing/Manifesto";
 import { Footer } from "./landing/Footer";
+import { Whoami } from "./landing/Whoami";
 import { SupportRibbon } from "./viewer/ui/SupportRibbon";
 import { PwaInstallBanner } from "./landing/PwaInstallBanner";
 import { ConsentBanner } from "./landing/ConsentBanner";
@@ -315,6 +316,10 @@ function AppRoutes() {
         {!embed && <PwaInstallBanner />}
       </main>
     );
+  }
+
+  if (route === "whoami") {
+    return <Whoami />;
   }
 
   return (

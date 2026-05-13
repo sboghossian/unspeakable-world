@@ -16,6 +16,10 @@ import { SnapshotButton } from "./ui/SnapshotButton";
 import { ShareButton } from "./ui/ShareButton";
 import { BookmarksPanel } from "./ui/BookmarksPanel";
 import { ColorLegend } from "./ui/ColorLegend";
+import {
+  DsoDistancesHud,
+  type DsoSceneSource,
+} from "./ui/DsoDistancesHud";
 import { LeftRail } from "./ui/LeftRail";
 import { InfoPanel } from "./ui/InfoPanel";
 import {
@@ -229,6 +233,10 @@ export function Universe({ onExit }: Props) {
       if (e.key === "t" || e.key === "T") {
         sceneRef.current?.toggleTrackingOnFocus();
       }
+      if (e.key === "d" || e.key === "D") {
+        // d = "distances" — toggle the DSO Distances HUD.
+        setDsoHudVisible((v) => !v);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -256,6 +264,9 @@ export function Universe({ onExit }: Props) {
   // While a scene is playing, suspend the hash-state hydration so the
   // URL hash updater doesn't fight playback for camera authority.
   const [scenePlaying, setScenePlaying] = useState(false);
+
+  // DSO Distances HUD visibility — opt-in. Default OFF. Toggled with D.
+  const [dsoHudVisible, setDsoHudVisible] = useState(false);
 
   useEffect(() => {
     if (scenePlaying) return;
@@ -688,6 +699,23 @@ export function Universe({ onExit }: Props) {
 
       <ReportBugButton />
       <SupportRibbon />
+
+      {/* DSO Distances HUD — opt-in, default OFF. Press D to toggle. */}
+      <DsoDistancesHud
+        source={
+          sceneRef.current
+            ? ({
+                mode: "universe",
+                unitScaleToMeters: 1.495978707e11,
+                getCameraWorldPos: () => sceneRef.current!.getCameraWorldPos(),
+                getCameraLogicalLY: () =>
+                  sceneRef.current!.getCameraLogicalLY(),
+              } satisfies DsoSceneSource)
+            : null
+        }
+        visible={dsoHudVisible}
+        onDismiss={() => setDsoHudVisible(false)}
+      />
 
       {shortcutsOpen && (
         <ShortcutsOverlay onClose={() => setShortcutsOpen(false)} />

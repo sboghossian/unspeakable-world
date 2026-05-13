@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Vector3 } from "three";
 import {
   blankScene,
   clampTimings,
@@ -14,6 +15,11 @@ import {
   type SceneMode,
 } from "../../lib/scene-editor";
 import { SceneRunner, type RunnerState } from "../scene-editor/scene-runner";
+import {
+  MOTION_PRESETS,
+  getMotionPreset,
+  type MotionKeyframe,
+} from "../scene-editor/motion-presets";
 import { log } from "../../lib/logger";
 
 /**
@@ -169,6 +175,43 @@ export function SceneEditorPanel({
     setActive({ ...active, keyframes: [...active.keyframes, kf] });
   }, [active, onCapture]);
 
+  /**
+   * Insert a procedural cinematic preset. We sample the preset, convert
+   * each motion keyframe into the current scene's camera blob shape,
+   * and append them to the timeline. Duration is split evenly across
+   * the generated keyframes.
+   */
+  const insertMotionPreset = useCallback(
+    (presetId: string, durationSec: number) => {
+      if (!active) return;
+      const preset = getMotionPreset(presetId);
+      if (!preset) return;
+      const baseCam = onCapture();
+      const { startPos, target } = deriveMotionAnchors(mode, baseCam);
+      const motion = preset.generate(target, startPos, durationSec);
+      if (motion.length === 0) return;
+      const perStepMs = Math.max(
+        200,
+        Math.floor((durationSec * 1000) / motion.length),
+      );
+      const transitionMs = Math.max(200, Math.floor(perStepMs * 0.7));
+      const holdMs = Math.max(0, perStepMs - transitionMs);
+      const newKfs: Keyframe[] = motion.map((mk, i) => ({
+        id: uid("kf"),
+        label: `${preset.label} ${i + 1}`,
+        transitionMs: i === 0 ? 0 : transitionMs,
+        holdMs,
+        camera: motionToCameraBlob(mode, baseCam, mk),
+      }));
+      setActive({
+        ...active,
+        keyframes: [...active.keyframes, ...newKfs],
+      });
+      setTab("timeline");
+    },
+    [active, mode, onCapture],
+  );
+
   return (
     <>
       <button
@@ -261,6 +304,7 @@ export function SceneEditorPanel({
                 runnerState={runnerState}
                 onChange={(next) => setActive(next)}
                 onCaptureKeyframe={captureKeyframe}
+                onInsertPreset={insertMotionPreset}
                 onPlay={handlePlay}
                 onPause={handlePause}
                 onResume={handleResume}
@@ -449,6 +493,7 @@ function TimelineTab({
   runnerState,
   onChange,
   onCaptureKeyframe,
+  onInsertPreset,
   onPlay,
   onPause,
   onResume,
@@ -459,6 +504,7 @@ function TimelineTab({
   runnerState: RunnerState | null;
   onChange: (next: SavedScene) => void;
   onCaptureKeyframe: () => void;
+  onInsertPreset: (presetId: string, durationSec: number) => void;
   onPlay: () => void;
   onPause: () => void;
   onResume: () => void;
@@ -466,6 +512,10 @@ function TimelineTab({
   onApplyKeyframe: (kf: Keyframe) => void;
 }) {
   const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [presetId, setPresetId] = useState<string>(
+    () => MOTION_PRESETS[0]?.id ?? "",
+  );
+  const [presetDuration, setPresetDuration] = useState<number>(10);
 
   if (!scene) {
     return (
@@ -685,6 +735,59 @@ function TimelineTab({
       >
         + keyframe (capture current camera)
       </button>
+
+      {/* Motion presets — pick a cinematic style + duration, hit insert. */}
+      <div className="rounded-md border border-white/5 bg-white/[0.02] p-2">
+        <div className="mb-1.5 flex items-center gap-1.5">
+          <span aria-hidden>🎬</span>
+          <span className="font-mono text-[10px] uppercase tracking-widest text-white/55">
+            motion presets
+          </span>
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <select
+            value={presetId}
+            onChange={(e) => setPresetId(e.target.value)}
+            aria-label="Motion preset"
+            className="flex-1 min-w-[160px] rounded border border-white/10 bg-space-950/60 px-1.5 py-1 font-mono text-[11px] text-white/80 focus:border-cyan-400/40 focus:outline-none"
+          >
+            {MOTION_PRESETS.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+          <label className="flex items-center gap-1 font-mono text-[10px] uppercase tracking-widest text-white/45">
+            dur
+            <input
+              type="number"
+              min={2}
+              max={60}
+              step={1}
+              value={presetDuration}
+              onChange={(e) =>
+                setPresetDuration(
+                  Math.max(2, Math.min(60, parseInt(e.target.value, 10) || 10)),
+                )
+              }
+              className="w-12 rounded border border-white/10 bg-space-950/60 px-1 py-0.5 text-right font-mono text-[10px] text-white/80 focus:border-cyan-400/40 focus:outline-none"
+            />
+            s
+          </label>
+          <button
+            type="button"
+            onClick={() => onInsertPreset(presetId, presetDuration)}
+            disabled={!presetId}
+            className="rounded-md border border-cyan-400/40 bg-cyan-400/10 px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-cyan-200 transition hover:bg-cyan-400/20 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            insert
+          </button>
+        </div>
+        <div className="mt-1 font-mono text-[10px] text-white/40">
+          {MOTION_PRESETS.find((p) => p.id === presetId)?.description ??
+            "Pick a motion style above."}
+        </div>
+      </div>
     </div>
   );
 }
@@ -894,4 +997,103 @@ function ShareTab({
       </div>
     </div>
   );
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Motion preset → camera blob adapters
+// ────────────────────────────────────────────────────────────────────
+
+/**
+ * Extract a `(startPos, target)` pair from the current camera blob for
+ * the motion-preset generator. Both vectors live in the camera blob's
+ * native coordinate system — we don't try to mix units across modes.
+ */
+function deriveMotionAnchors(
+  mode: SceneMode,
+  cam: Record<string, unknown>,
+): { startPos: Vector3; target: Vector3 } {
+  if (mode === "universe") {
+    const pos = cam["cameraLogicalPos"] as
+      | { x: number; y: number; z: number }
+      | undefined;
+    const px = typeof pos?.x === "number" ? pos.x : 26000;
+    const py = typeof pos?.y === "number" ? pos.y : 0;
+    const pz = typeof pos?.z === "number" ? pos.z : 0;
+    // Universe-mode target = origin (galactic centre) unless we have a
+    // tracking target. The bridge doesn't expose the target's world
+    // position directly, so origin is the cleanest deterministic anchor.
+    const startPos = new Vector3(px, py, pz);
+    const target = new Vector3(0, 0, 0);
+    return { startPos, target };
+  }
+  // Solar mode — orbit-style coords. Convert (yaw, pitch, distance)
+  // around `focus` into a Cartesian start vector around the origin
+  // ("focus" frame), since the preset works in pure Cartesians.
+  const yaw = typeof cam["yaw"] === "number" ? (cam["yaw"] as number) : 0;
+  const pitch =
+    typeof cam["pitch"] === "number" ? (cam["pitch"] as number) : 0.4;
+  const dist =
+    typeof cam["cameraDistance"] === "number"
+      ? (cam["cameraDistance"] as number)
+      : 4;
+  const cp = Math.cos(pitch);
+  const startPos = new Vector3(
+    dist * cp * Math.sin(yaw),
+    dist * Math.sin(pitch),
+    dist * cp * Math.cos(yaw),
+  );
+  const target = new Vector3(0, 0, 0);
+  return { startPos, target };
+}
+
+/**
+ * Pack a single motion keyframe back into the camera blob shape the
+ * mode's bridge understands. We reuse the base blob so non-spatial
+ * fields (simTime, rate, overlay, focus, tracking) propagate from the
+ * captured starting state.
+ */
+function motionToCameraBlob(
+  mode: SceneMode,
+  baseCam: Record<string, unknown>,
+  mk: MotionKeyframe,
+): Record<string, unknown> {
+  if (mode === "universe") {
+    // Universe mode: cameraLogicalPos + yaw/pitch derived from lookAt
+    // direction. Releasing tracking so we own the pose.
+    const dir = new Vector3()
+      .subVectors(mk.lookAt, mk.position)
+      .normalize();
+    // World-Y-up yaw/pitch — same convention universe-scene exposes.
+    const yaw = Math.atan2(dir.x, dir.z);
+    const horiz = Math.hypot(dir.x, dir.z);
+    const pitch = Math.atan2(dir.y, horiz);
+    return {
+      ...baseCam,
+      trackingTarget: null,
+      cameraLogicalPos: {
+        x: mk.position.x,
+        y: mk.position.y,
+        z: mk.position.z,
+      },
+      yaw,
+      pitch,
+    };
+  }
+  // Solar mode: convert position back to (yaw, pitch, distance) around
+  // the focus body (which we've kept at origin in the motion-preset
+  // frame).
+  const dx = mk.position.x;
+  const dy = mk.position.y;
+  const dz = mk.position.z;
+  const distance = Math.max(Math.hypot(dx, dy, dz), 0.001);
+  const yaw = Math.atan2(dx, dz);
+  const horiz = Math.hypot(dx, dz);
+  const pitch = Math.atan2(dy, horiz);
+  return {
+    ...baseCam,
+    tracking: false,
+    cameraDistance: distance,
+    yaw,
+    pitch,
+  };
 }

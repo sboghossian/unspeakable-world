@@ -4,6 +4,11 @@ import {
   type Agency,
   type MissionEntry,
 } from "../missions-catalog/missions-catalog-data";
+import {
+  narrativeForCatalogId,
+  type MissionNarrative,
+} from "../missions-narrative/missions-data";
+import { MissionNarrativePanel } from "./MissionNarrativePanel";
 
 /**
  * 🛰 Missions Catalog — a reference encyclopedia of major spacecraft +
@@ -53,6 +58,9 @@ export function MissionsCatalogPanel() {
   const [agencyFilter, setAgencyFilter] = useState<Agency | "all">("all");
   const [query, setQuery] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [activeNarrative, setActiveNarrative] = useState<MissionNarrative | null>(
+    null,
+  );
 
   const agencies = useMemo(() => {
     const s = new Set<Agency>();
@@ -200,15 +208,32 @@ export function MissionsCatalogPanel() {
                               Ended {m.endDate}
                             </div>
                           )}
-                          <a
-                            href={m.link}
-                            target="_blank"
-                            rel="noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="mt-1.5 inline-block font-mono text-[10.5px] text-cyan-300/80 hover:text-cyan-200 hover:underline"
-                          >
-                            mission page →
-                          </a>
+                          <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                            <a
+                              href={m.link}
+                              target="_blank"
+                              rel="noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-block font-mono text-[10.5px] text-cyan-300/80 hover:text-cyan-200 hover:underline"
+                            >
+                              mission page →
+                            </a>
+                            {narrativeForCatalogId(m.id) && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const n = narrativeForCatalogId(m.id);
+                                  if (n) setActiveNarrative(n);
+                                }}
+                                className="inline-flex items-center gap-1 rounded border border-cyan-400/40 bg-cyan-400/10 px-1.5 py-0.5 font-mono text-[10.5px] text-cyan-200 transition hover:bg-cyan-400/20"
+                                title="Open in-product mission profile"
+                              >
+                                <span aria-hidden>ℹ</span>
+                                <span>read mission profile</span>
+                              </button>
+                            )}
+                          </div>
                         </div>
                       )}
                     </button>
@@ -218,6 +243,12 @@ export function MissionsCatalogPanel() {
             )}
           </div>
         </div>
+      )}
+      {activeNarrative && (
+        <MissionNarrativePanel
+          mission={activeNarrative}
+          onClose={() => setActiveNarrative(null)}
+        />
       )}
     </>
   );

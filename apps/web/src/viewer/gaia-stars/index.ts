@@ -13,6 +13,7 @@ import type { Group } from "three";
 import { GaiaField } from "./gaia-field";
 import { resolveGaiaSource } from "./loader";
 import { log } from "../../lib/logger";
+import { getActivePreset } from "../../lib/quality";
 
 export const LAYER_META = {
   id: "gaia-stars",
@@ -47,7 +48,10 @@ export type MountOpts = {
  * so disabled-by-default doesn't pay the network cost.
  */
 export function mountLayer(opts: MountOpts): LayerHandle {
-  const field = new GaiaField({ density: opts.density ?? 1_000_000 });
+  // Caller-supplied density wins; otherwise fall back to whichever bucket
+  // the active quality preset asks for. Hard upper bound is 1M (file size).
+  const density = opts.density ?? getActivePreset().gaiaDensityBucket;
+  const field = new GaiaField({ density });
   field.setMode(opts.mode);
   opts.parent.add(field.group);
   field.group.visible = opts.enabled;

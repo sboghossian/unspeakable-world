@@ -1,42 +1,56 @@
-[
-  {
-    "name": "gaia-1m-stars",
-    "ok": true,
-    "ms": 9690
-  },
-  {
-    "name": "multi-messenger",
-    "ok": true,
-    "ms": 7136
-  },
-  {
-    "name": "galaxy-cone",
-    "ok": true,
-    "ms": 10493
-  },
-  {
-    "name": "cosmic-copilot",
-    "ok": true,
-    "ms": 5069
-  },
-  {
-    "name": "universe-tiers",
-    "ok": true,
-    "ms": 6041
-  },
-  {
-    "name": "extra-layers-panel",
-    "ok": true,
-    "ms": 5033
-  },
-  {
-    "name": "ar-sky-preview",
-    "ok": true,
-    "ms": 4939
-  },
-  {
-    "name": "planck-cmb",
-    "ok": true,
-    "ms": 5845
-  }
-]
+{
+  "target": "https://unspeakable-world.dashable.dev",
+  "capturedAt": "2026-05-13T12:06:40.613Z",
+  "shots": [
+    {
+      "name": "gaia-dr3-million-stars",
+      "ok": true,
+      "ms": 13112
+    },
+    {
+      "name": "multi-messenger-sky",
+      "ok": true,
+      "ms": 15879
+    },
+    {
+      "name": "136k-galaxy-cone",
+      "ok": true,
+      "ms": 13098
+    },
+    {
+      "name": "cosmic-copilot-conversation",
+      "ok": true,
+      "ms": 8958
+    },
+    {
+      "name": "universe-tier-handoff",
+      "ok": true,
+      "ms": 10502
+    },
+    {
+      "name": "layers-panel-with-sub-tabs",
+      "ok": true,
+      "ms": 9648
+    },
+    {
+      "name": "grand-tour-v2",
+      "ok": true,
+      "ms": 22039
+    },
+    {
+      "name": "fits-upload-on-sky",
+      "ok": true,
+      "ms": 20759
+    },
+    {
+      "name": "planck-cmb-polarization",
+      "ok": true,
+      "ms": 11283
+    },
+    {
+      "name": "education-certificate",
+      "ok": true,
+      "ms": 7934
+    }
+  ]
+}

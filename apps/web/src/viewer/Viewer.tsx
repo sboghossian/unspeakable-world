@@ -27,6 +27,10 @@ import { FirstRunHint } from "./ui/FirstRunHint";
 import { CenterHud } from "./ui/CenterHud";
 import { ColorLegend } from "./ui/ColorLegend";
 import {
+  DsoDistancesHud,
+  type DsoSceneSource,
+} from "./ui/DsoDistancesHud";
+import {
   TutorialOverlay,
   shouldShowTutorial,
 } from "./ui/TutorialOverlay";
@@ -192,6 +196,10 @@ export function Viewer() {
   const [skyCulture, setSkyCulture] = useState<SkyCultureChoice>("western");
   const [copilotOpen, setCopilotOpen] = useState(false);
   const [copilotSeed, setCopilotSeed] = useState<string | null>(null);
+  // Off by default — the DSO distances HUD is opt-in via the keyboard
+  // shortcut (D) and the Settings panel. Mirrors the same memory tier as
+  // Constellations / Star Labels: not persisted across reloads.
+  const [dsoHudVisible, setDsoHudVisible] = useState(false);
 
   const openCopilot = useCallback((seed: string | null) => {
     setCopilotSeed(seed);
@@ -610,6 +618,11 @@ export function Viewer() {
       }
       if (e.key === ".") {
         sceneRef.current?.setTime(new Date());
+        return;
+      }
+      if (e.key === "d") {
+        // d = "distances" — toggle the DSO Distances HUD.
+        setDsoHudVisible((v) => !v);
         return;
       }
       if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
@@ -1301,6 +1314,24 @@ export function Viewer() {
       {!embed && status === "live" && <FirstRunHint />}
 
       {!embed && status === "live" && <ColorLegend />}
+
+      {/* DSO Distances HUD — opt-in (press D). Default OFF. Floats
+          bottom-right above the SupportRibbon. */}
+      {!embed && status === "live" && (
+        <DsoDistancesHud
+          source={
+            sceneRef.current
+              ? ({
+                  mode: "sky",
+                  unitScaleToMeters: 1,
+                  getCameraWorldPos: () => sceneRef.current!.getCameraWorldPos(),
+                } satisfies DsoSceneSource)
+              : null
+          }
+          visible={dsoHudVisible}
+          onDismiss={() => setDsoHudVisible(false)}
+        />
+      )}
 
       {/* One-shot v4 feature awareness — fires once per browser; cheaper
           than rewiring TutorialOverlay's eight hand-crafted steps. */}

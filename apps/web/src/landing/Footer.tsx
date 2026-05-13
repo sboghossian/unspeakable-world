@@ -58,7 +58,13 @@ export function Footer() {
             >
               Stephane Boghossian
             </a>{" "}
-            and contributors
+            and contributors ·{" "}
+            <a
+              href="#whoami"
+              className="text-white/60 hover:text-white"
+            >
+              About the author →
+            </a>
           </span>
           <span className="font-mono">
             <a

@@ -21,11 +21,18 @@ const NUDGE_LAST_SHOWN_KEY = "uw:support-nudge:last-shown";
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
-// Allow the user to override their donation target via env or fall back
-// to a generic "thanks" link. Build-time replacement keeps the value
-// out of the bundle if the env var is empty.
+// Founder picked Ko-fi as the canonical tip jar — observatory-friendly,
+// no platform tax under the threshold, simple "buy a coffee" flow.
+// GitHub Sponsors stays as a secondary link for people who'd rather
+// route through GitHub. Both override via env at build time; empty
+// envs fall back to the public placeholder URLs.
 const COFFEE_URL =
+  import.meta.env.VITE_KOFI_URL ??
   import.meta.env.VITE_COFFEE_URL ??
+  "https://ko-fi.com/sboghossian";
+
+const SPONSORS_URL =
+  import.meta.env.VITE_GITHUB_SPONSORS_URL ??
   "https://github.com/sponsors/sboghossian";
 
 function isLandingRoute(): boolean {
@@ -127,13 +134,22 @@ export function SupportRibbon() {
               maybe later
             </button>
             <a
+              href={SPONSORS_URL}
+              target="_blank"
+              rel="noreferrer noopener"
+              onClick={() => setNudgeOpen(false)}
+              className="rounded-md border border-white/15 px-3 py-1.5 font-mono text-[11px] uppercase tracking-widest text-white/75 transition hover:bg-white/10 hover:text-white"
+            >
+              gh sponsors
+            </a>
+            <a
               href={COFFEE_URL}
               target="_blank"
               rel="noreferrer noopener"
               onClick={() => setNudgeOpen(false)}
               className="rounded-md border border-amber-400/40 bg-amber-400/10 px-3 py-1.5 font-mono text-[11px] uppercase tracking-widest text-amber-200 transition hover:bg-amber-400/20"
             >
-              tip a coffee ☕
+              tip on ko-fi ☕
             </a>
           </div>
           <p className="mt-3 text-[10px] uppercase tracking-[0.2em] text-white/30">
@@ -155,7 +171,7 @@ export function SupportRibbon() {
             ☕
           </span>
           <span className="font-mono text-[11px] text-white/80">
-            Free forever — tip a coffee?
+            Free forever — tip on Ko-fi?
           </span>
           <a
             href={COFFEE_URL}
@@ -163,7 +179,15 @@ export function SupportRibbon() {
             rel="noreferrer noopener"
             className="rounded-full border border-amber-400/40 bg-amber-400/10 px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-amber-200 transition hover:bg-amber-400/20"
           >
-            tip
+            ko-fi
+          </a>
+          <a
+            href={SPONSORS_URL}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="rounded-full border border-white/15 px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-white/65 transition hover:bg-white/10 hover:text-white"
+          >
+            sponsors
           </a>
           <button
             type="button"

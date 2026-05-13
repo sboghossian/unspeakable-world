@@ -83,6 +83,7 @@ import { LightCone } from "./light-cone";
 import { DarkMatterField } from "./dark-matter-field";
 import { AuroraOverlay } from "../space-weather/aurora-overlay";
 import { getSettings, onSettingsChange } from "../../lib/settings";
+import { getActivePreset, subscribeQuality } from "../../lib/quality";
 import { log } from "../../lib/logger";
 import {
   adaptiveSpeedLY,
@@ -393,18 +394,25 @@ export class UniverseScene {
     Neptune: 0x4070c0,
   };
 
+  /** Tear-down for the quality preset subscription. */
+  private qualityUnsub: (() => void) | null = null;
+
   constructor(readonly canvas: HTMLCanvasElement) {
+    const preset = getActivePreset();
     this.renderer = new WebGLRenderer({
       canvas,
-      antialias: true,
+      antialias: preset.msaaSamples > 0,
       powerPreference: "high-performance",
       alpha: false,
       stencil: false,
       preserveDrawingBuffer: true,
       logarithmicDepthBuffer: true,
     });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, preset.dpr));
     this.renderer.setClearColor(0x020415, 1);
+    this.qualityUnsub = subscribeQuality((p) => {
+      this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, p.dpr));
+    });
 
     // Wide near/far range — logDepth gives us precision across scales.
     this.camera = new PerspectiveCamera(60, 1, 1e-6, 1e10);
@@ -616,6 +624,23 @@ export class UniverseScene {
     this.listeners.add(listener);
     listener(this.state);
     return () => this.listeners.delete(listener);
+  }
+
+  /** Camera position in world coordinates. Universe-mode keeps the
+   *  camera glued to the world origin (logicalPosLY is the absolute
+   *  galactic-frame coord), so this returns the zero vector while the
+   *  DSO Distances HUD reads `logicalPos` via its own selector. */
+  getCameraWorldPos(): Vector3 {
+    return this.camera.getWorldPosition(new Vector3());
+  }
+
+  /** Camera position in absolute galactic-frame light-years. This is the
+   *  *logical* position the universe scene tracks — the WebGL camera sits
+   *  at world (0,0,0) and the scene translates around it. The DSO HUD
+   *  uses this when the user is in universe mode so distances to Andromeda
+   *  / CMB horizon read sensibly. */
+  getCameraLogicalLY(): Vector3 {
+    return this.logicalPos.clone();
   }
 
   setPlaying(p: boolean): void {
@@ -1953,6 +1978,8 @@ export class UniverseScene {
   dispose(): void {
     this.disposed = true;
     this.settingsUnsub();
+    this.qualityUnsub?.();
+    this.qualityUnsub = null;
     cancelAnimationFrame(this.rafHandle);
     this.resizeObs?.disconnect();
     this.extras?.dispose();

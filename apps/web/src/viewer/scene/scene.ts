@@ -5,6 +5,7 @@ import {
   type SceneRenderer,
 } from "./renderer-factory";
 import { getRendererPreference } from "../../lib/settings";
+import { subscribeQuality } from "../../lib/quality";
 import { SURVEYS } from "../hips/surveys";
 import { getSurveyAnywhere } from "../power-user/custom-hips";
 import { HipsSphere } from "./hips-sphere";
@@ -150,6 +151,8 @@ export class ViewerScene {
   private disposed = false;
   private lodPending = false;
   private lodTimer = 0;
+  /** Tear-down for the quality preset subscription. */
+  private qualityUnsub: (() => void) | null = null;
 
   private simTime = new Date();
   private playing = false;
@@ -346,6 +349,21 @@ export class ViewerScene {
     if (pref === "webgpu" || pref === "auto") {
       void this.maybeSwapToWebGPU();
     }
+
+    // Live-update the renderer DPR when the user changes the quality
+    // preset. Other preset fields (MSAA, gaia density bucket, planet
+    // segments) require a renderer or scene-graph rebuild — the UI
+    // surfaces a "reload to apply" hint and we do not attempt a hot
+    // swap here. DPR is the one knob three.js accepts at runtime.
+    this.qualityUnsub = subscribeQuality((p) => {
+      try {
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, p.dpr));
+        this.handleResize();
+        this.dirty = true;
+      } catch (err) {
+        log.warn("[scene] quality DPR update failed", err);
+      }
+    });
   }
 
   /**
@@ -886,10 +904,20 @@ export class ViewerScene {
     return out;
   }
 
+  /** Camera position in world coordinates. Sky-view camera always sits at
+   *  the world origin (the celestial sphere wraps around the viewer), so
+   *  this returns the zero vector — the DSO-distances HUD still uses it
+   *  as a uniform interface across sky / solar-flight / universe scenes. */
+  getCameraWorldPos(): Vector3 {
+    return this.camera.getWorldPosition(new Vector3());
+  }
+
   dispose(): void {
     this.disposed = true;
     cancelAnimationFrame(this.rafHandle);
     window.clearTimeout(this.lodTimer);
+    this.qualityUnsub?.();
+    this.qualityUnsub = null;
     this.resizeObs?.disconnect();
     this.controls.dispose();
     this.sphere.dispose();

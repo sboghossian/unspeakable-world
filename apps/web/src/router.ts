@@ -16,10 +16,12 @@ export type Route =
   | "universe"
   | "sandbox"
   | "guide"
-  | "class";
+  | "class"
+  | "whoami";
 
 function getRoute(): Route {
   const hash = typeof window === "undefined" ? "" : window.location.hash;
+  if (hash.startsWith("#whoami")) return "whoami";
   if (hash.startsWith("#class")) return "class";
   if (hash.startsWith("#guide")) return "guide";
   if (hash.startsWith("#sandbox")) return "sandbox";
@@ -128,6 +130,10 @@ export function navigate(route: Route, planet?: "Earth" | "Mars" | "Moon"): void
   }
   if (route === "sandbox") {
     window.location.hash = "#sandbox";
+    return;
+  }
+  if (route === "whoami") {
+    window.location.hash = "#whoami";
     return;
   }
   window.location.hash =
