@@ -360,18 +360,18 @@ const SHOTS = [
     postWaitMs: 7500,
   },
 
-  // 5. Universe Mode tier handoff — drama at the AU↔LY boundary. The
-  //    Sun sits at SUN_LY = (26000, 0, 0). Park the camera at the
-  //    tier-handoff threshold (~0.1 LY off the Sun on +z), yaw=π so
-  //    we look in -x toward the galactic centre, slight downward
-  //    pitch so the Sun reads as a foreground bright point with the
-  //    galactic disk + cosmic-web filling the upper frame. gaia-stars
-  //    + cosmic-web together make the multi-scale claim concrete:
-  //    stars near, structure far, Sun in the corner. Tier HUD reads
-  //    "Solar Tier ↔ Galactic Tier" at this distance.
+  // 5. Universe Mode tier handoff — cinematic banked shot. The Sun
+  //    sits at SUN_LY = (26000, 0, 0). Park the camera ~500 LY off
+  //    the Sun on +y (above the ecliptic) and ~500 LY behind on +x,
+  //    yawed back toward galactic centre, pitched slightly down so
+  //    the gaia star field carpets the lower frame and the galactic
+  //    disk + cosmic-web fill the upper-middle. Tier HUD reads
+  //    "Galactic Tier" at this distance and the scale chip shows
+  //    the LY frame is active — the "multiple scales at once"
+  //    statement is right in the HUD.
   {
     name: "universe-tier-handoff",
-    hash: "#universe?cx=26000&cy=0&cz=0.1&yaw=3.14159&pitch=-0.2",
+    hash: "#universe?cx=26500&cy=500&cz=0&yaw=3.14159&pitch=-0.35",
     seedLayers: {
       "gaia-stars": true,
       "cosmic-web": true,
@@ -512,7 +512,15 @@ const SHOTS = [
   //     is wired through.
   {
     name: "exoplanets-habitability",
-    hash: "#viewer?fov=110&ra=285&dec=44&layers=exoplanets-full,gaia-stars",
+    // FOV 60° — the Kepler-field cluster (RA ~290°, Dec +45°) at 60°
+    // shows ~3,000 planets dotted across the sky as discrete points,
+    // with the Milky Way disk crossing the lower half. Wider than 25°
+    // (which made each planet huge and confused the read) but tighter
+    // than the spec's 110° (which lost planets to sub-pixel size).
+    // 60° is the sweet-spot where (a) every planet is a clear dot,
+    // (b) the cluster reads as a busy field, and (c) the milky way
+    // background sells the celestial-sphere context.
+    hash: "#viewer?fov=60&ra=290&dec=45&layers=exoplanets-full,gaia-stars",
     seedLayers: {
       "exoplanets-full": true,
       "gaia-stars": true,
