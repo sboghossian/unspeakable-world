@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { EmailCapture } from "./EmailCapture";
 import { navigate } from "../router";
 
 export function Hero() {
@@ -153,8 +152,6 @@ export function Hero() {
           GitHub
         </a>
       </div>
-
-      <EmailCapture />
 
       <p className="mt-12 text-sm text-white/40">
         Live at{" "}
