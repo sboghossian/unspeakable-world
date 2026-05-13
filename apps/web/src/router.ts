@@ -34,30 +34,21 @@ function getRoute(): Route {
 }
 
 /**
- * Universe Mode v2 is now the front-door experience. When the user lands
- * on the bare root URL (no hash at all), redirect them to `/#universe`
- * unless they've explicitly opted into the marketing landing page via
- * `?landing=1`. The Hero CTA (owned by C1) routes to `/#universe`, so
- * direct visitors and shared social cards still see the marketing page —
- * only "naked" loads of the SPA front-door fall through to Universe.
+ * Routing policy (locked 2026-05-13):
+ *   `/`         → landing page (marketing + Hero CTA + Highlights + Manifesto + OpenData + Roadmap + Footer)
+ *   `/#universe`→ the product itself (Universe Mode v2 — the seamless tier scene)
  *
- * NOTE: this is intentionally a one-shot side effect, not a render-time
- * transform. We want existing routes (`/#solar`, `/#galactic`, etc.) to
- * continue resolving exactly as before — `App.tsx` owns the deprecation
- * upgrade for those.
+ * The bare-root → Universe redirect that briefly shipped is reverted.
+ * Discovery surface (HN, Show HN, OG previews, social, sponsor inquiries)
+ * lands on the landing page; the Hero's primary CTA is `🌌 Enter the
+ * Universe` which then routes to `/#universe`. This keeps marketing
+ * intact while preserving Universe as the headline product surface.
+ *
+ * Kept as an exported no-op so callers that previously imported it don't
+ * need to be edited.
  */
 export function ensureUniverseDefault(): void {
-  if (typeof window === "undefined") return;
-  if (window.location.hash) return;
-  const search = window.location.search;
-  if (search) {
-    const params = new URLSearchParams(search);
-    // Explicit opt-outs for the marketing page and embed flows.
-    if (params.get("landing") === "1") return;
-    if (params.get("embed") === "1") return;
-  }
-  // Use replaceState so the back button doesn't get a phantom `/` entry.
-  window.history.replaceState(null, "", `${window.location.pathname}${search}#universe`);
+  // Intentional no-op. See routing policy comment above.
 }
 
 /** For #surface/<planet>, return the planet name. */
