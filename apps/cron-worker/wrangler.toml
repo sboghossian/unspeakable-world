@@ -1,0 +1,17 @@
+name = "unspeakable-cron"
+main = "src/index.ts"
+compatibility_date = "2026-05-13"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = false
+
+# Fire daily at 09:00 UTC — well-timed for the EU morning + early US east coast.
+# CF cron triggers are GMT/UTC only.
+[triggers]
+crons = ["0 9 * * *"]
+
+# Wired in dashboard / per-env:
+#   DAILY_POST_URL = "https://unspeakable-world.dashable.dev/api/cron/daily-post"
+#   POST_TARGET    = "log"   # later: "discord", "twitter", "bluesky", "discussions"
+[vars]
+DAILY_POST_URL = "https://unspeakable-world.dashable.dev/api/cron/daily-post"
+POST_TARGET = "log"
