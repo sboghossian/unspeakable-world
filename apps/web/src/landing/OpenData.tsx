@@ -253,6 +253,11 @@ export function OpenData() {
         </p>
       </div>
 
+      <p className="mb-6 font-display text-xl text-white/85">
+        1.17M stars · 136K galaxies · 6,286 exoplanets · 14 sky surveys —
+        every byte CC-BY or public domain.
+      </p>
+
       <h3 className="mb-3 font-mono text-[10px] uppercase tracking-[0.2em] text-white/40">
         Bundled catalogs
       </h3>

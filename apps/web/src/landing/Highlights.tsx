@@ -137,6 +137,8 @@ export function Highlights() {
                       alt={`${h.title} — v4 screenshot preview`}
                       loading="lazy"
                       decoding="async"
+                      width="800"
+                      height="500"
                       className="absolute inset-0 h-full w-full object-cover opacity-80 transition group-hover:scale-[1.02] group-hover:opacity-100"
                     />
                   </picture>

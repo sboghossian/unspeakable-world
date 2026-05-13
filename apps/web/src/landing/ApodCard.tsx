@@ -75,7 +75,9 @@ export function ApodCard() {
     }
 
     const ctrl = new AbortController();
-    fetch("https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY", {
+    // Proxy through `/api/apod` (Pages Function): NASA's DEMO_KEY is
+    // capped at 30/hr/IP globally, so direct calls silently fail.
+    fetch("/api/apod", {
       signal: ctrl.signal,
     })
       .then((r) => {

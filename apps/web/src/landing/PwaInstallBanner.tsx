@@ -18,12 +18,30 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
+function isLandingHash(hash: string): boolean {
+  // Landing route is the empty / `#` / `#/` hash. Anywhere else
+  // (e.g. `#universe`, `#viewer`, `#surface/earth`) is a viewer route.
+  return /^#?\/?$/.test(hash);
+}
+
 export function PwaInstallBanner() {
   const [prompt, setPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [dismissed, setDismissed] = useState(() => {
     if (typeof localStorage === "undefined") return false;
     return localStorage.getItem(DISMISSED_KEY) === "1";
   });
+  const [onLanding, setOnLanding] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return isLandingHash(window.location.hash);
+  });
+
+  useEffect(() => {
+    const onHashChange = () => {
+      setOnLanding(isLandingHash(window.location.hash));
+    };
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
 
   useEffect(() => {
     if (dismissed) return;
@@ -49,6 +67,9 @@ export function PwaInstallBanner() {
     };
   }, [dismissed]);
 
+  // Suppress on the landing page — the banner overlaps the hero chrome
+  // and the install affordance is only useful inside a viewer route.
+  if (onLanding) return null;
   if (!prompt || dismissed) return null;
 
   const install = async () => {

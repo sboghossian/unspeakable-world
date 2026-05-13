@@ -106,13 +106,13 @@ const CONTACT_LINKS: ReadonlyArray<{
   },
   {
     label: "Twitter / X",
-    href: "https://twitter.com/search?q=%23unspeakable-world&src=typed_query",
-    detail: "tag #unspeakable-world",
+    href: "https://twitter.com/search?q=%23UnspeakableWorld&src=typed_query",
+    detail: "tag #UnspeakableWorld",
   },
   {
     label: "Bluesky",
-    href: "https://bsky.app/search?q=%23unspeakable-world",
-    detail: "tag #unspeakable-world",
+    href: "https://bsky.app/search?q=%23UnspeakableWorld",
+    detail: "tag #UnspeakableWorld",
   },
   {
     label: "Email",

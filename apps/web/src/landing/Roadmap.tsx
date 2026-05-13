@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 type Phase = {
   day: string;
   title: string;
@@ -224,14 +226,49 @@ const STATUS_LABEL: Record<Phase["status"], string> = {
   soon: "○ Soon",
 };
 
+function PhaseCard({ p }: { p: Phase }) {
+  return (
+    <li
+      className="group flex flex-col gap-2 rounded-xl border border-white/10 bg-white/[0.02] p-5 backdrop-blur transition hover:border-white/20 hover:bg-white/[0.04]"
+    >
+      <div className="flex items-center justify-between">
+        <span className="font-mono text-xs uppercase tracking-widest text-white/40">
+          {p.day}
+        </span>
+        <span
+          className={`rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wider ${STATUS_BADGE[p.status]}`}
+        >
+          {STATUS_LABEL[p.status]}
+        </span>
+      </div>
+      <h3 className="font-display text-xl font-semibold text-white">
+        {p.title}
+      </h3>
+      <p className="text-sm text-white/60">{p.detail}</p>
+    </li>
+  );
+}
+
 export function Roadmap() {
+  const [shippedOpen, setShippedOpen] = useState(false);
+
+  const shipped = PHASES.filter((p) => p.status === "shipped");
+  const upcoming = PHASES.filter((p) => p.status !== "shipped");
+  // Default: "Now" + next 2 upcoming (next/soon). Falls back gracefully
+  // when there are fewer than 3 non-shipped phases.
+  const nowPhase = upcoming.find((p) => p.status === "now");
+  const nextTwo = upcoming.filter((p) => p.status !== "now").slice(0, 2);
+  const headlinePhases: Phase[] = nowPhase
+    ? [nowPhase, ...nextTwo]
+    : upcoming.slice(0, 3);
+
   return (
     <section className="mx-auto w-full max-w-5xl px-6 py-20">
       <div className="mb-10 flex flex-col items-start justify-between gap-3 md:flex-row md:items-end">
         <div>
           <h2 className="font-display text-3xl font-semibold md:text-4xl">
             30 phases, building in public.{" "}
-            <span className="text-white/40">29 shipped, 1 live now.</span>
+            <span className="text-white/40">{shipped.length} shipped, {upcoming.length} live now.</span>
           </h2>
           <p className="mt-2 text-sm text-white/50">
             Every commit on{" "}
@@ -256,27 +293,38 @@ export function Roadmap() {
         </a>
       </div>
 
-      <ol className="grid gap-3 md:grid-cols-2">
-        {PHASES.map((p) => (
-          <li
-            key={p.day}
-            className="group flex flex-col gap-2 rounded-xl border border-white/10 bg-white/[0.02] p-5 backdrop-blur transition hover:border-white/20 hover:bg-white/[0.04]"
-          >
-            <div className="flex items-center justify-between">
-              <span className="font-mono text-xs uppercase tracking-widest text-white/40">
-                {p.day}
-              </span>
-              <span
-                className={`rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wider ${STATUS_BADGE[p.status]}`}
+      {shipped.length > 0 && (
+        <div className="mb-6">
+          {!shippedOpen ? (
+            <button
+              type="button"
+              onClick={() => setShippedOpen(true)}
+              className="w-full rounded-xl border border-emerald-500/30 bg-emerald-500/5 px-5 py-3 text-left text-sm text-emerald-200 transition hover:border-emerald-500/50 hover:bg-emerald-500/10"
+            >
+              {shipped.length} phases shipped · expand →
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => setShippedOpen(false)}
+                className="mb-3 w-full rounded-xl border border-emerald-500/30 bg-emerald-500/5 px-5 py-3 text-left text-sm text-emerald-200 transition hover:border-emerald-500/50 hover:bg-emerald-500/10"
               >
-                {STATUS_LABEL[p.status]}
-              </span>
-            </div>
-            <h3 className="font-display text-xl font-semibold text-white">
-              {p.title}
-            </h3>
-            <p className="text-sm text-white/60">{p.detail}</p>
-          </li>
+                {shipped.length} phases shipped · collapse ↑
+              </button>
+              <ol className="grid gap-3 md:grid-cols-2">
+                {shipped.map((p) => (
+                  <PhaseCard key={p.day} p={p} />
+                ))}
+              </ol>
+            </>
+          )}
+        </div>
+      )}
+
+      <ol className="grid gap-3 md:grid-cols-2">
+        {headlinePhases.map((p) => (
+          <PhaseCard key={p.day} p={p} />
         ))}
       </ol>
     </section>

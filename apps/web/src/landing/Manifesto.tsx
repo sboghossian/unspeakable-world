@@ -71,7 +71,7 @@ export function Manifesto() {
           href={TIP_URL}
           target="_blank"
           rel="noreferrer"
-          className="font-mono text-amber-200 underline-offset-2 hover:underline"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300/30 bg-amber-400/10 px-3 py-1.5 font-mono text-amber-200 transition hover:bg-amber-400/20"
         >
           tip the jar
         </a>

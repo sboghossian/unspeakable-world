@@ -85,16 +85,16 @@ export function Footer() {
           <span>
             Share what you see → tag{" "}
             <a
-              href="https://twitter.com/search?q=%23unspeakable-world&src=typed_query"
+              href="https://twitter.com/search?q=%23UnspeakableWorld&src=typed_query"
               target="_blank"
               rel="noreferrer"
               className="font-mono text-plasma-300/80 hover:text-plasma-300 hover:underline"
             >
-              #unspeakable-world
+              #UnspeakableWorld
             </a>{" "}
             on{" "}
             <a
-              href="https://twitter.com/search?q=%23unspeakable-world&src=typed_query"
+              href="https://twitter.com/search?q=%23UnspeakableWorld&src=typed_query"
               target="_blank"
               rel="noreferrer"
               className="text-white/65 hover:text-white"
@@ -103,7 +103,7 @@ export function Footer() {
             </a>{" "}
             or{" "}
             <a
-              href="https://bsky.app/search?q=%23unspeakable-world"
+              href="https://bsky.app/search?q=%23UnspeakableWorld"
               target="_blank"
               rel="noreferrer"
               className="text-white/65 hover:text-white"

@@ -1,6 +1,20 @@
 import { useState } from "react";
 import { navigate } from "../router";
 
+/**
+ * Best-effort preload of the Universe chunk on CTA hover/focus/touch so
+ * the route transition feels instant. Errors are swallowed — the regular
+ * lazy import on click will surface any real failure.
+ */
+function preloadUniverse(): void {
+  void import("../viewer/Universe").catch(() => {
+    // best-effort preload
+  });
+  void import("../viewer/scene/scene").catch(() => {
+    // best-effort preload
+  });
+}
+
 export function Hero() {
   const [modesOpen, setModesOpen] = useState(false);
 
@@ -22,8 +36,8 @@ export function Hero() {
       </h1>
 
       <p className="mx-auto mt-6 max-w-2xl text-balance text-lg text-white/70 md:text-xl">
-        Every wavelength of every sky survey, one seamless camera.
-        Free forever.
+        Fly from the ISS to the cosmic web in one camera. No install, no
+        account, free forever.
       </p>
 
       <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-1.5 text-xs uppercase tracking-[0.18em] text-white/65 backdrop-blur">
@@ -36,6 +50,9 @@ export function Hero() {
         <button
           type="button"
           onClick={() => navigate("universe")}
+          onMouseEnter={preloadUniverse}
+          onFocus={preloadUniverse}
+          onTouchStart={preloadUniverse}
           className="group inline-flex items-center gap-3 rounded-xl bg-emerald-400 px-8 py-4 text-lg font-semibold text-space-950 transition hover:bg-emerald-300"
         >
           🌌 Enter the Universe
@@ -47,7 +64,10 @@ export function Hero() {
           </span>
         </button>
         <p className="text-xs text-white/40">
-          Free · MIT · No account · Works on every device
+          No install · No account · 100% open data · MIT
+        </p>
+        <p className="font-mono text-[10px] text-white/35">
+          14 sky surveys · 1.17M open data points · 30 phases shipped · MIT
         </p>
       </div>
 
@@ -59,7 +79,7 @@ export function Hero() {
             onClick={() => setModesOpen((v) => !v)}
             className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/75 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
           >
-            Other modes
+            Universe presets
             <span aria-hidden className={`transition ${modesOpen ? "rotate-180" : ""}`}>
               ▾
             </span>
@@ -71,27 +91,14 @@ export function Hero() {
             >
               <button
                 type="button"
-                onClick={() => navigate("viewer")}
-                className="block w-full px-4 py-3 text-left transition hover:bg-white/5"
-              >
-                <div className="font-display text-sm text-plasma-300">
-                  📡 Sky Atlas
-                </div>
-                <div className="font-mono text-[10px] text-white/45">
-                  classic celestial sphere · HiPS imagery · SIMBAD
-                </div>
-              </button>
-              <div className="border-t border-white/5" />
-              <button
-                type="button"
                 onClick={() => navigate("solar")}
                 className="block w-full px-4 py-3 text-left transition hover:bg-white/5"
               >
                 <div className="font-display text-sm text-cyan-200">
-                  🚀 Solar Flight
+                  🚀 Solar Flight preset
                 </div>
                 <div className="font-mono text-[10px] text-white/45">
-                  3-D heliocentric · Gravity Sandbox · 935 satellites
+                  Universe camera framed on Sol · 935 satellites · gravity sandbox
                 </div>
               </button>
               <div className="border-t border-white/5" />
@@ -101,10 +108,10 @@ export function Hero() {
                 className="block w-full px-4 py-3 text-left transition hover:bg-white/5"
               >
                 <div className="font-display text-sm text-violet-200">
-                  🌌 Galactic
+                  🌌 Galactic preset
                 </div>
                 <div className="font-mono text-[10px] text-white/45">
-                  Milky Way + Local Group + cosmic web
+                  Universe at kpc scale · Milky Way + Local Group + cosmic web
                 </div>
               </button>
               <div className="border-t border-white/5" />
@@ -114,10 +121,10 @@ export function Hero() {
                 className="block w-full px-4 py-3 text-left transition hover:bg-white/5"
               >
                 <div className="font-display text-sm text-orange-200">
-                  🪐 Gravity Sandbox
+                  🪐 Gravity Sandbox preset
                 </div>
                 <div className="font-mono text-[10px] text-white/45">
-                  n-body playground · launch comets, stars, black holes
+                  Universe + n-body playground · launch comets, stars, black holes
                 </div>
               </button>
               <div className="border-t border-white/5" />
@@ -127,10 +134,23 @@ export function Hero() {
                 className="block w-full px-4 py-3 text-left transition hover:bg-white/5"
               >
                 <div className="font-display text-sm text-amber-200">
-                  🪐 Planetary Surface
+                  🪐 Planetary Surface preset
                 </div>
                 <div className="font-mono text-[10px] text-white/45">
-                  Earth · Mars · Moon textured 3-D bodies
+                  Universe zoomed to a body · Earth · Mars · Moon textured 3-D
+                </div>
+              </button>
+              <div className="border-t border-white/5" />
+              <button
+                type="button"
+                onClick={() => navigate("viewer")}
+                className="block w-full px-4 py-3 text-left transition hover:bg-white/5"
+              >
+                <div className="font-display text-sm text-plasma-300">
+                  📡 Sky Atlas (classic mode)
+                </div>
+                <div className="font-mono text-[10px] text-white/45">
+                  Legacy celestial sphere · HiPS imagery · SIMBAD
                 </div>
               </button>
             </div>
@@ -144,7 +164,7 @@ export function Hero() {
           📖 User Guide
         </button>
         <a
-          href="https://github.com/sboghossian/unspeakable-world"
+          href="https://github.com/sboghossian/unspeakable-world?ref=landing-hero"
           target="_blank"
           rel="noreferrer"
           className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/75 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
@@ -154,16 +174,13 @@ export function Hero() {
       </div>
 
       <p className="mt-12 text-sm text-white/40">
-        Live at{" "}
-        <span className="font-mono text-white/60">unspeakable-world.dashable.dev</span> · still
-        building in public ·{" "}
         <a
-          href="https://twitter.com/search?q=%23unspeakable-world&src=typed_query"
+          href="https://twitter.com/search?q=%23UnspeakableWorld&src=typed_query"
           target="_blank"
           rel="noreferrer"
           className="font-mono text-plasma-300/80 hover:text-plasma-300 hover:underline"
         >
-          #unspeakable-world
+          #UnspeakableWorld
         </a>
       </p>
     </section>

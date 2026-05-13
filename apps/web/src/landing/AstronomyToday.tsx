@@ -92,7 +92,7 @@ export function AstronomyToday() {
 
   return (
     <aside
-      className="fixed bottom-3 left-3 z-30 max-w-xs rounded-lg border border-white/10 bg-space-900/85 px-3 py-2 shadow-lg backdrop-blur-md"
+      className="fixed bottom-3 left-3 z-30 hidden max-w-xs rounded-lg border border-white/10 bg-space-900/85 px-3 py-2 shadow-lg backdrop-blur-md md:block"
       aria-label="Today in astronomy history"
     >
       <div className="text-[10px] uppercase tracking-[0.25em] text-white/40">

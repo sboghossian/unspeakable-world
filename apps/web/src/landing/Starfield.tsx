@@ -19,6 +19,19 @@ export function Starfield() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    // Respect prefers-reduced-motion + low-end CPUs: halve the star
+    // count on ≤4-core machines, and render a single static layer with
+    // no rAF loop when the user has reduced-motion turned on.
+    const reducedMotion =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const lowCpu =
+      typeof navigator !== "undefined" &&
+      typeof navigator.hardwareConcurrency === "number" &&
+      navigator.hardwareConcurrency > 0 &&
+      navigator.hardwareConcurrency <= 4;
+    const countScale = lowCpu ? 0.5 : 1;
+
     let raf = 0;
     let stars: Array<{
       x: number;
@@ -49,7 +62,10 @@ export function Starfield() {
       canvas.width = Math.round(w * dpr);
       canvas.height = Math.round(h * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const count = Math.min(900, Math.round((w * h) / 1800));
+      const count = Math.min(
+        900,
+        Math.round(((w * h) / 1800) * countScale),
+      );
       stars = Array.from({ length: count }, () => ({
         x: Math.random() * w,
         y: Math.random() * h,
@@ -57,6 +73,33 @@ export function Starfield() {
         phase: Math.random() * Math.PI * 2,
         speed: 0.4 + Math.random() * 1.6,
       }));
+    };
+
+    const drawStatic = () => {
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      const grad = ctx.createRadialGradient(
+        w * 0.7,
+        h * 0.85,
+        0,
+        w * 0.7,
+        h * 0.85,
+        Math.max(w, h),
+      );
+      grad.addColorStop(0, "rgba(14, 165, 233, 0.10)");
+      grad.addColorStop(0.4, "rgba(7, 10, 20, 0.95)");
+      grad.addColorStop(1, "rgba(3, 5, 10, 1)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+      ctx.save();
+      ctx.fillStyle = "#e2e8f0";
+      for (const s of stars) {
+        ctx.globalAlpha = 0.55;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
     };
 
     const spawnMeteor = (w: number, h: number) => {
@@ -155,6 +198,20 @@ export function Starfield() {
     };
 
     resize();
+
+    if (reducedMotion) {
+      // Static layer only — re-render on resize, no rAF loop.
+      drawStatic();
+      const onResize = () => {
+        resize();
+        drawStatic();
+      };
+      window.addEventListener("resize", onResize);
+      return () => {
+        window.removeEventListener("resize", onResize);
+      };
+    }
+
     raf = requestAnimationFrame(draw);
     window.addEventListener("resize", resize);
 
