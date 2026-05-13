@@ -65,19 +65,24 @@ export function CustomHipsPanel({ onActivate }: Props) {
         tile format and max order, then register it as a runtime survey you
         can activate from the wavelength bar.
       </p>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <input
           type="url"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="https://…/SomeHiPS"
-          className="flex-1 rounded-md border border-white/10 bg-space-950/80 px-2 py-1.5 font-mono text-xs text-white placeholder:text-white/30 outline-none focus:border-plasma-500/60"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
+          inputMode="url"
+          className="min-h-[44px] flex-1 basis-[200px] rounded-md border border-white/10 bg-space-950/80 px-2 py-1.5 font-mono text-xs text-white placeholder:text-white/30 outline-none focus:border-plasma-500/60"
         />
         <button
           type="button"
           onClick={() => void onProbe()}
           disabled={!url.trim() || status.kind === "probing"}
-          className="rounded-md border border-plasma-500/40 bg-plasma-500/15 px-3 py-1.5 font-mono text-xs uppercase tracking-wider text-plasma-300 transition hover:bg-plasma-500/25 disabled:opacity-40"
+          className="min-h-[44px] rounded-md border border-plasma-500/40 bg-plasma-500/15 px-3 py-1.5 font-mono text-xs uppercase tracking-wider text-plasma-300 transition hover:bg-plasma-500/25 disabled:opacity-40"
         >
           {status.kind === "probing" ? "probing…" : "paste + probe"}
         </button>
@@ -116,18 +121,18 @@ export function CustomHipsPanel({ onActivate }: Props) {
                     {s.baseUrl} · max order {s.maxOrder} · {s.format}
                   </span>
                 </div>
-                <div className="flex gap-1">
+                <div className="flex flex-shrink-0 gap-1">
                   <button
                     type="button"
                     onClick={() => onActivate?.(s.id)}
-                    className="rounded-sm border border-plasma-500/30 bg-plasma-500/10 px-2 py-0.5 text-[10px] uppercase tracking-widest text-plasma-300 hover:bg-plasma-500/20"
+                    className="min-h-[36px] rounded-sm border border-plasma-500/30 bg-plasma-500/10 px-2 py-1 text-[10px] uppercase tracking-widest text-plasma-300 hover:bg-plasma-500/20"
                   >
                     activate
                   </button>
                   <button
                     type="button"
                     onClick={() => removeRuntimeSurvey(s.id)}
-                    className="rounded-sm border border-rose-500/30 bg-rose-500/10 px-2 py-0.5 text-[10px] uppercase tracking-widest text-rose-300 hover:bg-rose-500/20"
+                    className="min-h-[36px] rounded-sm border border-rose-500/30 bg-rose-500/10 px-2 py-1 text-[10px] uppercase tracking-widest text-rose-300 hover:bg-rose-500/20"
                   >
                     remove
                   </button>

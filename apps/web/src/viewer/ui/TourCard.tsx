@@ -1,6 +1,9 @@
 import type { ReactNode } from "react";
 import type { TourStep } from "../tour/tour";
 import type { TourStepV2 } from "../tour/tour-v2";
+import { useT } from "../../i18n/hooks";
+import { cn, RADIUS } from "../../lib/design-tokens";
+import { EmptyState } from "./EmptyState";
 
 /**
  * 🎟 TourCard — works for both the original sky-mode Grand Tour
@@ -88,19 +91,32 @@ function renderMarkdown(text: string): ReactNode {
 
 export function TourCard(props: Props) {
   const { step, index, total, onPrev, onNext, onExit } = props;
+  const t = useT();
 
   if (isV2(step)) {
     const v2 = props as V2Props;
     const enabled = step.enable_layers ?? [];
     return (
-      <aside className="pointer-events-auto absolute left-1/2 top-20 z-30 w-[min(620px,94vw)] -translate-x-1/2 rounded-xl border border-violet-500/30 bg-space-950/85 p-4 backdrop-blur md:top-24">
+      <aside
+        className={cn(
+          "pointer-events-auto absolute left-1/2 top-20 z-30 w-[min(620px,94vw)] -translate-x-1/2 border border-violet-500/30 bg-space-950/85 p-4 backdrop-blur md:top-24",
+          RADIUS.lg,
+        )}
+        role="dialog"
+        aria-labelledby="tour-card-title"
+        aria-current="step"
+      >
+        {/* Screen-reader-only step announcement — fires on each step change. */}
+        <span className="sr-only" role="status" aria-live="polite">
+          {t("tour.step", { step: index + 1, total })}: {step.title}
+        </span>
         <header className="mb-2 flex items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full border border-violet-500/40 bg-violet-500/15 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.2em] text-violet-300">
-              tour v2
+              {t("tour.label.tourV2")}
             </span>
             <span className="font-mono text-[10px] uppercase tracking-widest text-white/40">
-              {index + 1} / {total}
+              {t("tour.step", { step: index + 1, total })}
             </span>
             {step.wavelengthHint && WAVELENGTH_LABEL[step.wavelengthHint] && (
               <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-white/55">
@@ -124,16 +140,19 @@ export function TourCard(props: Props) {
             type="button"
             onClick={onExit}
             className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 font-mono text-xs text-white/60 transition hover:bg-white/10 hover:text-white"
-            aria-label="Exit tour"
+            aria-label={t("tour.exit.aria")}
           >
-            exit
+            {t("tour.exit")}
           </button>
         </header>
 
-        <h2 className="font-display text-2xl font-semibold text-white">
+        <h2
+          id="tour-card-title"
+          className="font-display text-2xl font-semibold text-white"
+        >
           {step.title}
         </h2>
-        <p className="mt-2 text-sm leading-relaxed text-white/75">
+        <p className="mt-2 text-sm leading-relaxed text-white/80">
           {renderMarkdown(step.body)}
         </p>
 
@@ -144,7 +163,7 @@ export function TourCard(props: Props) {
             disabled={index === 0}
             className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-mono text-xs uppercase tracking-wider text-white/70 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
           >
-            ← prev
+            {t("tour.prev")}
           </button>
           <div className="flex h-1 flex-1 overflow-hidden rounded-full bg-white/10">
             {Array.from({ length: total }).map((_, i) => (
@@ -161,9 +180,9 @@ export function TourCard(props: Props) {
               type="button"
               onClick={v2.onCapture}
               className="rounded-lg border border-amber-400/40 bg-amber-400/15 px-3 py-1.5 font-mono text-xs uppercase tracking-wider text-amber-200 transition hover:bg-amber-400/25"
-              title="Take a snapshot of this view"
+              title={t("tour.snap.title")}
             >
-              📸 snap
+              {t("tour.snap")}
             </button>
           )}
           <button
@@ -171,7 +190,7 @@ export function TourCard(props: Props) {
             onClick={onNext}
             className="rounded-lg border border-violet-500/40 bg-violet-500/15 px-3 py-1.5 font-mono text-xs uppercase tracking-wider text-violet-300 transition hover:bg-violet-500/25"
           >
-            {index === total - 1 ? "finish" : "next →"}
+            {index === total - 1 ? t("tour.finish") : t("tour.next")}
           </button>
         </div>
 
@@ -186,7 +205,7 @@ export function TourCard(props: Props) {
                   key={i}
                   type="button"
                   onClick={() => v2.onJump?.(i)}
-                  title={`Step ${i + 1}`}
+                  title={t("tour.stepN", { n: i + 1 })}
                   className={`h-2.5 w-2.5 rounded-full border transition ${
                     active
                       ? "border-violet-300 bg-violet-300"
@@ -194,7 +213,7 @@ export function TourCard(props: Props) {
                         ? "border-violet-400/60 bg-violet-400/60 hover:bg-violet-300"
                         : "border-white/20 bg-white/10 hover:bg-white/30"
                   }`}
-                  aria-label={`Go to step ${i + 1}`}
+                  aria-label={t("tour.goTo", { n: i + 1 })}
                 />
               );
             })}
@@ -207,14 +226,26 @@ export function TourCard(props: Props) {
   // v1 — preserved verbatim for backwards compat.
   const v1Step = step;
   return (
-    <aside className="pointer-events-auto absolute left-1/2 top-20 z-30 w-[min(560px,92vw)] -translate-x-1/2 rounded-xl border border-violet-500/30 bg-space-950/85 p-4 backdrop-blur md:top-24">
+    <aside
+      className={cn(
+        "pointer-events-auto absolute left-1/2 top-20 z-30 w-[min(560px,92vw)] -translate-x-1/2 border border-violet-500/30 bg-space-950/85 p-4 backdrop-blur md:top-24",
+        RADIUS.lg,
+      )}
+      role="dialog"
+      aria-labelledby="tour-card-title-v1"
+      aria-current="step"
+    >
+      {/* Screen-reader-only step announcement — fires on each step change. */}
+      <span className="sr-only" role="status" aria-live="polite">
+        {t("tour.step", { step: index + 1, total })}: {v1Step.title}
+      </span>
       <header className="mb-2 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <span className="rounded-full border border-violet-500/40 bg-violet-500/15 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.2em] text-violet-300">
-            tour
+            {t("tour.label.tour")}
           </span>
           <span className="font-mono text-[10px] uppercase tracking-widest text-white/40">
-            {index + 1} / {total}
+            {t("tour.step", { step: index + 1, total })}
           </span>
           {v1Step.wavelengthHint && WAVELENGTH_LABEL[v1Step.wavelengthHint] && (
             <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-white/55">
@@ -226,16 +257,19 @@ export function TourCard(props: Props) {
           type="button"
           onClick={onExit}
           className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 font-mono text-xs text-white/60 transition hover:bg-white/10 hover:text-white"
-          aria-label="Exit tour"
+          aria-label={t("tour.exit.aria")}
         >
-          exit
+          {t("tour.exit")}
         </button>
       </header>
 
-      <h2 className="font-display text-2xl font-semibold text-white">
+      <h2
+        id="tour-card-title-v1"
+        className="font-display text-2xl font-semibold text-white"
+      >
         {v1Step.title}
       </h2>
-      <p className="mt-2 text-sm leading-relaxed text-white/75">
+      <p className="mt-2 text-sm leading-relaxed text-white/80">
         {v1Step.body}
       </p>
 
@@ -246,7 +280,7 @@ export function TourCard(props: Props) {
           disabled={index === 0}
           className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-mono text-xs uppercase tracking-wider text-white/70 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
         >
-          ← prev
+          {t("tour.prev")}
         </button>
         <div className="flex h-1 flex-1 overflow-hidden rounded-full bg-white/10">
           {Array.from({ length: total }).map((_, i) => (
@@ -261,9 +295,40 @@ export function TourCard(props: Props) {
           onClick={onNext}
           className="rounded-lg border border-violet-500/40 bg-violet-500/15 px-3 py-1.5 font-mono text-xs uppercase tracking-wider text-violet-300 transition hover:bg-violet-500/25"
         >
-          {index === total - 1 ? "finish" : "next →"}
+          {index === total - 1 ? t("tour.finish") : t("tour.next")}
         </button>
       </div>
+    </aside>
+  );
+}
+
+/**
+ * 🎟 TourStartCard — "before the tour starts" empty state. Mirrors the
+ * card geometry the active TourCard uses (centred top, dark violet
+ * accent) so it feels like the same surface lighting up. Used by
+ * Universe and Viewer when the user opens the tour panel but hasn't
+ * pressed Start yet.
+ */
+type StartProps = {
+  /** Total number of steps in the tour. Defaults to 12 (v2 length). */
+  total?: number;
+  /** Fires the runner. */
+  onStart: () => void;
+  /** Dismisses the card without starting. */
+  onSkip?: () => void;
+};
+
+export function TourStartCard({ total = 12, onStart, onSkip }: StartProps) {
+  return (
+    <aside className="pointer-events-auto absolute left-1/2 top-20 z-30 w-[min(560px,94vw)] -translate-x-1/2 md:top-24">
+      <EmptyState
+        icon="▶"
+        title={`Take the ${total}-step Grand Tour`}
+        body="A curated walkthrough through the federated universe — Earth, the Sun, the Milky Way, the cosmic web. Skip any step, jump around the timeline, or finish in one sitting."
+        tone="violet"
+        cta={{ label: "Start tour", onClick: onStart }}
+        {...(onSkip ? { secondary: { label: "Not now", onClick: onSkip } } : {})}
+      />
     </aside>
   );
 }

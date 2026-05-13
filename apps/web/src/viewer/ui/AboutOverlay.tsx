@@ -1,3 +1,5 @@
+import { cn, TEXT } from "../../lib/design-tokens";
+
 /**
  * ℹ About / credits overlay.
  *
@@ -110,7 +112,7 @@ export function AboutOverlay({ onClose }: { onClose: () => void }) {
       >
         <header className="sticky top-0 z-10 flex items-center justify-between border-b border-white/5 bg-space-950/95 px-5 py-3 backdrop-blur">
           <div>
-            <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/40">
+            <div className={cn(TEXT.label, "text-white/40")}>
               about · credits · sources
             </div>
             <div className="font-display text-base text-white">

@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { log } from "../../lib/logger";
+import { cn, RADIUS } from "../../lib/design-tokens";
+import { useT } from "../../i18n/hooks";
 import {
   CloudflareBackend,
   Copilot,
@@ -13,6 +15,8 @@ import {
 } from "../copilot/backends/ollama";
 import type { Citation, SceneContext } from "../copilot/types";
 import type { CopilotHost, ToolResult } from "../copilot";
+import { EmptyState } from "./EmptyState";
+import { getCopy, inferKind } from "../../lib/error-copy";
 
 /**
  * 🧠 Cosmic Copilot panel — slide-in chat that answers astronomy
@@ -126,6 +130,7 @@ export function CopilotPanel({
   onSeedConsumed,
   host,
 }: CopilotPanelProps) {
+  const t = useT();
   const [thread, setThread] = useState<StoredMessage[]>(() => loadThread());
   const [draft, setDraft] = useState("");
   const [streaming, setStreaming] = useState(false);
@@ -251,12 +256,12 @@ export function CopilotPanel({
         setThread((t) => [...t, assistantMsg]);
       } catch (err) {
         log.warn("[copilot] ask failed", err);
+        const copy = getCopy(inferKind(err), { service: "Copilot backend" });
         setThread((t) => [
           ...t,
           {
             role: "assistant",
-            content:
-              "(Backend error — I couldn't reach the model. Try the offline backend from the cog.)",
+            content: `(${copy.title}. ${copy.body} You can switch to the offline backend from the ⚙ cog.)`,
           },
         ]);
       } finally {
@@ -277,6 +282,22 @@ export function CopilotPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, seedQuestion]);
 
+  // Escape closes the panel (a11y: keyboard parity with the X button). We skip
+  // when the user is typing in the chat textarea so Escape doesn't surprise
+  // them mid-thought — they can blur first, then Escape.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName ?? "";
+      if (tag === "TEXTAREA" || tag === "INPUT") return;
+      onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
   const onCancel = useCallback(() => {
     abortRef.current?.abort();
   }, []);
@@ -288,19 +309,30 @@ export function CopilotPanel({
 
   const placeholder = useMemo(() => {
     if (context.focusedObject) {
-      return `Ask about ${context.focusedObject.name}…`;
+      return t("copilot.placeholder.focused", { name: context.focusedObject.name });
     }
-    return "Ask anything about the sky…";
-  }, [context.focusedObject]);
+    return t("copilot.placeholder");
+  }, [context.focusedObject, t]);
 
   if (!open) return null;
 
   return (
-    <aside className="pointer-events-auto absolute right-2 top-32 z-30 flex w-[360px] max-w-[calc(100vw-1rem)] flex-col rounded-xl border border-white/10 bg-space-950/90 backdrop-blur sm:right-4 sm:top-20 md:w-[420px]">
+    <aside
+      className={cn(
+        "pointer-events-auto absolute right-2 top-32 z-30 flex w-[360px] max-w-[calc(100vw-1rem)] flex-col border border-white/10 bg-space-950/90 backdrop-blur sm:right-4 sm:top-20 md:w-[420px]",
+        RADIUS.lg,
+      )}
+      role="dialog"
+      aria-modal="false"
+      aria-labelledby="copilot-panel-title"
+    >
       <header className="flex items-center justify-between gap-2 border-b border-white/10 px-4 py-3">
         <div className="flex items-center gap-2">
-          <div className="font-display text-sm font-semibold text-white">
-            🧠 Cosmic Copilot
+          <div
+            id="copilot-panel-title"
+            className="font-display text-sm font-semibold text-white"
+          >
+            {t("copilot.title")}
           </div>
           <BackendDot
             backendId={backendId}
@@ -312,23 +344,26 @@ export function CopilotPanel({
           <button
             type="button"
             onClick={() => setSettingsOpen((v) => !v)}
-            title="Backend settings"
+            title={t("copilot.settings")}
+            aria-label={t("copilot.settings")}
+            aria-expanded={settingsOpen}
             className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 font-mono text-xs text-white/60 transition hover:bg-white/10 hover:text-white"
           >
-            ⚙
+            <span aria-hidden="true">⚙</span>
           </button>
           <button
             type="button"
             onClick={onReset}
-            title="Clear conversation"
+            title={t("copilot.reset")}
+            aria-label={t("copilot.reset")}
             className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 font-mono text-xs text-white/60 transition hover:bg-white/10 hover:text-white"
           >
-            ↺
+            <span aria-hidden="true">↺</span>
           </button>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t("common.close")}
             className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 font-mono text-xs text-white/60 transition hover:bg-white/10 hover:text-white"
           >
             ✕
@@ -349,6 +384,10 @@ export function CopilotPanel({
       <div
         ref={scrollRef}
         className="flex max-h-[55vh] min-h-[180px] flex-col gap-3 overflow-y-auto px-4 py-3"
+        role="log"
+        aria-live="polite"
+        aria-relevant="additions text"
+        aria-label="Conversation with Cosmic Copilot"
       >
         {thread.length === 0 && !streaming && (
           <Empty focused={context.focusedObject?.name ?? null} onPick={send} />
@@ -373,14 +412,14 @@ export function CopilotPanel({
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 font-mono text-[11px] text-white/60">
               <span className="h-2 w-2 animate-pulse rounded-full bg-plasma-400" />
-              streaming…
+              {t("copilot.streaming")}
             </div>
             <button
               type="button"
               onClick={onCancel}
               className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 font-mono text-[11px] uppercase tracking-wider text-white/60 transition hover:bg-white/10"
             >
-              stop
+              {t("copilot.stop")}
             </button>
           </div>
         ) : (
@@ -402,14 +441,15 @@ export function CopilotPanel({
               }}
               rows={2}
               placeholder={placeholder}
-              className="min-h-[42px] flex-1 resize-none rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/90 placeholder:text-white/30 focus:border-plasma-400/50 focus:outline-none"
+              aria-label={t("copilot.title")}
+              className="min-h-[42px] flex-1 resize-none rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/90 placeholder:text-white/55 focus:border-plasma-400/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-plasma-400/40"
             />
             <button
               type="submit"
               disabled={!draft.trim()}
               className="shrink-0 rounded-lg border border-plasma-500/40 bg-plasma-500/15 px-3 py-2 font-mono text-xs uppercase tracking-wider text-plasma-200 transition hover:bg-plasma-500/25 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              send →
+              {t("copilot.send")}
             </button>
           </form>
         )}
@@ -596,10 +636,18 @@ function Empty({
   }, [focused]);
 
   return (
-    <div className="rounded-lg border border-white/10 bg-white/[0.02] p-3">
-      <div className="mb-2 font-mono text-[10px] uppercase tracking-widest text-white/40">
-        try asking
-      </div>
+    <div className="flex flex-col gap-2">
+      <EmptyState
+        icon="🧠"
+        title="Ask anything about the sky"
+        body={
+          focused
+            ? `You're focused on ${focused}. Try one of the prompts below, or type your own question.`
+            : "Type a question, or pick one of the prompts below. Answers are grounded in what's on screen."
+        }
+        tone="violet"
+        density="compact"
+      />
       <ul className="flex flex-col gap-1.5">
         {samples.map((s) => (
           <li key={s}>

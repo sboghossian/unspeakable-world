@@ -8,6 +8,7 @@ import {
   narrativeForCatalogId,
   type MissionNarrative,
 } from "../missions-narrative/missions-data";
+import { EmptyState } from "./EmptyState";
 import { MissionNarrativePanel } from "./MissionNarrativePanel";
 
 /**
@@ -168,9 +169,21 @@ export function MissionsCatalogPanel() {
           {/* List */}
           <div className="-mx-1 flex-1 overflow-y-auto px-1">
             {filtered.length === 0 ? (
-              <div className="rounded-md border border-dashed border-white/15 px-3 py-4 text-center font-mono text-[11px] text-white/40">
-                no missions match
-              </div>
+              <EmptyState
+                icon="🛰"
+                title="No missions match those filters"
+                body="The catalog is alive and well — your filters just narrowed it to nothing. Try clearing the search or widening the status / agency."
+                tone="cyan"
+                density="compact"
+                cta={{
+                  label: "Clear filters",
+                  onClick: () => {
+                    setStatusFilter("all");
+                    setAgencyFilter("all");
+                    setQuery("");
+                  },
+                }}
+              />
             ) : (
               <ul className="space-y-1.5">
                 {filtered.map((m) => (

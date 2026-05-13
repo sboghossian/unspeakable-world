@@ -2,9 +2,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { log } from "../../lib/logger";
 import { track } from "../../lib/telemetry";
+import { cn, PANEL, RADIUS, TEXT } from "../../lib/design-tokens";
+import { useT } from "../../i18n/hooks";
 import { EXTRA_LAYERS, type LayerMeta } from "../extra-layers/registry";
 import { useExtraLayers, useExtraLayersStore } from "../extra-layers/state";
+import { Tab, TabList } from "./primitives";
 import { makeLayerHashWriter, seedStoreFromHash } from "./layer-hash";
+import { getCopy, inferKind } from "../../lib/error-copy";
 
 /**
  * Minimal contract any scene must satisfy to host the panel. Sky /
@@ -128,10 +132,19 @@ function writeActiveTab(tab: LayerTabId): void {
  * in localStorage automatically.
  */
 export function ExtraLayersPanel({ scene }: Props) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTabState] = useState<LayerTabId>(() =>
     readActiveTab(),
   );
+  // Translated tab labels — the constant LAYER_TABS uses English so each
+  // render passes through the i18n hook.
+  const tabLabel = (id: LayerTabId): string => {
+    if (id === "catalogs") return t("layers.tabs.catalogs");
+    if (id === "structure") return t("layers.tabs.structure");
+    if (id === "alerts") return t("layers.tabs.alerts");
+    return t("layers.tabs.imagery");
+  };
   const setActiveTab = (next: LayerTabId): void => {
     setActiveTabState(next);
     writeActiveTab(next);
@@ -166,8 +179,19 @@ export function ExtraLayersPanel({ scene }: Props) {
   );
   /** Set of layer ids whose module has finished loading at least once. */
   const loadedRef = useRef<Set<string>>(new Set<string>());
+  /**
+   * Map of layer id → user-facing error copy when a loader rejected.
+   * Used to render an inline error chip beside the toggle so the user
+   * sees what happened (and the wording matches the rest of the
+   * viewer's error surface via `lib/error-copy`).
+   */
+  const [failed, setFailed] = useState<
+    Readonly<Record<string, { title: string; body: string } | undefined>>
+  >({});
   const popoverRef = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
+  /** Live announcement string for screen readers on toggle/load events. */
+  const [announce, setAnnounce] = useState<string>("");
 
   // Read the live list of layers mounted by the scene. The registry is
   // static so we could call `listExtras(mode)` directly, but reading
@@ -208,8 +232,22 @@ export function ExtraLayersPanel({ scene }: Props) {
           return next;
         });
         void loader()
+          .then(() => {
+            // Clear any previous failure record on a successful load.
+            setFailed((prev) => {
+              if (!prev[meta.id]) return prev;
+              const next = { ...prev };
+              delete next[meta.id];
+              return next;
+            });
+          })
           .catch((err: unknown) => {
             log.warn(`[extra-layers] panel-observed load failed: ${meta.id}`, err);
+            const copy = getCopy(inferKind(err), { feature: meta.label });
+            setFailed((prev) => ({
+              ...prev,
+              [meta.id]: { title: copy.title, body: copy.body },
+            }));
           })
           .finally(() => {
             loadedRef.current.add(meta.id);
@@ -275,12 +313,17 @@ export function ExtraLayersPanel({ scene }: Props) {
   function toggle(id: string): void {
     const store = useExtraLayersStore.getState();
     store.toggle(id);
+    const nowOn = useExtraLayersStore.getState().enabled[id] === true;
     // Most important telemetry signal in the app — tells us which
     // of the 21 federated layers anyone actually flips on. No PII.
     track("extra_layer_toggle", {
       id,
-      enabled: useExtraLayersStore.getState().enabled[id] === true,
+      enabled: nowOn,
     });
+    // Screen-reader announcement — meta label preferred, falls back to id.
+    const meta = metas.find((m) => m.id === id);
+    const label = meta?.label ?? id;
+    setAnnounce(`${label} ${nowOn ? "enabled" : "disabled"}`);
   }
 
   const anyOn = metas.some((m) => enabled[m.id]);
@@ -322,8 +365,9 @@ export function ExtraLayersPanel({ scene }: Props) {
         ref={buttonRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
-        title={`Federated data layers (${metas.length} available, ${onCount} on)`}
-        aria-label="Extra federated layers"
+        title={t("layers.button.title", { total: metas.length, on: onCount })}
+        aria-label={t("layers.button.aria")}
+        aria-haspopup="dialog"
         aria-expanded={open}
         className={`pointer-events-auto inline-flex h-[30px] items-center gap-1.5 rounded-lg border px-2.5 font-mono text-xs backdrop-blur transition ${
           anyOn
@@ -332,7 +376,7 @@ export function ExtraLayersPanel({ scene }: Props) {
         }`}
       >
         <span aria-hidden>✨</span>
-        <span className="hidden md:inline">layers</span>
+        <span className="hidden md:inline">{t("layers.button")}</span>
         {onCount > 0 && (
           <span className="rounded-sm bg-violet-400/30 px-1 text-[10px] text-violet-50">
             {onCount}
@@ -340,26 +384,36 @@ export function ExtraLayersPanel({ scene }: Props) {
         )}
       </button>
 
+      {/* Live region — screen readers announce a "<layer> enabled/disabled" ping
+          for every toggle change. Off-screen, polite. */}
+      <span className="sr-only" role="status" aria-live="polite">
+        {announce}
+      </span>
       {open && (
         <div
           ref={popoverRef}
-          className="pointer-events-auto absolute right-0 top-9 z-30 w-[min(420px,94vw)] max-h-[min(560px,80vh)] overflow-y-auto rounded-xl border border-white/10 bg-space-950/95 p-3 shadow-2xl backdrop-blur"
+          className={cn(
+            "pointer-events-auto absolute right-0 top-9 z-30 w-[min(420px,94vw)] max-h-[min(560px,80vh)] overflow-y-auto p-3",
+            RADIUS.lg,
+            PANEL.elevated,
+          )}
           role="dialog"
-          aria-label="Federated data layers"
+          aria-modal="true"
+          aria-label={t("layers.title")}
         >
           <div className="mb-2 flex items-baseline justify-between gap-3">
             <div>
-              <div className="font-display text-sm text-white/95">
-                Federated data
+              <div className={cn(TEXT.display, "text-sm")}>
+                {t("layers.title")}
               </div>
-              <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/40">
-                {metas.length} overlays · {onCount} on
+              <div className={cn(TEXT.label, "text-white/65")}>
+                {t("layers.subtitle", { count: metas.length, on: onCount })}
               </div>
             </div>
             <button
               type="button"
               onClick={() => setOpen(false)}
-              aria-label="Close"
+              aria-label={t("common.close")}
               className="rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[10px] text-white/60 hover:bg-white/10 hover:text-white"
             >
               ✕
@@ -368,36 +422,28 @@ export function ExtraLayersPanel({ scene }: Props) {
 
           {metas.length === 0 && (
             <div className="rounded-md border border-amber-400/30 bg-amber-400/10 p-2 font-mono text-[11px] text-amber-200">
-              Scene not ready yet. Try again in a moment.
+              {t("layers.empty")}
             </div>
           )}
 
           {metas.length > 0 && (
-            <div
-              role="tablist"
-              aria-label="Layer groups"
-              className="mb-2 flex flex-wrap gap-1 border-b border-white/5 pb-2"
-            >
+            <TabList label="Layer groups">
               {LAYER_TABS.map((tab) => {
                 const bucket = tabBuckets.get(tab.id) ?? [];
                 if (bucket.length === 0) return null;
                 const tabOnCount = bucket.filter((m) => enabled[m.id]).length;
                 const isActive = tab.id === activeTab;
                 return (
-                  <button
+                  <Tab
                     key={tab.id}
-                    type="button"
-                    role="tab"
-                    aria-selected={isActive}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 font-mono text-[10px] uppercase tracking-[0.15em] transition ${
-                      isActive
-                        ? "border-violet-400/50 bg-violet-400/15 text-violet-100"
-                        : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
-                    }`}
+                    id={`extra-layer-tab-${tab.id}`}
+                    aria-controls={`extra-layer-tabpanel-${tab.id}`}
+                    tabIndex={isActive ? 0 : -1}
+                    active={isActive}
+                    onSelect={() => setActiveTab(tab.id)}
+                    icon={tab.icon}
                   >
-                    <span aria-hidden>{tab.icon}</span>
-                    <span>{tab.label}</span>
+                    <span>{tabLabel(tab.id)}</span>
                     <span
                       className={`rounded-sm px-1 text-[9px] ${
                         tabOnCount > 0
@@ -407,13 +453,18 @@ export function ExtraLayersPanel({ scene }: Props) {
                     >
                       {tabOnCount}/{bucket.length}
                     </span>
-                  </button>
+                  </Tab>
                 );
               })}
-            </div>
+            </TabList>
           )}
 
-          <ul className="space-y-1.5">
+          <ul
+            className="space-y-1.5"
+            role="tabpanel"
+            id={`extra-layer-tabpanel-${activeTab}`}
+            aria-labelledby={`extra-layer-tab-${activeTab}`}
+          >
             {activeMetas.map((meta) => {
               const on = enabled[meta.id] === true;
               const isLoading = loading.has(meta.id);
@@ -459,16 +510,16 @@ export function ExtraLayersPanel({ scene }: Props) {
                             className="inline-flex items-center gap-0.5 rounded-full border border-amber-400/40 bg-amber-400/15 px-1.5 py-[1px] font-mono text-[9px] uppercase tracking-[0.15em] text-amber-200"
                           >
                             <span aria-hidden>⚠</span>
-                            synthetic
+                            {t("layers.synthetic")}
                           </span>
                         )}
                         {isLoading && (
                           <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-violet-200/80">
-                            loading…
+                            {t("layers.loading")}
                           </span>
                         )}
                       </div>
-                      <div className="mt-0.5 font-mono text-[10px] leading-snug text-white/55">
+                      <div className="mt-0.5 font-mono text-[10px] leading-snug text-white/70">
                         {meta.description}
                       </div>
                       {meta.warning && (
@@ -476,7 +527,20 @@ export function ExtraLayersPanel({ scene }: Props) {
                           ⚠ {meta.warning}
                         </div>
                       )}
-                      <div className="mt-1 font-mono text-[9px] uppercase tracking-[0.2em] text-white/35">
+                      {failed[meta.id] && (
+                        <div
+                          role="alert"
+                          className="mt-1 rounded border border-rose-400/40 bg-rose-400/10 px-1.5 py-1 font-mono text-[10px] text-rose-100"
+                        >
+                          <div className="font-semibold text-rose-200">
+                            {failed[meta.id]?.title}
+                          </div>
+                          <div className="text-rose-100/85">
+                            {failed[meta.id]?.body}
+                          </div>
+                        </div>
+                      )}
+                      <div className="mt-1 font-mono text-[9px] uppercase tracking-[0.2em] text-white/65">
                         {meta.attribution}
                       </div>
                     </div>
@@ -486,8 +550,8 @@ export function ExtraLayersPanel({ scene }: Props) {
             })}
           </ul>
 
-          <div className="mt-2 border-t border-white/5 pt-2 text-right font-mono text-[9px] uppercase tracking-[0.25em] text-white/35">
-            Esc to close
+          <div className="mt-2 border-t border-white/5 pt-2 text-right font-mono text-[9px] uppercase tracking-[0.25em] text-white/65">
+            {t("layers.escClose")}
           </div>
         </div>
       )}

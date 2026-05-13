@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Vector3 } from "three";
 import { type Favorite, removeFavorite } from "../favorites/favorites-store";
+import { EmptyState } from "./EmptyState";
 
 /**
  * ★ Favorites menu — opens a dropdown of saved sky targets.
@@ -58,6 +59,10 @@ export function FavoritesMenu({ favorites, onSelect, onChange }: Props) {
             : "border-amber-400/30 bg-amber-400/10 text-amber-300/80 hover:bg-amber-400/20"
         }`}
         title="Saved favorites"
+        aria-label={`Saved favorites (${favorites.length})`}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls="favorites-listbox"
       >
         <span className="md:hidden">★</span>
         <span className="hidden md:inline">★ {favorites.length}</span>
@@ -65,19 +70,33 @@ export function FavoritesMenu({ favorites, onSelect, onChange }: Props) {
 
       {open && (
         <div className="absolute right-0 top-full z-30 mt-2 w-[min(360px,90vw)] overflow-hidden rounded-xl border border-white/10 bg-space-950/95 backdrop-blur">
-          <div className="border-b border-white/5 px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-white/40">
+          <div className="border-b border-white/5 px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-white/65">
             saved · {favorites.length}
           </div>
           {favorites.length === 0 ? (
-            <div className="px-3 py-3 text-xs text-white/40">
-              Click any sky object → tap ☆ to save.
+            <div className="p-3">
+              <EmptyState
+                icon="✦"
+                title="Star anything you love"
+                body="Click any sky object, then tap ☆ to drop it here. Favorites live in your browser — nothing is ever uploaded."
+                tone="amber"
+                density="compact"
+                cta={{ label: "Browse the sky", onClick: () => setOpen(false) }}
+              />
             </div>
           ) : (
-            <ul className="max-h-[60vh] overflow-y-auto">
+            <ul
+              className="max-h-[60vh] overflow-y-auto"
+              id="favorites-listbox"
+              role="listbox"
+              aria-label="Saved favorites"
+            >
               {favorites.map((f) => (
                 <li
                   key={f.id}
                   className="flex items-center justify-between gap-2 border-b border-white/5 px-3 py-2 last:border-b-0 hover:bg-white/[0.04]"
+                  role="option"
+                  aria-selected="false"
                 >
                   <button
                     type="button"
@@ -87,7 +106,7 @@ export function FavoritesMenu({ favorites, onSelect, onChange }: Props) {
                     <div className="truncate font-display text-sm text-white">
                       {f.name}
                     </div>
-                    <div className="truncate font-mono text-[10px] text-white/40">
+                    <div className="truncate font-mono text-[10px] text-white/65">
                       {KIND_HINT[f.type] ?? f.type} · {f.raDeg.toFixed(2)}° /{" "}
                       {f.decDeg.toFixed(2)}°
                     </div>

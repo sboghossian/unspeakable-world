@@ -23,8 +23,25 @@ import { Group } from "three";
 import type { Object3D } from "three";
 
 import { log } from "../../lib/logger";
+import { getProceduralGalaxyDetail } from "../../lib/quality";
 import { GALAXY_CATALOG, type GalaxyRow } from "./data/galaxy-catalog";
 import { GalaxyMesh } from "./galaxy-mesh";
+
+/**
+ * Catalog-row cap per procedural-galaxy detail bucket. `"off"` skips the
+ * mount entirely (no meshes, no GPU upload), `"low"`/`"medium"`/`"high"`
+ * truncate the (curated, brightness-ordered) catalog to keep the GL state
+ * machine cheap on low-tier hardware.
+ *
+ * Bucket is set at mount time. A runtime quality change requires a layer
+ * re-mount (the registry handles this via `dispose()`+ re-load on toggle).
+ */
+const DETAIL_CAPS: Record<"off" | "low" | "medium" | "high", number> = {
+  off: 0,
+  low: 10,
+  medium: 25,
+  high: 40,
+};
 
 /** Public layer modes the registry advertises this module for. */
 export const LAYER_META = {
@@ -145,18 +162,29 @@ export function mountLayer(opts: MountOpts): LayerHandle {
   const field = new GalaxyMorphologyField();
   opts.parent.add(field.group);
 
-  // Catalogue is static, no async fetch — build immediately.
-  try {
-    field.build(GALAXY_CATALOG);
-    log.info(
-      "[galaxies-procedural]",
-      `built ${GALAXY_CATALOG.length} procedural galaxy meshes`,
-    );
-  } catch (err) {
-    log.warn("[galaxies-procedural]", "build failed", err);
+  // Quality preset gates how many catalog rows we instantiate. `"off"`
+  // → no meshes at all (we still return a no-op handle so the registry
+  // doesn't choke). Caps preserve the brightness-ordered prefix of the
+  // catalog so the first N rows are the most recognisable galaxies.
+  const detail = getProceduralGalaxyDetail();
+  const cap = DETAIL_CAPS[detail];
+
+  if (cap > 0) {
+    const slice = GALAXY_CATALOG.slice(0, cap);
+    try {
+      field.build(slice);
+      log.info(
+        "[galaxies-procedural]",
+        `built ${slice.length}/${GALAXY_CATALOG.length} procedural galaxy meshes (detail=${detail})`,
+      );
+    } catch (err) {
+      log.warn("[galaxies-procedural]", "build failed", err);
+    }
+  } else {
+    log.info("[galaxies-procedural]", "skipped (detail=off)");
   }
 
-  field.setVisible(opts.enabled && isSupportedMode(opts.mode));
+  field.setVisible(opts.enabled && isSupportedMode(opts.mode) && cap > 0);
 
   let currentMode = opts.mode;
   let enabled = opts.enabled;
@@ -164,7 +192,7 @@ export function mountLayer(opts: MountOpts): LayerHandle {
 
   const applyVisibility = (): void => {
     if (disposed) return;
-    field.setVisible(enabled && isSupportedMode(currentMode));
+    field.setVisible(enabled && isSupportedMode(currentMode) && cap > 0);
   };
 
   return {

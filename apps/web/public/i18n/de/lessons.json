@@ -138,8 +138,624 @@
           "text": "Der nächste Halt nach Neptun ist der Kuiper-Gürtel, dann der Oort-Cloud, dann vier Lichtjahre leerer Raum bis zur nächsten Sterne. Wir leben in einem sehr, sehr großen Nachbarschaft."
         }
       ]
+    },
+    {
+      "id": "keplers-laws",
+      "title": "Keplers Gesetze des planetarischen Bewegungs",
+      "summary": "Drei Regeln — abgeleitet aus Tycho-Daten — die Himmel in Geometrie verwandelten.",
+      "ageTier": "teen",
+      "durationMin": 9,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Für Jahrzehnte maß Tycho Brahe planetare Positionen von einer dänischen Insel aus mit bloßem Auge auf eine Genauigkeit von einer Bogensekunde. Als er 1601 starb, hinterließ er seinem Assistenten Johannes Kepler eine riesige Datenmenge. Kepler verbrachte acht Jahre damit, sich mit der Bahn des Mars abzumühen, bevor er es sah: Planeten bewegen sich nicht in Kreisen."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Mars"
+        },
+        {
+          "kind": "narrate",
+          "text": "Gesetz 1 — Jedes Planet orbitiert die Sonne in einer Ellipse, mit der Sonne an einem Fokus. Mars ist der am weitesten von der Sonne entfernte der hellen Planeten: Seine Entfernung zur Sonne variiert um 42 Millionen km zwischen Perihelion und Aphelion. Kreise waren ein 2.000 Jahre alter Vorurteil. Ellipsen passen zu den Daten."
+        },
+        {
+          "kind": "quiz",
+          "question": "Welche Form beschreibt am besten einen planetaren Orbit?",
+          "options": [
+            "Kreis",
+            "Parabel",
+            "Ellipse",
+            "Helix"
+          ],
+          "answerIndex": 2,
+          "explanation": "Keplers erste Gesetz: Planeten beschreiben Ellipsen mit dem Sonnenmittelpunkt an einem Fokus. Ein Kreis ist ein besonderer Fall, in dem sich beide Foci decken, aber reale Bahnen sind immer mindestens leicht elliptisch."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Earth"
+        },
+        {
+          "kind": "narrate",
+          "text": "Gesetz 2 — eine Linie, die vom Sonnenzentrum zu einem Planeten gezogen wird, schneidet in gleichen Zeiträumen gleich große Flächen ab. Die Erde bewegt sich im Mittel mit etwa 30 km/s, ist aber im Januar bei der Perihelkonjunktion etwa 1 km/s schneller als im Juli bei der Aphelkonjunktion. Planeten beschleunigen, wenn sie sich der Sonne nähern, und verlangsamen, wenn sie sich entfernen. Es ist die Schwerkraft, die ihre Rechnung aufstellt."
+        },
+        {
+          "kind": "quiz",
+          "question": "Wenn ein Planet gleich große Flächen in gleichen Zeiträumen abdeckt, wann bewegt er sich am schnellsten?",
+          "options": [
+            "Aphelion",
+            "Perihelion",
+            "Mittelpunkt der Bahn",
+            "Alle gleich schnell"
+          ],
+          "answerIndex": 1,
+          "explanation": "At perihelion the planet is closest to the Sun, so the radial line is shortest — to sweep the same area, the planet must cover more arc length, i.e. move faster."
+        },
+        {
+          "kind": "narrate",
+          "text": "Gesetz 3 — das Quadrat eines Planetenorbites ist proportional zur dritten Potenz seines halben großen Halbachses. T² ∝ a³. Verdoppelt man die Entfernung eines Planeten vom Sonnen und sein Jahr wird um 2,83× länger. Dieses Gesetz hat Newton später aus der Schwerkraft selbst abgeleitet, 1687."
+        },
+        {
+          "kind": "quiz",
+          "question": "Wenn Planet A 4× weiter vom Sonnen entfernt ist als Planet B, beträgt die Umlaufzeit von Planet A ungefähr…",
+          "options": [
+            "4-mal so lang",
+            "8-mal so lang",
+            "16-mal so lang",
+            "64-mal so lang"
+          ],
+          "answerIndex": 1,
+          "explanation": "T² = a³, also T = a^(3/2). Mit a = 4, T = 4^1,5 = 8. Die Entfernung verdoppelt sich; die Zeit nimmt achtmal länger in Anspruch."
+        },
+        {
+          "kind": "narrate",
+          "text": "Kepler wusste nie, warum die Gesetze funktionierten – das erfuhr Newton und die umgekehrte Quadratgesetzmäßigkeit der Schwerkraft. Aber die drei Regeln, die er aus Tycho's Zahlen extrahierte, sind bis heute exakt und jede Raumsonde, die wir je gestartet haben, fliegt auf ihnen."
+        }
+      ]
+    },
+    {
+      "id": "why-planets-differ",
+      "title": "Warum alle Planeten nicht gleich sind",
+      "summary": "Eine Durchschnittstour von Merkur bis Neptun — und warum die Zusammensetzung alles entscheidet.",
+      "ageTier": "teen",
+      "durationMin": 7,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Die Planeten bildeten sich aus demselben Gas- und Staubring vor 4,6 Milliarden Jahren, aber sie sehen allesamt anders aus. Der Grund ist einfach: das innere Sonnensystem war zu heiß für Eis, und das äußere Sonnensystem war kalt genug, um Wasserstoff zu speichern. Öffnen Sie das Querschnittspanel, während wir uns nähern – die Schichten erzählen die Geschichte."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Mercury"
+        },
+        {
+          "kind": "narrate",
+          "text": "Mercury — ein kleiner felsiger Planet, 4.880 km im Durchmesser, mit einem beeindruckend großen Eisenkern, der 85 % seines Radius einnimmt. Möglicherweise ist er das Überbleibsel eines Riesenimpakts, der die leichtere Kruste abgestreift hat. Keine Atmosphäre, kein Wetter, nur Krater und 600°C-Tages-Nacht-Schwankungen."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Earth"
+        },
+        {
+          "kind": "narrate",
+          "text": "Erde — felsig, aber mit einem flüssigen Wassermeere auf der Oberfläche und einem geschmolzenen Eisen-Nickel-Außenkern, der sich wie ein Dynamo dreht und einen starken magnetischen Feld erzeugt, das stark genug ist, um den Sonnenwind abzulenken. Ohne dieses Feld wäre die Atmosphäre abgestreift worden. Ohne die Atmosphäre wäre es uns nicht möglich gewesen."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Jupiter"
+        },
+        {
+          "kind": "narrate",
+          "text": "Jupiter — 318 Erdmassen, aber hauptsächlich Wasserstoff und Helium. Der Druck drinnen ist so extrem, dass 10.000 km tief, Wasserstoff metallisch wird und Elektrizität leitet. Diese schwappte Metall erzeugt ein Magnetfeld 20.000× stärker als Erdmagnetfeld. Es gibt ein kleines, verdünntes Kern irgendwo drin, aber Jupiter ist im Grunde ein verfehlter Stern."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Neptune"
+        },
+        {
+          "kind": "narrate",
+          "text": "Neptun — ein Eisschirm. Der Begriff 'Eis' in der Planetenforschung bezieht sich auf Wasser, Methan und Ammoniak, aber bei diesen Drücken und Temperaturen existieren sie als heißer ionischer Fluid — weder fest noch gasförmig. Die blaue Farbe von Neptun entsteht durch Methan in der oberen Atmosphäre, das rote Licht absorbiert. Die Windgeschwindigkeiten erreichen bis zu 2.000 km/h, die höchsten im Sonnensystem."
+        },
+        {
+          "kind": "quiz",
+          "question": "Was gibt Gasriesen ihre geschichtete Struktur aus metallischem Wasserstoff, molekularem Wasserstoff und Atmosphäre?",
+          "options": [
+            "Die Temperatur allein",
+            "Die Druck allein",
+            "Druck und Zusammensetzung",
+            "Magnetfelder"
+          ],
+          "answerIndex": 2,
+          "explanation": "Wasserstoff verhält sich bei verschiedenen Drücken unterschiedlich — molekular an der Oberfläche, metallisch tief drinnen. Kombiniert mit dem Mischungsverhältnis des Planeten aus H, He und Eismassen, bestimmt sich dieses Druckprofil jede Schicht."
+        },
+        {
+          "kind": "narrate",
+          "text": "Gleiches Ausgangsmaterial, völlig unterschiedliche Ergebnisse — weil die Entfernung von der Sonne entschied, was sich kondensieren konnte, und die Masse entschied, was sich halten konnte. Planetare Vielfalt ist Geometrie plus Chemie."
+        }
+      ]
+    },
+    {
+      "id": "moons-rings-asteroids",
+      "title": "Mond, Ringe, Asteroiden — die Reste",
+      "summary": "Eine Tour durch die kleinen Körper des Sonnensystems — und warum Hollywood über Asteroidengürtel lügt.",
+      "ageTier": "teen",
+      "durationMin": 7,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Planeten erhalten die Schlagzeilen, aber das Sonnensystem besteht hauptsächlich aus Resten — Monden, Ringen, Asteroiden, Kometen. Sie sind dort, wo die wahre Geschichte erhalten bleibt, weil sie zu klein sind, um wieder geschmolzen zu sein."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Saturn"
+        },
+        {
+          "kind": "narrate",
+          "text": "Saturns Ringe bestehen zu 99% aus Wasserstoffeis und 1% aus Staub, verbreitet über 280.000 km — aber sie sind nur etwa 10 Meter dick. Wenn man die Ringe auf die Größe eines Fußballfeldes skalierte, wären sie dünner als ein Blatt Papier. Sie könnten die Überreste eines Mondes sein, der zu nah gekommen ist und sich selbst auseinandergerissen hat."
+        },
+        {
+          "kind": "scene",
+          "hash": "#solar?focus=Jupiter"
+        },
+        {
+          "kind": "narrate",
+          "text": "Jupiter hat 95 bekannte Monde, aber die vier großen — Io, Europa, Ganymede, Callisto — wurden von Galileo 1610 entdeckt und zerstörten die geozentrische Vorstellung über Nacht. Io ist das am meisten vulkanisch aktive Körper im Sonnensystem, zusammengedrückt durch gezeitenkräfte. Europa hat ein subsolares Ozean mit mehr flüssigem Wasser als alle Ozeane auf der Erde kombiniert."
+        },
+        {
+          "kind": "narrate",
+          "text": "Zwischen Mars und Jupiter liegt der Asteroidengürtel – etwa eine Million Felsen größer als 1 km. In Filmen fahren Schiffe durch ihn hindurch. In der Realität beträgt der durchschnittliche Abstand zwischen Asteroiden etwa eine Million Kilometer. Sonderfahrzeuge fliegen routinemäßig durch und finden absolut nichts für Tausende von Kilometern in jede Richtung."
+        },
+        {
+          "kind": "narrate",
+          "text": "Außerhalb von Neptun liegt der Kuiper-Gürtel — ein Ring aus eisigen Körpern, darunter Pluto, Eris, Makemake und Haumea. Dies sind die Überreste des Scheibens, die nie zu einem Planeten zusammengefunden haben. Kurzperiodische Kometen — alles mit einer Umlaufzeit unter 200 Jahren — stammen aus diesem Bereich. Halley's Komet ist einer von ihnen."
+        },
+        {
+          "kind": "quiz",
+          "question": "Wenn Sie sich auf einem typischen Hauptscheideasteroiden aufhielten, wie viele andere Asteroiden würden Sie typischerweise mit bloßem Auge über Ihrem Kopf sehen?",
+          "options": [
+            "Tausende",
+            "Hunderte",
+            "Dutzende",
+            "Keine"
+          ],
+          "answerIndex": 3,
+          "explanation": "Der Gürtel ist enorm und die Asteroiden sind winzig — die durchschnittliche Entfernung beträgt etwa eine Million Kilometer. Sie würden Sterne und die Sonne sehen, aber keine anderen Asteroiden. Hollywood lügt."
+        },
+        {
+          "kind": "narrate",
+          "text": "Überall, wohin wir ein Raumschiff richten, finden wir mehr kleine Körper. Sie sind das ungelöste Problem der Planetenentstehung und der beste Aufzeichnungsstoff, den wir über die Zusammensetzung des frühen Sonnensystems haben."
+        }
+      ]
+    },
+    {
+      "id": "sun-is-a-star",
+      "title": "Die Sonne ist ein Stern. Sind andere Sterne wie sie?",
+      "summary": "Ein Feldzug auf dem Hertzsprung-Russell-Diagramm von einem roten Riesenstern zu einem blauen Hauptreihenstern.",
+      "ageTier": "teen",
+      "durationMin": 8,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Die Sonne sieht besonder aus, weil wir drei Lichtminuten von ihr entfernt sind. Aus jedem anderen Sternensystem wäre unsere Sonne nur ein gelber Punkt – ein perfekt normaler G2V-Hauptreihenstern. Was sieht die restliche Bevölkerung also so aus?"
+        },
+        {
+          "kind": "scene",
+          "hash": "#sky?ra=86.13&dec=-2.49"
+        },
+        {
+          "kind": "narrate",
+          "text": "Betelgeuse — die rote Schulter des Orion, ein M-Typ-Rotriesen. Es ist etwa 700-mal so groß wie der Radius der Sonne. Wenn man es mit der Sonne austauschen würde, würde seine Oberfläche den Orbit des Mars überschreiten. Es ist nur 10 Millionen Jahre alt, aber bereits fast ausgetrocknet, und es wird吹upernova in den nächsten 100.000 Jahren — möglicherweise morgen."
+        },
+        {
+          "kind": "scene",
+          "hash": "#sky?ra=78.63&dec=8.20"
+        },
+        {
+          "kind": "narrate",
+          "text": "Bellatrix — der linke Schulter des Orion, ein B2 III blauer Riese. Oberflächentemperatur etwa 22.000 K, sechsmal heißer als die Sonne, und 6.400-mal so leuchtend. Massesterne verbrennen ihren Wasserstoff furchtbar: Bellatrix ist nur 25 Millionen Jahre alt und ist bereits dem Hauptdurchlauf entgangen. Lebe schnell, sterbe jung."
+        },
+        {
+          "kind": "scene",
+          "hash": "#sky?ra=101.27&dec=-16.72"
+        },
+        {
+          "kind": "narrate",
+          "text": "Sirius — der helle Stern in unserem Himmel, nur 8,6 Lichtjahre entfernt. Ein A1V-Hauptreihenstern, zweimal so schwer wie die Sonne, 25-mal so hell, weißglühend bei 9.940 K. Es hat auch einen kleinen Begleiter: Sirius B, ein Weiß Zwerg der Größe der Erde mit der Masse der Sonne. Der Endzustand von Sternen wie unserem."
+        },
+        {
+          "kind": "quiz",
+          "question": "Welcher Typ von Stern hat das KURZESTE Hauptreihenlebensdauer?",
+          "options": [
+            "Rote Zwerge",
+            "Gelbe Sterne wie die Sonne",
+            "Blaue O-Typ-Giganten",
+            "Weiße Zwerge"
+          ],
+          "answerIndex": 2,
+          "explanation": "Eine höhere Masse bedeutet eine höhere KernTemperatur und -Druck, so dass die Fusion viel schneller abläuft. Ein 50-solar-massiger O-Typ-Gigant verbrennt sich in einigen Millionen Jahren auf; ein roter Zwerg kann mit Trillionen leben."
+        },
+        {
+          "kind": "narrate",
+          "text": "Plotte Sterne nach Farbe gegen Helligkeit und sie fallen auf eine diagonale Bahn — die Hauptsequenz —, die seit einem Jahrhundert die Wirbelsäule der stellaren Astrophysik ist. Die Sonne sitzt bescheiden in der Mitte, und sie hat noch weitere fünf Milliarden Jahre zu gehen."
+        }
+      ]
+    },
+    {
+      "id": "nearest-star",
+      "title": "Wie weit entfernt ist die nächste Sterne?",
+      "summary": "Proxima Centauri ist 4,24 Lichtjahre entfernt. Hier bedeutet das tatsächlich.",
+      "ageTier": "teen",
+      "durationMin": 6,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Die Sonne ist ein Stern. Es gibt etwa 400 Milliarden andere in unserer Galaxie. Die nächste ist Proxima Centauri – ein kleiner roter Zwerg, nur 12% der Sonnenmasse, derzeit 4,24 Lichtjahre entfernt."
+        },
+        {
+          "kind": "scene",
+          "hash": "#sky?ra=217.42&dec=-62.68"
+        },
+        {
+          "kind": "narrate",
+          "text": "Proxima ist ein M5,5Ve-Rotdwarf, viel zu schwach, um mit bloßem Auge zu sehen, trotzdem ist sie unser nächster stellarer Nachbar. 2016 fanden Astronomen einen Planeten um sie herum – Proxima b – mit etwa Erdmasse, im habitablen Bereich, obwohl wahrscheinlich tidally gelockt und von stellaren Flächenfluten umgeben."
+        },
+        {
+          "kind": "narrate",
+          "text": "4,24 Lichtjahre bedeutet, dass sich das Licht selbst — das schnellste Ding im Universum — 4,24 Jahre mit der Reise aufhält. Voyager 1, das schnellste Raumfahrzeug, das Menschen je gebaut haben, bewegt sich mit 17 km/s. Bei dieser Geschwindigkeit würde es Voyager etwa 73.000 Jahre dauern, Proxima zu erreichen. Wir sind als Spezies noch nicht so lange existent."
+        },
+        {
+          "kind": "narrate",
+          "text": "Hier ist die brutale Skala: die Entfernung vom Sonnenzentrum zu Neptun beträgt 30 AE. Die Entfernung vom Sonnenzentrum zu Proxima beträgt 268.000 AE. Der Abstand zwischen benachbarten Sternen ist etwa 1.000-mal der Entfernung zwischen der Sonne und Neptun. Sterne in einer Galaxie sind nicht dicht beieinander. Sie sind Flecken von Licht in einem Ozean."
+        },
+        {
+          "kind": "quiz",
+          "question": "Wenn die Sonne die Größe eines Basketball hätte, wie weit entfernt wäre Proxima Centauri auf derselben Skala?",
+          "options": [
+            "10 m",
+            "1 km",
+            "100 km",
+            "6.300 km"
+          ],
+          "answerIndex": 3,
+          "explanation": "Ein Basketball-Größe-Sonnen hat die Erde etwa 25 m entfernt. Auf derselben Skala liegt Proxima etwa 6.300 km entfernt – etwa die Entfernung von New York nach Paris. Das ist nur auf die nächste Zahl gerundet."
+        },
+        {
+          "kind": "narrate",
+          "text": "Jedes Stern, den Sie in der Nacht sehen, ist mindestens so weit entfernt. Die meisten sind viel, viel weiter entfernt. Der Nachthimmel ist ein Schnappschuss von Licht, das von seinem Ursprungjahre, Jahrhunderten oder Jahrtausenden her gewonnen wurde."
+        }
+      ]
+    },
+    {
+      "id": "constellations-human-invention",
+      "title": "Sternbilder sind eine menschliche Erfindung",
+      "summary": "Orions Sterne sehen freundlich aus — bis man fragt, wie weit jeder einzelne tatsächlich entfernt ist.",
+      "ageTier": "teen",
+      "durationMin": 6,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Schalten Sie das Sternbild-Überlagerungsmodus ein und der Himmel wird in Formen — ein Jäger, ein Bär, eine Schwanenfrau. Jede Kultur hat ihre eigenen gezeichnet. Hier ist das Geheimnis: keine dieser Formen ist physisch real."
+        },
+        {
+          "kind": "scene",
+          "hash": "#viewer?ra=83.82&dec=-1.20&fov=30&c=1"
+        },
+        {
+          "kind": "narrate",
+          "text": "Dies ist Orion — das auffälligste Sternbild im nördlichen Himmel. Die Gürtelsterne, seine Schultern, sein Schwert — sieben sichtbare Sterne mit Linien, die Menschen zeichneten. Schauen Sie sich jetzt an, wie weit jeder wirklich entfernt ist."
+        },
+        {
+          "kind": "scene",
+          "hash": "#sky?ra=88.79&dec=7.41"
+        },
+        {
+          "kind": "narrate",
+          "text": "Betelgeuse — der rote Schulter — befindet sich 642 Lichtjahre von uns entfernt. Bellatrix, die blauere Schulter rechts neben ihm am Himmel, ist nur 250 Lichtjahre entfernt. Sie sind durch nahezu 400 Lichtjahre in unserer Sichtlinie getrennt. Sie sind keine Nachbarn; sie sehen nur benachbart aus, weil wir sie von einem bestimmten Winkel im Galaxien aus betrachten."
+        },
+        {
+          "kind": "narrate",
+          "text": "Fliegen Sie zu jedem anderen Sternsystem und Orion verschwindet. Das Muster existiert nur von der Erde aus. Sternbilder sind Koordinaten, die wir auf dem Himmelsschilder zeichneten – nützlich für die Navigation, schön als Mythologie, aber keine physischen Gruppen. Die Sterne innerhalb eines sind nicht mehr miteinander verwandt als drei zufällige Menschen, die sich auf einer Stadtstraße in Reihe aufstellen."
+        },
+        {
+          "kind": "quiz",
+          "question": "Warum ist ein Sternbild nicht ein \"echtes\" physikalisches Gruppe von Sternen?",
+          "options": [
+            "Die Sterne sind zu schwach, um miteinander verwandt zu sein",
+            "Die Sterne befinden sich in einem völlig unterschiedlichen Abstand von uns",
+            "Sternbilder enthalten nur einen Stern jedes",
+            "Die Sterne bewegen sich zu schnell, um gruppiert zu werden"
+          ],
+          "answerIndex": 1,
+          "explanation": "Ein Sternbild ist ein 2D-Muster, das auf den Himmel projiziert wird. Die Sterne innerhalb davon befinden sich in völlig unterschiedlichen Entfernungen – Betelgeuse und Bellatrix unterscheiden sich etwa um ~400 Lichtjahre entlang unserer Sichtlinie. Aus jedem anderen Standpunkt im Galaxieninneren löst sich das Muster auf."
+        },
+        {
+          "kind": "narrate",
+          "text": "Die Formen sind unsere. Die Sterne sind einfach dort, wo sie sind."
+        }
+      ]
+    },
+    {
+      "id": "milky-way-place-we-live",
+      "title": "Die Milchstraße ist der Ort, an dem wir leben",
+      "summary": "Ziehen Sie sich vom Sonnen zurück, bis unsere ganze Galaxie in den Rahmen passt – und treffen Sie den Schwarzen Loch im Zentrum.",
+      "ageTier": "teen",
+      "durationMin": 7,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Alles, was wir bisher betrachtet haben – die Planeten, die Sonne, die wenigen hundert Sterne, die man benennen kann – passt in einen winzigen Fleck einer Galaxie. Zeit, um auszuweiten."
+        },
+        {
+          "kind": "scene",
+          "hash": "#galactic"
+        },
+        {
+          "kind": "narrate",
+          "text": "Dies ist die Milchstraße: ein spiralgeteilter Barre mit etwa 100.000 Lichtjahren Durchmesser, mit etwa 100 bis 400 Milliarden Sternen. Wir sitzen 26.000 Lichtjahre vom Zentrum entfernt, in einer kleinen spiraligen Erscheinung namens Orion-Spur – ein ruhiger Vorort zwischen den Sagittarius- und Perseus-Arm."
+        },
+        {
+          "kind": "scene",
+          "hash": "#sky?ra=266.4168&dec=-29.0078"
+        },
+        {
+          "kind": "narrate",
+          "text": "Am Zentrum steht Sagittarius A* — ein Supermassenstern mit 4,3 Millionen Sonnenmassen, die in einem Bereich kleiner als Merkur&#39;s Umlauf komprimiert sind. Wir können es in sichtbarem Licht nicht sehen, weil 26.000 Lichtjahre galaktisches Staub im Weg sitzt, aber Röntgen- und Infrarotstrahlung schneiden direkt durch. Das Event Horizon Telescope hat seine Schattenabbildung 2022 erstellt."
+        },
+        {
+          "kind": "narrate",
+          "text": "Jedes Stern, den Sie mit bloßem Auge sehen können, befindet sich in diesem gleichen Diskus. Die schwache Lichtband, die Sie als 'Milchstraße' bezeichnen, auf einer dunklen Nacht ist der Diskus selbst, gesehen senkrecht von innen. Sie sehen wörtlich durch den Körper Ihrer eigenen Galaxie hinaus."
+        },
+        {
+          "kind": "quiz",
+          "question": "Wie viele Sterne enthält die Milchstraße ungefähr?",
+          "options": [
+            "1 Billion",
+            "100–400 Billionen",
+            "10 Billionen",
+            "1 Quadrillion"
+          ],
+          "answerIndex": 1,
+          "explanation": "Moderne Umfragen konvergieren auf 100–400 Milliarden Sterne, je nachdem, wie man kleine, rote Zwergsterne zählt. Die meisten sind viel zu schwach, um einzeln zu sehen – sie sind im diffusen Glanz des Diskus verborgen."
+        },
+        {
+          "kind": "narrate",
+          "text": "Eines der Galaxien ist erledigt. Rund zwei Billionen sind noch übrig."
+        }
+      ]
+    },
+    {
+      "id": "other-galaxies-milky-ways",
+      "title": "Andere Galaxien, andere Milchstraßen",
+      "summary": "Andromeda ist 2,5 Millionen Lichtjahre entfernt – und auf einem Kollisionskurs mit uns.",
+      "ageTier": "teen",
+      "durationMin": 6,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Die Milchstraße ist eine Galaxie unter etwa zwei Billionen in dem beobachtbaren Universum. Die nächste große Galaxie, Andromeda, M31, ist nahe genug, dass Sie sie mit bloßem Auge auf einer dunklen Nacht sehen können, als ein schwacher Fleck im Sternbild des gleichen Namens."
+        },
+        {
+          "kind": "scene",
+          "hash": "#sky?ra=10.6847&dec=41.2691"
+        },
+        {
+          "kind": "narrate",
+          "text": "Andromeda liegt 2,5 Millionen Lichtjahre entfernt. Die Photonen, die Ihr Auge treffen, wenn Ihr sie anblickt, verließen M31, als unsere Vorfahren Homo habilis waren, gerade dabei, Steinwerkzeuge zu bearbeiten. Alles, was in der geschriebenen menschlichen Geschichte jemals passiert ist, ist jünger als das Licht von diesem einen Galaxien."
+        },
+        {
+          "kind": "narrate",
+          "text": "M31 ist größer als die Milchstraße — etwa eine Billion Sterne — und es kommt uns entgegen. Andromeda bewegt sich in Richtung der Milchstraße mit 110 km/s. In 4,5 Milliarden Jahren werden sich die beiden Galaxien kollidieren, durch die Himmelskörper hindurchschleudern und innerhalb der nächsten Milliarde Jahre in eine einzelne elliptische Galaxie, die Astronomen bereits Milkomeda genannt haben."
+        },
+        {
+          "kind": "narrate",
+          "text": "Sorgen Sie sich nicht über stellare Kollisionen. Galaxien sind größtenteils leerer Raum — die Chance, dass zwei Sterne aufeinanderprallen, ist im Wesentlichen Null. Aber die Nachtssky ändert sich völlig. Der Himmel wird nicht mehr schwarz und sternbedeckt sein; er wird von einem anderen Galaxienring überzogen sein."
+        },
+        {
+          "kind": "quiz",
+          "question": "Wie lange dauert es, bis Licht von Andromeda uns erreicht?",
+          "options": [
+            "2,5 Jahre",
+            "2.500 Jahre",
+            "2,5 Millionen Jahre",
+            "25 Millionen Jahre"
+          ],
+          "answerIndex": 2,
+          "explanation": "Andromeda ist 2,5 Millionen Lichtjahre entfernt, also dauert es 2,5 Millionen Jahre, bis das Licht bei uns ankommt. Wenn man hinsieht, ist das ein wahrer Zeitreise-Effekt — man sieht es, wie es war, als unsere Gattung zum ersten Mal auf der Erde erschien."
+        },
+        {
+          "kind": "narrate",
+          "text": "Jede unscharfe Fleck in einer tiefen Teleskopbild ist ein weiterer Scheibe aus hundert Billionen Sonnen. Das Universum ist aus Galaxien aufgebaut wie ein Strand aus Sand."
+        }
+      ]
+    },
+    {
+      "id": "redshift-universe-past",
+      "title": "Das Universum hat eine Vergangenheit, die man sehen kann",
+      "summary": "Der Rotverschiebung wandelt Farbe in Entfernung um — und lässt uns 9 Milliarden Jahre in die Vergangenheit schauen.",
+      "ageTier": "teen",
+      "durationMin": 7,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Wenn eine Galaxie sich von uns entfernt, wird das Licht, das sie emittiert, auf dem Weg hierher gestreckt. Blaue Linien rücken nach rot. Je schneller sich die Galaxie entfernt, desto größer ist der Verschiebung. Astronomen nennen den Verhältnis z — und es ist, wie wir die Größe des Universums messen."
+        },
+        {
+          "kind": "scene",
+          "hash": "#sky?ra=187.278&dec=2.052"
+        },
+        {
+          "kind": "narrate",
+          "text": "Dies ist 3C 273, das erste Quasar, das jemals identifiziert wurde — Maarten Schmidt knackte 1963 seine Spektrallinien. Die Linien waren so weit in das Rot verschoben, dass nichts in der Nähe es erklären konnte. Die einzige Antwort war die Entfernung: 3C 273 liegt etwa 2,4 Milliarden Lichtjahren entfernt, in einer Galaxie, deren zentrales Schwarzes Loch Materie so gewaltig verdaut, dass es die Milchstraße um den Faktor vier Billionen überstrahlt."
+        },
+        {
+          "kind": "narrate",
+          "text": "Wir sehen 3C 273, wie sie 2,4 Milliarden Jahre alt war — als die Erde noch keine komplexen Zellen hatte und die Atmosphäre gerade erst mit Sauerstoff gefüllt wurde. Das Licht brauchte länger, um uns zu erreichen, als komplexes Leben auf diesem Planeten existiert."
+        },
+        {
+          "kind": "narrate",
+          "text": "Je größer der Rotverschiebung, desto weiter zurück schauen Sie. Der James Webb Space Telescope hat nun Galaxien bei z = 14 gefunden – Licht, das sie verlassen hat, als das Universum nur 290 Millionen Jahre alt war. Teleskope sind Zeitmaschinen, die nur in eine Richtung zeigen: rückwärts."
+        },
+        {
+          "kind": "quiz",
+          "question": "Was sagt der Rotverschiebungsindex z einer Galaxie direkt aus?",
+          "options": [
+            "Die Temperatur der Galaxie",
+            "Wie schnell es sich von uns entfernt",
+            "Das Alter der Galaxie",
+            "Die Masse der Galaxie"
+          ],
+          "answerIndex": 1,
+          "explanation": "Der Rotverschiebung ist eine Doppler-Messung: sie gibt die Abstands- Geschwindigkeit direkt an. Kombiniert mit dem Hubbleschen Gesetz (v ≈ H₀ × d), dasselbe Geschwindigkeitsmaß dann in eine Entfernung konvertiert — und die Entfernung, geteilt durch die Lichtgeschwindigkeit, konvertiert sich in einen Rückblickzeitpunkt."
+        },
+        {
+          "kind": "narrate",
+          "text": "Jeder Spektrum ist ein Fossil. Lies die Linien, und du liest die Geschichte des Kosmos."
+        }
+      ]
+    },
+    {
+      "id": "cosmic-web",
+      "title": "Das kosmische Netzwerk",
+      "summary": "Galaxien sind nicht verteilt – sie sammeln sich auf Filamenten, die durch gigantische leere Voids getrennt sind.",
+      "ageTier": "teen",
+      "durationMin": 7,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Wenn man zwei Billionen Galaxien zufällig im Weltraum verteilt, wäre der Himmel ein gleichmäßiger Nebel. Stattdessen klumpen sie in drei Dimensionen auf dünnen Schichten und Fäden zusammen, die durch riesige leere Regionen getrennt sind. Die Struktur hat einen Namen: das kosmische Netzwerk."
+        },
+        {
+          "kind": "scene",
+          "hash": "#universe"
+        },
+        {
+          "kind": "narrate",
+          "text": "Die größte einzelne Struktur, die wir kennen — die Sloan Great Wall — ist ein Filament aus Galaxienhaufen 1,4 Milliarden Lichtjahre lang. Die größte leere Region — der Boötes-Loch — ist 330 Millionen Lichtjahre groß und enthält nur etwa 60 Galaxien, wobei ein typischer Bereich dieser Größe zehntausend enthalten würde."
+        },
+        {
+          "kind": "narrate",
+          "text": "Wir haben diese Muster nicht entworfen. Sie wurden 380.000 Jahre nach dem Urknall als winzige Dichtestrukturen gesät — eins zu 100.000, aufgezeichnet im kosmischen Mikrowellenhintergrund — und durch Gravitation über 13,8 Milliarden Jahre verstärkt. Das Web, das Sie betrachten, ist die langsame Selbstassemblage des Universums."
+        },
+        {
+          "kind": "narrate",
+          "text": "And the threads of the web aren't made of stars. They're made of something we cannot see directly. Galaxies are just glowing markers stuck to the surface of vast invisible filaments — and those filaments are dark matter."
+        },
+        {
+          "kind": "quiz",
+          "question": "What dominates the mass of the cosmic web?",
+          "options": [
+            "Stars",
+            "Interstellar gas",
+            "Dark matter",
+            "Black holes"
+          ],
+          "answerIndex": 2,
+          "explanation": "Das Dunkle Materie macht etwa 85% aller Materie im Universum aus und etwa 27% seines gesamten Energiebudgets. Wir haben ein Dunklematerie-Teilchen noch nie direkt festgestellt — nur seine Gravitationswirkung auf Galaxien, auf Licht und auf die Form des Web selbst."
+        },
+        {
+          "kind": "narrate",
+          "text": "Alles, was du je gesehen hast, jedes Stern und jedes Galaxie, ist Dekoration auf einem Gerüst, das aus Dingen besteht, die man nicht sehen kann. Das sichtbare Universum ist die Schaumkrone auf einem viel dunkleren Ozean."
+        }
+      ]
+    },
+    {
+      "id": "how-we-know-m87",
+      "title": "Wie wir all dies wissen",
+      "summary": "Die erste Photographie eines Schwarzen Lochs — und das Jahr Arbeit, das es dauerte, sie zu machen.",
+      "ageTier": "teen",
+      "durationMin": 8,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Es ist gerechtfertigt zu fragen: wie weiß jemand eigentlich, was wahr ist über etwas, das 55 Millionen Lichtjahre entfernt ist? Hier ist ein Beispiel, von Anfang bis Ende."
+        },
+        {
+          "kind": "scene",
+          "hash": "#sky?ra=187.706&dec=12.391"
+        },
+        {
+          "kind": "narrate",
+          "text": "Dies ist M87* — der supermassive schwarze Loch im Zentrum der elliptischen Galaxie M87, im Virgo-Cluster. Es wiegt 6,5 Milliarden Sonnenmassen, mehr als 1.500× schwerer als das im Zentrum unserer eigenen Galaxie. Am 10. April 2019 veröffentlichte die Event Horizon Telescope-Kollaboration die erste Photographie seines Schattens."
+        },
+        {
+          "kind": "narrate",
+          "text": "Es handelt sich nicht um ein reales Foto im Sinne eines Kameraschalters. Die EHT besteht aus acht Radioteleskopen, die sich über der Erde von Hawaii bis Spanien bis Antarktis erstrecken – M87 gleichzeitig beobachten und ihre Signale zu einem synthetischen Antennengewicht kombinieren, das der Größe des Planeten entspricht. Die Technik heißt Very-Long-Baseline-Interferometrie, VLBI. Die Beobachtung dauerte fünf Nächte im April 2017; das Bild wurde zwei Jahre lang analysiert, um es zu extrahieren."
+        },
+        {
+          "kind": "narrate",
+          "text": "Die dunkle zentrale Region in der EHT-Bild ist etwa 2,5-mal so groß wie der Schwarzschild-Radius des Schwarzen Lochs. Das ist nicht der Ereignishorizont selbst – es ist der Lichtkugelumfang, der Radius, an dem ein Lichtstrahl genau 90° gebogen wird und um das Schwarze Loch orbitiert. Das helle Ring ist Licht, das sich hinter dem Loch windet und wieder zurück zu uns konzentriert wird."
+        },
+        {
+          "kind": "narrate",
+          "text": "Die allgemeine Relativitätstheorie, formuliert von Einstein im Jahr 1915, vorhersagte, dass dies genau das ist, was Sie sehen würden, wenn Sie eine Schwarzkugel-Schattenauflösung erreichen könnten. Einhundertvier Jahre später passte die Messung der Vorhersage mit wenigen Prozenten. Das ist, wie wir wissen."
+        },
+        {
+          "kind": "quiz",
+          "question": "Die EHT-Bild von M87* bestätigte direkt welche Vorhersage der allgemeinen Relativitätstheorie?",
+          "options": [
+            "Schwerkraftwellen",
+            "Lichtverbiegung in einen Photonring um einen Ereignishorizont",
+            "Hawkingstrahlung",
+            "Die Existenz von dunkler Materie"
+          ],
+          "answerIndex": 1,
+          "explanation": "Der helle Mond in der Abbildung ist>${\text{ Licht auf gekrümmten Bahnenden gezwungen, um den Schwarzen Loch – GR vorhersagt ein Photonengürtel bei 2,5× der Schwarzschild-Radius, und die Messung landete dort. Hawking-Strahlung ist viel zu schwach, um dies auf diese Weise zu detektieren, und Dunkle Materie und Gravitationswellen sind unabhängige Tests."
+        },
+        {
+          "kind": "narrate",
+          "text": "Jeder Anspruch in diesem Curriculum ist das Ende einer Kette wie dieser: eine Vorhersage, ein Instrument, eine Messung, eine Vergleichung. Das Universum ist kenntlich. Es braucht nur Geduld."
+        }
+      ]
+    },
+    {
+      "id": "what-we-still-dont-know",
+      "title": "Was wir noch nicht wissen",
+      "summary": "Dunkle Materie, dunkle Energie, die Frage nach Leben an anderen Orten — die ehrliche Karte unserer Unwissenheit.",
+      "ageTier": "teen",
+      "durationMin": 8,
+      "steps": [
+        {
+          "kind": "narrate",
+          "text": "Ende der Tour. Zeit für die unangenehme Geständnis: Wir haben eine recht gute Karte des Universums, aber wir wissen nicht, was die meisten davon ausmacht."
+        },
+        {
+          "kind": "narrate",
+          "text": "Etwa 5% der Energie des Universums ist gewöhnliches Materie — Atome, aus denen Sterne und Menschen bestehen. Etwa 27% ist dunkle Materie, die unter dem Einfluss der Schwerkraft klotzt, aber kein Licht emittiert, absorbiert oder streut. Die verbleibenden 68% sind dunkle Energie, eine gleichmäßige Druck, der den Raum selbst dehnt, und beschleunigt die Expansion des Kosmos. Wir haben beide nur durch ihre Gravitationswirkungen detektiert. Wir wissen nicht, was sie sind."
+        },
+        {
+          "kind": "narrate",
+          "text": "Nächste Frage: Gibt es überall Leben? Bis heute wurde keine Biosignatur auf einem Exoplaneten bestätigt. Derzeit diskutierte Kandidat ist die von JWST in 2023 angenommene, aber schwache und umstrittene Detektion von Dimethylsulfid in der Atmosphäre von K2-18 b — ein Molekül, das nur von lebenden Organismen auf der Erde produziert wird."
+        },
+        {
+          "kind": "scene",
+          "hash": "#sky?ra=346.622&dec=-5.041"
+        },
+        {
+          "kind": "narrate",
+          "text": "Dies ist TRAPPIST-1, ein roter Zwerg 40 Lichtjahre entfernt mit sieben Erdgrößen-Planeten in Umlaufbahn — drei davon im habitablen Zone, wo flüssiges Wasser auf der Oberfläche existieren könnte. JWST scannet ihre Atmosphären derzeit, nach Wasser, Methan, Sauerstoff, allem Anomalie. Wir könnten innerhalb des nächsten Jahrzehnts eine Antwort auf 'sind wir allein' haben. Wir könnten es auch nicht."
+        },
+        {
+          "kind": "narrate",
+          "text": "Und die größten offenen Probleme unter allem: wir haben keine funktionierende Theorie, die Quantenmechanik mit der allgemeinen Relativitätstheorie kombiniert. Warum dunkle Energie den Wert hat, den sie hat, ist unerklärt. Ob unsere Universum das einzige ist, ist wirklich unbekannt. Das sind keine Lücken in einem Lehrbuch – es sind Klippen am Rand der Karte."
+        },
+        {
+          "kind": "quiz",
+          "question": "Welches von diesen ist ehrlich gesagt das GRÖßTE ungelöste Problem in der Physik heute?",
+          "options": [
+            "Was Dunkle Energie ist",
+            "Wie sich Bewusstsein entwickelt",
+            "Wie Quantenmechanik und Gravitation vereinigt werden können",
+            "Woher das Leben auf der Erde kommt"
+          ],
+          "answerIndex": 0,
+          "explanation": "Dies ist eine Einschätzung — die Quantengravitation ist auch eine vertretbare Antwort, da ihre Lösung uns wahrscheinlich sagt, was Dunkle Energie ist und was sich in einem Schwarzen Loch abspielt. Dunkle Energie ist derzeit das größte gemessene Ding im Universum, das niemand erklären kann. Bewusstsein und Abiogenese sind riesige offene Fragen, aber sie stehen weiter von der fundamentalen Physik entfernt."
+        },
+        {
+          "kind": "narrate",
+          "text": "Sie wissen nun ungefähr, was die menschliche Spezies über das Universum weiß. Die meisten Arbeiten stehen noch vor uns. Das ist die gute Nachricht."
+        }
+      ]
     }
   ],
-  "generatedAt": "2026-05-13T12:42:00.799Z",
+  "generatedAt": "2026-05-13T12:52:56.688Z",
   "source": "lessons.ts"
 }

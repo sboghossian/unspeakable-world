@@ -43,13 +43,17 @@ export type QualityPreset = {
    *  faceted in close-ups; 96 is silky-smooth at 4K. */
   planetSegments: number;
   /** Post-FX bloom master switch (deferred — no bloom pass mounted yet). */
+  // TODO(wave-8): wire to EffectComposer once F1's post-FX primitives land.
   bloomEnabled: boolean;
   /** Bloom intensity, 0–2. Honoured by the future post-FX pipeline. */
+  // TODO(wave-8): consumed by the deferred EffectComposer pass.
   bloomStrength: number;
   /** WebGL `antialias` MSAA sample count. 0 = off, 8 = max. Requires
    *  renderer rebuild to change. */
   msaaSamples: 0 | 2 | 4 | 8;
   /** Cast/receive shadows on the solar-system bodies (deferred). */
+  // TODO(wave-8): requires a directional-light + ShadowMap pass on
+  // solar-flight; gated on the same post-FX wave as bloom.
   shadowsEnabled: boolean;
   /** Procedural galaxy-disc / dark-matter / asteroid-belt detail. */
   proceduralGalaxyDetail: "off" | "low" | "medium" | "high";
@@ -207,4 +211,35 @@ export function subscribeQuality(cb: (p: QualityPreset) => void): () => void {
   return () => {
     listeners.delete(cb);
   };
+}
+
+/* ─── Field-level convenience getters ─────────────────────────────── *
+ * Scene-graph code that only cares about one knob (MSAA, HiPS cap,
+ * far-plane multiplier, star-count cap) can pull the value directly
+ * without destructuring the whole preset.                            *
+ * ────────────────────────────────────────────────────────────────── */
+
+/** Currently active MSAA sample count. `0` = AA disabled. */
+export function getMsaaSamples(): QualityPreset["msaaSamples"] {
+  return active.msaaSamples;
+}
+
+/** Cap on the HEALPix order the HiPS LOD pass will ever request. */
+export function getHipsMaxOrder(): number {
+  return active.hipsMaxOrder;
+}
+
+/** Far-plane multiplier (relative to the historic per-scene default). */
+export function getRenderDist(): number {
+  return active.renderDist;
+}
+
+/** Cap on the bright-star count layers should render. */
+export function getStarCountCap(): number {
+  return active.starCount;
+}
+
+/** Default procedural-galaxy detail bucket. */
+export function getProceduralGalaxyDetail(): QualityPreset["proceduralGalaxyDetail"] {
+  return active.proceduralGalaxyDetail;
 }

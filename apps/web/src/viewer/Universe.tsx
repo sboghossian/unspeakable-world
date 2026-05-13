@@ -5,6 +5,8 @@ import {
   type UniverseState,
   type UniverseHit,
 } from "./universe/universe-scene";
+// Light, always-on chrome — kept eager so the top/bottom bars hydrate
+// in one paint. Heavy popovers move to React.lazy below.
 import { TimeStrip } from "./ui/TimeStrip";
 import { EventsPanel } from "./ui/EventsPanel";
 import { SkyTonightPanel } from "./ui/SkyTonightPanel";
@@ -14,46 +16,32 @@ import { TonightSky } from "./ui/TonightSky";
 import { SearchBar } from "./ui/SearchBar";
 import { SnapshotButton } from "./ui/SnapshotButton";
 import { ShareButton } from "./ui/ShareButton";
-import { BookmarksPanel } from "./ui/BookmarksPanel";
 import { ColorLegend } from "./ui/ColorLegend";
+import { ErrorBoundary } from "./ui/ErrorBoundary";
 import {
   DsoDistancesHud,
   type DsoSceneSource,
 } from "./ui/DsoDistancesHud";
 import { LeftRail } from "./ui/LeftRail";
-import { InfoPanel } from "./ui/InfoPanel";
 import {
   SceneBottomHud,
   formatDistanceLY,
 } from "./ui/SceneBottomHud";
 import { TopBarActions } from "./ui/TopBarActions";
-import { AchievementsPanel } from "./ui/AchievementsPanel";
-import { MusicPanel } from "./ui/MusicPanel";
-import { HistoryPanel } from "./ui/HistoryPanel";
-import { MissionsCatalogPanel } from "./ui/MissionsCatalogPanel";
 import { GyroButton } from "./ui/GyroButton";
-import { CollectionsPanel } from "./ui/CollectionsPanel";
-import { MarsPhotosPanel } from "./ui/MarsPhotosPanel";
-import { ApodArchivePanel } from "./ui/ApodArchivePanel";
-import { JwstPanel } from "./ui/JwstPanel";
-import { TransientsPanel } from "./ui/TransientsPanel";
 import { MeasurePanel } from "./ui/MeasurePanel";
-import { MythsPanel } from "./ui/MythsPanel";
-import { NewsPanel } from "./ui/NewsPanel";
-import { LessonPanel } from "./ui/LessonPanel";
-import { SetiPanel } from "./ui/SetiPanel";
-import { ComparePanel } from "./ui/ComparePanel";
 import { StarTrailsPanel } from "./ui/StarTrailsPanel";
 import { SurpriseButton } from "./ui/SurpriseButton";
 import { ShortcutsOverlay } from "./ui/ShortcutsOverlay";
 import { ReportBugButton } from "./ui/ReportBugButton";
 import { SupportRibbon } from "./ui/SupportRibbon";
 import { ExploreDrawer, type Group } from "./ui/ExploreDrawer";
-import { ExtraLayersPanel } from "./ui/ExtraLayersPanel";
-import { TutorPanel } from "./ui/TutorPanel";
+import {
+  TutorialOverlayV2,
+  type TutorialActions,
+} from "./ui/TutorialOverlayV2";
 import { makeUniverseAdapter } from "./tutor/adapters";
 import { useExtraLayersStore } from "./extra-layers/state";
-import { SceneEditorPanel } from "./ui/SceneEditorPanel";
 import { TourCard } from "./ui/TourCard";
 import { TourRunnerV2, type TourRunnerState } from "./tour/runner-v2";
 import { EXTRA_LAYERS } from "./extra-layers/registry";
@@ -64,6 +52,7 @@ import {
 } from "./scene-editor/universe-bridge";
 import { saveScene } from "../lib/scene-editor";
 import { useIdle } from "../lib/use-idle";
+import { useT } from "../i18n/hooks";
 import { unlock } from "../lib/achievements";
 import {
   LightConeControls,
@@ -72,9 +61,90 @@ import {
 import { SearchIndex, type SearchEntry } from "./search/search-index";
 import { addBookmark } from "../lib/bookmarks";
 import { log } from "../lib/logger";
+import {
+  LoadingSkeleton,
+  PanelSkeleton,
+  useFakeProgress,
+} from "./ui/LoadingSkeleton";
+
+/* ────────────────────────────────────────────────────────────────────
+ * Lazy panel chunks — same rationale as SolarFlight.tsx. Each panel
+ * carries its own static-data island (history-data, myths-data,
+ * object-citations, etc.) and the user only ever sees one at a time,
+ * so they ship on demand.
+ * ──────────────────────────────────────────────────────────────────── */
 
 const TimeMachinePanel = lazy(() =>
   import("./ui/TimeMachinePanel").then((m) => ({ default: m.TimeMachinePanel })),
+);
+const BookmarksPanel = lazy(() =>
+  import("./ui/BookmarksPanel").then((m) => ({ default: m.BookmarksPanel })),
+);
+const InfoPanel = lazy(() =>
+  import("./ui/InfoPanel").then((m) => ({ default: m.InfoPanel })),
+);
+const AchievementsPanel = lazy(() =>
+  import("./ui/AchievementsPanel").then((m) => ({
+    default: m.AchievementsPanel,
+  })),
+);
+const MusicPanel = lazy(() =>
+  import("./ui/MusicPanel").then((m) => ({ default: m.MusicPanel })),
+);
+const HistoryPanel = lazy(() =>
+  import("./ui/HistoryPanel").then((m) => ({ default: m.HistoryPanel })),
+);
+const MissionsCatalogPanel = lazy(() =>
+  import("./ui/MissionsCatalogPanel").then((m) => ({
+    default: m.MissionsCatalogPanel,
+  })),
+);
+const CollectionsPanel = lazy(() =>
+  import("./ui/CollectionsPanel").then((m) => ({
+    default: m.CollectionsPanel,
+  })),
+);
+const MarsPhotosPanel = lazy(() =>
+  import("./ui/MarsPhotosPanel").then((m) => ({ default: m.MarsPhotosPanel })),
+);
+const ApodArchivePanel = lazy(() =>
+  import("./ui/ApodArchivePanel").then((m) => ({
+    default: m.ApodArchivePanel,
+  })),
+);
+const JwstPanel = lazy(() =>
+  import("./ui/JwstPanel").then((m) => ({ default: m.JwstPanel })),
+);
+const TransientsPanel = lazy(() =>
+  import("./ui/TransientsPanel").then((m) => ({ default: m.TransientsPanel })),
+);
+const MythsPanel = lazy(() =>
+  import("./ui/MythsPanel").then((m) => ({ default: m.MythsPanel })),
+);
+const NewsPanel = lazy(() =>
+  import("./ui/NewsPanel").then((m) => ({ default: m.NewsPanel })),
+);
+const LessonPanel = lazy(() =>
+  import("./ui/LessonPanel").then((m) => ({ default: m.LessonPanel })),
+);
+const SetiPanel = lazy(() =>
+  import("./ui/SetiPanel").then((m) => ({ default: m.SetiPanel })),
+);
+const ComparePanel = lazy(() =>
+  import("./ui/ComparePanel").then((m) => ({ default: m.ComparePanel })),
+);
+const ExtraLayersPanel = lazy(() =>
+  import("./ui/ExtraLayersPanel").then((m) => ({
+    default: m.ExtraLayersPanel,
+  })),
+);
+const TutorPanel = lazy(() =>
+  import("./ui/TutorPanel").then((m) => ({ default: m.TutorPanel })),
+);
+const SceneEditorPanel = lazy(() =>
+  import("./ui/SceneEditorPanel").then((m) => ({
+    default: m.SceneEditorPanel,
+  })),
 );
 
 /**
@@ -138,6 +208,7 @@ const DEFAULT_STATE: UniverseState = {
 };
 
 export function Universe({ onExit }: Props) {
+  const t = useT();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const sceneRef = useRef<UniverseScene | null>(null);
   const [state, setState] = useState<UniverseState>(DEFAULT_STATE);
@@ -146,6 +217,13 @@ export function Universe({ onExit }: Props) {
   const [searchIndex, setSearchIndex] = useState<SearchIndex | null>(null);
   const [inspect, setInspect] = useState<UniverseHit | null>(null);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [tutorialOpen, setTutorialOpen] = useState(false);
+  // Toggled to true once UniverseScene's first state callback fires —
+  // gates the LoadingSkeleton's "Ready" stage. UniverseScene doesn't
+  // expose tile/star/dso counts, so the skeleton runs on a short
+  // staggered timer (see useFakeProgress).
+  const [sceneAlive, setSceneAlive] = useState(false);
+  const loadProgress = useFakeProgress(sceneAlive);
   const tourRunnerRef = useRef<TourRunnerV2 | null>(null);
   const [tourState, setTourState] = useState<TourRunnerState>({
     index: null,
@@ -175,6 +253,7 @@ export function Universe({ onExit }: Props) {
     sceneRef.current = scene;
     scene.setOnClick((hit) => setInspect(hit));
     const unsubscribe = scene.subscribe(setState);
+    setSceneAlive(true);
     const runner = new TourRunnerV2(scene);
     tourRunnerRef.current = runner;
     const unsubTour = runner.subscribe(setTourState);
@@ -397,10 +476,18 @@ export function Universe({ onExit }: Props) {
       label: "Learn",
       children: (
         <>
-          <LessonPanel />
-          <MythsPanel />
-          <ComparePanel />
-          <SetiPanel />
+          <Suspense fallback={<PanelSkeleton />}>
+            <LessonPanel />
+          </Suspense>
+          <Suspense fallback={<PanelSkeleton />}>
+            <MythsPanel />
+          </Suspense>
+          <Suspense fallback={<PanelSkeleton />}>
+            <ComparePanel />
+          </Suspense>
+          <Suspense fallback={<PanelSkeleton />}>
+            <SetiPanel />
+          </Suspense>
         </>
       ),
     },
@@ -408,8 +495,12 @@ export function Universe({ onExit }: Props) {
       label: "Live",
       children: (
         <>
-          <NewsPanel />
-          <TransientsPanel scene={sceneRef.current} />
+          <Suspense fallback={<PanelSkeleton />}>
+            <NewsPanel />
+          </Suspense>
+          <Suspense fallback={<PanelSkeleton />}>
+            <TransientsPanel scene={sceneRef.current} />
+          </Suspense>
           <SkyTonightPanel observer={observer} />
           <SpaceWeatherPanel observer={observer} />
           <TonightSky
@@ -434,10 +525,18 @@ export function Universe({ onExit }: Props) {
       label: "Imagery",
       children: (
         <>
-          <MarsPhotosPanel />
-          <ApodArchivePanel />
-          <JwstPanel />
-          <HistoryPanel />
+          <Suspense fallback={<PanelSkeleton />}>
+            <MarsPhotosPanel />
+          </Suspense>
+          <Suspense fallback={<PanelSkeleton />}>
+            <ApodArchivePanel />
+          </Suspense>
+          <Suspense fallback={<PanelSkeleton />}>
+            <JwstPanel />
+          </Suspense>
+          <Suspense fallback={<PanelSkeleton />}>
+            <HistoryPanel />
+          </Suspense>
         </>
       ),
     },
@@ -462,19 +561,23 @@ export function Universe({ onExit }: Props) {
             onOpenChange={setEventsOpen}
             onFlyToBody={(name) => sceneRef.current?.flyTo(name)}
           />
-          <MissionsCatalogPanel />
-          <CollectionsPanel
-            onFlyTo={(item) => sceneRef.current?.flyTo(item.id)}
-          />
+          <Suspense fallback={<PanelSkeleton />}>
+            <MissionsCatalogPanel />
+          </Suspense>
+          <Suspense fallback={<PanelSkeleton />}>
+            <CollectionsPanel
+              onFlyTo={(item) => sceneRef.current?.flyTo(item.id)}
+            />
+          </Suspense>
         </>
       ),
     },
     {
       label: "Federated data",
       children: (
-        <>
+        <Suspense fallback={<PanelSkeleton />}>
           <ExtraLayersPanel scene={sceneRef.current} />
-        </>
+        </Suspense>
       ),
     },
   ];
@@ -501,8 +604,22 @@ export function Universe({ onExit }: Props) {
       <canvas
         ref={canvasRef}
         tabIndex={0}
-        className="absolute inset-0 h-full w-full focus:outline-none"
+        role="img"
+        aria-label="Interactive 3D Universe viewer — drag to orbit, scroll to zoom, click objects to inspect"
+        className="absolute inset-0 h-full w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-plasma-400/40"
       />
+
+      {/* Staged loading skeleton — fades out the moment the scene's
+          first state callback fires. Time-driven progress because
+          UniverseScene aggregates many catalogs and doesn't expose a
+          single tile/star/DSO progress channel. */}
+      <LoadingSkeleton progress={loadProgress} />
+
+      {/* Panel-scope error boundary wraps the entire chrome stack so any
+          single popover crash (Search, Tonight, Copilot, …) is contained
+          without unmounting the 3D scene. The route-level boundary
+          upstairs catches scene/canvas crashes; this one catches panels. */}
+      <ErrorBoundary scope="panel" label="Universe chrome">
 
       {/* Bottom-left tier HUD — Universe Mode v2 readout. Always visible
           (even in focus mode) so the user knows which frame is dominant
@@ -537,10 +654,10 @@ export function Universe({ onExit }: Props) {
             onClick={onExit}
             className="rounded-lg border border-white/10 bg-space-950/70 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-white/80 backdrop-blur transition hover:bg-white/10 hover:text-white"
           >
-            ← exit
+            ← {t("viewer.exit")}
           </button>
           <div className="rounded-lg border border-white/10 bg-space-950/70 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.25em] text-emerald-200/80 backdrop-blur">
-            🌌 universe — {state.tier}
+            {t("universe.title")} — {state.tier}
           </div>
           <SearchBar
             index={searchIndex}
@@ -560,16 +677,20 @@ export function Universe({ onExit }: Props) {
             }}
           />
           <ShareButton onPrepare={() => buildUniverseHash(state)} />
-          <TutorPanel adapter={tutorAdapter} />
-          <BookmarksPanel />
+          <Suspense fallback={<PanelSkeleton />}>
+            <TutorPanel adapter={tutorAdapter} />
+          </Suspense>
+          <Suspense fallback={<PanelSkeleton />}>
+            <BookmarksPanel />
+          </Suspense>
           {tourState.index === null && (
             <button
               type="button"
               onClick={() => tourRunnerRef.current?.start(0)}
-              title="Start the 12-step Grand Tour through Universe Mode v2"
+              title={t("universe.grandTour.title")}
               className="pointer-events-auto rounded-lg border border-violet-500/40 bg-violet-500/15 px-3 py-1.5 font-mono text-[11px] uppercase tracking-widest text-violet-200 backdrop-blur transition hover:bg-violet-500/25"
             >
-              ▶ grand tour
+              {t("universe.grandTour")}
             </button>
           )}
           <button
@@ -583,10 +704,10 @@ export function Universe({ onExit }: Props) {
                 mode: "universe",
               });
             }}
-            title="Save the current view as a bookmark"
+            title={t("viewer.save.title")}
             className="pointer-events-auto rounded-lg border border-white/10 bg-space-950/70 px-2.5 py-1.5 font-mono text-xs text-white/70 backdrop-blur transition hover:bg-white/10 hover:text-white"
           >
-            ★ save
+            {t("viewer.save")}
           </button>
           {state.tier === "Solar" &&
             (state.scaleLabel === "Earth Vicinity" ||
@@ -618,20 +739,36 @@ export function Universe({ onExit }: Props) {
 
         <div className="pointer-events-auto flex max-w-[60vw] flex-wrap items-center justify-end gap-1.5">
           <ExploreDrawer groups={exploreGroups} />
-          <SceneEditorPanel
-            mode="universe"
-            onCapture={() => {
-              const s = sceneRef.current;
-              return s ? captureUniverseCamera(s) : {};
-            }}
-            onApply={(c) => {
-              const s = sceneRef.current;
-              if (s) applyUniverseCamera(s, c);
-            }}
-            onPlayingChange={setScenePlaying}
-          />
-          <MusicPanel />
-          <AchievementsPanel />
+          <Suspense fallback={<PanelSkeleton />}>
+            <SceneEditorPanel
+              mode="universe"
+              onCapture={() => {
+                const s = sceneRef.current;
+                return s ? captureUniverseCamera(s) : {};
+              }}
+              onApply={(c) => {
+                const s = sceneRef.current;
+                if (s) applyUniverseCamera(s, c);
+              }}
+              onPlayingChange={setScenePlaying}
+            />
+          </Suspense>
+          <Suspense fallback={<PanelSkeleton />}>
+            <MusicPanel />
+          </Suspense>
+          <Suspense fallback={<PanelSkeleton />}>
+            <AchievementsPanel />
+          </Suspense>
+          <button
+            type="button"
+            onClick={() => setTutorialOpen(true)}
+            title="📖 Show me how — 12-step tutorial"
+            aria-label="Show me how — open the 12-step tutorial"
+            className="pointer-events-auto inline-flex min-h-[30px] items-center gap-1 rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1 font-mono text-[11px] uppercase tracking-widest text-emerald-200 backdrop-blur transition hover:bg-emerald-400/20"
+          >
+            <span aria-hidden>📖</span>
+            <span className="hidden sm:inline">show me how</span>
+          </button>
           <TopBarActions />
         </div>
       </div>
@@ -692,28 +829,32 @@ export function Universe({ onExit }: Props) {
         </div>
       </div>
 
-      {/* Inspector card — unified InfoPanel */}
+      {/* Inspector card — unified InfoPanel. Lazy: object-citations.ts
+          (~104 KB) is only fetched when the user actually inspects an
+          object. */}
       {inspect && (
-        <InfoPanel
-          payload={inspect.payload}
-          onClose={() => setInspect(null)}
-          onFlyHere={() => sceneRef.current?.flyTo(inspect.name)}
-          onSurface={
-            inspect.name === "Earth" ||
-            inspect.name === "Mars" ||
-            inspect.name === "Moon"
-              ? () => {
-                  window.location.hash = `#surface/${inspect.name.toLowerCase()}`;
-                }
-              : undefined
-          }
-          onStartLightCone={(centerLY, name, currentAgeYears) => {
-            sceneRef.current?.setLightCone(centerLY, name);
-            if (currentAgeYears && currentAgeYears > 0) {
-              sceneRef.current?.setLightConeYears(currentAgeYears);
+        <Suspense fallback={null}>
+          <InfoPanel
+            payload={inspect.payload}
+            onClose={() => setInspect(null)}
+            onFlyHere={() => sceneRef.current?.flyTo(inspect.name)}
+            onSurface={
+              inspect.name === "Earth" ||
+              inspect.name === "Mars" ||
+              inspect.name === "Moon"
+                ? () => {
+                    window.location.hash = `#surface/${inspect.name.toLowerCase()}`;
+                  }
+                : undefined
             }
-          }}
-        />
+            onStartLightCone={(centerLY, name, currentAgeYears) => {
+              sceneRef.current?.setLightCone(centerLY, name);
+              if (currentAgeYears && currentAgeYears > 0) {
+                sceneRef.current?.setLightConeYears(currentAgeYears);
+              }
+            }}
+          />
+        </Suspense>
       )}
 
       <LightConeControls
@@ -762,6 +903,24 @@ export function Universe({ onExit }: Props) {
         <ShortcutsOverlay onClose={() => setShortcutsOpen(false)} />
       )}
 
+      {tutorialOpen && (
+        <TutorialOverlayV2
+          onClose={() => setTutorialOpen(false)}
+          actions={
+            {
+              openShortcuts: () => setShortcutsOpen(true),
+              startGrandTour: () => tourRunnerRef.current?.start(0),
+              switchMode: (mode) => {
+                if (mode === "viewer") window.location.hash = "#viewer";
+                else if (mode === "solar") window.location.hash = "#solar";
+                else if (mode === "galactic") window.location.hash = "#galactic";
+                else window.location.hash = "#universe";
+              },
+            } satisfies TutorialActions
+          }
+        />
+      )}
+
       <SceneLinkToast
         mode="universe"
         onPlay={(scene) => {
@@ -795,6 +954,7 @@ export function Universe({ onExit }: Props) {
           }}
         />
       )}
+      </ErrorBoundary>
     </div>
   );
 }

@@ -16,6 +16,7 @@ import {
   type ObservationSeeing,
 } from "../obs-log/store";
 import type { SearchEntry, SearchIndex } from "../search/search-index";
+import { EmptyState } from "./EmptyState";
 import type { ExtraLayersHost } from "./ExtraLayersPanel";
 
 /**
@@ -431,11 +432,14 @@ function ListView(props: ListProps) {
       )}
 
       {props.observations.length === 0 ? (
-        <div className="py-6 text-center font-mono text-[11px] text-white/50">
-          No observations yet. Press "+ observation" to log your first.
-          <br />
-          Stored locally — nothing leaves your browser.
-        </div>
+        <EmptyState
+          icon="🔭"
+          title="Log your first observation"
+          body="Capture what you saw — when, with what scope, what the seeing was like. Stored locally; nothing leaves your browser."
+          tone="cyan"
+          density="compact"
+          cta={{ label: "Add observation", onClick: props.onAdd }}
+        />
       ) : (
         <ul className="space-y-1.5">
           {props.observations.map((o) => (

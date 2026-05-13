@@ -66,7 +66,7 @@ export function PowerUserPanel({ group, onMarkDirty, onActivateOverlay }: Props)
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Close"
-                className="rounded-md border border-white/10 bg-white/5 px-2 py-1 font-mono text-xs text-white/60 hover:bg-white/10 hover:text-white"
+                className="min-h-[44px] min-w-[44px] rounded-md border border-white/10 bg-white/5 px-2 py-1 font-mono text-xs text-white/60 hover:bg-white/10 hover:text-white"
               >
                 ✕
               </button>
@@ -82,7 +82,7 @@ export function PowerUserPanel({ group, onMarkDirty, onActivateOverlay }: Props)
                   key={t.id}
                   type="button"
                   onClick={() => setTab(t.id)}
-                  className={`flex-1 rounded-md border px-2 py-1.5 font-mono text-[11px] uppercase tracking-wider transition ${
+                  className={`min-h-[44px] flex-1 rounded-md border px-2 py-1.5 font-mono text-[11px] uppercase tracking-wider transition ${
                     tab === t.id
                       ? "border-plasma-500/40 bg-plasma-500/15 text-plasma-300"
                       : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10"

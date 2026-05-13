@@ -72,7 +72,7 @@ export function QualityPicker() {
         {settings.quality === "auto"
           ? `auto → ${active.label.toLowerCase()}`
           : "manual override"}
-        {" · reload to apply MSAA / star-density changes"}
+        {" · DPR + render distance + HiPS cap apply live · MSAA, star count, gaia density, procedural galaxy detail need a reload"}
       </div>
       <Stats preset={active} />
     </div>

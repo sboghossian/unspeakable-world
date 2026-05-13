@@ -6,6 +6,7 @@ import {
   Points,
   ShaderMaterial,
 } from "three";
+import { getStarCountCap } from "../../lib/quality";
 import { bvToRgb, raDecToVec3 } from "./coords";
 
 /**
@@ -43,7 +44,12 @@ export class StarField {
     if (!res.ok) throw new Error(`star catalog HTTP ${res.status}`);
     const buf = await res.arrayBuffer();
     const view = new DataView(buf);
-    const count = view.getUint32(0, true);
+    const fileCount = view.getUint32(0, true);
+    // Quality preset caps the bright-star count. The HYG binary is
+    // already sorted by apparent magnitude (brightest first) so a
+    // straight truncation keeps the visually-dominant stars.
+    const cap = getStarCountCap();
+    const count = Math.min(fileCount, cap);
     const stars: StarRecord[] = new Array(count);
     let o = 4;
     for (let i = 0; i < count; i++) {

@@ -20,10 +20,13 @@ import {
   useRoute,
 } from "./router";
 import { CertificatePanel } from "./viewer/ui/CertificatePanel";
+import { ErrorBoundary } from "./viewer/ui/ErrorBoundary";
 import {
   getOverallProgress,
   useLessonProgress,
 } from "./lib/lesson-progress";
+import { useLangQueryParam } from "./i18n/hooks";
+import { useOgMetaSync } from "./seo/og-meta";
 
 // Lazy: the viewer pulls in Three.js, AstronomyEngine, and ~500 KB of HiPS /
 // catalog code. The landing page should not pay that cost — most first-time
@@ -104,8 +107,17 @@ const LEGACY_PRESET: Record<"solar" | "galactic" | "sandbox", string> = {
 const DEPRECATED_TOAST_KEY = "uw:deprecation-toast:v1";
 
 export function App() {
+  // Apply `?lang=es` (or fr/de/ja/zh) URL preference once on mount, and
+  // keep OG/Twitter meta tags in sync with the current route so shared
+  // deep-links preview with object-specific copy.
+  useLangQueryParam();
+  useOgMetaSync();
+  // Top-level boundary: keeps the page from white-screening if any
+  // route throws synchronously during render. The fallback is a tiny
+  // dark card with a Refresh button — every route inside also has
+  // scene/panel boundaries so most failures are caught much earlier.
   return (
-    <>
+    <ErrorBoundary scope="panel" label="App">
       <AppRoutes />
       <DeprecatedRouteToast />
       <CertificateAutoModal />
@@ -114,7 +126,7 @@ export function App() {
           landing page, /viewer deep link, embed, etc. The banner reads
           getConsent() itself and returns null when consent is set. */}
       <ConsentBanner />
-    </>
+    </ErrorBoundary>
   );
 }
 
@@ -223,9 +235,11 @@ function AppRoutes() {
   if (route === "verify-cert") {
     return (
       <main className="relative h-full w-full bg-space-950">
-        <Suspense fallback={<ViewerLoadingVeil />}>
-          <CertificateVerifyPanel />
-        </Suspense>
+        <ErrorBoundary scope="scene" label="Verify certificate">
+          <Suspense fallback={<ViewerLoadingVeil />}>
+            <CertificateVerifyPanel />
+          </Suspense>
+        </ErrorBoundary>
       </main>
     );
   }
@@ -233,9 +247,11 @@ function AppRoutes() {
   if (route === "class") {
     return (
       <main className="relative h-full w-full bg-space-950">
-        <Suspense fallback={<ViewerLoadingVeil />}>
-          <TeacherDashboard onExit={() => navigate("landing")} />
-        </Suspense>
+        <ErrorBoundary scope="scene" label="Teacher dashboard">
+          <Suspense fallback={<ViewerLoadingVeil />}>
+            <TeacherDashboard onExit={() => navigate("landing")} />
+          </Suspense>
+        </ErrorBoundary>
       </main>
     );
   }
@@ -243,9 +259,11 @@ function AppRoutes() {
   if (route === "guide") {
     return (
       <main className="relative h-full w-full bg-space-950">
-        <Suspense fallback={<ViewerLoadingVeil />}>
-          <Guide onExit={() => navigate("landing")} />
-        </Suspense>
+        <ErrorBoundary scope="scene" label="Guide">
+          <Suspense fallback={<ViewerLoadingVeil />}>
+            <Guide onExit={() => navigate("landing")} />
+          </Suspense>
+        </ErrorBoundary>
         {!embed && <PwaInstallBanner />}
       </main>
     );
@@ -254,9 +272,11 @@ function AppRoutes() {
   if (route === "universe") {
     return (
       <main className="relative h-full w-full bg-space-950">
-        <Suspense fallback={<ViewerLoadingVeil />}>
-          <Universe onExit={() => navigate("landing")} />
-        </Suspense>
+        <ErrorBoundary scope="scene" label="Universe Mode">
+          <Suspense fallback={<ViewerLoadingVeil />}>
+            <Universe onExit={() => navigate("landing")} />
+          </Suspense>
+        </ErrorBoundary>
         {!embed && <PwaInstallBanner />}
       </main>
     );
@@ -265,9 +285,11 @@ function AppRoutes() {
   if (route === "sandbox") {
     return (
       <main className="relative h-full w-full bg-space-950">
-        <Suspense fallback={<ViewerLoadingVeil />}>
-          <Sandbox onExit={() => navigate("landing")} />
-        </Suspense>
+        <ErrorBoundary scope="scene" label="Sandbox">
+          <Suspense fallback={<ViewerLoadingVeil />}>
+            <Sandbox onExit={() => navigate("landing")} />
+          </Suspense>
+        </ErrorBoundary>
       </main>
     );
   }
@@ -275,9 +297,11 @@ function AppRoutes() {
   if (route === "galactic") {
     return (
       <main className="relative h-full w-full bg-space-950">
-        <Suspense fallback={<ViewerLoadingVeil />}>
-          <Galactic onExit={() => navigate("solar")} />
-        </Suspense>
+        <ErrorBoundary scope="scene" label="Galactic">
+          <Suspense fallback={<ViewerLoadingVeil />}>
+            <Galactic onExit={() => navigate("solar")} />
+          </Suspense>
+        </ErrorBoundary>
         {!embed && <PwaInstallBanner />}
       </main>
     );
@@ -286,12 +310,14 @@ function AppRoutes() {
   if (route === "surface") {
     return (
       <main className="relative h-full w-full bg-space-950">
-        <Suspense fallback={<ViewerLoadingVeil />}>
-          <PlanetSurface
-            planet={surfacePlanet()}
-            onExit={() => navigate("solar")}
-          />
-        </Suspense>
+        <ErrorBoundary scope="scene" label="Planet surface">
+          <Suspense fallback={<ViewerLoadingVeil />}>
+            <PlanetSurface
+              planet={surfacePlanet()}
+              onExit={() => navigate("solar")}
+            />
+          </Suspense>
+        </ErrorBoundary>
         {!embed && <PwaInstallBanner />}
       </main>
     );
@@ -300,24 +326,26 @@ function AppRoutes() {
   if (route === "solar") {
     return (
       <main className="relative h-full w-full bg-space-950">
-        <Suspense fallback={<ViewerLoadingVeil />}>
-          <SolarFlight
-            onExit={() => navigate("viewer")}
-            onFlyToSky={(dir) => {
-              const params = new URLSearchParams();
-              params.set("ra", "0");
-              params.set("dec", "0");
-              params.set("fov", "30");
-              // We can't easily compute RA/Dec from xyz here without dragging
-              // in math; instead encode the direction as a custom hash hint
-              // that the viewer will pick up.
-              params.set("dx", dir.x.toFixed(4));
-              params.set("dy", dir.y.toFixed(4));
-              params.set("dz", dir.z.toFixed(4));
-              window.location.hash = `#viewer?${params.toString()}`;
-            }}
-          />
-        </Suspense>
+        <ErrorBoundary scope="scene" label="Solar Flight">
+          <Suspense fallback={<ViewerLoadingVeil />}>
+            <SolarFlight
+              onExit={() => navigate("viewer")}
+              onFlyToSky={(dir) => {
+                const params = new URLSearchParams();
+                params.set("ra", "0");
+                params.set("dec", "0");
+                params.set("fov", "30");
+                // We can't easily compute RA/Dec from xyz here without dragging
+                // in math; instead encode the direction as a custom hash hint
+                // that the viewer will pick up.
+                params.set("dx", dir.x.toFixed(4));
+                params.set("dy", dir.y.toFixed(4));
+                params.set("dz", dir.z.toFixed(4));
+                window.location.hash = `#viewer?${params.toString()}`;
+              }}
+            />
+          </Suspense>
+        </ErrorBoundary>
         {!embed && <PwaInstallBanner />}
       </main>
     );
@@ -326,9 +354,11 @@ function AppRoutes() {
   if (route === "viewer") {
     return (
       <main className="relative h-full w-full bg-space-950">
-        <Suspense fallback={<ViewerLoadingVeil />}>
-          <Viewer />
-        </Suspense>
+        <ErrorBoundary scope="scene" label="Sky viewer">
+          <Suspense fallback={<ViewerLoadingVeil />}>
+            <Viewer />
+          </Suspense>
+        </ErrorBoundary>
         {!embed && <PwaInstallBanner />}
       </main>
     );

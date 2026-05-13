@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Vector3 } from "three";
 import { Body, GeoVector, HelioVector } from "astronomy-engine";
+import { cn, RADIUS } from "../../lib/design-tokens";
 
 /**
  * 📏 DSO Distances HUD.
@@ -336,9 +337,13 @@ export function DsoDistancesHud({
 
   return (
     <div
-      className="pointer-events-auto fixed bottom-20 right-4 z-30 w-[280px] rounded-xl border border-white/10 bg-space-950/85 p-3 font-mono text-[10px] text-white/80 shadow-2xl backdrop-blur sm:bottom-24"
+      className={cn(
+        "pointer-events-auto fixed bottom-20 right-4 z-30 w-[280px] border border-white/10 bg-space-950/85 p-3 font-mono text-[10px] text-white/80 shadow-2xl backdrop-blur sm:bottom-24",
+        RADIUS.lg,
+      )}
       role="region"
       aria-label="DSO distances"
+      aria-hidden="true"
     >
       <div className="mb-2 flex items-center justify-between">
         <span className="text-[10px] uppercase tracking-[0.2em] text-white/55">

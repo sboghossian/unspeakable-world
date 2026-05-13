@@ -148,19 +148,29 @@ export function WavelengthBar({
     [],
   );
   return (
-    <div className="pointer-events-auto flex flex-col items-center gap-2 rounded-xl border border-white/10 bg-space-950/80 px-3 py-2 backdrop-blur md:flex-row">
-      <span className="font-mono text-[10px] uppercase tracking-widest text-white/40">
+    <div
+      className="pointer-events-auto flex flex-col items-center gap-2 rounded-xl border border-white/10 bg-space-950/80 px-3 py-2 backdrop-blur md:flex-row"
+      role="toolbar"
+      aria-label="Sky display layers"
+    >
+      <span className="font-mono text-[10px] uppercase tracking-widest text-white/65">
         wavelength
       </span>
 
-      <div className="flex flex-wrap items-center gap-1">
+      <div
+        className="flex flex-wrap items-center gap-1"
+        role="group"
+        aria-label="Wavelength overlay"
+      >
         <button
           type="button"
           onClick={() => onSetOverlay(null)}
+          aria-pressed={overlayId === null}
+          aria-label="Visible-light overlay"
           className={`rounded-md border px-2.5 py-1 font-mono text-xs uppercase tracking-wider transition ${
             overlayId === null
               ? "border-plasma-500/40 bg-plasma-500/15 text-plasma-400"
-              : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10"
+              : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
           }`}
         >
           visible
@@ -173,6 +183,8 @@ export function WavelengthBar({
               key={l.id}
               type="button"
               onClick={() => onSetOverlay(active ? null : l.id)}
+              aria-pressed={active}
+              aria-label={`${l.label} overlay — ${l.sub}`}
               className={`rounded-md border px-2.5 py-1 font-mono text-xs uppercase tracking-wider transition ${
                 active ? cls.active : cls.idle
               }`}
@@ -209,7 +221,7 @@ export function WavelengthBar({
 
       {overlayId && (
         <div className="flex items-center gap-2">
-          <span className="font-mono text-[10px] uppercase tracking-widest text-white/40">
+          <span className="font-mono text-[10px] uppercase tracking-widest text-white/65">
             mix
           </span>
           <input
@@ -221,6 +233,10 @@ export function WavelengthBar({
             onChange={(e) => onSetMix(parseFloat(e.target.value))}
             className="h-1 w-32 accent-plasma-500"
             aria-label="Wavelength cross-fade"
+            aria-valuemin={0}
+            aria-valuemax={1}
+            aria-valuenow={overlayMix}
+            aria-valuetext={`${Math.round(overlayMix * 100)} percent`}
           />
           <span className="font-mono text-[10px] text-white/50 w-8 text-right">
             {Math.round(overlayMix * 100)}%
@@ -233,10 +249,12 @@ export function WavelengthBar({
       <button
         type="button"
         onClick={onToggleProjection}
+        aria-pressed={projection === "aitoff"}
+        aria-label={`Switch to ${projection === "aitoff" ? "3D dome" : "2D Aitoff"} projection`}
         className={`rounded-md border px-2.5 py-1 font-mono text-xs uppercase tracking-wider transition ${
           projection === "aitoff"
             ? "border-cyan-400/40 bg-cyan-400/15 text-cyan-300"
-            : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10"
+            : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
         }`}
         title="Toggle 2D Aitoff projection of the whole sky"
       >
@@ -249,14 +267,16 @@ export function WavelengthBar({
         <button
           type="button"
           onClick={onToggleConstellations}
+          aria-pressed={constellationsVisible}
+          aria-label="Toggle constellation lines"
           className={`rounded-md border px-2.5 py-1 font-mono text-xs uppercase tracking-wider transition ${
             constellationsVisible
               ? "border-violet-500/40 bg-violet-500/15 text-violet-300"
-              : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10"
+              : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
           }`}
           title="Toggle 88 IAU constellation lines (c)"
         >
-          ✦ lines
+          <span aria-hidden="true">✦ </span>lines
         </button>
         {constellationsVisible && (
           <select
@@ -277,74 +297,86 @@ export function WavelengthBar({
         <button
           type="button"
           onClick={onToggleCoordGrid}
+          aria-pressed={coordGridVisible}
+          aria-label="Toggle coordinate grid"
           className={`rounded-md border px-2.5 py-1 font-mono text-xs uppercase tracking-wider transition ${
             coordGridVisible
               ? "border-sky-500/40 bg-sky-500/15 text-sky-300"
-              : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10"
+              : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
           }`}
           title="Toggle equatorial / ecliptic / galactic grid (g)"
         >
-          ⌖ grid
+          <span aria-hidden="true">⌖ </span>grid
         </button>
         <button
           type="button"
           onClick={onToggleStarLabels}
+          aria-pressed={starLabelsVisible}
+          aria-label="Toggle bright-star names"
           className={`rounded-md border px-2.5 py-1 font-mono text-xs uppercase tracking-wider transition ${
             starLabelsVisible
               ? "border-amber-400/40 bg-amber-400/15 text-amber-200"
-              : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10"
+              : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
           }`}
           title="Toggle bright-star name labels (n)"
         >
-          ★ names
+          <span aria-hidden="true">★ </span>names
         </button>
         <button
           type="button"
           onClick={onToggleSpacecraft}
+          aria-pressed={spacecraftVisible}
+          aria-label="Toggle spacecraft markers"
           className={`rounded-md border px-2.5 py-1 font-mono text-xs uppercase tracking-wider transition ${
             spacecraftVisible
               ? "border-cyan-400/40 bg-cyan-400/15 text-cyan-200"
-              : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10"
+              : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
           }`}
           title="Toggle spacecraft markers — Voyager 1/2, Pioneers, NH, JWST (s)"
         >
-          ◇ craft
+          <span aria-hidden="true">◇ </span>craft
         </button>
         <button
           type="button"
           onClick={onToggleExoplanets}
+          aria-pressed={exoplanetsVisible}
+          aria-label="Toggle exoplanet host systems"
           className={`rounded-md border px-2.5 py-1 font-mono text-xs uppercase tracking-wider transition ${
             exoplanetsVisible
               ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
-              : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10"
+              : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
           }`}
           title="Toggle 6,278 confirmed exoplanet host systems (x)"
         >
-          ⊙ exo
+          <span aria-hidden="true">⊙ </span>exo
         </button>
         <button
           type="button"
           onClick={onToggleCosmicLandmarks}
+          aria-pressed={cosmicLandmarksVisible}
+          aria-label="Toggle exotic objects — black holes, pulsars, supernova remnants"
           className={`rounded-md border px-2.5 py-1 font-mono text-xs uppercase tracking-wider transition ${
             cosmicLandmarksVisible
               ? "border-rose-400/40 bg-rose-400/15 text-rose-200"
-              : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10"
+              : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
           }`}
           title="Toggle named exotic objects — Sgr A*, M87*, Crab Pulsar, GW170817 etc (z)"
         >
-          ◉ exotic
+          <span aria-hidden="true">◉ </span>exotic
         </button>
         <button
           type="button"
           onClick={onTogglePulsars}
+          aria-pressed={pulsarsVisible}
+          aria-label="Toggle pulsars"
           className={`rounded-md border px-2.5 py-1 font-mono text-xs uppercase tracking-wider transition ${
             pulsarsVisible
               ? "border-amber-400/40 bg-amber-400/15 text-amber-200"
-              : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10"
+              : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
           }`}
           title="Toggle 3,927 pulsars from SIMBAD (p)"
         >
-          ⚡ pulsars
+          <span aria-hidden="true">⚡ </span>pulsars
         </button>
       </div>
     </div>

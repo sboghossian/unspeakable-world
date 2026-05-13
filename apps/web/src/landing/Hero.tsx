@@ -23,8 +23,8 @@ export function Hero() {
       </h1>
 
       <p className="mx-auto mt-6 max-w-2xl text-balance text-lg text-white/70 md:text-xl">
-        Every wavelength, every probe, every alert — one seamless camera,
-        free forever.
+        Every wavelength of every sky survey, one seamless camera.
+        Free forever.
       </p>
 
       <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-1.5 text-xs uppercase tracking-[0.18em] text-white/65 backdrop-blur">

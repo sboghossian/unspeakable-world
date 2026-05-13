@@ -346,9 +346,14 @@ export class SolarFlightScene {
     this.renderer.setClearColor(0x000208, 1);
     this.qualityUnsub = subscribeQuality((p) => {
       this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, p.dpr));
+      // Far-plane multiplier — keep the historical 20 000-unit base and
+      // scale by `renderDist` so low-tier shaves it down to 16 000 and
+      // ultra extends to 30 000 (matters at Voyager distances).
+      this.camera.far = 20000 * p.renderDist;
+      this.camera.updateProjectionMatrix();
     });
 
-    this.camera = new PerspectiveCamera(50, 1, 0.001, 20000);
+    this.camera = new PerspectiveCamera(50, 1, 0.001, 20000 * preset.renderDist);
 
     // Sun at origin — emissive sphere + sprite glow. The sphere wears a
     // granulation texture (convection cells) so it doesn't read as a

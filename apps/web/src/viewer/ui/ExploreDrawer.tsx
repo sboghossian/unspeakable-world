@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { cn, PANEL, RADIUS } from "../../lib/design-tokens";
 
 /**
  * 🔭 Explore drawer — a Notion-style consolidated home for secondary
@@ -49,6 +50,25 @@ export function ExploreDrawer({ groups }: Props) {
     };
   }, [open]);
 
+  // Focus management — move focus inside the popover on open, return it to
+  // the trigger on close. Same pattern as MobileMenuDrawer.
+  useEffect(() => {
+    if (!open) return;
+    const panel = popoverRef.current;
+    if (!panel) return;
+    const focusable = panel.querySelector<HTMLElement>(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    );
+    focusable?.focus();
+    return () => {
+      try {
+        buttonRef.current?.focus();
+      } catch {
+        /* ignore */
+      }
+    };
+  }, [open]);
+
   return (
     <>
       <button
@@ -57,6 +77,7 @@ export function ExploreDrawer({ groups }: Props) {
         onClick={() => setOpen((v) => !v)}
         title="Explore the universe — lessons, news, imagery, tools"
         aria-label="Explore the universe"
+        aria-haspopup="dialog"
         aria-expanded={open}
         className={`pointer-events-auto inline-flex h-7 items-center gap-1.5 rounded-md border px-2.5 text-[12px] backdrop-blur transition ${
           open
@@ -72,8 +93,13 @@ export function ExploreDrawer({ groups }: Props) {
       {open && (
         <div
           ref={popoverRef}
-          className="pointer-events-auto absolute right-3 top-12 z-30 w-[min(560px,94vw)] max-h-[min(500px,80vh)] overflow-y-auto rounded-xl border border-white/10 bg-space-950/95 p-4 shadow-2xl backdrop-blur"
+          className={cn(
+            "pointer-events-auto absolute right-3 top-12 z-30 w-[min(560px,94vw)] max-h-[min(500px,80vh)] overflow-y-auto p-4",
+            RADIUS.lg,
+            PANEL.elevated,
+          )}
           role="dialog"
+          aria-modal="false"
           aria-label="Explore the universe"
         >
           <div className="mb-3 flex items-baseline justify-between gap-3">
@@ -81,7 +107,7 @@ export function ExploreDrawer({ groups }: Props) {
               <div className="font-display text-sm text-white/95">
                 Explore the universe
               </div>
-              <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/40">
+              <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/65">
                 lessons · news · imagery · tools
               </div>
             </div>
@@ -97,7 +123,7 @@ export function ExploreDrawer({ groups }: Props) {
           <div className="space-y-3">
             {groups.map((g) => (
               <section key={g.label}>
-                <div className="mb-1.5 font-mono text-[10px] uppercase tracking-[0.25em] text-white/45">
+                <div className="mb-1.5 font-mono text-[10px] uppercase tracking-[0.25em] text-white/65">
                   {g.label}
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5">
@@ -106,7 +132,7 @@ export function ExploreDrawer({ groups }: Props) {
               </section>
             ))}
           </div>
-          <div className="mt-3 border-t border-white/5 pt-2 text-right font-mono text-[9px] uppercase tracking-[0.25em] text-white/35">
+          <div className="mt-3 border-t border-white/5 pt-2 text-right font-mono text-[9px] uppercase tracking-[0.25em] text-white/65">
             Esc to close
           </div>
         </div>

@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+
 /**
  * ⌨ Keyboard shortcuts modal.
  *
@@ -44,6 +46,10 @@ const SHORTCUTS: Array<{ section: string; items: Shortcut[] }> = [
       { keys: ["s", ""], label: "Toggle spacecraft markers" },
       { keys: ["x", ""], label: "Toggle 6,278 exoplanet hosts" },
       { keys: ["z", ""], label: "Toggle exotic objects (BH, pulsars, SNR)" },
+      { keys: ["p", ""], label: "Toggle pulsar markers" },
+      { keys: ["d", ""], label: "Toggle DSO distances HUD" },
+      { keys: ["f", ""], label: "Focus mode (hide all chrome)" },
+      { keys: ["b", ""], label: "Bookmark this view" },
       { keys: ["i", ""], label: "About / credits" },
       { keys: ["e", ""], label: "Astronomical events" },
       { keys: ["?"], label: "Show this overlay" },
@@ -52,21 +58,38 @@ const SHORTCUTS: Array<{ section: string; items: Shortcut[] }> = [
 ];
 
 export function ShortcutsOverlay({ onClose }: { onClose: () => void }) {
+  // Escape closes — Viewer.tsx also wires this up, but having it here makes
+  // the modal self-contained when used outside the viewer (e.g. landing).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
   return (
     <div
       className="pointer-events-auto fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
       onClick={onClose}
+      role="presentation"
     >
       <div
         className="w-[min(560px,92vw)] overflow-hidden rounded-2xl border border-white/10 bg-space-950/95 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="shortcuts-overlay-title"
       >
         <header className="flex items-center justify-between border-b border-white/5 px-5 py-3">
           <div>
-            <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/40">
+            <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/65">
               keyboard shortcuts
             </div>
-            <div className="font-display text-sm text-white">
+            <div
+              id="shortcuts-overlay-title"
+              className="font-display text-sm text-white"
+            >
               The Unspeakable World — keys
             </div>
           </div>
@@ -82,7 +105,7 @@ export function ShortcutsOverlay({ onClose }: { onClose: () => void }) {
         <div className="grid grid-cols-1 gap-x-6 gap-y-4 px-5 py-4 sm:grid-cols-2">
           {SHORTCUTS.map((g) => (
             <section key={g.section}>
-              <div className="mb-1.5 font-mono text-[10px] uppercase tracking-widest text-white/40">
+              <div className="mb-1.5 font-mono text-[10px] uppercase tracking-widest text-white/65">
                 {g.section}
               </div>
               <ul className="space-y-1.5">
@@ -110,7 +133,7 @@ export function ShortcutsOverlay({ onClose }: { onClose: () => void }) {
             </section>
           ))}
         </div>
-        <footer className="border-t border-white/5 px-5 py-2 font-mono text-[10px] text-white/30">
+        <footer className="border-t border-white/5 px-5 py-2 font-mono text-[10px] text-white/65">
           Drag works on touch too · pinch to zoom · long-press to inspect
         </footer>
       </div>

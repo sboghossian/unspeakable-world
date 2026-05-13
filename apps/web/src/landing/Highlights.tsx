@@ -120,13 +120,25 @@ export function Highlights() {
             >
               {h.image && (
                 <div className="relative aspect-[16/10] w-full overflow-hidden border-b border-white/10 bg-space-950">
-                  <img
-                    src={h.image}
-                    alt={`${h.title} — v4 screenshot preview`}
-                    loading="lazy"
-                    decoding="async"
-                    className="absolute inset-0 h-full w-full object-cover opacity-80 transition group-hover:scale-[1.02] group-hover:opacity-100"
-                  />
+                  {/* <picture> falls back to the source PNG if a browser
+                      can't decode WebP. The WebP variants are built by
+                      `scripts/optimize-screenshots.ts` (sharp, devDep
+                      only). loading=lazy + decoding=async keep these
+                      below-the-fold images out of the LCP critical
+                      path. */}
+                  <picture>
+                    <source
+                      srcSet={h.image.replace(/\.png$/i, ".webp")}
+                      type="image/webp"
+                    />
+                    <img
+                      src={h.image}
+                      alt={`${h.title} — v4 screenshot preview`}
+                      loading="lazy"
+                      decoding="async"
+                      className="absolute inset-0 h-full w-full object-cover opacity-80 transition group-hover:scale-[1.02] group-hover:opacity-100"
+                    />
+                  </picture>
                 </div>
               )}
               <div className="p-4">

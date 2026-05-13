@@ -1,3 +1,9 @@
+/* Print stylesheet — see styles-print.css for the policy + per-browser
+   notes. Loaded inline so Vite ships a single CSS file rather than two.
+   Must come BEFORE the tailwind directives because PostCSS @import has
+   to appear at the top of the file. */
+@import "./styles-print.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

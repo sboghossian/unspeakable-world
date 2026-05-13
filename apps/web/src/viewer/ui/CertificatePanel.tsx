@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { BUTTON, cn } from "../../lib/design-tokens";
 import {
   allProgress,
   getCertificateData,
@@ -17,6 +18,7 @@ import {
 } from "../../lib/cert-crypto";
 import { makeQrSvg } from "../../lib/qr";
 import { log } from "../../lib/logger";
+import { EmptyState } from "./EmptyState";
 
 /**
  * 🏅 CertificatePanel — printable completion certificate.
@@ -72,7 +74,7 @@ export function CertificatePanel({ onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-center justify-center overflow-y-auto bg-black/75 p-4 backdrop-blur print:static print:bg-white print:p-0 print:backdrop-blur-none"
+      className="cert-print-wrap fixed inset-0 z-[70] flex items-center justify-center overflow-y-auto bg-black/75 p-4 backdrop-blur print:static print:bg-white print:p-0 print:backdrop-blur-none"
       role="dialog"
       aria-modal="true"
       aria-label="Certificate of completion"
@@ -87,7 +89,17 @@ export function CertificatePanel({ onClose }: Props) {
         ✕
       </button>
 
-      {!committed ? (
+      {data.lessonsCompleted.length === 0 ? (
+        <div className="w-[min(440px,94vw)]">
+          <EmptyState
+            icon="🏅"
+            title="Your certificate will live here"
+            body="Complete any curriculum lesson to start earning your Unspeakable-World cert. It's locally signed (Ed25519), printable, and verifiable from a QR code — no account needed."
+            tone="emerald"
+            cta={{ label: "Open lessons", onClick: onClose }}
+          />
+        </div>
+      ) : !committed ? (
         <NamePrompt
           name={name}
           onChange={setName}
@@ -162,7 +174,11 @@ function NamePrompt({
           type="button"
           onClick={onSave}
           disabled={name.trim().length === 0}
-          className="inline-flex h-8 items-center rounded-md border border-emerald-400/55 bg-emerald-400/15 px-3 font-mono text-[10px] uppercase tracking-widest text-emerald-100 transition hover:bg-emerald-400/25 disabled:cursor-not-allowed disabled:opacity-40"
+          className={cn(
+            "inline-flex h-8 items-center rounded-md px-3 font-mono text-[10px] uppercase tracking-widest",
+            BUTTON.primary,
+            "disabled:cursor-not-allowed disabled:opacity-40",
+          )}
         >
           Make my certificate →
         </button>
@@ -269,7 +285,7 @@ function CertificateSheet({
     <div className="flex w-full flex-col items-center gap-4 print:gap-0">
       <div
         // A4 portrait at ~96dpi ≈ 794 × 1123 px.
-        className="relative mx-auto flex h-[1123px] w-[794px] max-w-full flex-col border-[12px] border-double border-emerald-700 bg-[#fbf6e8] p-12 font-display text-stone-900 shadow-2xl print:h-[297mm] print:w-[210mm] print:max-w-none print:shadow-none"
+        className="cert-sheet relative mx-auto flex h-[1123px] w-[794px] max-w-full flex-col border-[12px] border-double border-emerald-700 bg-[#fbf6e8] p-12 font-display text-stone-900 shadow-2xl print:h-[297mm] print:w-[210mm] print:max-w-none print:shadow-none"
       >
         {/* Decorative top label */}
         <div className="mx-auto mb-2 font-mono text-[11px] uppercase tracking-[0.45em] text-emerald-800">
@@ -299,7 +315,7 @@ function CertificateSheet({
           , a guided tour from the surface of Earth to the cosmic web.
         </p>
 
-        <div className="mb-6 grid grid-cols-2 gap-x-6 gap-y-1 text-[12px]">
+        <div className="cert-lessons-grid mb-6 grid grid-cols-2 gap-x-6 gap-y-1 text-[12px]">
           {lessonsCompleted.map((l, i) => (
             <div
               key={l.id}
@@ -342,7 +358,10 @@ function CertificateSheet({
         <button
           type="button"
           onClick={onPrint}
-          className="inline-flex h-9 items-center rounded-md border border-emerald-400/55 bg-emerald-400/15 px-4 font-mono text-[11px] uppercase tracking-widest text-emerald-100 transition hover:bg-emerald-400/25"
+          className={cn(
+            "inline-flex h-9 items-center rounded-md px-4 font-mono text-[11px] uppercase tracking-widest",
+            BUTTON.primary,
+          )}
         >
           Print / Save PDF
         </button>
@@ -400,7 +419,7 @@ function CertQrBlock({ signature }: { signature: SignatureState }) {
   }, [signature]);
 
   return (
-    <div className="flex flex-col items-end gap-1">
+    <div className="cert-qr-block flex flex-col items-end gap-1">
       <div className="h-[140px] w-[140px] rounded-md border border-stone-300 bg-white p-1.5">
         {qrHtml ? (
           // QR SVG is generated from a trusted local module — no

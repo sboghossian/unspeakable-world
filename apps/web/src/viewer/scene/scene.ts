@@ -5,7 +5,7 @@ import {
   type SceneRenderer,
 } from "./renderer-factory";
 import { getRendererPreference } from "../../lib/settings";
-import { subscribeQuality } from "../../lib/quality";
+import { getRenderDist, subscribeQuality } from "../../lib/quality";
 import { SURVEYS } from "../hips/surveys";
 import { getSurveyAnywhere } from "../power-user/custom-hips";
 import { HipsSphere } from "./hips-sphere";
@@ -171,7 +171,11 @@ export class ViewerScene {
     this.renderer = createWebGLRenderer(canvas);
     this.rendererKind = "webgl";
 
-    this.camera = new PerspectiveCamera(60, 1, 0.001, 100);
+    // Sky-atlas historical far-plane is 100 scene units. The quality
+    // preset's `renderDist` is a multiplier (0.8 on `low`, 1.5 on `ultra`)
+    // so a low-tier device clips the far cone slightly earlier and saves
+    // depth precision for the foreground meshes.
+    this.camera = new PerspectiveCamera(60, 1, 0.001, 100 * getRenderDist());
     this.camera.position.set(0, 0, 0);
 
     this.sphere = new HipsSphere(SURVEYS.dss2!);
@@ -358,6 +362,10 @@ export class ViewerScene {
     this.qualityUnsub = subscribeQuality((p) => {
       try {
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, p.dpr));
+        // Far-plane is also live-tunable — three.js re-derives the
+        // projection matrix on next render so we just flag dirty.
+        this.camera.far = 100 * p.renderDist;
+        this.camera.updateProjectionMatrix();
         this.handleResize();
         this.dirty = true;
       } catch (err) {

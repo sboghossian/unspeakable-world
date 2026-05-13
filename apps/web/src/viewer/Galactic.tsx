@@ -4,7 +4,12 @@ import { SceneBottomHud } from "./ui/SceneBottomHud";
 import { SnapshotButton } from "./ui/SnapshotButton";
 import { ShareButton } from "./ui/ShareButton";
 import { BookmarksPanel } from "./ui/BookmarksPanel";
+import { ErrorBoundary } from "./ui/ErrorBoundary";
 import { ExtraLayersPanel } from "./ui/ExtraLayersPanel";
+import {
+  TutorialOverlayV2,
+  type TutorialActions,
+} from "./ui/TutorialOverlayV2";
 import { addBookmark } from "../lib/bookmarks";
 
 /**
@@ -26,6 +31,7 @@ export function Galactic({ onExit }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const sceneRef = useRef<GalacticScene | null>(null);
   const [state, setState] = useState<GalacticState>(DEFAULT_STATE);
+  const [tutorialOpen, setTutorialOpen] = useState(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -61,8 +67,13 @@ export function Galactic({ onExit }: Props) {
       <canvas
         ref={canvasRef}
         tabIndex={0}
-        className="absolute inset-0 h-full w-full focus:outline-none"
+        role="img"
+        aria-label="Interactive 3D Galactic viewer — drag to orbit the Milky Way, scroll to zoom"
+        className="absolute inset-0 h-full w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-plasma-400/40"
       />
+
+      {/* Panel-scope boundary: protect the canvas from chrome crashes. */}
+      <ErrorBoundary scope="panel" label="Galactic chrome">
 
       {/* Top bar */}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-2 p-3">
@@ -101,6 +112,16 @@ export function Galactic({ onExit }: Props) {
             className="rounded-lg border border-white/10 bg-space-950/70 px-2.5 py-1.5 font-mono text-xs text-white/70 backdrop-blur transition hover:bg-white/10 hover:text-white"
           >
             ★ save
+          </button>
+          <button
+            type="button"
+            onClick={() => setTutorialOpen(true)}
+            title="📖 Show me how — 12-step tutorial"
+            aria-label="Show me how — open the 12-step tutorial"
+            className="pointer-events-auto inline-flex items-center gap-1 rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1.5 font-mono text-xs uppercase tracking-widest text-emerald-200 backdrop-blur transition hover:bg-emerald-400/20"
+          >
+            <span aria-hidden>📖</span>
+            <span className="hidden sm:inline">show me how</span>
           </button>
         </div>
 
@@ -172,6 +193,23 @@ export function Galactic({ onExit }: Props) {
           W A S D · move · drag · look · wheel · adjust speed · Q/E · up/down
         </div>
       </div>
+
+      {tutorialOpen && (
+        <TutorialOverlayV2
+          onClose={() => setTutorialOpen(false)}
+          actions={
+            {
+              switchMode: (mode) => {
+                if (mode === "viewer") window.location.hash = "#viewer";
+                else if (mode === "solar") window.location.hash = "#solar";
+                else if (mode === "galactic") window.location.hash = "#galactic";
+                else window.location.hash = "#universe";
+              },
+            } satisfies TutorialActions
+          }
+        />
+      )}
+      </ErrorBoundary>
     </div>
   );
 }

@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { log } from "../../lib/logger";
+import { makeQrSvg } from "../../lib/qr";
+import { useIsMobile } from "../../lib/use-is-mobile";
+import { EmptyState } from "./EmptyState";
 import {
   becomeTeacher,
   buildTutorHash,
@@ -75,6 +78,7 @@ export function TutorPanel({ adapter, buttonClassName }: Props) {
   const popoverRef = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const lastAppliedTsRef = useRef<number>(0);
+  const isMobile = useIsMobile();
 
   // Probe the backend once per mount — cheap HEAD-ish GET.
   useEffect(() => {
@@ -276,6 +280,34 @@ export function TutorPanel({ adapter, buttonClassName }: Props) {
     }
   }, [shareUrl]);
 
+  /**
+   * Native share sheet — Android, iOS Safari, and most desktop browsers
+   * expose `navigator.share`. Falls back gracefully to clipboard when
+   * the API isn't available (e.g. Firefox desktop) so the user always
+   * has *some* path to forward the link.
+   */
+  const systemShare = useCallback(async () => {
+    if (!shareUrl) return;
+    const nav = navigator as Navigator & {
+      share?: (data: ShareData) => Promise<void>;
+    };
+    if (typeof nav.share !== "function") {
+      await copyShareUrl();
+      return;
+    }
+    try {
+      await nav.share({
+        title: "Join my Unspeakable World session",
+        text: "I'm teaching a live sky-tour session — tap the link to follow along.",
+        url: shareUrl,
+      });
+    } catch (err) {
+      // AbortError = user dismissed the share sheet. Treat as benign.
+      const name = (err as DOMException | undefined)?.name ?? "";
+      if (name !== "AbortError") log.warn("[tutor] navigator.share failed", err);
+    }
+  }, [shareUrl, copyShareUrl]);
+
   const buttonLabel = (() => {
     if (phase.kind === "teacher") {
       const n = watchers ?? 0;
@@ -301,7 +333,7 @@ export function TutorPanel({ adapter, buttonClassName }: Props) {
         title="Live tutoring — broadcast or join a class"
         className={
           buttonClassName ??
-          `pointer-events-auto rounded-lg border px-3 py-1.5 font-mono text-xs uppercase tracking-widest backdrop-blur transition ${buttonAccent}`
+          `pointer-events-auto min-h-[36px] rounded-lg border px-3 py-1.5 font-mono text-xs uppercase tracking-widest backdrop-blur transition ${buttonAccent}`
         }
       >
         {buttonLabel}
@@ -310,7 +342,11 @@ export function TutorPanel({ adapter, buttonClassName }: Props) {
       {open && (
         <div
           ref={popoverRef}
-          className="absolute right-0 top-full z-30 mt-2 w-80 rounded-xl border border-white/10 bg-space-950/95 p-3 backdrop-blur"
+          className={
+            isMobile
+              ? "fixed left-2 right-2 top-12 z-30 max-h-[calc(100dvh-60px)] overflow-y-auto rounded-xl border border-white/10 bg-space-950/95 p-3 backdrop-blur"
+              : "absolute right-0 top-full z-30 mt-2 w-80 rounded-xl border border-white/10 bg-space-950/95 p-3 backdrop-blur"
+          }
         >
           {phase.kind === "idle" && (
             <IdleView
@@ -333,8 +369,10 @@ export function TutorPanel({ adapter, buttonClassName }: Props) {
               watchers={watchers}
               error={teacherError}
               caption={caption}
+              isMobile={isMobile}
               onCaptionChange={setCaption}
               onCopy={copyShareUrl}
+              onShare={() => void systemShare()}
               onStop={stopSession}
             />
           )}
@@ -344,6 +382,8 @@ export function TutorPanel({ adapter, buttonClassName }: Props) {
               code={phase.handle.code}
               state={studentState}
               error={studentError}
+              isMobile={isMobile}
+              joining={studentState === null && studentError === null}
               onLeave={stopSession}
             />
           )}
@@ -369,26 +409,16 @@ function IdleView({
   const disabled = available === false;
   return (
     <div className="flex flex-col gap-2">
-      <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/40">
-        🎓 live tutoring
-      </div>
-      <p className="text-xs leading-snug text-white/70">
-        Start a session and share the link with your class. Students see the
-        teacher&apos;s view update in real time — camera, layers, overlays, all
-        of it. Complements the offline curriculum + certificate workflow.
-      </p>
-      <button
-        type="button"
-        onClick={onStart}
-        disabled={disabled}
-        className={`rounded-lg border px-3 py-2 font-mono text-xs uppercase tracking-widest transition ${
-          disabled
-            ? "border-white/5 bg-white/5 text-white/30"
-            : "border-emerald-400/40 bg-emerald-400/15 text-emerald-200 hover:bg-emerald-400/25"
-        }`}
-      >
-        Start a session
-      </button>
+      <EmptyState
+        icon="🎓"
+        title="Teach the sky, live"
+        body="Start a session and share the link with your class. Students see the teacher's view update in real time — camera, layers, overlays, all of it. Complements the offline curriculum + certificate workflow."
+        tone="emerald"
+        density="compact"
+        {...(disabled
+          ? {}
+          : { cta: { label: "Start a session", onClick: onStart } })}
+      />
       {disabled && (
         <div className="rounded-md border border-amber-400/30 bg-amber-400/5 px-2 py-1.5 font-mono text-[10px] leading-snug text-amber-200/80">
           Live tutoring isn&apos;t enabled on this deployment. Ask the operator
@@ -410,8 +440,10 @@ function TeacherView({
   watchers,
   error,
   caption,
+  isMobile,
   onCaptionChange,
   onCopy,
+  onShare,
   onStop,
 }: {
   code: string;
@@ -419,17 +451,42 @@ function TeacherView({
   watchers: number | null;
   error: string | null;
   caption: string;
+  isMobile: boolean;
   onCaptionChange: (next: string) => void;
   onCopy: () => void;
+  onShare: () => void;
   onStop: () => void;
 }) {
+  // QR code for the share URL — rendered as inline SVG so it stays crisp
+  // at any zoom level and prints cleanly. We memoise on shareUrl so we
+  // don't redo encoding on every keystroke in the caption box.
+  const qrSvg = useMemo(() => {
+    if (!shareUrl) return "";
+    try {
+      return makeQrSvg(shareUrl, { cellSize: 6, margin: 2 });
+    } catch (err) {
+      log.warn("[tutor] qr encoding failed", err);
+      return "";
+    }
+  }, [shareUrl]);
+  // Detect Web Share API once so we can hide the share button on
+  // browsers that would otherwise fall back to clipboard (avoiding the
+  // double-up with the explicit "copy link" button).
+  const canShare =
+    typeof navigator !== "undefined" &&
+    typeof (navigator as Navigator & { share?: unknown }).share === "function";
+
   return (
     <div className="flex flex-col gap-2.5">
       <div className="flex items-center justify-between gap-2">
         <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-amber-200/80">
           🎓 broadcasting
         </div>
-        <div className="rounded-md border border-amber-400/30 bg-amber-400/10 px-2 py-0.5 font-mono text-[10px] text-amber-200">
+        {/* Live "students count" badge — updates each publish cycle. */}
+        <div
+          className="rounded-md border border-amber-400/30 bg-amber-400/10 px-2 py-0.5 font-mono text-[10px] text-amber-200"
+          aria-live="polite"
+        >
           👁 {watchers ?? 0} watching
         </div>
       </div>
@@ -441,6 +498,25 @@ function TeacherView({
           {code}
         </div>
       </div>
+
+      {/* QR code — primary mobile share affordance. Students scan with
+          their phone camera and land directly on the joining flow. We
+          keep it visible on desktop too so a teacher with a laptop can
+          show their class the projected screen. */}
+      {qrSvg && (
+        <div className="flex flex-col items-center gap-1 rounded-md border border-white/10 bg-white p-3">
+          <div
+            className="h-[180px] w-[180px] [&>svg]:h-full [&>svg]:w-full"
+            // eslint-disable-next-line react/no-danger
+            dangerouslySetInnerHTML={{ __html: qrSvg }}
+            aria-label="QR code for session share link"
+          />
+          <div className="font-mono text-[9px] uppercase tracking-widest text-space-950/60">
+            scan to join
+          </div>
+        </div>
+      )}
+
       <label className="flex flex-col gap-1">
         <span className="font-mono text-[10px] uppercase tracking-widest text-white/40">
           share link
@@ -450,7 +526,7 @@ function TeacherView({
           readOnly
           value={shareUrl}
           onFocus={(e) => e.currentTarget.select()}
-          className="w-full rounded-md border border-white/10 bg-space-950 px-2 py-1.5 font-mono text-[11px] text-white/80 focus:border-amber-400/50 focus:outline-none"
+          className="min-h-[44px] w-full rounded-md border border-white/10 bg-space-950 px-2 py-1.5 font-mono text-[11px] text-white/80 focus:border-amber-400/50 focus:outline-none"
         />
       </label>
       <label className="flex flex-col gap-1">
@@ -463,21 +539,30 @@ function TeacherView({
           maxLength={200}
           placeholder="Notice the Tarantula Nebula here…"
           onChange={(e) => onCaptionChange(e.target.value)}
-          className="w-full rounded-md border border-white/10 bg-space-950 px-2 py-1.5 text-xs text-white/85 placeholder-white/30 focus:border-amber-400/50 focus:outline-none"
+          className="min-h-[44px] w-full rounded-md border border-white/10 bg-space-950 px-2 py-1.5 text-xs text-white/85 placeholder-white/30 focus:border-amber-400/50 focus:outline-none"
         />
       </label>
-      <div className="flex items-center gap-2">
+      <div className={isMobile ? "flex flex-col gap-2" : "flex items-center gap-2"}>
         <button
           type="button"
           onClick={onCopy}
-          className="flex-1 rounded-md border border-white/10 bg-white/5 px-2 py-1.5 font-mono text-[11px] uppercase tracking-widest text-white/80 transition hover:bg-white/10"
+          className="min-h-[44px] flex-1 rounded-md border border-white/10 bg-white/5 px-2 py-1.5 font-mono text-[11px] uppercase tracking-widest text-white/80 transition hover:bg-white/10"
         >
           📋 copy link
         </button>
+        {canShare && (
+          <button
+            type="button"
+            onClick={onShare}
+            className="min-h-[44px] flex-1 rounded-md border border-amber-400/30 bg-amber-400/10 px-2 py-1.5 font-mono text-[11px] uppercase tracking-widest text-amber-200 transition hover:bg-amber-400/20"
+          >
+            📤 share
+          </button>
+        )}
         <button
           type="button"
           onClick={onStop}
-          className="rounded-md border border-rose-400/30 bg-rose-400/10 px-2 py-1.5 font-mono text-[11px] uppercase tracking-widest text-rose-200 transition hover:bg-rose-400/20"
+          className="min-h-[44px] rounded-md border border-rose-400/30 bg-rose-400/10 px-2 py-1.5 font-mono text-[11px] uppercase tracking-widest text-rose-200 transition hover:bg-rose-400/20"
         >
           stop
         </button>
@@ -495,17 +580,77 @@ function StudentView({
   code,
   state,
   error,
+  isMobile,
+  joining,
   onLeave,
 }: {
   code: string;
   state: TutorState | null;
   error: string | null;
+  isMobile: boolean;
+  joining: boolean;
   onLeave: () => void;
 }) {
+  // Joined for the first time — show a one-shot "hold your device steady"
+  // hint that fades after the third successful state apply. We track this
+  // with a counter so the hint disappears as soon as the student sees the
+  // teacher's view actually move.
+  const [hintDismissed, setHintDismissed] = useState(false);
+  useEffect(() => {
+    if (state) {
+      // Fade the hint a moment after we've actually started receiving
+      // teacher state. Single-shot setTimeout so re-renders don't re-arm.
+      const id = window.setTimeout(() => setHintDismissed(true), 4000);
+      return () => window.clearTimeout(id);
+    }
+    return undefined;
+  }, [state !== null]);
+
+  if (joining) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-4 text-center">
+        <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-emerald-200/80">
+          🎓 joining session…
+        </div>
+        <div className="rounded-md border border-white/10 bg-white/5 px-3 py-1.5">
+          <div className="font-mono text-[10px] uppercase tracking-widest text-white/40">
+            session
+          </div>
+          <div className="font-mono text-lg tracking-[0.3em] text-white">
+            {code}
+          </div>
+        </div>
+        <div className="h-1.5 w-32 overflow-hidden rounded-full bg-white/10">
+          <div className="h-full w-1/3 animate-pulse rounded-full bg-emerald-300/70" />
+        </div>
+        <p className="max-w-[260px] text-xs leading-snug text-white/55">
+          Hold your device steady; the teacher will navigate.
+        </p>
+        {error && (
+          <div className="rounded-md border border-rose-400/30 bg-rose-400/5 px-2 py-1.5 font-mono text-[10px] leading-snug text-rose-200/80">
+            {error}
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={onLeave}
+          className="min-h-[44px] rounded-md border border-white/10 bg-white/5 px-3 py-1.5 font-mono text-[11px] uppercase tracking-widest text-white/80 transition hover:bg-white/10"
+        >
+          cancel
+        </button>
+      </div>
+    );
+  }
+
+  // Active student session — minimal chrome on mobile, a Following-teacher
+  // indicator, a Leave button, and the optional caption.
   return (
     <div className="flex flex-col gap-2.5">
-      <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-emerald-200/80">
-        🎓 student mode — camera follows teacher
+      <div className="flex items-center justify-between gap-2">
+        <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-emerald-200/80">
+          🎓 following teacher
+        </div>
+        <span className="inline-flex h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
       </div>
       <div className="rounded-md border border-white/10 bg-white/5 p-2">
         <div className="font-mono text-[10px] uppercase tracking-widest text-white/40">
@@ -515,12 +660,17 @@ function StudentView({
           {code}
         </div>
       </div>
+      {!hintDismissed && isMobile && (
+        <p className="rounded-md border border-white/10 bg-white/[0.03] px-2 py-1.5 text-[11px] leading-snug text-white/55">
+          Hold your device steady; the teacher will navigate.
+        </p>
+      )}
       {state?.caption && (
         <div className="rounded-md border border-amber-400/30 bg-amber-400/10 px-2 py-1.5 text-xs leading-snug text-amber-100">
           {state.caption}
         </div>
       )}
-      {state && (
+      {state && !isMobile && (
         <div className="font-mono text-[10px] leading-snug text-white/50">
           mode: {state.mode}
           {state.focus ? ` · focus: ${state.focus}` : ""}
@@ -538,7 +688,7 @@ function StudentView({
       <button
         type="button"
         onClick={onLeave}
-        className="rounded-md border border-white/10 bg-white/5 px-2 py-1.5 font-mono text-[11px] uppercase tracking-widest text-white/80 transition hover:bg-white/10"
+        className="min-h-[44px] rounded-md border border-white/10 bg-white/5 px-2 py-1.5 font-mono text-[11px] uppercase tracking-widest text-white/80 transition hover:bg-white/10"
       >
         Leave session
       </button>

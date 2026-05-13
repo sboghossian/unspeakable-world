@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && pnpm build:seo",
+    "build": "tsc -b && vite build && pnpm build:seo && pnpm build:screenshots",
     "build:seo": "node --experimental-strip-types --no-warnings ../../scripts/build-seo-pages.ts",
+    "build:screenshots": "node --experimental-strip-types --no-warnings ../../scripts/optimize-screenshots.ts",
     "preview": "vite preview --host",
     "typecheck": "tsc -b --noEmit",
     "lint": "echo 'lint: TODO'",
@@ -29,6 +30,7 @@
     "bake:sky-cultures-extended": "node --experimental-strip-types --no-warnings ../../scripts/bake-sky-cultures-extended.ts",
     "bake:spice": "node --experimental-strip-types --no-warnings ../../scripts/bake-spice.ts",
     "bake:translate": "node --experimental-strip-types --no-warnings ../../scripts/translate-lessons.ts",
+    "bake:translate-ui": "node --experimental-strip-types --no-warnings ../../scripts/translate-ui.ts",
     "verify:imagery": "node --experimental-strip-types --no-warnings ../../scripts/verify-imagery.ts"
   },
   "dependencies": {
@@ -54,6 +56,7 @@
     "autoprefixer": "^10.4.20",
     "jsdom": "^25.0.0",
     "postcss": "^8.4.49",
+    "sharp": "^0.33.5",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.0",
     "vite": "^6.0.0",

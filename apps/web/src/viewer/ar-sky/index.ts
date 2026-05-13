@@ -119,15 +119,38 @@ export class ArSkyController {
    * Hand control of the camera to the device gyroscope and (optionally)
    * start the rear-camera passthrough. Must be called from inside a user
    * gesture on iOS Safari.
+   *
+   * # iOS single-gesture invariant
+   * Safari ≥ 13 requires BOTH `DeviceOrientationEvent.requestPermission()`
+   * AND `navigator.mediaDevices.getUserMedia()` to be _kicked off_ inside
+   * the same synchronous user gesture. If we `await` the orientation
+   * permission before even calling `getUserMedia`, Safari treats the
+   * second call as detached from the gesture and silently rejects it
+   * with `NotAllowedError`. To preserve the invariant we start both
+   * promises _synchronously_ here (no `await` between them) and only
+   * await the results afterwards.
    */
   async enter(opts: ArEnterOptions): Promise<void> {
     // 1. Pause Voyager pointer/wheel input. We do this first so a
     //    half-failed enter doesn't leave drag+gyro fighting.
     this.scene.setControlsEnabled(false);
 
-    // 2. Orientation permission (iOS gate). Other platforms return
-    //    "granted" immediately.
-    const perm = await requestOrientationPermission();
+    // 2. Kick off BOTH permission flows synchronously. `requestOrientationPermission`
+    //    must call `DeviceOrientationEvent.requestPermission()` in this same
+    //    JS task or iOS Safari rejects it. Same with `startRearCamera` →
+    //    `getUserMedia`. Awaiting *both* afterwards is fine — the gesture
+    //    requirement is on the synchronous *call*, not the resolution.
+    const orientationPromise = requestOrientationPermission();
+    const cameraPromise = opts.useCamera
+      ? startRearCamera(opts.videoEl)
+      : Promise.resolve<CameraStartResult>({
+          ok: false,
+          reason: "permission-denied",
+          detail: "User opted out of camera at entry",
+        });
+
+    // 3. Now we can safely await each result.
+    const perm = await orientationPromise;
     if (perm === "granted") {
       this.orientation = startOrientation((q) => {
         // Three's camera convention: forward is local -Z, up is local
@@ -144,23 +167,15 @@ export class ArSkyController {
       log.warn("[ar-sky] orientation permission not granted", perm);
     }
 
-    // 3. Camera passthrough (optional). If declined, we still run AR
+    // 4. Camera passthrough (optional). If declined, we still run AR
     //    mode — just on a dark background.
-    if (opts.useCamera) {
-      const camResult = await startRearCamera(opts.videoEl);
-      if (camResult.ok) {
-        this.cameraStop = camResult.stop;
-      }
-      opts.onCameraResult(camResult);
-    } else {
-      opts.onCameraResult({
-        ok: false,
-        reason: "permission-denied",
-        detail: "User opted out of camera at entry",
-      });
+    const camResult = await cameraPromise;
+    if (camResult.ok) {
+      this.cameraStop = camResult.stop;
     }
+    opts.onCameraResult(camResult);
 
-    // 4. Pre-fetch the bright-star catalog. We don't await — overlay can
+    // 5. Pre-fetch the bright-star catalog. We don't await — overlay can
     //    render planets immediately and add stars when they arrive.
     void this.ensureBrightStars();
   }

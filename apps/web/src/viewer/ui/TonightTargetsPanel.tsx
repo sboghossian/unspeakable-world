@@ -7,6 +7,7 @@ import {
   effectiveBortle,
 } from "../observer/bortle";
 import { BortleBadge, BortleSelector } from "./BortleSelector";
+import { EmptyState } from "./EmptyState";
 import type { SearchEntry } from "../search/search-index";
 
 /**
@@ -101,6 +102,10 @@ export function TonightTargetsPanel({ entries, observer, onSelect }: Props) {
         type="button"
         onClick={() => setOpen((v) => !v)}
         title="Tonight's targets — what's up right now"
+        aria-label="Tonight's targets — objects above the horizon now"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls="tonight-targets-listbox"
         className={`rounded-lg border px-3 py-1.5 font-mono text-xs uppercase tracking-widest backdrop-blur transition ${
           open
             ? "border-emerald-400/50 bg-emerald-400/15 text-emerald-300"
@@ -113,7 +118,7 @@ export function TonightTargetsPanel({ entries, observer, onSelect }: Props) {
 
       {open && (
         <div className="absolute right-0 top-full z-30 mt-2 w-[min(380px,92vw)] overflow-hidden rounded-xl border border-white/10 bg-space-950/95 backdrop-blur">
-          <div className="flex items-center justify-between gap-2 border-b border-white/5 px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-white/40">
+          <div className="flex items-center justify-between gap-2 border-b border-white/5 px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-white/65">
             <span>up now · ≥{MIN_ALT_DEG}° · top {LIMIT}</span>
             <BortleBadge value={bortle} />
           </div>
@@ -121,17 +126,34 @@ export function TonightTargetsPanel({ entries, observer, onSelect }: Props) {
             <BortleSelector value={bortle} onChange={setBortle} />
           </div>
           {ranked.length === 0 ? (
-            <div className="px-3 py-4 text-xs text-white/40">
-              Nothing brighter than mag {limitingMag.toFixed(1)} is above{" "}
-              {MIN_ALT_DEG}° right now. Try a higher Bortle class for a
-              wider list, or wait — the sky rotates 15°/hour.
+            <div className="p-3">
+              <EmptyState
+                icon="🔭"
+                title="Nothing's quite up right now"
+                body={`Nothing brighter than mag ${limitingMag.toFixed(1)} is above ${MIN_ALT_DEG}° from your location. The sky rotates ~15°/hour — give it time, or try a higher Bortle class for a wider list.`}
+                tone="emerald"
+                density="compact"
+                cta={{
+                  label: "Widen Bortle",
+                  onClick: () => {
+                    setBortle((b) => (b < 9 ? ((b + 1) as BortleClass) : b));
+                  },
+                }}
+              />
             </div>
           ) : (
-            <ul className="max-h-[60vh] overflow-y-auto">
+            <ul
+              className="max-h-[60vh] overflow-y-auto"
+              id="tonight-targets-listbox"
+              role="listbox"
+              aria-label="Tonight's targets"
+            >
               {ranked.map(({ e, alt }) => (
                 <li
                   key={e.id}
                   className="border-b border-white/5 last:border-b-0"
+                  role="option"
+                  aria-selected="false"
                 >
                   <button
                     type="button"
@@ -139,13 +161,14 @@ export function TonightTargetsPanel({ entries, observer, onSelect }: Props) {
                       onSelect(e.direction);
                       setOpen(false);
                     }}
+                    aria-label={`${e.label}, altitude ${alt.toFixed(0)} degrees`}
                     className="flex w-full items-baseline justify-between gap-2 px-3 py-2 text-left transition hover:bg-white/[0.04]"
                   >
                     <div className="min-w-0 flex-1">
                       <div className="truncate font-display text-sm text-white">
                         {e.label}
                       </div>
-                      <div className="truncate font-mono text-[10px] text-white/45">
+                      <div className="truncate font-mono text-[10px] text-white/65">
                         {e.detail}
                       </div>
                     </div>
@@ -153,7 +176,7 @@ export function TonightTargetsPanel({ entries, observer, onSelect }: Props) {
                       <div className="font-mono text-xs text-emerald-300/85">
                         {alt.toFixed(0)}°
                       </div>
-                      <div className="font-mono text-[10px] text-white/40">
+                      <div className="font-mono text-[10px] text-white/65">
                         {compass(e.direction)}
                       </div>
                     </div>
@@ -162,7 +185,7 @@ export function TonightTargetsPanel({ entries, observer, onSelect }: Props) {
               ))}
             </ul>
           )}
-          <div className="border-t border-white/5 px-3 py-1.5 text-[10px] text-white/30">
+          <div className="border-t border-white/5 px-3 py-1.5 text-[10px] text-white/65">
             local sky · auto-refresh 60s · click to fly
           </div>
         </div>

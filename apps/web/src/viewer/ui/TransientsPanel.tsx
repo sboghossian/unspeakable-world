@@ -7,6 +7,7 @@ import {
   type Transient,
 } from "../transients/alerce-feed";
 import { fetchAtelRecent, type AtelItem } from "../transients/atel-feed";
+import { getCopy, inferKind } from "../../lib/error-copy";
 import { fetchGcnCirculars, type GcnCircular } from "../transients/gcn-feed";
 import {
   fetchGraceDbAlerts,
@@ -457,6 +458,25 @@ export function TransientsPanel({ scene }: Props) {
 
 /* ── per-tab list components ─────────────────────────────────────────── */
 
+/**
+ * Shared error renderer for the four feed tabs (ALeRCE / GraceDB / GCN /
+ * ATel). Routes everything through `lib/error-copy.getCopy()` so the
+ * tone matches the rest of the viewer (friendly, blame-shifting away
+ * from the user, ends with a next action).
+ */
+function FeedError({ error, service }: { error: string; service: string }) {
+  const copy = getCopy(inferKind(error), { service });
+  return (
+    <div
+      role="alert"
+      className="px-3 py-3 text-xs text-amber-200"
+    >
+      <div className="font-mono text-amber-300">{copy.title}</div>
+      <div className="mt-0.5 text-amber-200/80">{copy.body}</div>
+    </div>
+  );
+}
+
 function AlerceList(props: {
   data: Transient[] | null;
   error: string | null;
@@ -471,7 +491,7 @@ function AlerceList(props: {
     );
   }
   if (error && (!data || data.length === 0)) {
-    return <div className="px-3 py-3 text-xs text-amber-300/80">{error}</div>;
+    return <FeedError error={error} service="ALeRCE" />;
   }
   if (!data || data.length === 0) return null;
   return (
@@ -535,7 +555,7 @@ function GwList(props: {
     );
   }
   if (error && (!data || data.length === 0)) {
-    return <div className="px-3 py-3 text-xs text-amber-300/80">{error}</div>;
+    return <FeedError error={error} service="GraceDB" />;
   }
   if (!data || data.length === 0) return null;
   return (
@@ -617,7 +637,7 @@ function GcnList(props: {
     );
   }
   if (error && (!data || data.length === 0)) {
-    return <div className="px-3 py-3 text-xs text-amber-300/80">{error}</div>;
+    return <FeedError error={error} service="GCN" />;
   }
   if (!data || data.length === 0) return null;
   return (
@@ -687,7 +707,7 @@ function AtelList(props: { data: AtelItem[] | null; error: string | null }) {
     );
   }
   if (error && (!data || data.length === 0)) {
-    return <div className="px-3 py-3 text-xs text-amber-300/80">{error}</div>;
+    return <FeedError error={error} service="ATel" />;
   }
   if (!data || data.length === 0) return null;
   return (

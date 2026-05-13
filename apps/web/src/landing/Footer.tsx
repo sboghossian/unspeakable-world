@@ -1,3 +1,5 @@
+import { useT } from "../i18n/hooks";
+
 const SOURCES = [
   {
     name: "CDS Strasbourg",
@@ -23,11 +25,12 @@ const SOURCES = [
 ];
 
 export function Footer() {
+  const t = useT();
   return (
     <footer className="mt-auto border-t border-white/5 bg-space-950/60 px-6 py-12 backdrop-blur">
       <div className="mx-auto w-full max-w-5xl">
         <p className="mb-6 text-xs uppercase tracking-[0.2em] text-white/40">
-          Built on the shoulders of
+          {t("footer.builtOn")}
         </p>
         <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
           {SOURCES.map((s) => (
@@ -63,7 +66,7 @@ export function Footer() {
               href="#whoami"
               className="text-white/60 hover:text-white"
             >
-              About the author →
+              {t("footer.about")}
             </a>
           </span>
           <span className="font-mono">

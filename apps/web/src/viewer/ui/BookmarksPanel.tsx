@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { removeBookmark, useBookmarks } from "../../lib/bookmarks";
+import { EmptyState } from "./EmptyState";
 
 /**
  * ⭐ Cross-mode bookmarks panel.
@@ -28,14 +29,17 @@ export function BookmarksPanel() {
         type="button"
         onClick={() => setOpen((v) => !v)}
         title="Bookmarks — saved views across all modes"
-        aria-label="Bookmarks"
+        aria-label={`Bookmarks (${list.length} saved)`}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls="bookmarks-listbox"
         className={`pointer-events-auto rounded-lg border px-2.5 py-1.5 font-mono text-xs backdrop-blur transition ${
           open
             ? "border-amber-400/60 bg-amber-400/15 text-amber-200"
             : "border-white/10 bg-space-950/70 text-white/70 hover:bg-white/10 hover:text-white"
         }`}
       >
-        ★
+        <span aria-hidden="true">★</span>
       </button>
       {open && (
         <div className="absolute right-0 top-full z-30 mt-1 w-[min(320px,90vw)] rounded-xl border border-white/10 bg-space-950/95 p-2 shadow-lg backdrop-blur">
@@ -53,14 +57,26 @@ export function BookmarksPanel() {
             </button>
           </div>
           {list.length === 0 ? (
-            <div className="px-2 py-3 font-mono text-[11px] text-white/40">
-              no bookmarks yet — use “★ save view” in any mode
-            </div>
+            <EmptyState
+              icon="★"
+              title="Save the views you'll come back to"
+              body="Frame anything you love and tap ★ save view in any mode — Sky, Solar, Galactic, Universe. Bookmarks live in your browser."
+              tone="amber"
+              density="compact"
+              cta={{ label: "Got it", onClick: () => setOpen(false) }}
+            />
           ) : (
-            <div className="flex max-h-[60vh] flex-col gap-1 overflow-y-auto">
+            <ul
+              id="bookmarks-listbox"
+              role="listbox"
+              aria-label="Saved bookmarks"
+              className="flex max-h-[60vh] flex-col gap-1 overflow-y-auto"
+            >
               {list.map((b) => (
-                <div
+                <li
                   key={b.id}
+                  role="option"
+                  aria-selected="false"
                   className="flex items-center gap-1 rounded-md border border-white/5 bg-white/[0.03] px-2 py-1.5"
                 >
                   <a
@@ -80,13 +96,13 @@ export function BookmarksPanel() {
                     type="button"
                     onClick={() => removeBookmark(b.id)}
                     aria-label={`Remove ${b.title}`}
-                    className="rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[10px] text-white/45 hover:bg-rose-400/15 hover:text-rose-200"
+                    className="rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[10px] text-white/65 hover:bg-rose-400/15 hover:text-rose-200"
                   >
                     ✕
                   </button>
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
         </div>
       )}

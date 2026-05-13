@@ -1,0 +1,115 @@
+/* ─────────────────────────────────────────────────────────────────────
+ * styles-print.css — print stylesheet, imported once from `styles.css`
+ *
+ * The certificate panel (`viewer/ui/CertificatePanel.tsx`) calls
+ * `window.print()` and relies on Tailwind's `print:` variants for most
+ * of its layout. This file picks up the cross-cutting print policy that
+ * doesn't translate cleanly to utility classes:
+ *
+ *   1. A4 portrait page geometry, white background, no margins so the
+ *      cert sheet fills the printable area exactly.
+ *   2. Hide every fixed-position panel and toast that floats above the
+ *      cert — the print preview should show only the sheet.
+ *   3. Force `color-adjust: exact` on the certificate body so Chrome
+ *      keeps the emerald border and parchment fill instead of "saving
+ *      ink" with white panels.
+ *   4. Disable `body { overflow: hidden }` from `styles.css` for the
+ *      print stack — otherwise the renderer clips the cert.
+ *
+ * Cross-browser notes (verified manually 2026-05):
+ *   - Chrome (139): respects @page A4. With "Background graphics" ON in
+ *     the print dialog the emerald border + parchment fill print. Off
+ *     by default — we set `print-color-adjust: exact` so the fill
+ *     survives even with the toggle off (Chrome 105+).
+ *   - Safari (17): respects @page A4. `print-color-adjust: exact` is
+ *     honoured (added in 15.4). The QR SVG renders crisply because the
+ *     internal SVG has no anti-aliasing filter applied.
+ *   - Firefox (128): respects @page A4. Treats `print-color-adjust:
+ *     exact` correctly. The `@media print` selector also matches the
+ *     PDF-export "Save as PDF" pseudo-print path.
+ *
+ * Known quirk: Safari occasionally renders the dotted `border-double`
+ * as a single line at certain zoom levels. Switching to `border-style:
+ * double` directly works around it; we do that below.
+ * ──────────────────────────────────────────────────────────────────── */
+
+@media print {
+  /* Page geometry — A4 portrait, no margins so the sheet's own padding
+     governs spacing. Tailwind ships the cert at 210 × 297 mm (`print:w-
+     [210mm] print:h-[297mm]`), so this matches it 1:1. */
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  /* Reset the SPA shell — the scene chrome (top bars, toasts, support
+     ribbon, consent banner) should NEVER appear on a printed cert. We
+     selectively show the certificate-modal subtree below via z-index
+     plus the Tailwind `print:` classes already in CertificatePanel. */
+  html,
+  body,
+  #root {
+    background: #ffffff !important;
+    overflow: visible !important;
+    height: auto !important;
+    margin: 0 !important;
+  }
+
+  /* Anything explicitly tagged with the existing Tailwind `print:hidden`
+     utility already drops out; this catches the fixed-position chrome
+     we don't control (PWA banner, support ribbon, error toast, etc.). */
+  .pwa-install-banner,
+  .support-ribbon,
+  [role="status"]:not(.cert-sheet *),
+  [role="alert"] {
+    display: none !important;
+  }
+
+  /* Color-fidelity: keep the emerald border + parchment fill on paper.
+     Chrome calls this `print-color-adjust`; the standard property is
+     `color-adjust`. Both ship to make sure the cert prints with brand
+     colours rather than being collapsed to white-on-white. */
+  .cert-sheet,
+  .cert-sheet * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* Safari sometimes renders Tailwind's `border-double` as a single
+     line at certain DPRs. Force the SVG-grade double-line border so
+     printed certs match the on-screen design across all three engines. */
+  .cert-sheet {
+    border-style: double !important;
+    box-shadow: none !important;
+  }
+
+  /* Re-pin the cert sheet to the top of the page so it isn't pushed
+     down by the modal backdrop's flex-center alignment (Chrome will
+     still center vertically on screen, but on paper we want the top of
+     the sheet flush to the page top). */
+  .cert-print-wrap {
+    position: static !important;
+    inset: auto !important;
+    background: #ffffff !important;
+    backdrop-filter: none !important;
+    padding: 0 !important;
+    display: block !important;
+  }
+
+  /* Avoid awkward page breaks INSIDE the lessons grid — the QR/QR-label
+     column is what most often gets orphaned by a forced break. */
+  .cert-sheet .cert-lessons-grid,
+  .cert-sheet .cert-qr-block {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* QR code — SVG renders crisply but some browsers anti-alias the
+     parent <img>/<div>. Force shape-rendering=crispEdges so the modules
+     stay scannable on cheap printers. */
+  .cert-sheet svg {
+    shape-rendering: crispEdges;
+    image-rendering: -webkit-optimize-contrast;
+  }
+}

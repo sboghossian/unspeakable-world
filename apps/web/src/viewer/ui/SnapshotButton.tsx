@@ -39,9 +39,9 @@ export function SnapshotButton({ onCapture }: Props) {
           ? "border-emerald-400/60 bg-emerald-400/15 text-emerald-200"
           : "border-white/10 bg-space-950/70 text-white/70 hover:bg-white/10 hover:text-white"
       }`}
-      aria-label="Snapshot"
+      aria-label="Save current view as PNG snapshot"
     >
-      📷
+      <span aria-hidden="true">📷</span>
     </button>
   );
 }

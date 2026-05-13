@@ -15,6 +15,7 @@ import {
   type SimbadHit,
 } from "../info/simbad";
 import { resolveLocalHit } from "../info/local-resolver";
+import { getCopy } from "../../lib/error-copy";
 import {
   candidatesFromSimbad,
   wikipediaSummary,
@@ -77,12 +78,22 @@ export function ArSkyOverlay({ scene, onExit }: Props) {
     | { kind: "live" }
     | { kind: "fallback"; reason: FailureReason; detail: string }
   >({ kind: "pending" });
-  const [askCameraOptIn, setAskCameraOptIn] = useState(true);
+  // Pre-permission card lifecycle: "prompt" → user explains expectations,
+  // "entering" → both permissions kicked off in the gesture (still inside
+  // the card so we can render a spinner), "live" → overlay is active,
+  // "denied-retry" → user can re-grant after a "no".
+  const [optIn, setOptIn] = useState<
+    "prompt" | "entering" | "live" | "demo"
+  >("prompt");
+  const [demoMode, setDemoMode] = useState(false);
   const [inspect, setInspect] = useState<Inspect | null>(null);
   const [bright, setBright] = useState(false);
   // useCameraRef captures the user's pre-mount opt-in choice without
   // re-triggering the enter effect.
   const useCameraRef = useRef(true);
+  // Stash the controller across the gesture-bound enter() and the React
+  // teardown effect so the same instance is reused.
+  const enterStartedRef = useRef(false);
 
   // Subscribe to scene state for forward + fov (drives label positions
   // and HUD altitude). VoyagerControls is paused, so the only thing
@@ -116,58 +127,26 @@ export function ArSkyOverlay({ scene, onExit }: Props) {
   // poll the ref each tick so the interval picks the controller up as
   // soon as the entry effect installs it.
   useEffect(() => {
-    if (askCameraOptIn) return;
+    if (optIn !== "live" && optIn !== "demo") return;
     const handle = window.setInterval(() => {
       const ctrl = controllerRef.current;
       if (!ctrl) return;
       setLabels(ctrl.visibleLabels());
     }, 800);
     return () => window.clearInterval(handle);
-  }, [askCameraOptIn]);
+  }, [optIn]);
 
-  // Lifecycle: create the controller, enter, and tear down on unmount.
-  // We intentionally re-run when the user toggles camera opt-in so the
-  // <video> element is freshly attached after a "yes camera" tap.
+  // Cleanup: tear down the controller on unmount. We do NOT recreate the
+  // controller in an effect — that would break the single-gesture
+  // invariant on iOS Safari (the click → setState → rerender → effect
+  // chain crosses task boundaries that strip the gesture flag). Instead
+  // `beginEnter` below runs inside the click handler.
   useEffect(() => {
-    if (askCameraOptIn) return;
-    const ctrl = new ArSkyController(scene);
-    controllerRef.current = ctrl;
-    let cancelled = false;
-    const videoEl = videoRef.current;
-    if (!videoEl) {
-      log.warn("[ar-sky] video element missing");
-      return;
-    }
-    void ctrl
-      .enter({
-        videoEl,
-        useCamera: useCameraRef.current,
-        onOrientation: () => {
-          /* state updates flow through scene.subscribe */
-        },
-        onCameraResult: (res) => {
-          if (cancelled) return;
-          if (res.ok) setCameraStatus({ kind: "live" });
-          else
-            setCameraStatus({
-              kind: "fallback",
-              reason: res.reason,
-              detail: res.detail,
-            });
-        },
-      })
-      .then(() => {
-        if (cancelled) return;
-        setLabels(ctrl.visibleLabels());
-      })
-      .catch((err) => log.warn("[ar-sky] enter failed", err));
-
     return () => {
-      cancelled = true;
-      ctrl.exit();
+      controllerRef.current?.exit();
       controllerRef.current = null;
     };
-  }, [scene, askCameraOptIn]);
+  }, []);
 
   // Compute screen-space positions for every label given the current
   // forward + fov + viewport.
@@ -255,82 +234,191 @@ export function ArSkyOverlay({ scene, onExit }: Props) {
       });
   };
 
-  // Initial opt-in card — explains the camera+motion permissions before
-  // we trigger the platform prompts. The button click is the user
-  // gesture iOS requires for both DeviceOrientationEvent.requestPermission
-  // and getUserMedia, so we trigger enter() from inside this handler.
-  if (askCameraOptIn) {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-space-950/95 backdrop-blur">
-        <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-space-950 p-6 text-center shadow-2xl">
-          <div className="mb-1 font-mono text-[11px] uppercase tracking-[0.3em] text-fuchsia-300/80">
-            ar sky
-          </div>
-          <h2 className="font-display text-2xl text-white">
-            Point your phone at the sky
-          </h2>
-          <p className="mt-3 text-sm leading-relaxed text-white/65">
-            AR Sky uses your phone's <strong>motion sensors</strong> to
-            line up labels with the real sky and your{" "}
-            <strong>rear camera</strong> to show what's actually above
-            you.
-          </p>
-          <p className="mt-3 text-xs text-white/40">
-            Both are <strong>opt-in</strong> and nothing leaves your
-            device. iOS will ask you to confirm each permission.
-          </p>
-          <div className="mt-5 flex flex-col gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                useCameraRef.current = true;
-                setAskCameraOptIn(false);
-              }}
-              className="pointer-events-auto rounded-lg border border-fuchsia-400/40 bg-fuchsia-500/10 px-4 py-2.5 font-mono text-xs uppercase tracking-widest text-fuchsia-200 transition hover:bg-fuchsia-500/20"
-            >
-              🛰 enter AR (camera + motion)
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                useCameraRef.current = false;
-                setAskCameraOptIn(false);
-              }}
-              className="pointer-events-auto rounded-lg border border-white/10 bg-white/[0.03] px-4 py-2 font-mono text-[11px] uppercase tracking-widest text-white/70 transition hover:bg-white/[0.07]"
-            >
-              motion only · no camera
-            </button>
-            <button
-              type="button"
-              onClick={onExit}
-              className="pointer-events-auto rounded-lg px-4 py-2 font-mono text-[11px] uppercase tracking-widest text-white/40 transition hover:text-white/70"
-            >
-              cancel
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  /**
+   * Start AR Sky directly from a click handler. CRITICAL: this is the
+   * single user-gesture path iOS Safari demands — both
+   * `DeviceOrientationEvent.requestPermission()` and
+   * `navigator.mediaDevices.getUserMedia()` must be invoked while the
+   * call stack is still rooted in this React synthetic event handler.
+   *
+   * We deliberately do NOT route this through `setState` → effect because
+   * by the time the effect runs we'd be in a fresh task and Safari would
+   * silently demote the gesture token, causing the camera prompt to
+   * never appear.
+   */
+  const beginEnter = (useCamera: boolean): void => {
+    if (enterStartedRef.current) return;
+    enterStartedRef.current = true;
+    useCameraRef.current = useCamera;
+    const videoEl = videoRef.current;
+    if (!videoEl) {
+      log.warn("[ar-sky] video element missing at gesture time");
+      enterStartedRef.current = false;
+      return;
+    }
+    const ctrl = new ArSkyController(scene);
+    controllerRef.current = ctrl;
+    // Show the spinner state while the prompts resolve.
+    setOptIn("entering");
+    // Kick off enter() synchronously — `enter()` itself starts both
+    // permission promises *before* its first await, satisfying the
+    // gesture invariant.
+    void ctrl
+      .enter({
+        videoEl,
+        useCamera,
+        onOrientation: () => {
+          /* state updates flow through scene.subscribe */
+        },
+        onCameraResult: (res) => {
+          if (res.ok) setCameraStatus({ kind: "live" });
+          else
+            setCameraStatus({
+              kind: "fallback",
+              reason: res.reason,
+              detail: res.detail,
+            });
+        },
+      })
+      .then(() => {
+        setOptIn("live");
+        setLabels(ctrl.visibleLabels());
+      })
+      .catch((err) => {
+        log.warn("[ar-sky] enter failed", err);
+        // Reset so the user can retry.
+        enterStartedRef.current = false;
+        setOptIn("prompt");
+      });
+  };
+
+  /**
+   * Demo mode — gyro-driven sky without camera or even orientation
+   * permission. Lets the user see the AR experience before granting any
+   * real device access.
+   */
+  const beginDemo = (): void => {
+    if (enterStartedRef.current) return;
+    enterStartedRef.current = true;
+    const ctrl = new ArSkyController(scene);
+    controllerRef.current = ctrl;
+    setDemoMode(true);
+    setOptIn("demo");
+    // Fire-and-forget — demo path will skip the camera entirely. We do
+    // still ask for orientation since the user pressed a button (counts
+    // as a gesture); they can decline and the sky just won't rotate.
+    void ctrl
+      .enter({
+        videoEl: videoRef.current ?? document.createElement("video"),
+        useCamera: false,
+        onOrientation: () => undefined,
+        onCameraResult: (res) => {
+          if (!res.ok) {
+            setCameraStatus({
+              kind: "fallback",
+              reason: res.reason,
+              detail: res.detail,
+            });
+          }
+        },
+      })
+      .then(() => setLabels(ctrl.visibleLabels()))
+      .catch((err) => log.warn("[ar-sky] demo enter failed", err));
+  };
+
+  // The opt-in card is rendered as an overlay on top of the main AR
+  // container so the <video> element survives all phase transitions —
+  // moving the ref across two different DOM subtrees would orphan the
+  // attached MediaStream once the camera permission resolves.
+  const showOptInOverlay = optIn === "prompt" || optIn === "entering";
 
   return (
     <div
       ref={containerRef}
-      onClick={handleIdentify}
+      onClick={showOptInOverlay ? undefined : handleIdentify}
       className="fixed inset-0 z-50 select-none overflow-hidden bg-black text-white"
     >
       {/* Camera feed — sits behind everything. `object-cover` fills the
           viewport without stretching. Black background shows through
-          when the camera was declined / unavailable. */}
+          when the camera was declined / unavailable. Rendered from the
+          first mount so `videoRef.current` is populated when the click
+          handler invokes `beginEnter` — the iOS Safari single-gesture
+          invariant depends on this. */}
       <video
         ref={videoRef}
         playsInline
         muted
         autoPlay
         className={`pointer-events-none absolute inset-0 h-full w-full object-cover ${
-          cameraStatus.kind === "live" ? "opacity-100" : "opacity-0"
+          cameraStatus.kind === "live" && !showOptInOverlay
+            ? "opacity-100"
+            : "opacity-0"
         }`}
       />
+
+      {/* Pre-permission card. Sits on top of the (still mounted but
+          invisible) camera <video> so the same element is reused once
+          permissions resolve. */}
+      {showOptInOverlay && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-space-950/95 backdrop-blur">
+          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-space-950 p-6 text-center shadow-2xl">
+            <div className="mb-1 font-mono text-[11px] uppercase tracking-[0.3em] text-fuchsia-300/80">
+              ar sky
+            </div>
+            <h2 className="font-display text-2xl text-white">
+              Point your phone at the sky
+            </h2>
+            <p className="mt-3 text-sm leading-relaxed text-white/65">
+              We&apos;ll ask for{" "}
+              <strong className="text-fuchsia-200">camera</strong> +{" "}
+              <strong className="text-fuchsia-200">motion access</strong> —
+              both are needed for AR sky mode. Tap to grant.
+            </p>
+            <p className="mt-3 text-xs text-white/40">
+              Nothing leaves your device. Requires iOS Safari ≥ 13 or recent
+              Chrome on Android. You&apos;ll see one prompt for each permission
+              after you tap below.
+            </p>
+            <div className="mt-5 flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => beginEnter(true)}
+                disabled={optIn === "entering"}
+                className="pointer-events-auto min-h-[48px] rounded-lg border border-fuchsia-400/40 bg-fuchsia-500/10 px-4 py-2.5 font-mono text-xs uppercase tracking-widest text-fuchsia-200 transition hover:bg-fuchsia-500/20 disabled:opacity-60"
+              >
+                {optIn === "entering"
+                  ? "requesting permissions…"
+                  : "🛰 enter AR (camera + motion)"}
+              </button>
+              <button
+                type="button"
+                onClick={() => beginEnter(false)}
+                disabled={optIn === "entering"}
+                className="pointer-events-auto min-h-[44px] rounded-lg border border-white/10 bg-white/[0.03] px-4 py-2 font-mono text-[11px] uppercase tracking-widest text-white/70 transition hover:bg-white/[0.07] disabled:opacity-60"
+              >
+                motion only · no camera
+              </button>
+              <button
+                type="button"
+                onClick={beginDemo}
+                disabled={optIn === "entering"}
+                className="pointer-events-auto min-h-[44px] rounded-lg border border-white/5 bg-white/[0.02] px-4 py-2 font-mono text-[11px] uppercase tracking-widest text-white/55 transition hover:text-white/80 disabled:opacity-60"
+                title="Try the AR view without giving any device access"
+              >
+                👀 sample what AR looks like (demo)
+              </button>
+              <button
+                type="button"
+                onClick={onExit}
+                disabled={optIn === "entering"}
+                className="pointer-events-auto min-h-[44px] rounded-lg px-4 py-2 font-mono text-[11px] uppercase tracking-widest text-white/40 transition hover:text-white/70"
+              >
+                cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Subtle dimming so labels stay readable over a bright sky. The
           "bright" toggle bumps the dim strength when the rear-camera
@@ -372,14 +460,56 @@ export function ArSkyOverlay({ scene, onExit }: Props) {
         </div>
       </div>
 
-      {/* Status pill — only when something's off (camera fallback). */}
+      {/* Demo-mode badge — lets the user know they're seeing AR without
+          camera or real sensor data, so the lack of real-sky alignment
+          isn't surprising. */}
+      {demoMode && (
+        <div className="pointer-events-none absolute right-3 top-3 rounded-full border border-cyan-300/40 bg-cyan-300/10 px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-cyan-200 backdrop-blur">
+          demo mode
+        </div>
+      )}
+
+      {/* Status pill — only when something's off (camera fallback).
+          On `permission-denied` we expose a retry button that re-runs
+          beginEnter() inside its own user gesture so the user can give
+          a second yes without leaving AR. */}
       {cameraStatus.kind === "fallback" && (
-        <div className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 rounded-full border border-amber-400/40 bg-amber-500/10 px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-amber-200 backdrop-blur">
-          {cameraStatus.reason === "permission-denied"
-            ? "camera declined — labels only"
-            : cameraStatus.reason === "no-camera"
-              ? "no rear camera — labels only"
-              : "camera unavailable — labels only"}
+        <div className="pointer-events-auto absolute left-1/2 top-3 flex -translate-x-1/2 items-center gap-2 rounded-full border border-amber-400/40 bg-amber-500/10 px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-amber-200 backdrop-blur">
+          <span
+            title={
+              cameraStatus.reason === "permission-denied"
+                ? getCopy("permission", {
+                    permission: "camera",
+                    feature: "AR Sky",
+                  }).body
+                : undefined
+            }
+          >
+            {cameraStatus.reason === "permission-denied"
+              ? "camera declined — labels only"
+              : cameraStatus.reason === "no-camera"
+                ? "no rear camera — labels only"
+                : "camera unavailable — labels only"}
+          </span>
+          {cameraStatus.reason === "permission-denied" && !demoMode && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                // Tear down the existing controller so beginEnter starts
+                // clean — `enterStartedRef` is the latch we have to clear
+                // for the retry to take effect.
+                controllerRef.current?.exit();
+                controllerRef.current = null;
+                enterStartedRef.current = false;
+                setOptIn("prompt");
+                setCameraStatus({ kind: "pending" });
+              }}
+              className="min-h-[36px] rounded-full border border-amber-300/40 bg-amber-300/15 px-2 py-0.5 text-[10px] text-amber-100 hover:bg-amber-300/25"
+            >
+              retry
+            </button>
+          )}
         </div>
       )}
 
@@ -391,7 +521,7 @@ export function ArSkyOverlay({ scene, onExit }: Props) {
           e.stopPropagation();
           setBright((v) => !v);
         }}
-        className="pointer-events-auto absolute bottom-3 left-3 rounded-lg border border-white/15 bg-space-950/70 px-3 py-1.5 font-mono text-[11px] uppercase tracking-widest text-white/80 backdrop-blur transition hover:bg-white/10"
+        className="pointer-events-auto absolute bottom-3 left-3 min-h-[44px] min-w-[44px] rounded-lg border border-white/15 bg-space-950/70 px-3 py-1.5 font-mono text-[11px] uppercase tracking-widest text-white/80 backdrop-blur transition hover:bg-white/10"
         title="Toggle high-contrast labels for daytime use"
       >
         {bright ? "☼ bright" : "☾ dim"}
@@ -404,7 +534,7 @@ export function ArSkyOverlay({ scene, onExit }: Props) {
           e.stopPropagation();
           onExit();
         }}
-        className="pointer-events-auto absolute bottom-3 right-3 rounded-lg border border-fuchsia-400/40 bg-fuchsia-500/10 px-4 py-2 font-mono text-xs uppercase tracking-widest text-fuchsia-200 backdrop-blur transition hover:bg-fuchsia-500/20"
+        className="pointer-events-auto absolute bottom-3 right-3 min-h-[44px] rounded-lg border border-fuchsia-400/40 bg-fuchsia-500/10 px-4 py-2 font-mono text-xs uppercase tracking-widest text-fuchsia-200 backdrop-blur transition hover:bg-fuchsia-500/20"
         aria-label="Exit AR Sky mode"
       >
         ✕ exit AR

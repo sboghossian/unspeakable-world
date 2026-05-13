@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { upcomingEvents, type SkyEvent } from "../events/sky-events";
 import { t, useLanguage } from "../../lib/i18n";
+import { EmptyState } from "./EmptyState";
 
 /**
  * 🗓 Upcoming sky events button + dropdown.
@@ -41,6 +42,10 @@ export function EventsPanel({
         type="button"
         onClick={() => onOpenChange(!open)}
         title={`${t("panel.events", "Upcoming sky events")} (e)`}
+        aria-label={t("panel.events", "Upcoming sky events")}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls="events-listbox"
         className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 font-mono text-xs uppercase tracking-widest backdrop-blur transition ${
           open
             ? "border-amber-400/50 bg-amber-400/15 text-amber-200"
@@ -50,7 +55,7 @@ export function EventsPanel({
         <span aria-hidden>🗓</span>
         <span className="hidden md:inline">{t("panel.events", "events").toLowerCase()}</span>
         {next && !open && (
-          <span className="hidden lg:inline text-[10px] text-white/45">
+          <span className="hidden lg:inline text-[10px] text-white/65">
             · {next.glyph} {fmtRelative(next.time)}
           </span>
         )}
@@ -58,15 +63,26 @@ export function EventsPanel({
 
       {open && (
         <div className="absolute right-0 top-full z-30 mt-2 w-[min(380px,94vw)] overflow-hidden rounded-xl border border-white/10 bg-space-950/95 shadow-2xl backdrop-blur">
-          <div className="border-b border-white/5 px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-white/40">
+          <div className="border-b border-white/5 px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-white/65">
             upcoming · next 90 days
           </div>
           {events.length === 0 ? (
-            <div className="px-3 py-4 font-mono text-xs text-white/45">
-              No events found.
+            <div className="p-3">
+              <EmptyState
+                icon="🗓"
+                title="The sky's calm for now"
+                body="No headline events in the next 90 days from your wall clock. Moon phases, oppositions, eclipses and meteor showers will show up here as they approach."
+                tone="amber"
+                density="compact"
+              />
             </div>
           ) : (
-            <ul className="max-h-[60vh] overflow-y-auto">
+            <ul
+              id="events-listbox"
+              role="listbox"
+              aria-label="Upcoming sky events"
+              className="max-h-[60vh] overflow-y-auto"
+            >
               {events.map((e, i) => {
                 const clickable = !!e.target && (onFlyToBody || onFlyToRadiant);
                 const handleClick = clickable
@@ -84,9 +100,23 @@ export function EventsPanel({
                   <li
                     key={`${e.kind}-${e.time.getTime()}-${i}`}
                     onClick={handleClick}
+                    role="option"
+                    aria-selected="false"
+                    aria-label={`${e.title} ${fmtAbsolute(e.time)}${e.detail ? ` ${e.detail}` : ""}`}
+                    tabIndex={clickable ? 0 : -1}
+                    onKeyDown={
+                      clickable && handleClick
+                        ? (kev) => {
+                            if (kev.key === "Enter" || kev.key === " ") {
+                              kev.preventDefault();
+                              handleClick();
+                            }
+                          }
+                        : undefined
+                    }
                     className={`flex items-start gap-2.5 border-b border-white/5 px-3 py-2 last:border-b-0 ${
                       clickable
-                        ? "cursor-pointer hover:bg-white/[0.06]"
+                        ? "cursor-pointer hover:bg-white/[0.06] focus:bg-white/[0.06] focus:outline-none focus-visible:ring-2 focus-visible:ring-plasma-400/40"
                         : "hover:bg-white/[0.03]"
                     }`}
                   >
@@ -106,12 +136,12 @@ export function EventsPanel({
                         </span>
                       </div>
                       {e.detail && (
-                        <div className="font-mono text-[10px] text-white/45">
+                        <div className="font-mono text-[10px] text-white/65">
                           {e.detail}
                         </div>
                       )}
                       <div className="flex items-baseline justify-between gap-2">
-                        <span className="font-mono text-[10px] text-white/30">
+                        <span className="font-mono text-[10px] text-white/65">
                           {fmtAbsolute(e.time)}
                         </span>
                         {clickable && (
@@ -126,7 +156,7 @@ export function EventsPanel({
               })}
             </ul>
           )}
-          <div className="border-t border-white/5 px-3 py-1.5 font-mono text-[10px] text-white/30">
+          <div className="border-t border-white/5 px-3 py-1.5 font-mono text-[10px] text-white/65">
             via AstronomyEngine + IMO meteor table · pure compute
           </div>
         </div>

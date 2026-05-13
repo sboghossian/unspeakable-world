@@ -23,6 +23,61 @@ type Props = {
 
 const DISPLAY_CAP = 200;
 
+/**
+ * Quick-paste pills above the textarea. Each is a single short ADQL snippet
+ * tuned to fit comfortably in a phone-screen result table. The labels stay
+ * deliberately short so the four chips wrap onto two rows on a 375 px
+ * iPhone SE without horizontal scroll.
+ */
+const QUERY_TEMPLATES: ReadonlyArray<{
+  id: string;
+  label: string;
+  query: string;
+}> = [
+  {
+    id: "bright-stars",
+    label: "Bright stars (G<5)",
+    query: `-- Brightest Gaia DR3 stars (G < 5). Capped to 200 rows.
+SELECT TOP 200 source_id, ra, dec, phot_g_mean_mag
+FROM "I/355/gaiadr3"
+WHERE phot_g_mean_mag < 5
+ORDER BY phot_g_mean_mag ASC`,
+  },
+  {
+    id: "variables-fov",
+    label: "Variables in current FOV",
+    query: `-- Known variable stars in a 10° cone around RA=83.8 Dec=-5.4 (Orion).
+-- Edit the cone center to match your current viewport.
+SELECT TOP 200 source_id, ra, dec, phot_g_mean_mag, phot_variable_flag
+FROM "I/355/gaiadr3"
+WHERE phot_variable_flag = 'VARIABLE'
+  AND 1 = CONTAINS(
+    POINT('ICRS', ra, dec),
+    CIRCLE('ICRS', 83.8, -5.4, 10)
+  )`,
+  },
+  {
+    id: "recent-sne",
+    label: "Recent SNe",
+    query: `-- Recent supernovae from the Asiago catalog (B/sn).
+SELECT TOP 200 SN, RAJ2000, DEJ2000, Type, Date, mag
+FROM "B/sn/sncat"
+WHERE Date >= '2023-01-01'
+ORDER BY Date DESC`,
+  },
+  {
+    id: "m-dwarfs-nearby",
+    label: "M-dwarfs within 10 pc",
+    query: `-- M-dwarfs (cool red stars) within 10 parsecs, via Gaia DR3 parallax.
+SELECT TOP 200 source_id, ra, dec, parallax, phot_g_mean_mag, bp_rp
+FROM "I/355/gaiadr3"
+WHERE parallax > 100
+  AND bp_rp > 2.0
+  AND phot_g_mean_mag IS NOT NULL
+ORDER BY parallax DESC`,
+  },
+];
+
 export function AdqlPanel({ group, onMarkDirty }: Props) {
   const [query, setQuery] = useState(DEFAULT_ADQL_QUERY);
   const [busy, setBusy] = useState(false);
@@ -97,19 +152,41 @@ export function AdqlPanel({ group, onMarkDirty }: Props) {
         columns (auto-detected via UCD or name) can be plotted as points
         on the sky.
       </p>
+
+      {/* Quick-paste template pills. Wraps onto multiple rows on narrow
+          viewports; each chip is ≥36 px tall so it's tap-friendly on
+          mobile without dominating the popover. */}
+      <div className="flex flex-wrap gap-1.5">
+        {QUERY_TEMPLATES.map((tpl) => (
+          <button
+            key={tpl.id}
+            type="button"
+            onClick={() => setQuery(tpl.query)}
+            title="Paste this template into the editor"
+            className="min-h-[36px] rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-cyan-200 transition hover:bg-cyan-400/20 active:bg-cyan-400/30"
+          >
+            {tpl.label}
+          </button>
+        ))}
+      </div>
+
       <textarea
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        rows={4}
+        rows={6}
         spellCheck={false}
-        className="rounded-md border border-white/10 bg-space-950/80 px-2 py-1.5 font-mono text-[11px] text-white outline-none focus:border-plasma-500/60"
+        autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="off"
+        inputMode="text"
+        className="w-full min-h-[140px] rounded-md border border-white/10 bg-space-950/80 px-2 py-1.5 font-mono text-[11px] text-white outline-none focus:border-plasma-500/60"
       />
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
           onClick={() => void onSubmit()}
           disabled={busy}
-          className="rounded-md border border-plasma-500/40 bg-plasma-500/15 px-3 py-1.5 font-mono text-xs uppercase tracking-wider text-plasma-300 transition hover:bg-plasma-500/25 disabled:opacity-40"
+          className="min-h-[44px] rounded-md border border-plasma-500/40 bg-plasma-500/15 px-3 py-1.5 font-mono text-xs uppercase tracking-wider text-plasma-300 transition hover:bg-plasma-500/25 disabled:opacity-40"
         >
           {busy ? "running…" : "submit"}
         </button>
@@ -118,7 +195,7 @@ export function AdqlPanel({ group, onMarkDirty }: Props) {
             type="button"
             onClick={onPlot}
             disabled={!group || plottable.length === 0}
-            className="rounded-md border border-cyan-400/40 bg-cyan-400/10 px-3 py-1.5 font-mono text-xs uppercase tracking-wider text-cyan-200 transition hover:bg-cyan-400/20 disabled:opacity-40"
+            className="min-h-[44px] rounded-md border border-cyan-400/40 bg-cyan-400/10 px-3 py-1.5 font-mono text-xs uppercase tracking-wider text-cyan-200 transition hover:bg-cyan-400/20 disabled:opacity-40"
           >
             plot on sky ({plottable.length})
           </button>
@@ -127,7 +204,7 @@ export function AdqlPanel({ group, onMarkDirty }: Props) {
           <button
             type="button"
             onClick={onClearPoints}
-            className="rounded-md border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 font-mono text-xs uppercase tracking-wider text-rose-300 hover:bg-rose-500/20"
+            className="min-h-[44px] rounded-md border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 font-mono text-xs uppercase tracking-wider text-rose-300 hover:bg-rose-500/20"
           >
             clear points
           </button>

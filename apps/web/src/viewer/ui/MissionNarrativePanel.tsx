@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { TabList } from "./primitives";
 import type {
   MissionNarrative,
   MissionStatus,
@@ -79,10 +80,14 @@ export function MissionNarrativePanel({
     <div
       className="pointer-events-auto fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
       onClick={onClose}
+      role="presentation"
     >
       <div
         className="relative flex max-h-[90vh] w-[min(720px,96vw)] flex-col overflow-hidden rounded-2xl border border-white/10 bg-space-950/95 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="mission-narrative-title"
       >
         {/* Hero */}
         <div className="relative">
@@ -123,7 +128,10 @@ export function MissionNarrativePanel({
                 {mission.agency} · launched {mission.launch_date}
                 {mission.end_date ? ` · ended ${mission.end_date}` : ""}
               </div>
-              <h2 className="mt-0.5 font-display text-xl text-white">
+              <h2
+                id="mission-narrative-title"
+                className="mt-0.5 font-display text-xl text-white"
+              >
                 {mission.name}
               </h2>
             </div>
@@ -146,13 +154,13 @@ export function MissionNarrativePanel({
           <p className="font-mono text-[12px] leading-snug text-white/85">
             {mission.summary}
           </p>
-          <div className="mt-1 font-mono text-[10px] uppercase tracking-widest text-white/45">
+          <div className="mt-1 font-mono text-[10px] uppercase tracking-widest text-white/65">
             Anchor: {mission.anchor_body}
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 border-b border-white/10 px-3 pt-2">
+        <TabList variant="panel" label="Mission profile sections">
           {TABS.map((t) => (
             <button
               key={t.id}
@@ -161,18 +169,26 @@ export function MissionNarrativePanel({
               className={`rounded-t-md px-3 py-1.5 font-mono text-[11px] transition ${
                 tab === t.id
                   ? "border-x border-t border-white/15 bg-space-950 text-white"
-                  : "text-white/55 hover:text-white/80"
+                  : "text-white/65 hover:text-white/90"
               }`}
-              aria-selected={tab === t.id}
               role="tab"
+              id={`mission-tab-${t.id}`}
+              aria-controls={`mission-tabpanel-${t.id}`}
+              aria-selected={tab === t.id}
+              tabIndex={tab === t.id ? 0 : -1}
             >
               {t.label}
             </button>
           ))}
-        </div>
+        </TabList>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-4 py-4">
+        <div
+          className="flex-1 overflow-y-auto px-4 py-4"
+          role="tabpanel"
+          id={`mission-tabpanel-${tab}`}
+          aria-labelledby={`mission-tab-${tab}`}
+        >
           {tab === "overview" && (
             <OverviewTab paragraphs={paragraphs} keyFacts={mission.key_facts} />
           )}
@@ -218,7 +234,7 @@ function OverviewTab({
               key={i}
               className="flex gap-2 font-mono text-[11.5px] leading-snug text-white/80"
             >
-              <span aria-hidden className="text-white/45">·</span>
+              <span aria-hidden className="text-white/65">·</span>
               <span>{f}</span>
             </li>
           ))}
@@ -236,7 +252,7 @@ function StatsTab({
   const entries = Object.entries(stats);
   if (entries.length === 0) {
     return (
-      <div className="rounded-md border border-dashed border-white/15 px-3 py-4 text-center font-mono text-[11px] text-white/45">
+      <div className="rounded-md border border-dashed border-white/15 px-3 py-4 text-center font-mono text-[11px] text-white/65">
         no stats recorded
       </div>
     );
@@ -275,7 +291,7 @@ function TimelineTab({
 }) {
   if (timeline.length === 0) {
     return (
-      <div className="rounded-md border border-dashed border-white/15 px-3 py-4 text-center font-mono text-[11px] text-white/45">
+      <div className="rounded-md border border-dashed border-white/15 px-3 py-4 text-center font-mono text-[11px] text-white/65">
         no timeline entries
       </div>
     );
@@ -308,7 +324,7 @@ function SourcesTab({
 }) {
   if (sources.length === 0) {
     return (
-      <div className="rounded-md border border-dashed border-white/15 px-3 py-4 text-center font-mono text-[11px] text-white/45">
+      <div className="rounded-md border border-dashed border-white/15 px-3 py-4 text-center font-mono text-[11px] text-white/65">
         no sources recorded
       </div>
     );
@@ -328,7 +344,7 @@ function SourcesTab({
           >
             {s.label}
           </a>
-          <div className="mt-0.5 truncate font-mono text-[10px] text-white/40">
+          <div className="mt-0.5 truncate font-mono text-[10px] text-white/65">
             {s.url}
           </div>
         </li>

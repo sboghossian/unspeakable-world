@@ -12,7 +12,7 @@ import {
 import { LessonRunner } from "./LessonRunner";
 import { CertificatePanel } from "./CertificatePanel";
 import { encodeMyProgress, buildShareSegment } from "../../lib/teacher";
-import { t } from "../../lib/i18n";
+import { translate, useT } from "../../i18n/hooks";
 
 /**
  * 🎓 Lessons — top-bar entry into the curriculum.
@@ -32,6 +32,7 @@ import { t } from "../../lib/i18n";
  */
 
 export function LessonPanel() {
+  const t = useT();
   const { lessons, locale, loading } = useLocalisedLessons();
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState<Lesson | null>(null);
@@ -54,18 +55,17 @@ export function LessonPanel() {
       {open && (
         <div className="pointer-events-auto absolute right-3 top-12 z-30 w-[min(380px,92vw)] max-h-[70vh] overflow-y-auto rounded-xl border border-white/10 bg-space-950/95 p-3 backdrop-blur">
           <div className="mb-2 flex items-baseline justify-between">
-            <div className="font-display text-sm text-white/90">{t("panel.lessons", "Lessons")}</div>
+            <div className="font-display text-sm text-white/90">{t("lessons.title")}</div>
             <div className="font-mono text-[10px] uppercase tracking-widest text-white/45">
               {done} / {total}
             </div>
           </div>
           <p className="mb-3 font-mono text-[10px] leading-relaxed text-white/45">
-            Short, narrated tours of where we are in the universe. Each one
-            takes you somewhere real.
+            {t("lessons.intro")}
           </p>
           <div className="mb-3" aria-label={`Overall progress ${overall.percentage}%`}>
             <div className="mb-1 flex items-baseline justify-between font-mono text-[10px] uppercase tracking-widest text-white/45">
-              <span>Overall</span>
+              <span>{t("lessons.overall")}</span>
               <span className="text-emerald-300/85">{overall.percentage}%</span>
             </div>
             <div className="h-1 w-full overflow-hidden rounded-full bg-white/10">
@@ -81,7 +81,7 @@ export function LessonPanel() {
                   onClick={() => setShowCert(true)}
                   className="inline-flex h-7 items-center rounded-md border border-emerald-400/55 bg-emerald-400/15 px-2.5 font-mono text-[10px] uppercase tracking-widest text-emerald-100 transition hover:bg-emerald-400/25"
                 >
-                  View certificate
+                  {t("lessons.viewCert")}
                 </button>
               )}
               <button
@@ -98,13 +98,13 @@ export function LessonPanel() {
                 }}
                 className="inline-flex h-7 items-center rounded-md border border-white/15 bg-white/[0.04] px-2.5 font-mono text-[10px] uppercase tracking-widest text-white/75 transition hover:bg-white/10 hover:text-white"
               >
-                {shareCopied ? "Copied!" : "Share progress"}
+                {shareCopied ? t("lessons.share.copied") : t("lessons.share")}
               </button>
             </div>
           </div>
           {loading && (
             <div className="mb-2 font-mono text-[10px] uppercase tracking-widest text-white/45">
-              loading {locale}…
+              {t("lessons.loading", { locale })}
             </div>
           )}
           <ul className="space-y-2">
@@ -163,10 +163,10 @@ export function LessonPanel() {
                       className="pointer-events-auto inline-flex h-7 shrink-0 items-center rounded-md border border-emerald-400/40 bg-emerald-400/10 px-2.5 font-mono text-[10px] uppercase tracking-widest text-emerald-200 transition hover:bg-emerald-400/20"
                     >
                       {p?.completed
-                        ? t("lesson.replay", "Replay")
+                        ? t("lessons.action.replay")
                         : p?.started
-                          ? t("lesson.resume", "Resume")
-                          : t("lesson.start", "Start")}
+                          ? t("lessons.action.resume")
+                          : t("lessons.action.start")}
                     </button>
                   </div>
                 </li>
@@ -193,12 +193,13 @@ export function LessonPanelButton({
   total: number;
   onClick: () => void;
 }) {
+  const t = useT();
   return (
     <button
       type="button"
       onClick={onClick}
-      title={`${t("panel.lessons", "Lessons")} (${completed} / ${total})`}
-      aria-label={t("panel.lessons", "Lessons")}
+      title={`${t("lessons.title")} (${completed} / ${total})`}
+      aria-label={t("lessons.title")}
       className="pointer-events-auto inline-flex h-7 items-center gap-1.5 rounded-md border border-white/10 bg-space-950/70 px-2 text-[12px] text-white/70 backdrop-blur transition hover:bg-white/10 hover:text-white"
     >
       <span aria-hidden>🎓</span>
@@ -216,13 +217,17 @@ function statusOf(
     return {
       glyph: "●",
       tone: "text-emerald-300",
-      label: "Completed",
+      label: translate("lessons.status.completed"),
     };
   if (p?.started)
     return {
       glyph: "◐",
       tone: "text-amber-300",
-      label: "In progress",
+      label: translate("lessons.status.inProgress"),
     };
-  return { glyph: "○", tone: "text-white/40", label: "Not started" };
+  return {
+    glyph: "○",
+    tone: "text-white/40",
+    label: translate("lessons.status.notStarted"),
+  };
 }

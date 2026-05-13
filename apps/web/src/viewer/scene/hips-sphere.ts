@@ -1,5 +1,6 @@
 import { query_disc_inclusive_nest } from "@hscmap/healpix";
 import { Group, type Vector3 } from "three";
+import { getHipsMaxOrder } from "../../lib/quality";
 import type { Survey } from "../hips/surveys";
 import { buildTile, type TileMesh } from "./healpix-tile-mesh";
 
@@ -230,10 +231,18 @@ function disposeMaterial(t: TileMesh): void {
  * Choose target HEALPix order from camera FOV.
  * Day 3 MVP: only Norder 0 and 1 (48 tiles total at order 1). Higher orders
  * arrive once we have texture-atlas batching.
+ *
+ * The quality preset caps the maximum order we'll request — `low` clamps to
+ * 6 so mobile devices never ask the CDN for the deep tile, `ultra` opens it
+ * up to 9. Cap changes take effect on next camera update (no reload needed
+ * because `updateLOD` is invoked on every dirty frame).
  */
 function pickTargetOrder(fovDeg: number): number {
-  if (fovDeg >= 50) return 0;
-  if (fovDeg >= 25) return 1;
-  if (fovDeg >= 12) return 2;
-  return 3;
+  const cap = getHipsMaxOrder();
+  let order: number;
+  if (fovDeg >= 50) order = 0;
+  else if (fovDeg >= 25) order = 1;
+  else if (fovDeg >= 12) order = 2;
+  else order = 3;
+  return Math.min(order, cap);
 }

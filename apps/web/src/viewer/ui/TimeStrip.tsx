@@ -197,6 +197,7 @@ export function TimeStrip({
           onPointerCancel={onTrackPointerUp}
           className="relative h-5 flex-1 cursor-pointer select-none"
           role="presentation"
+          aria-hidden="true"
         >
           {/* Track */}
           <div className="absolute inset-x-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-white/10" />
@@ -230,7 +231,13 @@ export function TimeStrip({
             className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border border-plasma-300 bg-plasma-400 shadow-md"
             style={{ left: thumbPct }}
           />
-          {/* A11y range under the visual track */}
+          {/* A11y range under the visual track. The visible track above is
+              decorative (aria-hidden) — screen readers + keyboard users
+              interact with this 0–1 range, which we translate into a date
+              via fracToDeltaDays in onChange. We expose a readable now-
+              relative aria-valuetext (e.g. "+ 3 days, simulated time
+              2026-05-16 14:00 UTC") so a JAWS / VoiceOver reader narrates
+              the consequence of moving the slider, not the opaque 0.5238. */}
           <input
             type="range"
             min={0}
@@ -238,8 +245,12 @@ export function TimeStrip({
             step={0.001}
             value={frac}
             onChange={(e) => applyFrac(parseFloat(e.target.value))}
-            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+            className="absolute inset-0 h-full w-full cursor-pointer opacity-0 focus-visible:opacity-30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-plasma-400/50"
             aria-label="Time scrubber"
+            aria-valuemin={0}
+            aria-valuemax={1}
+            aria-valuenow={frac}
+            aria-valuetext={`${describeOffset(time.getTime() - nowRef.current.getTime())}, simulation time ${iso}`}
           />
         </div>
       </div>
@@ -348,4 +359,27 @@ function formatIso(time: Date): string {
   const hh = time.getUTCHours().toString().padStart(2, "0");
   const mm = time.getUTCMinutes().toString().padStart(2, "0");
   return `${y}-${m}-${d} ${hh}:${mm}Z`;
+}
+
+/**
+ * Render a millisecond offset from "now" as a screen-reader-friendly
+ * phrase like "now", "+ 3 hours", "− 12 days", "+ 4.2 years". Used only
+ * by `aria-valuetext` so the scrubber narrates a useful summary instead
+ * of an opaque 0..1 fraction.
+ */
+function describeOffset(deltaMs: number): string {
+  const abs = Math.abs(deltaMs);
+  if (abs < 60_000) return "now";
+  const sign = deltaMs < 0 ? "−" : "+";
+  const mins = abs / 60_000;
+  if (mins < 60) return `${sign} ${Math.round(mins)} minutes`;
+  const hours = mins / 60;
+  if (hours < 24) return `${sign} ${Math.round(hours)} hours`;
+  const days = hours / 24;
+  if (days < 30) return `${sign} ${Math.round(days)} days`;
+  const months = days / 30;
+  if (months < 12) return `${sign} ${Math.round(months)} months`;
+  const years = days / 365.25;
+  if (years < 100) return `${sign} ${years.toFixed(1)} years`;
+  return `${sign} ${Math.round(years)} years`;
 }

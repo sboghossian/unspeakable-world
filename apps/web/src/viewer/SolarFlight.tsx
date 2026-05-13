@@ -1,35 +1,22 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-// Using useState below.
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import {
   SolarFlightScene,
   type SolarFlightHit,
   type SolarFlightState,
 } from "./solar/solar-flight";
+// Light, always-mounted UI bits stay eagerly imported. Each is < 5 KB
+// gzipped and either sits in the persistent chrome (TimeStrip, top bar,
+// bottom HUD) or is the immediate inspector card that fires the moment
+// the user taps something.
 import { TimeStrip } from "./ui/TimeStrip";
-import { InfoPanel } from "./ui/InfoPanel";
 import {
   SceneBottomHud,
   formatDistanceAU,
 } from "./ui/SceneBottomHud";
 import { TopBarActions } from "./ui/TopBarActions";
-import { TransientsPanel } from "./ui/TransientsPanel";
-import { SatellitesPanel } from "./ui/SatellitesPanel";
-import { SpacecraftPanel } from "./ui/SpacecraftPanel";
-import { HistoryPanel } from "./ui/HistoryPanel";
-import { MissionsCatalogPanel } from "./ui/MissionsCatalogPanel";
-import { AchievementsPanel } from "./ui/AchievementsPanel";
-import { MusicPanel } from "./ui/MusicPanel";
-import { CollectionsPanel } from "./ui/CollectionsPanel";
-import { MarsPhotosPanel } from "./ui/MarsPhotosPanel";
-import { ApodArchivePanel } from "./ui/ApodArchivePanel";
-import { JwstPanel } from "./ui/JwstPanel";
 import { PlanetCrossSection } from "./ui/PlanetCrossSection";
-import { MythsPanel } from "./ui/MythsPanel";
-import { NewsPanel } from "./ui/NewsPanel";
-import { LessonPanel } from "./ui/LessonPanel";
-import { SetiPanel } from "./ui/SetiPanel";
-import { ComparePanel } from "./ui/ComparePanel";
 import { ColorLegend } from "./ui/ColorLegend";
+import { ErrorBoundary } from "./ui/ErrorBoundary";
 import { ShortcutsOverlay } from "./ui/ShortcutsOverlay";
 import { ReportBugButton } from "./ui/ReportBugButton";
 import { SupportRibbon } from "./ui/SupportRibbon";
@@ -38,7 +25,10 @@ import {
   type DsoSceneSource,
 } from "./ui/DsoDistancesHud";
 import { ExploreDrawer, type Group } from "./ui/ExploreDrawer";
-import { SceneEditorPanel } from "./ui/SceneEditorPanel";
+import {
+  TutorialOverlayV2,
+  type TutorialActions,
+} from "./ui/TutorialOverlayV2";
 import { SceneLinkToast } from "./scene-editor/SceneLinkToast";
 import {
   applySolarCamera,
@@ -47,17 +37,121 @@ import {
 import { saveScene } from "../lib/scene-editor";
 import { useIdle } from "../lib/use-idle";
 import { recordPlanetVisit, unlock } from "../lib/achievements";
-import { SettingsPanel } from "./ui/SettingsPanel";
 import { SnapshotButton } from "./ui/SnapshotButton";
 import { ShareButton } from "./ui/ShareButton";
-import { BookmarksPanel } from "./ui/BookmarksPanel";
-import { ExtraLayersPanel } from "./ui/ExtraLayersPanel";
-import { TutorPanel } from "./ui/TutorPanel";
 import { makeSolarAdapter } from "./tutor/adapters";
 import { useExtraLayersStore } from "./extra-layers/state";
-import { MarsRoverInspectorCard } from "./ui/MarsRoverInspectorCard";
 import { addBookmark } from "../lib/bookmarks";
 import { getSettings, useSettings } from "../lib/settings";
+import {
+  LoadingSkeleton,
+  PanelSkeleton,
+  useFakeProgress,
+} from "./ui/LoadingSkeleton";
+
+/* ────────────────────────────────────────────────────────────────────
+ * Lazy-loaded panel chunks.
+ *
+ * Each of these is gated behind a button/popover that the user opens
+ * on demand — there's no reason to pay for their JS (or their static
+ * data files) at first paint. Splitting them out drops the initial
+ * SolarFlight chunk from ~520 KB to under 100 KB and lets each panel
+ * ship as its own ~20-40 KB chunk.
+ *
+ * The data weights that motivated the split (per B3's audit):
+ *   • object-citations.ts   ~104 KB
+ *   • history-data.ts       ~ 92 KB
+ *   • myths-data.ts         ~ 40 KB
+ *   • lessons-*.json        ~ 38 KB
+ *   • missions-catalog.ts   ~ 28 KB
+ *   • celestial-art.ts      ~ 23 KB
+ *
+ * All of these only matter once the relevant panel is on screen.
+ * ──────────────────────────────────────────────────────────────────── */
+
+const InfoPanel = lazy(() =>
+  import("./ui/InfoPanel").then((m) => ({ default: m.InfoPanel })),
+);
+const TransientsPanel = lazy(() =>
+  import("./ui/TransientsPanel").then((m) => ({ default: m.TransientsPanel })),
+);
+const SatellitesPanel = lazy(() =>
+  import("./ui/SatellitesPanel").then((m) => ({ default: m.SatellitesPanel })),
+);
+const SpacecraftPanel = lazy(() =>
+  import("./ui/SpacecraftPanel").then((m) => ({ default: m.SpacecraftPanel })),
+);
+const HistoryPanel = lazy(() =>
+  import("./ui/HistoryPanel").then((m) => ({ default: m.HistoryPanel })),
+);
+const MissionsCatalogPanel = lazy(() =>
+  import("./ui/MissionsCatalogPanel").then((m) => ({
+    default: m.MissionsCatalogPanel,
+  })),
+);
+const AchievementsPanel = lazy(() =>
+  import("./ui/AchievementsPanel").then((m) => ({
+    default: m.AchievementsPanel,
+  })),
+);
+const MusicPanel = lazy(() =>
+  import("./ui/MusicPanel").then((m) => ({ default: m.MusicPanel })),
+);
+const CollectionsPanel = lazy(() =>
+  import("./ui/CollectionsPanel").then((m) => ({
+    default: m.CollectionsPanel,
+  })),
+);
+const MarsPhotosPanel = lazy(() =>
+  import("./ui/MarsPhotosPanel").then((m) => ({ default: m.MarsPhotosPanel })),
+);
+const ApodArchivePanel = lazy(() =>
+  import("./ui/ApodArchivePanel").then((m) => ({
+    default: m.ApodArchivePanel,
+  })),
+);
+const JwstPanel = lazy(() =>
+  import("./ui/JwstPanel").then((m) => ({ default: m.JwstPanel })),
+);
+const MythsPanel = lazy(() =>
+  import("./ui/MythsPanel").then((m) => ({ default: m.MythsPanel })),
+);
+const NewsPanel = lazy(() =>
+  import("./ui/NewsPanel").then((m) => ({ default: m.NewsPanel })),
+);
+const LessonPanel = lazy(() =>
+  import("./ui/LessonPanel").then((m) => ({ default: m.LessonPanel })),
+);
+const SetiPanel = lazy(() =>
+  import("./ui/SetiPanel").then((m) => ({ default: m.SetiPanel })),
+);
+const ComparePanel = lazy(() =>
+  import("./ui/ComparePanel").then((m) => ({ default: m.ComparePanel })),
+);
+const SceneEditorPanel = lazy(() =>
+  import("./ui/SceneEditorPanel").then((m) => ({
+    default: m.SceneEditorPanel,
+  })),
+);
+const SettingsPanel = lazy(() =>
+  import("./ui/SettingsPanel").then((m) => ({ default: m.SettingsPanel })),
+);
+const BookmarksPanel = lazy(() =>
+  import("./ui/BookmarksPanel").then((m) => ({ default: m.BookmarksPanel })),
+);
+const ExtraLayersPanel = lazy(() =>
+  import("./ui/ExtraLayersPanel").then((m) => ({
+    default: m.ExtraLayersPanel,
+  })),
+);
+const TutorPanel = lazy(() =>
+  import("./ui/TutorPanel").then((m) => ({ default: m.TutorPanel })),
+);
+const MarsRoverInspectorCard = lazy(() =>
+  import("./ui/MarsRoverInspectorCard").then((m) => ({
+    default: m.MarsRoverInspectorCard,
+  })),
+);
 
 /**
  * 🚀 Solar System Flight Mode component.
@@ -101,6 +195,11 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
   const sceneRef = useRef<SolarFlightScene | null>(null);
   const [state, setState] = useState<SolarFlightState>(DEFAULT_STATE);
   const [inspect, setInspect] = useState<SolarFlightHit | null>(null);
+  // Flips true the moment the scene constructor returns and the first
+  // state pubsub fires — used to gate the LoadingSkeleton's "Ready"
+  // stage so the overlay doesn't dismiss before the canvas is painting.
+  const [sceneAlive, setSceneAlive] = useState(false);
+  const loadProgress = useFakeProgress(sceneAlive);
 
   // First-light achievement: getting any scene loaded counts.
   useEffect(() => {
@@ -141,6 +240,9 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
     }
     if (params.rate !== null) scene.setTimeRate(params.rate);
     const unsubscribe = scene.subscribe(setState);
+    // The scene is now mounted + emitting state — let the loading
+    // skeleton know it can finish its stage timeline.
+    setSceneAlive(true);
     return () => {
       unsubscribe();
       scene.dispose();
@@ -194,6 +296,7 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [tutorialOpen, setTutorialOpen] = useState(false);
   // DSO Distances HUD visibility — opt-in. Default OFF. Toggled with D.
   const [dsoHudVisible, setDsoHudVisible] = useState(false);
 
@@ -294,15 +397,26 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
   // Drawer groups — mirrors Universe.tsx but with the panels relevant
   // to solar-flight (no SkyTonight / SpaceWeather / TonightSky which
   // are sky-mode features, plus Satellites + Spacecraft for in-system).
+  // Each `<Suspense>` boundary is panel-scoped — a single slow chunk
+  // won't block its neighbours from hydrating, and the inline
+  // PanelSkeleton keeps the drawer layout stable while a chunk lands.
   const exploreGroups: Group[] = [
     {
       label: "Learn",
       children: (
         <>
-          <LessonPanel />
-          <MythsPanel />
-          <ComparePanel />
-          <SetiPanel />
+          <Suspense fallback={<PanelSkeleton />}>
+            <LessonPanel />
+          </Suspense>
+          <Suspense fallback={<PanelSkeleton />}>
+            <MythsPanel />
+          </Suspense>
+          <Suspense fallback={<PanelSkeleton />}>
+            <ComparePanel />
+          </Suspense>
+          <Suspense fallback={<PanelSkeleton />}>
+            <SetiPanel />
+          </Suspense>
         </>
       ),
     },
@@ -310,8 +424,12 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
       label: "Live",
       children: (
         <>
-          <NewsPanel />
-          <TransientsPanel />
+          <Suspense fallback={<PanelSkeleton />}>
+            <NewsPanel />
+          </Suspense>
+          <Suspense fallback={<PanelSkeleton />}>
+            <TransientsPanel />
+          </Suspense>
         </>
       ),
     },
@@ -319,10 +437,18 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
       label: "Imagery",
       children: (
         <>
-          <MarsPhotosPanel />
-          <ApodArchivePanel />
-          <JwstPanel />
-          <HistoryPanel />
+          <Suspense fallback={<PanelSkeleton />}>
+            <MarsPhotosPanel />
+          </Suspense>
+          <Suspense fallback={<PanelSkeleton />}>
+            <ApodArchivePanel />
+          </Suspense>
+          <Suspense fallback={<PanelSkeleton />}>
+            <JwstPanel />
+          </Suspense>
+          <Suspense fallback={<PanelSkeleton />}>
+            <HistoryPanel />
+          </Suspense>
         </>
       ),
     },
@@ -330,42 +456,66 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
       label: "Catalog",
       children: (
         <>
-          <SatellitesPanel />
-          <SpacecraftPanel
-            active={trajectoriesOn}
-            onToggle={(next) => {
-              setTrajectoriesOn(next);
-              sceneRef.current?.setTrajectories(next);
-            }}
-            getStatus={() => sceneRef.current?.spacecraftStatus() ?? []}
-            onFlyTo={(slug) => {
-              if (!trajectoriesOn) {
-                setTrajectoriesOn(true);
-                sceneRef.current?.setTrajectories(true);
-              }
-              sceneRef.current?.flyToSpacecraft(slug);
-            }}
-          />
-          <MissionsCatalogPanel />
-          <CollectionsPanel
-            onFlyTo={(item) => sceneRef.current?.setFocus(item.id)}
-          />
+          <Suspense fallback={<PanelSkeleton />}>
+            <SatellitesPanel />
+          </Suspense>
+          <Suspense fallback={<PanelSkeleton />}>
+            <SpacecraftPanel
+              active={trajectoriesOn}
+              onToggle={(next) => {
+                setTrajectoriesOn(next);
+                sceneRef.current?.setTrajectories(next);
+              }}
+              getStatus={() => sceneRef.current?.spacecraftStatus() ?? []}
+              onFlyTo={(slug) => {
+                if (!trajectoriesOn) {
+                  setTrajectoriesOn(true);
+                  sceneRef.current?.setTrajectories(true);
+                }
+                sceneRef.current?.flyToSpacecraft(slug);
+              }}
+            />
+          </Suspense>
+          <Suspense fallback={<PanelSkeleton />}>
+            <MissionsCatalogPanel />
+          </Suspense>
+          <Suspense fallback={<PanelSkeleton />}>
+            <CollectionsPanel
+              onFlyTo={(item) => sceneRef.current?.setFocus(item.id)}
+            />
+          </Suspense>
         </>
       ),
     },
     {
       label: "Federated data",
       children: (
-        <>
+        <Suspense fallback={<PanelSkeleton />}>
           <ExtraLayersPanel scene={sceneRef.current} />
-        </>
+        </Suspense>
       ),
     },
   ];
 
   return (
     <div className="relative h-full w-full bg-[#000208]">
-      <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
+      <canvas
+        ref={canvasRef}
+        tabIndex={0}
+        role="img"
+        aria-label="Interactive 3D Solar System flight viewer — drag to orbit, scroll to zoom, click planets to inspect"
+        className="absolute inset-0 h-full w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-plasma-400/40"
+      />
+
+      {/* Panel-scope boundary: keeps a single popover crash from
+          unmounting the canvas. Scene/constructor crashes are caught by
+          the route-level ErrorBoundary in App.tsx. */}
+      <ErrorBoundary scope="panel" label="Solar Flight chrome">
+
+      {/* Staged loading skeleton — fades out once the scene is alive.
+          Time-driven progress because SolarFlightScene doesn't expose
+          tile/star/dso counts (those live in the Sky viewer's scene). */}
+      <LoadingSkeleton progress={loadProgress} />
 
       {/* Top bar — back button + focus picker (hidden in focus mode).
           Also fades to 30% when the user is idle so the canvas owns the
@@ -407,8 +557,12 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
             }}
           />
           <ShareButton onPrepare={() => buildSolarHash(state)} />
-          <TutorPanel adapter={tutorAdapter} />
-          <BookmarksPanel />
+          <Suspense fallback={<PanelSkeleton />}>
+            <TutorPanel adapter={tutorAdapter} />
+          </Suspense>
+          <Suspense fallback={<PanelSkeleton />}>
+            <BookmarksPanel />
+          </Suspense>
           <button
             type="button"
             onClick={() => {
@@ -447,20 +601,36 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
           ))}
           <PlanetCrossSection focus={state.focus} />
           <ExploreDrawer groups={exploreGroups} />
-          <SceneEditorPanel
-            mode="solar"
-            onCapture={() => {
-              const s = sceneRef.current;
-              return s ? captureSolarCamera(s) : {};
-            }}
-            onApply={(c) => {
-              const s = sceneRef.current;
-              if (s) applySolarCamera(s, c);
-            }}
-            onPlayingChange={setScenePlaying}
-          />
-          <MusicPanel />
-          <AchievementsPanel />
+          <Suspense fallback={<PanelSkeleton />}>
+            <SceneEditorPanel
+              mode="solar"
+              onCapture={() => {
+                const s = sceneRef.current;
+                return s ? captureSolarCamera(s) : {};
+              }}
+              onApply={(c) => {
+                const s = sceneRef.current;
+                if (s) applySolarCamera(s, c);
+              }}
+              onPlayingChange={setScenePlaying}
+            />
+          </Suspense>
+          <Suspense fallback={<PanelSkeleton />}>
+            <MusicPanel />
+          </Suspense>
+          <Suspense fallback={<PanelSkeleton />}>
+            <AchievementsPanel />
+          </Suspense>
+          <button
+            type="button"
+            onClick={() => setTutorialOpen(true)}
+            title="📖 Show me how — 12-step tutorial"
+            aria-label="Show me how — open the 12-step tutorial"
+            className="pointer-events-auto inline-flex min-h-[30px] items-center gap-1 rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1 font-mono text-[11px] uppercase tracking-widest text-emerald-200 backdrop-blur transition hover:bg-emerald-400/20"
+          >
+            <span aria-hidden>📖</span>
+            <span className="hidden sm:inline">show me how</span>
+          </button>
           <TopBarActions
             focusActive={focusMode}
             onFocusToggle={() => setFocusMode((v) => !v)}
@@ -630,12 +800,17 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
         </div>
       </div>
 
-      {/* Shared settings panel */}
-      <SettingsPanel
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        anchor="bottom-right"
-      />
+      {/* Shared settings panel. Only mount when open so the chunk
+          download is deferred until the user actually asks for it. */}
+      {settingsOpen && (
+        <Suspense fallback={null}>
+          <SettingsPanel
+            open={settingsOpen}
+            onClose={() => setSettingsOpen(false)}
+            anchor="bottom-right"
+          />
+        </Suspense>
+      )}
 
       {/* Gravity Sandbox panel */}
       {sandboxOpen && (
@@ -724,29 +899,34 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
         </div>
       )}
 
-      {/* Inspector card — unified InfoPanel */}
+      {/* Inspector card — unified InfoPanel. Lazy: a viewer that never
+          taps a body never downloads object-citations.ts (~104 KB). */}
       {inspect && (
-        <InfoPanel
-          payload={inspect.payload}
-          onClose={() => setInspect(null)}
-          onFlyHere={() => {
-            sceneRef.current?.setFocus(inspect.name);
-            setInspect(null);
-          }}
-          onSurface={
-            inspect.name === "Earth" || inspect.name === "Mars"
-              ? () => {
-                  window.location.hash = `#surface/${inspect.name.toLowerCase()}`;
-                }
-              : undefined
-          }
-        />
+        <Suspense fallback={null}>
+          <InfoPanel
+            payload={inspect.payload}
+            onClose={() => setInspect(null)}
+            onFlyHere={() => {
+              sceneRef.current?.setFocus(inspect.name);
+              setInspect(null);
+            }}
+            onSurface={
+              inspect.name === "Earth" || inspect.name === "Mars"
+                ? () => {
+                    window.location.hash = `#surface/${inspect.name.toLowerCase()}`;
+                  }
+                : undefined
+            }
+          />
+        </Suspense>
       )}
 
       {/* Mars Rover Image-of-the-Day inspector card — floats top-right
           whenever the federated `mars-rover-iotd` extra layer is enabled. */}
       {!focusMode && (
-        <MarsRoverInspectorCard scene={sceneRef.current} />
+        <Suspense fallback={null}>
+          <MarsRoverInspectorCard scene={sceneRef.current} />
+        </Suspense>
       )}
 
       {!focusMode && <ColorLegend />}
@@ -775,6 +955,23 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
         <ShortcutsOverlay onClose={() => setShortcutsOpen(false)} />
       )}
 
+      {tutorialOpen && (
+        <TutorialOverlayV2
+          onClose={() => setTutorialOpen(false)}
+          actions={
+            {
+              openShortcuts: () => setShortcutsOpen(true),
+              switchMode: (mode) => {
+                if (mode === "viewer") window.location.hash = "#viewer";
+                else if (mode === "solar") window.location.hash = "#solar";
+                else if (mode === "galactic") window.location.hash = "#galactic";
+                else window.location.hash = "#universe";
+              },
+            } satisfies TutorialActions
+          }
+        />
+      )}
+
       <SceneLinkToast
         mode="solar"
         onPlay={(scene) => {
@@ -787,6 +984,7 @@ export function SolarFlight({ onExit, onFlyToSky }: Props) {
           if (first && s) applySolarCamera(s, first.camera);
         }}
       />
+      </ErrorBoundary>
     </div>
   );
 }

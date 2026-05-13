@@ -86,14 +86,19 @@ export function SearchBar({ index, onSelect }: Props) {
           setOpen(true);
           setTimeout(() => inputRef.current?.focus(), 0);
         }}
-        className="pointer-events-auto rounded-lg border border-white/10 bg-space-950/70 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-white/60 backdrop-blur transition hover:bg-white/10 hover:text-white"
+        className="pointer-events-auto rounded-lg border border-white/10 bg-space-950/70 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-white/70 backdrop-blur transition hover:bg-white/10 hover:text-white"
         title="Search the sky · ⌘K"
+        aria-label="Search the sky (Cmd+K)"
+        aria-expanded={false}
+        aria-haspopup="listbox"
       >
-        🔍
+        <span aria-hidden="true">🔍</span>
         <span className="hidden md:ml-2 md:inline">search · ⌘K</span>
       </button>
     );
   }
+
+  const activeId = results.length > 0 ? `search-option-${highlight}` : undefined;
 
   return (
     <div className="pointer-events-auto relative">
@@ -105,23 +110,36 @@ export function SearchBar({ index, onSelect }: Props) {
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={onInputKey}
           placeholder="Saturn · Andromeda · M31 · Orion · Polaris…"
-          className="w-72 bg-transparent text-sm text-white placeholder-white/30 outline-none md:w-80"
+          className="w-72 bg-transparent text-sm text-white placeholder-white/55 outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-plasma-400/40 md:w-80"
           aria-label="Search the sky"
+          role="combobox"
+          aria-expanded={results.length > 0}
+          aria-controls="search-results-listbox"
+          aria-autocomplete="list"
+          aria-activedescendant={activeId}
         />
         <button
           type="button"
           onClick={() => setOpen(false)}
-          aria-label="Close"
-          className="text-white/40 hover:text-white"
+          aria-label="Close search"
+          className="text-white/70 hover:text-white"
         >
-          ✕
+          <span aria-hidden="true">✕</span>
         </button>
       </div>
       {results.length > 0 && (
-        <ul className="absolute right-0 top-full z-30 mt-2 w-[min(420px,90vw)] overflow-hidden rounded-xl border border-white/10 bg-space-950/95 backdrop-blur">
+        <ul
+          id="search-results-listbox"
+          role="listbox"
+          aria-label="Search results"
+          className="absolute right-0 top-full z-30 mt-2 w-[min(420px,90vw)] overflow-hidden rounded-xl border border-white/10 bg-space-950/95 backdrop-blur"
+        >
           {results.map((r, i) => (
             <li
               key={r.id}
+              id={`search-option-${i}`}
+              role="option"
+              aria-selected={i === highlight}
               onMouseEnter={() => setHighlight(i)}
               onClick={() => choose(r)}
               className={`flex cursor-pointer items-center justify-between gap-2 border-b border-white/5 px-3 py-2 last:border-b-0 transition ${
@@ -132,7 +150,7 @@ export function SearchBar({ index, onSelect }: Props) {
                 <div className="truncate font-display text-sm text-white">
                   {r.label}
                 </div>
-                <div className="truncate font-mono text-[10px] text-white/40">
+                <div className="truncate font-mono text-[10px] text-white/65">
                   {r.detail}
                 </div>
               </div>
@@ -146,7 +164,7 @@ export function SearchBar({ index, onSelect }: Props) {
         </ul>
       )}
       {query.trim() && results.length === 0 && (
-        <div className="absolute right-0 top-full z-30 mt-2 rounded-xl border border-white/10 bg-space-950/95 px-3 py-2 font-mono text-xs text-white/40 backdrop-blur">
+        <div className="absolute right-0 top-full z-30 mt-2 rounded-xl border border-white/10 bg-space-950/95 px-3 py-2 font-mono text-xs text-white/65 backdrop-blur">
           no match in local catalogs
         </div>
       )}

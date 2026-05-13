@@ -412,10 +412,16 @@ export class UniverseScene {
     this.renderer.setClearColor(0x020415, 1);
     this.qualityUnsub = subscribeQuality((p) => {
       this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, p.dpr));
+      // logDepthBuffer makes the far-plane multiplier mostly cosmetic
+      // here (precision is preserved across many orders of magnitude),
+      // but we still apply it for consistency with the other scenes
+      // and so an `ultra` user can opt into a larger cosmological volume.
+      this.camera.far = 1e10 * p.renderDist;
+      this.camera.updateProjectionMatrix();
     });
 
     // Wide near/far range — logDepth gives us precision across scales.
-    this.camera = new PerspectiveCamera(60, 1, 1e-6, 1e10);
+    this.camera = new PerspectiveCamera(60, 1, 1e-6, 1e10 * preset.renderDist);
     this.camera.position.set(0, 0, 0); // camera always at world origin
 
     this.scene.add(this.solarGroup);

@@ -5,6 +5,7 @@ import type { SceneContext } from "./copilot/types";
 import type { CopilotHost } from "./copilot";
 import { ViewerScene, type ViewerState } from "./scene/scene";
 import { isEmbedMode, navigate } from "../router";
+import { useT } from "../i18n/hooks";
 import { EXTRA_LAYERS } from "./extra-layers/registry";
 
 // Lazy-load the copilot UI — keeps the LLM-y chat code out of the main
@@ -13,6 +14,7 @@ const CopilotPanel = lazy(() =>
   import("./ui/CopilotPanel").then((m) => ({ default: m.CopilotPanel })),
 );
 import { EmbedBadge } from "./ui/EmbedBadge";
+import { LoadingSkeleton } from "./ui/LoadingSkeleton";
 import { RendererBadge } from "./ui/RendererBadge";
 import { TimeStrip } from "./ui/TimeStrip";
 import { QuickTargets } from "./ui/QuickTargets";
@@ -26,14 +28,11 @@ import { AboutOverlay } from "./ui/AboutOverlay";
 import { FirstRunHint } from "./ui/FirstRunHint";
 import { CenterHud } from "./ui/CenterHud";
 import { ColorLegend } from "./ui/ColorLegend";
+import { ErrorBoundary } from "./ui/ErrorBoundary";
 import {
   DsoDistancesHud,
   type DsoSceneSource,
 } from "./ui/DsoDistancesHud";
-import {
-  TutorialOverlay,
-  shouldShowTutorial,
-} from "./ui/TutorialOverlay";
 import { EventsPanel } from "./ui/EventsPanel";
 import { NeoPanel } from "./ui/NeoPanel";
 import { ShareButton } from "./ui/ShareButton";
@@ -65,8 +64,12 @@ import { SonificationControls } from "./ui/SonificationControls";
 import { JwstLiveBadge } from "./ui/JwstLiveBadge";
 import { ObservationLogPanel } from "./ui/ObservationLogPanel";
 import { MobileMenuDrawer, type MobileMenuGroup } from "./ui/MobileMenuDrawer";
-import { WhatsNewV4Toast } from "./ui/TopBarOverflow";
 import { PowerUserPanel } from "./ui/PowerUserPanel";
+import {
+  TutorialOverlayV2,
+  shouldShowTutorialV2,
+  type TutorialActions,
+} from "./ui/TutorialOverlayV2";
 import {
   candidatesFromSimbad,
   wikipediaSummary,
@@ -132,6 +135,7 @@ type Inspect = {
 };
 
 export function Viewer() {
+  const t = useT();
   // Embed mode is computed once at mount. It's driven by the URL the user
   // landed on and we never expect it to flip mid-session — an embedded
   // iframe stays embedded. Captured here so every chrome conditional
@@ -164,7 +168,7 @@ export function Viewer() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [eventsOpen, setEventsOpen] = useState(false);
-  const [tutorialOpen, setTutorialOpen] = useState(() => shouldShowTutorial());
+  const [tutorialOpen, setTutorialOpen] = useState(() => shouldShowTutorialV2());
   const [favorites, setFavorites] = useState<Favorite[]>(() => readFavorites());
 
   const reloadFavorites = useCallback(() => {
@@ -883,50 +887,32 @@ export function Viewer() {
       <canvas
         ref={canvasRef}
         onClick={onCanvasClick}
-        className="block h-full w-full touch-none select-none"
-        aria-label="3D sky viewer"
+        className="block h-full w-full touch-none select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-plasma-400/40"
+        role="img"
+        aria-label="Interactive 3D sky viewer — drag to pan, pinch or wheel to zoom, tap to inspect objects"
+        tabIndex={
+          inspect || shortcutsOpen || aboutOpen || eventsOpen || copilotOpen || tutorialOpen
+            ? -1
+            : 0
+        }
       />
 
-      {/* Top bar — hidden in embed mode (chrome-less iframe).
-          On mobile (< 768 px) we surface only the essentials inline
-          (exit · search · ✨ layers · ☰) and stash everything else
-          behind the hamburger drawer. On md+ the original wide layout
-          is preserved exactly. */}
+      {/* Panel-scope boundary wraps the whole UI chrome so a popover
+          crash (Copilot, Events, Tonight, …) doesn't take the 3D scene
+          with it. The route-level boundary in App.tsx catches canvas /
+          scene-constructor failures upstream. */}
+      <ErrorBoundary scope="panel" label="Sky viewer chrome">
+
+      {/* Top bar v3 (Wave-7 declutter) — hidden in embed mode.
+          Cap: six fixed right-side buttons on desktop AND mobile —
+            ✨ layers · 🧠 ask · share · ★ favorites · ☰ more · 📖 tutorial
+          Everything else lives behind the ☰ drawer (desktop reuses
+          MobileMenuDrawer via `desktop`) grouped per the cross-mode
+          catalogue in `./ui/viewer-menu-groups.ts`. */}
       {!embed && (() => {
         const mobileMenuGroups: MobileMenuGroup[] = [
           {
-            label: "identify · info",
-            children: (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setAboutOpen(true)}
-                  title="About / credits"
-                  className="pointer-events-auto inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-white/10 bg-space-950/70 px-2.5 font-mono text-xs text-white/70 backdrop-blur transition hover:bg-white/10 hover:text-white"
-                >
-                  i · about
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShortcutsOpen(true)}
-                  title="Keyboard shortcuts"
-                  className="pointer-events-auto inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-white/10 bg-space-950/70 px-2.5 font-mono text-xs text-white/70 backdrop-blur transition hover:bg-white/10 hover:text-white"
-                >
-                  ? · shortcuts
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTutorialOpen(true)}
-                  title="Re-open the interactive tutorial"
-                  className="pointer-events-auto inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-2.5 font-mono text-xs text-emerald-200 backdrop-blur transition hover:bg-emerald-400/20"
-                >
-                  🎓 tutorial
-                </button>
-              </>
-            ),
-          },
-          {
-            label: "live · tonight",
+            label: t("menu.group.live"),
             children: (
               <>
                 <NeoPanel />
@@ -939,38 +925,12 @@ export function Viewer() {
                     onSelect={(dir) => sceneRef.current?.flyTo(dir)}
                   />
                 )}
-                {/* EventsPanel is rendered inline at the top-bar (both
-                    desktop and mobile) so the global `e` keybind stays
-                    wired to its single mount point. Intentionally NOT
-                    duplicated in this group. */}
                 <MultimessengerControls scene={sceneRef.current} />
-                <SonificationControls scene={sceneRef.current} />
                 <JwstLiveBadge scene={sceneRef.current} />
                 <ObservationLogPanel
                   scene={sceneRef.current}
                   searchIndex={searchIndex}
                 />
-              </>
-            ),
-          },
-          {
-            label: "tools",
-            children: (
-              <>
-                <GyroButton scene={sceneRef.current} />
-                <ArSkyButton scene={sceneRef.current} />
-                <SnapshotButton
-                  onCapture={() => sceneRef.current?.snapshotPng() ?? null}
-                />
-                <ShareButton />
-                <button
-                  type="button"
-                  onClick={() => openCopilot(null)}
-                  title="Open the Cosmic Copilot"
-                  className="pointer-events-auto inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-violet-400/40 bg-violet-400/10 px-2.5 font-mono text-xs text-violet-200 backdrop-blur transition hover:bg-violet-400/20"
-                >
-                  🧠 ask
-                </button>
                 <TonightSky
                   location={observer}
                   onLocationFix={(lat, lon) => {
@@ -988,14 +948,21 @@ export function Viewer() {
                     sceneRef.current?.flyToZenith(lat, lon)
                   }
                 />
+              </>
+            ),
+          },
+          {
+            label: t("menu.group.tools"),
+            children: (
+              <>
+                <GyroButton scene={sceneRef.current} />
+                <ArSkyButton scene={sceneRef.current} />
+                <SnapshotButton
+                  onCapture={() => sceneRef.current?.snapshotPng() ?? null}
+                />
                 <QuickTargets
                   hasIssFix={state.iss !== null}
                   onTarget={(t) => sceneRef.current?.flyToTarget(t)}
-                />
-                <FavoritesMenu
-                  favorites={favorites}
-                  onSelect={(dir) => sceneRef.current?.flyTo(dir)}
-                  onChange={reloadFavorites}
                 />
                 <PowerUserPanel
                   group={sceneRef.current?.powerUserGroup() ?? null}
@@ -1004,41 +971,108 @@ export function Viewer() {
                     sceneRef.current?.setOverlay(id)
                   }
                 />
+                <TutorPanel adapter={tutorAdapter} />
               </>
             ),
           },
           {
-            label: "modes",
+            label: "audio",
+            children: <SonificationControls scene={sceneRef.current} />,
+          },
+          {
+            label: "view",
+            children: (
+              <button
+                type="button"
+                onClick={() => setDsoHudVisible((v) => !v)}
+                title="Toggle the DSO Distances HUD (shortcut: D)"
+                className={`pointer-events-auto inline-flex min-h-[44px] items-center rounded-lg border px-2.5 font-mono text-xs backdrop-blur transition ${
+                  dsoHudVisible
+                    ? "border-cyan-400/50 bg-cyan-400/15 text-cyan-100"
+                    : "border-white/10 bg-space-950/70 text-white/70 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                ⌖ DSO HUD {dsoHudVisible ? "on" : "off"}
+              </button>
+            ),
+          },
+          {
+            label: t("menu.group.modes"),
             children: (
               <>
                 <button
                   type="button"
                   onClick={() => navigate("solar")}
-                  title="Switch to 3D Solar System Flight Mode"
+                  title={t("viewer.solar.title")}
                   className="pointer-events-auto inline-flex min-h-[44px] items-center justify-center rounded-lg border border-cyan-400/40 bg-cyan-400/10 px-3 font-mono text-xs uppercase tracking-widest text-cyan-200 backdrop-blur transition hover:bg-cyan-400/20"
                 >
-                  🚀 solar flight
+                  {t("viewer.solar")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate("universe")}
+                  title="Open Universe Mode v2 — Earth → cosmic web in one seamless scene"
+                  className="pointer-events-auto inline-flex min-h-[44px] items-center justify-center rounded-lg border border-emerald-400/40 bg-emerald-400/10 px-3 font-mono text-[11px] uppercase tracking-widest text-emerald-200 backdrop-blur transition hover:bg-emerald-400/20"
+                >
+                  🌌 universe v2
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate("galactic")}
+                  title="Switch to Galactic Mode"
+                  className="pointer-events-auto inline-flex min-h-[44px] items-center justify-center rounded-lg border border-violet-400/40 bg-violet-400/10 px-3 font-mono text-xs uppercase tracking-widest text-violet-200 backdrop-blur transition hover:bg-violet-400/20"
+                >
+                  🌠 galactic
                 </button>
                 {tourIndex === null && (
                   <button
                     type="button"
                     onClick={startTour}
-                    title="Take a guided tour"
+                    title="Take the guided Sky Tour"
                     className="pointer-events-auto inline-flex min-h-[44px] items-center justify-center rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 font-mono text-xs uppercase tracking-widest text-violet-300 backdrop-blur transition hover:bg-violet-500/20"
                   >
-                    ▶ tour
+                    ▶ sky tour
                   </button>
                 )}
-                {tourIndex === null && (
-                  <button
-                    type="button"
-                    onClick={() => navigate("universe")}
-                    title="Open Universe Mode v2 and run the new 12-step Grand Tour (Earth → CMB → heat death)"
-                    className="pointer-events-auto inline-flex min-h-[44px] items-center justify-center rounded-lg border border-emerald-400/40 bg-emerald-400/10 px-3 font-mono text-[10px] uppercase tracking-widest text-emerald-200 backdrop-blur transition hover:bg-emerald-400/20"
-                  >
-                    Try Tour v2 in Universe →
-                  </button>
-                )}
+              </>
+            ),
+          },
+          {
+            label: "about · help",
+            children: (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setAboutOpen(true)}
+                  title={t("viewer.about.title")}
+                  className="pointer-events-auto inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-white/10 bg-space-950/70 px-2.5 font-mono text-xs text-white/70 backdrop-blur transition hover:bg-white/10 hover:text-white"
+                >
+                  {t("viewer.about")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShortcutsOpen(true)}
+                  title="Keyboard shortcuts (?)"
+                  className="pointer-events-auto inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-white/10 bg-space-950/70 px-2.5 font-mono text-xs text-white/70 backdrop-blur transition hover:bg-white/10 hover:text-white"
+                >
+                  ? shortcuts
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEventsOpen(true)}
+                  title="90-day events calendar (E)"
+                  className="pointer-events-auto inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-white/10 bg-space-950/70 px-2.5 font-mono text-xs text-white/70 backdrop-blur transition hover:bg-white/10 hover:text-white"
+                >
+                  🗓 events
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTutorialOpen(true)}
+                  title={t("viewer.tutorial.title")}
+                  className="pointer-events-auto inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-2.5 font-mono text-xs text-emerald-200 backdrop-blur transition hover:bg-emerald-400/20"
+                >
+                  {t("viewer.tutorial")}
+                </button>
               </>
             ),
           },
@@ -1046,35 +1080,64 @@ export function Viewer() {
 
         return (
         <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-2 p-2 sm:p-4">
+          {/* Left — exit only. */}
           <button
             type="button"
             onClick={() => navigate("landing")}
-            title="Back to landing"
-            className="pointer-events-auto inline-flex min-h-[44px] shrink-0 items-center rounded-lg border border-white/10 bg-space-950/70 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-white/60 backdrop-blur transition hover:bg-white/10 hover:text-white"
+            title={t("viewer.back")}
+            aria-label={t("viewer.back")}
+            className="pointer-events-auto inline-flex min-h-[36px] shrink-0 items-center rounded-lg border border-white/10 bg-space-950/70 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-white/60 backdrop-blur transition hover:bg-white/10 hover:text-white"
           >
             <span className="sm:hidden">←</span>
-            <span className="hidden sm:inline">← The Unspeakable World</span>
+            <span className="hidden sm:inline">← {t("viewer.exit")}</span>
           </button>
 
-          {/* Desktop button cluster — declutter pass: only the most-used
-              actions stay inline (search · ✨ layers · share · favorites ·
-              🧠 ask). Everything else moves into the "more ▾" popover
-              powered by MobileMenuDrawer in desktop mode (same groups as
-              mobile). The exit button on the left + the bottom time strip
-              are already always-on, so the top-bar cap stays at ~8. */}
-          <div className="pointer-events-auto hidden flex-wrap items-center justify-end gap-2 md:flex">
+          {/* Center — SearchBar fills the middle. On mobile the bar
+              already collapses to an icon-only ⌘K form internally. */}
+          <div className="pointer-events-auto flex min-w-0 flex-1 items-center justify-center px-1">
             <SearchBar
               index={searchIndex}
               onSelect={(entry: SearchEntry) =>
                 sceneRef.current?.flyTo(entry.direction)
               }
             />
+          </div>
+
+          {/* Right cluster — six fixed slots, identical on desktop +
+              mobile so muscle memory survives a resize. */}
+          <div className="pointer-events-auto flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
             <ExtraLayersPanel scene={sceneRef.current} />
-            <JwstLiveBadge scene={sceneRef.current} />
-            <TutorPanel adapter={tutorAdapter} />
-            {/* EventsPanel stays inline on desktop because the global
-                `e` keyboard shortcut toggles it via external state — the
-                panel needs to be mounted to react. Small footprint. */}
+            <button
+              type="button"
+              onClick={() => openCopilot(null)}
+              title={t("viewer.copilot.title")}
+              className="pointer-events-auto inline-flex min-h-[36px] items-center rounded-lg border border-violet-400/40 bg-violet-400/10 px-3 py-1 font-mono text-xs uppercase tracking-widest text-violet-200 backdrop-blur transition hover:bg-violet-400/20"
+            >
+              {t("viewer.copilot.button")}
+            </button>
+            <ShareButton />
+            <FavoritesMenu
+              favorites={favorites}
+              onSelect={(dir) => sceneRef.current?.flyTo(dir)}
+              onChange={reloadFavorites}
+            />
+            <MobileMenuDrawer desktop groups={mobileMenuGroups} />
+            <button
+              type="button"
+              onClick={() => setTutorialOpen(true)}
+              title="📖 Show me how — 12-step tutorial"
+              aria-label="Show me how — open the 12-step tutorial"
+              className="pointer-events-auto inline-flex min-h-[36px] items-center gap-1 rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1 font-mono text-xs uppercase tracking-widest text-emerald-200 backdrop-blur transition hover:bg-emerald-400/20"
+            >
+              <span aria-hidden>📖</span>
+              <span className="hidden sm:inline">show me how</span>
+            </button>
+          </div>
+
+          {/* EventsPanel mount — kept hidden but mounted so the global
+              `e` keybind has a single source of truth. The visible
+              trigger lives in the "about · help" drawer group. */}
+          <div className="sr-only">
             <EventsPanel
               open={eventsOpen}
               onOpenChange={setEventsOpen}
@@ -1094,42 +1157,6 @@ export function Viewer() {
                 sceneRef.current?.flyTo(dir);
               }}
             />
-            <ShareButton />
-            <FavoritesMenu
-              favorites={favorites}
-              onSelect={(dir) => sceneRef.current?.flyTo(dir)}
-              onChange={reloadFavorites}
-            />
-            <button
-              type="button"
-              onClick={() => openCopilot(null)}
-              title="Open the Cosmic Copilot — an AI tutor grounded in what you're looking at"
-              className="pointer-events-auto rounded-lg border border-violet-400/40 bg-violet-400/10 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-violet-200 backdrop-blur transition hover:bg-violet-400/20"
-            >
-              🧠 ask
-            </button>
-            <PowerUserPanel
-              group={sceneRef.current?.powerUserGroup() ?? null}
-              onMarkDirty={() => sceneRef.current?.markDirty()}
-              onActivateOverlay={(id) => sceneRef.current?.setOverlay(id)}
-            />
-            <MobileMenuDrawer desktop groups={mobileMenuGroups} />
-          </div>
-
-          {/* Mobile button cluster — visible on < md only. Five essentials:
-              search · ✨ layers · 🗓 events · ☰ hamburger. EventsPanel is
-              inline (rather than inside the drawer) so the global `e`
-              keybind has a single mount point on both viewports. */}
-          <div className="pointer-events-auto flex items-center justify-end gap-1.5 md:hidden">
-            <SearchBar
-              index={searchIndex}
-              onSelect={(entry: SearchEntry) =>
-                sceneRef.current?.flyTo(entry.direction)
-              }
-            />
-            <ExtraLayersPanel scene={sceneRef.current} />
-            <TutorPanel adapter={tutorAdapter} />
-            <MobileMenuDrawer groups={mobileMenuGroups} />
           </div>
         </div>
         );
@@ -1137,7 +1164,7 @@ export function Viewer() {
 
       {/* Bottom bar (chips + warnings) — sits above the wavelength + time strips.
           Mobile gets a smaller bottom inset + padding so chips don't bleed
-          into the WhatsNewV4 toast or the time strip on 375 px screens. */}
+          into the time strip on 375 px screens. */}
       {!embed && (
       <div className="pointer-events-none absolute inset-x-0 bottom-28 z-10 flex items-end justify-between gap-2 p-2 md:bottom-32 md:p-4">
         <div className="pointer-events-auto flex flex-wrap items-center gap-1.5 md:gap-2">
@@ -1233,7 +1260,7 @@ export function Viewer() {
       {/* Hint (top-center) — desktop only; mobile users discover by tapping */}
       {!embed && status === "live" && (
         <div className="pointer-events-none absolute inset-x-0 top-16 z-10 hidden justify-center md:flex">
-          <div className="rounded-full border border-white/5 bg-space-950/60 px-4 py-1 font-mono text-[11px] uppercase tracking-widest text-white/40 backdrop-blur">
+          <div className="rounded-full border border-white/5 bg-space-950/60 px-4 py-1 font-mono text-[11px] uppercase tracking-widest text-white/65 backdrop-blur">
             drag · pinch · wheel · tap
           </div>
         </div>
@@ -1309,17 +1336,27 @@ export function Viewer() {
         </Suspense>
       )}
 
-      {/* Loading veil */}
-      {status === "init" && (
-        <LoadingVeil
-          tilesLoaded={state.baseTilesLoaded}
-          total={state.baseTilesTotal}
-        />
-      )}
-      {status === "live" && state.baseTilesLoaded < state.baseTilesTotal && (
-        <LoadingVeil
-          tilesLoaded={state.baseTilesLoaded}
-          total={state.baseTilesTotal}
+      {/* Loading skeleton — the 5-stage indicator replaces the legacy
+          single-bar veil. Stages glow as the scene streams tiles, stars,
+          and DSO data; fades out once the scene is fully interactive. */}
+      {status !== "unsupported" && status !== "error" && (
+        <LoadingSkeleton
+          progress={{
+            baseTilesLoaded: state.baseTilesLoaded,
+            baseTilesTotal: state.baseTilesTotal,
+            starCount: state.starCount,
+            dsoCount: state.dsoCount,
+            ready:
+              status === "live" &&
+              state.baseTilesLoaded >= state.baseTilesTotal &&
+              state.starCount > 0 &&
+              state.dsoCount > 0,
+          }}
+          onDismiss={() => {
+            // The skeleton handles its own unmount on dismiss — no
+            // additional viewer state to flip; the live scene is
+            // already mounted behind it.
+          }}
         />
       )}
 
@@ -1347,7 +1384,30 @@ export function Viewer() {
       {!embed && aboutOpen && <AboutOverlay onClose={() => setAboutOpen(false)} />}
 
       {!embed && tutorialOpen && (
-        <TutorialOverlay onClose={() => setTutorialOpen(false)} />
+        <TutorialOverlayV2
+          onClose={() => setTutorialOpen(false)}
+          actions={
+            {
+              openCopilot: (seed?: string) => openCopilot(seed ?? null),
+              openShortcuts: () => setShortcutsOpen(true),
+              openAbout: () => setAboutOpen(true),
+              openTonight: () => setEventsOpen(true),
+              startGrandTour: () => startTour(),
+              switchMode: (mode) => {
+                try {
+                  navigate(mode);
+                } catch {
+                  // ignore
+                }
+              },
+              setOverlay: (id, mix) => {
+                sceneRef.current?.setOverlay(id);
+                if (mix !== undefined) sceneRef.current?.setOverlayMix(mix);
+                else if (id) sceneRef.current?.setOverlayMix(0.55);
+              },
+            } satisfies TutorialActions
+          }
+        />
       )}
 
       {!embed && status === "live" && <FirstRunHint />}
@@ -1372,9 +1432,9 @@ export function Viewer() {
         />
       )}
 
-      {/* One-shot v4 feature awareness — fires once per browser; cheaper
-          than rewiring TutorialOverlay's eight hand-crafted steps. */}
-      {!embed && status === "live" && <WhatsNewV4Toast />}
+      {/* WhatsNewV4Toast removed in top-bar v3 — the 12-step Tutorial v2
+          now covers every v4 feature with screenshots and "Try it now"
+          actions, and tombstones the old `uw:whats-new-v4:seen` key. */}
 
       {/* Embed-mode corner attribution — opens full app in a new tab. */}
       {embed && status === "live" && <EmbedBadge />}
@@ -1384,6 +1444,7 @@ export function Viewer() {
       {!embed && status === "live" && (
         <RendererBadge kind={state.rendererKind} />
       )}
+      </ErrorBoundary>
     </div>
   );
 }
@@ -1418,35 +1479,6 @@ function fovToZoomLabel(fov: number): string {
   if (zoom >= 10) return `${zoom.toFixed(0)}×`;
   if (zoom >= 1) return `${zoom.toFixed(1)}×`;
   return `${zoom.toFixed(2)}×`;
-}
-
-function LoadingVeil({
-  tilesLoaded,
-  total,
-}: {
-  tilesLoaded: number;
-  total: number;
-}) {
-  return (
-    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-space-950/85 backdrop-blur">
-      <div className="mb-4 font-mono text-xs uppercase tracking-[0.3em] text-white/50">
-        streaming sky
-      </div>
-      <div className="font-display text-3xl text-white">
-        {tilesLoaded}{" "}
-        <span className="text-white/30">/ {total} base tiles</span>
-      </div>
-      <div className="mt-2 font-mono text-xs text-white/30">
-        DSS2 · CDS Strasbourg
-      </div>
-      <div className="mt-4 h-0.5 w-48 overflow-hidden rounded-full bg-white/10">
-        <div
-          className="h-full bg-plasma-500 transition-all duration-300"
-          style={{ width: `${(tilesLoaded / total) * 100}%` }}
-        />
-      </div>
-    </div>
-  );
 }
 
 function FallbackPanel({ title, body }: { title: string; body: string }) {

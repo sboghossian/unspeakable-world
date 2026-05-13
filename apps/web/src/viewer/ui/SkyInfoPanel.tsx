@@ -3,6 +3,7 @@ import { describeType } from "../info/simbad";
 import type { WikiSummary } from "../info/wikipedia";
 import { computeRiseSet, currentAltitude } from "../observer/rise-set";
 import { CitizenSciencePrompt } from "./CitizenSciencePrompt";
+import { getCopy, inferKind } from "../../lib/error-copy";
 
 type Props = {
   raDeg: number;
@@ -40,13 +41,22 @@ export function SkyInfoPanel({
   onAskCopilot,
 }: Props) {
   return (
-    <aside className="pointer-events-auto absolute right-2 top-32 z-20 w-[300px] max-w-[calc(100vw-1rem)] rounded-xl border border-white/10 bg-space-950/85 p-4 backdrop-blur sm:right-4 sm:top-20 md:w-[340px]">
+    <aside
+      className="pointer-events-auto absolute right-2 top-32 z-20 w-[300px] max-w-[calc(100vw-1rem)] rounded-xl border border-white/10 bg-space-950/85 p-4 backdrop-blur sm:right-4 sm:top-20 md:w-[340px]"
+      role="dialog"
+      aria-modal="false"
+      aria-labelledby="sky-inspector-title"
+      aria-live="polite"
+    >
       <header className="mb-3 flex items-start justify-between gap-3">
         <div>
-          <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/40">
+          <div
+            id="sky-inspector-title"
+            className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/65"
+          >
             sky inspector
           </div>
-          <div className="mt-1 font-mono text-xs text-white/50">
+          <div className="mt-1 font-mono text-xs text-white/70">
             {formatRa(raDeg)}, {formatDec(decDeg)}
           </div>
         </div>
@@ -61,17 +71,28 @@ export function SkyInfoPanel({
       </header>
 
       {loading && (
-        <div className="flex items-center gap-2 py-2 font-mono text-xs text-white/50">
+        <div
+          className="flex items-center gap-2 py-2 font-mono text-xs text-white/70"
+          role="status"
+          aria-live="polite"
+        >
           <span className="h-2 w-2 animate-pulse rounded-full bg-plasma-400" />
           asking SIMBAD…
         </div>
       )}
 
-      {error && (
-        <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-2 font-mono text-xs text-amber-300/90">
-          {error}
-        </div>
-      )}
+      {error && (() => {
+        const copy = getCopy(inferKind(error), { service: "SIMBAD" });
+        return (
+          <div
+            role="alert"
+            className="rounded-md border border-amber-500/30 bg-amber-500/10 p-2 font-mono text-xs text-amber-200"
+          >
+            <div className="mb-0.5 text-amber-300">{copy.title}</div>
+            <div className="text-amber-200/85">{copy.body}</div>
+          </div>
+        );
+      })()}
 
       {!loading && !error && !hit && (
         <div className="rounded-md border border-white/10 bg-white/5 p-3 text-sm text-white/60">
@@ -83,14 +104,14 @@ export function SkyInfoPanel({
               {fullConstellationName(constellation)}.
             </div>
           )}
-          <div className="mt-2 text-xs text-white/40">
+          <div className="mt-2 text-xs text-white/70">
             Try clicking closer to a bright object, or zoom in.
           </div>
         </div>
       )}
 
       {hit && constellation && constellation !== "—" && (
-        <div className="mt-2 font-mono text-[10px] text-white/40">
+        <div className="mt-2 font-mono text-[10px] text-white/65">
           in <span className="text-amber-300/80">{constellation}</span> ·{" "}
           {fullConstellationName(constellation)}
         </div>
@@ -116,7 +137,7 @@ export function SkyInfoPanel({
 
           {hit.identifiers.length > 0 && (
             <div className="mt-4">
-              <div className="mb-1 font-mono text-[10px] uppercase tracking-widest text-white/40">
+              <div className="mb-1 font-mono text-[10px] uppercase tracking-widest text-white/65">
                 also known as
               </div>
               <div className="flex flex-wrap gap-1">
@@ -144,7 +165,7 @@ export function SkyInfoPanel({
           {(wikiLoading || wiki) && (
             <div className="mt-4 rounded-lg border border-white/10 bg-white/[0.02] p-3">
               <div className="mb-1 flex items-center justify-between">
-                <span className="font-mono text-[10px] uppercase tracking-widest text-white/40">
+                <span className="font-mono text-[10px] uppercase tracking-widest text-white/65">
                   Wikipedia
                 </span>
                 {wiki && (
@@ -159,7 +180,7 @@ export function SkyInfoPanel({
                 )}
               </div>
               {wikiLoading && !wiki && (
-                <div className="font-mono text-xs text-white/40">
+                <div className="font-mono text-xs text-white/65">
                   looking up…
                 </div>
               )}
@@ -219,7 +240,7 @@ export function SkyInfoPanel({
             )}
           </div>
 
-          <div className="mt-3 text-[10px] text-white/30">
+          <div className="mt-3 text-[10px] text-white/60">
             via SIMBAD · CDS Strasbourg{wiki ? " · Wikipedia (CC BY-SA)" : ""}
           </div>
         </>
@@ -231,7 +252,7 @@ export function SkyInfoPanel({
 function Row({ k, v }: { k: string; v: string }) {
   return (
     <>
-      <dt className="font-mono text-[10px] uppercase tracking-widest text-white/40">
+      <dt className="font-mono text-[10px] uppercase tracking-widest text-white/65">
         {k}
       </dt>
       <dd className="font-mono text-white/85">{v}</dd>
@@ -380,12 +401,12 @@ function TonightRow({
   return (
     <div className="mt-4 rounded-lg border border-white/10 bg-white/[0.02] p-3">
       <div className="mb-1.5 flex items-center justify-between">
-        <span className="font-mono text-[10px] uppercase tracking-widest text-white/40">
+        <span className="font-mono text-[10px] uppercase tracking-widest text-white/65">
           tonight · your sky
         </span>
         <span
           className={`font-mono text-[10px] ${
-            rs.currentlyUp ? "text-emerald-300/80" : "text-white/40"
+            rs.currentlyUp ? "text-emerald-300/80" : "text-white/65"
           }`}
         >
           {rs.currentlyUp ? "● up now" : "○ below horizon"}
@@ -436,7 +457,7 @@ function TonightRow({
 function Tile({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="font-mono text-[9px] uppercase tracking-widest text-white/40">
+      <dt className="font-mono text-[9px] uppercase tracking-widest text-white/65">
         {label}
       </dt>
       <dd className="font-mono text-white/90">{value}</dd>

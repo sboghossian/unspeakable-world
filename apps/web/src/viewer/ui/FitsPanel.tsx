@@ -10,6 +10,7 @@ import {
 } from "../power-user/fits-projection";
 import type { Group } from "three";
 import { log } from "../../lib/logger";
+import { useIsMobile } from "../../lib/use-is-mobile";
 
 /**
  * Drop-zone for a .fits file. After parsing we render a 1:1 thumbnail
@@ -58,6 +59,7 @@ export function FitsPanel({ group, onMarkDirty }: Props) {
   const [dragging, setDragging] = useState(false);
   const [handle, setHandle] = useState<FitsProjectionHandle | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const isMobile = useIsMobile();
 
   // Render the thumbnail whenever a new file is parsed.
   useEffect(() => {
@@ -157,40 +159,60 @@ export function FitsPanel({ group, onMarkDirty }: Props) {
         flat — fields larger than a few degrees will warp slightly.
       </p>
 
-      <label
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDragging(true);
-        }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={(e) => {
-          e.preventDefault();
-          setDragging(false);
-          const file = e.dataTransfer.files[0];
-          if (file) void onFile(file);
-        }}
-        className={`flex cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed px-4 py-6 text-xs transition ${
-          dragging
-            ? "border-plasma-500/60 bg-plasma-500/10 text-plasma-200"
-            : "border-white/15 bg-white/5 text-white/60 hover:border-white/30"
-        }`}
-      >
-        <span className="font-mono uppercase tracking-widest">
-          {busy ? "parsing…" : "drop .fits or click"}
-        </span>
-        <span className="text-[11px] text-white/40">
-          primary HDU · BITPIX 8/16/32/-32/-64
-        </span>
-        <input
-          type="file"
-          accept=".fits,.fit,.fts,application/fits"
-          className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
+      {isMobile ? (
+        // Mobile: tap-to-pick. No drag-and-drop affordance, one fat button.
+        // `min-h-[44px]` keeps the hit target at the iOS HIG touch-target
+        // floor so thumbs don't miss the file picker.
+        <label className="flex min-h-[56px] cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-white/20 bg-white/5 px-4 py-3 text-sm transition hover:border-white/30 active:bg-white/10">
+          <span className="font-mono uppercase tracking-widest text-white/80">
+            {busy ? "parsing…" : "📁 Choose .fits file"}
+          </span>
+          <input
+            type="file"
+            accept=".fits,.fit,.fts,application/fits"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) void onFile(file);
+            }}
+          />
+        </label>
+      ) : (
+        <label
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragging(true);
+          }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragging(false);
+            const file = e.dataTransfer.files[0];
             if (file) void onFile(file);
           }}
-        />
-      </label>
+          className={`flex cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed px-4 py-6 text-xs transition ${
+            dragging
+              ? "border-plasma-500/60 bg-plasma-500/10 text-plasma-200"
+              : "border-white/15 bg-white/5 text-white/60 hover:border-white/30"
+          }`}
+        >
+          <span className="font-mono uppercase tracking-widest">
+            {busy ? "parsing…" : "drop .fits or click"}
+          </span>
+          <span className="text-[11px] text-white/40">
+            primary HDU · BITPIX 8/16/32/-32/-64
+          </span>
+          <input
+            type="file"
+            accept=".fits,.fit,.fts,application/fits"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) void onFile(file);
+            }}
+          />
+        </label>
+      )}
 
       {error && (
         <div className="rounded-md border border-rose-500/30 bg-rose-500/10 px-2 py-1.5 font-mono text-xs text-rose-200">
@@ -245,7 +267,7 @@ export function FitsPanel({ group, onMarkDirty }: Props) {
               type="button"
               onClick={onProject}
               disabled={!loaded.img.wcs || !group}
-              className="rounded-md border border-plasma-500/40 bg-plasma-500/15 px-3 py-1.5 font-mono text-xs uppercase tracking-wider text-plasma-300 transition hover:bg-plasma-500/25 disabled:opacity-40"
+              className="min-h-[44px] rounded-md border border-plasma-500/40 bg-plasma-500/15 px-3 py-1.5 font-mono text-xs uppercase tracking-wider text-plasma-300 transition hover:bg-plasma-500/25 disabled:opacity-40"
             >
               project on sky
             </button>
@@ -253,7 +275,7 @@ export function FitsPanel({ group, onMarkDirty }: Props) {
               <button
                 type="button"
                 onClick={onRemove}
-                className="rounded-md border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 font-mono text-xs uppercase tracking-wider text-rose-300 hover:bg-rose-500/20"
+                className="min-h-[44px] rounded-md border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 font-mono text-xs uppercase tracking-wider text-rose-300 hover:bg-rose-500/20"
               >
                 remove
               </button>

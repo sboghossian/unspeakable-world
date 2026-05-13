@@ -25,6 +25,7 @@ import {
   type ExtrasController,
 } from "../extra-layers/mount";
 import type { LayerMeta } from "../extra-layers/registry";
+import { getActivePreset, subscribeQuality } from "../../lib/quality";
 
 /**
  * 🌌 Galactic-scale scene.
@@ -156,22 +157,36 @@ export class GalacticScene {
   private lastTickMs = performance.now();
   private armsVisible = true;
   private haloVisible = true;
+  /** Tear-down for the quality preset subscription. */
+  private qualityUnsub: (() => void) | null = null;
 
   constructor(readonly canvas: HTMLCanvasElement) {
+    const preset = getActivePreset();
     this.renderer = new WebGLRenderer({
       canvas,
-      antialias: true,
+      antialias: preset.msaaSamples > 0,
       powerPreference: "high-performance",
       alpha: false,
       stencil: false,
       preserveDrawingBuffer: true,
       logarithmicDepthBuffer: true,
     });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(
+      Math.min(window.devicePixelRatio, preset.dpr),
+    );
     this.renderer.setClearColor(0x020415, 1);
 
+    this.qualityUnsub = subscribeQuality((p) => {
+      this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, p.dpr));
+      // Far-plane multiplier — historical 100 000 kly is enormous, but
+      // the renderDist knob still tightens it on low-tier hardware and
+      // expands it on ultra for the supercluster overlay.
+      this.camera.far = 100000 * p.renderDist;
+      this.camera.updateProjectionMatrix();
+    });
+
     // Wide near/far range for galactic scales.
-    this.camera = new PerspectiveCamera(60, 1, 0.001, 100000);
+    this.camera = new PerspectiveCamera(60, 1, 0.001, 100000 * preset.renderDist);
     this.applyCamera();
 
     // Galactic disk — flat plane with procedural galaxy texture.
@@ -533,6 +548,8 @@ export class GalacticScene {
     cancelAnimationFrame(this.rafHandle);
     this.resizeObs?.disconnect();
     this.extras?.dispose();
+    this.qualityUnsub?.();
+    this.qualityUnsub = null;
     this.canvas.removeEventListener("pointerdown", this.onPointerDown);
     this.canvas.removeEventListener("pointermove", this.onPointerMove);
     this.canvas.removeEventListener("pointerup", this.onPointerUp);
