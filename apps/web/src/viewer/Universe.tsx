@@ -45,6 +45,9 @@ import { useExtraLayersStore } from "./extra-layers/state";
 import { TourCard } from "./ui/TourCard";
 import { TourRunnerV2, type TourRunnerState } from "./tour/runner-v2";
 import { EXTRA_LAYERS } from "./extra-layers/registry";
+import { useCopilotStore } from "../lib/copilot-store";
+import { useTutorialAutoOpen } from "../lib/use-tutorial-auto-open";
+import { MobileMenuDrawer } from "./ui/MobileMenuDrawer";
 import { SceneLinkToast } from "./scene-editor/SceneLinkToast";
 import {
   applyUniverseCamera,
@@ -61,6 +64,7 @@ import {
 import { SearchIndex, type SearchEntry } from "./search/search-index";
 import { addBookmark } from "../lib/bookmarks";
 import { log } from "../lib/logger";
+import { Button } from "./ui/primitives/Button";
 import {
   LoadingSkeleton,
   PanelSkeleton,
@@ -218,6 +222,8 @@ export function Universe({ onExit }: Props) {
   const [inspect, setInspect] = useState<UniverseHit | null>(null);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [tutorialOpen, setTutorialOpen] = useState(false);
+  useTutorialAutoOpen(setTutorialOpen);
+  const openCopilot = useCopilotStore((s) => s.setOpen);
   // Toggled to true once UniverseScene's first state callback fires —
   // gates the LoadingSkeleton's "Ready" stage. UniverseScene doesn't
   // expose tile/star/dso counts, so the skeleton runs on a short
@@ -649,13 +655,14 @@ export function Universe({ onExit }: Props) {
         }`}
       >
         <div className="pointer-events-auto flex items-center gap-2">
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={onExit}
-            className="rounded-lg border border-white/10 bg-space-950/70 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-white/80 backdrop-blur transition hover:bg-white/10 hover:text-white"
+            className="min-h-[44px] rounded-lg border border-white/10 bg-space-950/70 px-3 py-1.5 uppercase tracking-widest text-white/80 backdrop-blur hover:bg-white/10 hover:text-white"
           >
             ← {t("viewer.exit")}
-          </button>
+          </Button>
           <div className="rounded-lg border border-white/10 bg-space-950/70 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.25em] text-emerald-200/80 backdrop-blur">
             {t("universe.title")} — {state.tier}
           </div>
@@ -693,8 +700,9 @@ export function Universe({ onExit }: Props) {
               {t("universe.grandTour")}
             </button>
           )}
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => {
               const hash = buildUniverseHash(state);
               window.history.replaceState(null, "", `#${hash}`);
@@ -705,10 +713,10 @@ export function Universe({ onExit }: Props) {
               });
             }}
             title={t("viewer.save.title")}
-            className="pointer-events-auto rounded-lg border border-white/10 bg-space-950/70 px-2.5 py-1.5 font-mono text-xs text-white/70 backdrop-blur transition hover:bg-white/10 hover:text-white"
+            className="min-h-[44px] rounded-lg border border-white/10 bg-space-950/70 px-2.5 py-1.5 text-white/70 backdrop-blur hover:bg-white/10 hover:text-white"
           >
             {t("viewer.save")}
-          </button>
+          </Button>
           {state.tier === "Solar" &&
             (state.scaleLabel === "Earth Vicinity" ||
               state.scaleLabel === "Inner Solar System") && (
@@ -761,10 +769,28 @@ export function Universe({ onExit }: Props) {
           </Suspense>
           <button
             type="button"
+            onClick={() => openCopilot(true)}
+            title="Cosmic Copilot — ask about anything you can see"
+            aria-label="Open the Cosmic Copilot chat"
+            className="pointer-events-auto inline-flex min-h-[44px] items-center gap-1 rounded-lg border border-violet-400/40 bg-violet-400/10 px-2.5 py-1 font-mono text-[11px] uppercase tracking-widest text-violet-200 backdrop-blur transition hover:bg-violet-400/20"
+          >
+            <span aria-hidden>🧠</span>
+            <span className="hidden sm:inline">copilot</span>
+          </button>
+          <a
+            href="#guide"
+            title="Open the User Guide — every feature + every keyboard shortcut"
+            className="pointer-events-auto inline-flex min-h-[44px] items-center gap-1 rounded-lg border border-white/10 bg-space-950/70 px-2.5 py-1 font-mono text-[11px] uppercase tracking-widest text-white/75 backdrop-blur transition hover:bg-white/10 hover:text-white"
+          >
+            <span aria-hidden>📖</span>
+            <span className="hidden sm:inline">user guide</span>
+          </a>
+          <button
+            type="button"
             onClick={() => setTutorialOpen(true)}
             title="📖 Show me how — 12-step tutorial"
             aria-label="Show me how — open the 12-step tutorial"
-            className="pointer-events-auto inline-flex min-h-[30px] items-center gap-1 rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1 font-mono text-[11px] uppercase tracking-widest text-emerald-200 backdrop-blur transition hover:bg-emerald-400/20"
+            className="pointer-events-auto inline-flex min-h-[44px] items-center gap-1 rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1 font-mono text-[11px] uppercase tracking-widest text-emerald-200 backdrop-blur transition hover:bg-emerald-400/20"
           >
             <span aria-hidden>📖</span>
             <span className="hidden sm:inline">show me how</span>
@@ -955,6 +981,16 @@ export function Universe({ onExit }: Props) {
         />
       )}
       </ErrorBoundary>
+
+      {/* Mobile-only hamburger drawer — mode switcher + tutorial +
+          copilot + GitHub + user guide. Hidden on ≥ md (the ModeRail
+          handles mode switching there). */}
+      <div className="pointer-events-auto absolute right-3 top-3 z-30 md:hidden">
+        <MobileMenuDrawer
+          mode="universe"
+          onShowTutorial={() => setTutorialOpen(true)}
+        />
+      </div>
     </div>
   );
 }

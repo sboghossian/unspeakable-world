@@ -10,7 +10,14 @@ import {
   TutorialOverlayV2,
   type TutorialActions,
 } from "./ui/TutorialOverlayV2";
+import { LoadingSkeleton, useFakeProgress } from "./ui/LoadingSkeleton";
+import { MobileMenuDrawer } from "./ui/MobileMenuDrawer";
+import { Button } from "./ui/primitives/Button";
+import { Toggle } from "./ui/primitives/Toggle";
 import { addBookmark } from "../lib/bookmarks";
+import { navigate } from "../router";
+import { useCopilotStore } from "../lib/copilot-store";
+import { useTutorialAutoOpen } from "../lib/use-tutorial-auto-open";
 
 /**
  * 🌌 Galactic Mode — Milky Way + Local Group + WASD free flight.
@@ -27,11 +34,21 @@ const DEFAULT_STATE: GalacticState = {
   starHalo: true,
 };
 
-export function Galactic({ onExit }: Props) {
+export function Galactic({ onExit: _onExit }: Props) {
+  // We deliberately ignore the parent-provided onExit and route every
+  // back action to `#universe` instead — that's the front door now, and
+  // the prior behaviour stranded users on `#solar` (which itself is a
+  // legacy redirect target). Kept in the props for ABI compatibility.
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const sceneRef = useRef<GalacticScene | null>(null);
   const [state, setState] = useState<GalacticState>(DEFAULT_STATE);
   const [tutorialOpen, setTutorialOpen] = useState(false);
+  useTutorialAutoOpen(setTutorialOpen);
+  const openCopilot = useCopilotStore((s) => s.setOpen);
+  // Track scene readiness so the loading skeleton can fade out the
+  // moment GalacticScene's first state callback fires.
+  const [sceneAlive, setSceneAlive] = useState(false);
+  const loadProgress = useFakeProgress(sceneAlive);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -43,7 +60,10 @@ export function Galactic({ onExit }: Props) {
     if (params.dist !== null) scene.setCameraDistance(params.dist);
     if (params.arms !== null) scene.setArmsVisible(params.arms);
     if (params.halo !== null) scene.setHaloVisible(params.halo);
-    const unsubscribe = scene.subscribe(setState);
+    const unsubscribe = scene.subscribe((next) => {
+      setState(next);
+      setSceneAlive(true);
+    });
     return () => {
       unsubscribe();
       scene.dispose();
@@ -72,19 +92,24 @@ export function Galactic({ onExit }: Props) {
         className="absolute inset-0 h-full w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-plasma-400/40"
       />
 
+      {/* Staged loading skeleton — fades out the moment the scene's
+          first state callback fires. */}
+      <LoadingSkeleton progress={loadProgress} />
+
       {/* Panel-scope boundary: protect the canvas from chrome crashes. */}
       <ErrorBoundary scope="panel" label="Galactic chrome">
 
       {/* Top bar */}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-2 p-3">
         <div className="pointer-events-auto flex items-center gap-2">
-          <button
-            type="button"
-            onClick={onExit}
-            className="rounded-lg border border-white/10 bg-space-950/70 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-white/80 backdrop-blur transition hover:bg-white/10 hover:text-white"
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("universe")}
+            className="min-h-[44px] rounded-lg border border-white/10 bg-space-950/70 px-3 py-1.5 uppercase tracking-widest text-white/80 backdrop-blur hover:bg-white/10 hover:text-white"
           >
-            ← solar
-          </button>
+            ← universe
+          </Button>
           <div className="rounded-lg border border-white/10 bg-space-950/70 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.25em] text-violet-200/80 backdrop-blur">
             🌌 galactic — milky way
           </div>
@@ -97,8 +122,9 @@ export function Galactic({ onExit }: Props) {
           <ShareButton onPrepare={() => buildGalacticHash(state)} />
           <BookmarksPanel />
           <ExtraLayersPanel scene={sceneRef.current} />
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => {
               const hash = buildGalacticHash(state);
               window.history.replaceState(null, "", `#${hash}`);
@@ -109,20 +135,39 @@ export function Galactic({ onExit }: Props) {
               });
             }}
             title="Save the current view as a bookmark"
-            className="rounded-lg border border-white/10 bg-space-950/70 px-2.5 py-1.5 font-mono text-xs text-white/70 backdrop-blur transition hover:bg-white/10 hover:text-white"
+            className="min-h-[44px] rounded-lg border border-white/10 bg-space-950/70 px-2.5 py-1.5 text-white/70 backdrop-blur hover:bg-white/10 hover:text-white"
           >
             ★ save
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => openCopilot(true)}
+            title="Cosmic Copilot — ask anything"
+            aria-label="Open the Cosmic Copilot chat"
+            className="min-h-[44px] gap-1 rounded-lg border border-violet-400/40 bg-violet-400/10 px-2.5 py-1.5 uppercase tracking-widest text-violet-200 backdrop-blur hover:bg-violet-400/20"
+          >
+            <span aria-hidden>🧠</span>
+            <span className="hidden sm:inline">copilot</span>
+          </Button>
+          <a
+            href="#guide"
+            title="Open the User Guide — every feature + every keyboard shortcut"
+            className="inline-flex min-h-[44px] items-center rounded-lg border border-white/10 bg-space-950/70 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-white/80 backdrop-blur transition hover:bg-white/10 hover:text-white"
+          >
+            📖 user guide
+          </a>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setTutorialOpen(true)}
             title="📖 Show me how — 12-step tutorial"
             aria-label="Show me how — open the 12-step tutorial"
-            className="pointer-events-auto inline-flex items-center gap-1 rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1.5 font-mono text-xs uppercase tracking-widest text-emerald-200 backdrop-blur transition hover:bg-emerald-400/20"
+            className="min-h-[44px] gap-1 rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1.5 uppercase tracking-widest text-emerald-200 backdrop-blur hover:bg-emerald-400/20"
           >
             <span aria-hidden>📖</span>
             <span className="hidden sm:inline">show me how</span>
-          </button>
+          </Button>
         </div>
 
         <div className="pointer-events-auto flex flex-wrap items-center justify-end gap-1">
@@ -137,14 +182,14 @@ export function Galactic({ onExit }: Props) {
               "M31",
               "Local Group",
             ] as const
-          ).map((t) => (
+          ).map((target) => (
             <button
-              key={t}
+              key={target}
               type="button"
-              onClick={() => sceneRef.current?.flyTo(t)}
+              onClick={() => sceneRef.current?.flyTo(target)}
               className="rounded-md border border-white/10 bg-white/5 px-2 py-1 font-mono text-[11px] text-white/65 transition hover:bg-white/10 hover:text-violet-200"
             >
-              {t}
+              {target}
             </button>
           ))}
         </div>
@@ -158,12 +203,14 @@ export function Galactic({ onExit }: Props) {
         <Toggle
           label="Spiral arms"
           on={state.arms}
-          onClick={() => sceneRef.current?.setArmsVisible(!state.arms)}
+          compact
+          onChange={(next) => sceneRef.current?.setArmsVisible(next)}
         />
         <Toggle
           label="Star halo"
           on={state.starHalo}
-          onClick={() => sceneRef.current?.setHaloVisible(!state.starHalo)}
+          compact
+          onChange={(next) => sceneRef.current?.setHaloVisible(next)}
         />
       </div>
 
@@ -210,6 +257,14 @@ export function Galactic({ onExit }: Props) {
         />
       )}
       </ErrorBoundary>
+
+      {/* Mobile-only hamburger drawer. Hidden on ≥ md (ModeRail wins). */}
+      <div className="pointer-events-auto absolute right-3 top-3 z-30 md:hidden">
+        <MobileMenuDrawer
+          mode="galactic"
+          onShowTutorial={() => setTutorialOpen(true)}
+        />
+      </div>
     </div>
   );
 }
@@ -253,28 +308,3 @@ function buildGalacticHash(state: GalacticState): string {
   p.set("halo", String(state.starHalo));
   return `galactic?${p.toString()}`;
 }
-
-function Toggle({
-  label,
-  on,
-  onClick,
-}: {
-  label: string;
-  on: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`rounded-md border px-2 py-1 text-left font-mono text-[11px] transition ${
-        on
-          ? "border-violet-400/50 bg-violet-400/15 text-violet-200"
-          : "border-white/10 bg-white/5 text-white/65 hover:bg-white/10"
-      }`}
-    >
-      {on ? "◉" : "○"} {label}
-    </button>
-  );
-}
-

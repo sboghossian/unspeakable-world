@@ -36,3 +36,11 @@ export const log: {
   // eslint-disable-next-line no-console
   error: (...args) => console.error(...args),
 };
+
+/**
+ * `logger` — preferred name for new code (aliases `log`). Existing
+ * `import { log } from "../lib/logger"` callsites keep working; new
+ * callers should reach for `logger` so the convention drifts toward
+ * the more conventional spelling over time.
+ */
+export const logger = log;

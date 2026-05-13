@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { log } from "../lib/logger";
 import { Vector3 } from "three";
 import type { SceneContext } from "./copilot/types";
@@ -7,12 +7,13 @@ import { ViewerScene, type ViewerState } from "./scene/scene";
 import { isEmbedMode, navigate } from "../router";
 import { useT } from "../i18n/hooks";
 import { EXTRA_LAYERS } from "./extra-layers/registry";
+import { useCopilotStore } from "../lib/copilot-store";
 
-// Lazy-load the copilot UI — keeps the LLM-y chat code out of the main
-// viewer chunk so first paint stays snappy.
-const CopilotPanel = lazy(() =>
-  import("./ui/CopilotPanel").then((m) => ({ default: m.CopilotPanel })),
-);
+// The Copilot panel itself is mounted once at the App level (see
+// `App.tsx::GlobalCopilotOverlay`) so it's reachable from every mode.
+// Viewer.tsx pushes its rich `SceneContext` + `CopilotHost` into the
+// shared Zustand store, and just calls `setOpen(true)` to summon the
+// panel.
 import { EmbedBadge } from "./ui/EmbedBadge";
 import { LoadingSkeleton } from "./ui/LoadingSkeleton";
 import { RendererBadge } from "./ui/RendererBadge";
@@ -67,9 +68,9 @@ import { MobileMenuDrawer, type MobileMenuGroup } from "./ui/MobileMenuDrawer";
 import { PowerUserPanel } from "./ui/PowerUserPanel";
 import {
   TutorialOverlayV2,
-  shouldShowTutorialV2,
   type TutorialActions,
 } from "./ui/TutorialOverlayV2";
+import { useTutorialAutoOpen } from "../lib/use-tutorial-auto-open";
 import {
   candidatesFromSimbad,
   wikipediaSummary,
@@ -168,7 +169,10 @@ export function Viewer() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [eventsOpen, setEventsOpen] = useState(false);
-  const [tutorialOpen, setTutorialOpen] = useState(() => shouldShowTutorialV2());
+  const [tutorialOpen, setTutorialOpen] = useState(false);
+  // Auto-open the 12-step tutorial the first time anyone reaches a
+  // viewer mode (shared key across modes; see lib/use-tutorial-auto-open.ts).
+  useTutorialAutoOpen(setTutorialOpen);
   const [favorites, setFavorites] = useState<Favorite[]>(() => readFavorites());
 
   const reloadFavorites = useCallback(() => {
@@ -203,17 +207,26 @@ export function Viewer() {
     () => getSettings().skyProjection,
   );
   const [skyCulture, setSkyCulture] = useState<SkyCultureChoice>("western");
-  const [copilotOpen, setCopilotOpen] = useState(false);
-  const [copilotSeed, setCopilotSeed] = useState<string | null>(null);
+  // Copilot is mounted globally (App.tsx). The local viewer just calls
+  // `setCopilotOpen(true)` via the store and pushes its rich host +
+  // scene context for the panel to consume.
+  const setCopilotOpen = useCopilotStore((s) => s.setOpen);
+  const setCopilotSeed = useCopilotStore((s) => s.setSeed);
+  const setCopilotHost = useCopilotStore((s) => s.setHost);
+  const setCopilotContext = useCopilotStore((s) => s.setContext);
+  const copilotOpen = useCopilotStore((s) => s.open);
   // Off by default — the DSO distances HUD is opt-in via the keyboard
   // shortcut (D) and the Settings panel. Mirrors the same memory tier as
   // Constellations / Star Labels: not persisted across reloads.
   const [dsoHudVisible, setDsoHudVisible] = useState(false);
 
-  const openCopilot = useCallback((seed: string | null) => {
-    setCopilotSeed(seed);
-    setCopilotOpen(true);
-  }, []);
+  const openCopilot = useCallback(
+    (seed: string | null) => {
+      setCopilotSeed(seed);
+      setCopilotOpen(true);
+    },
+    [setCopilotSeed, setCopilotOpen],
+  );
 
   /**
    * Build a fresh SceneContext snapshot each render — the Copilot panel
@@ -363,6 +376,19 @@ export function Viewer() {
       },
     };
   }, [searchIndex]);
+
+  // Publish the Sky viewer's CopilotHost + per-render SceneContext to
+  // the global store so the App-level panel mount can drive the scene
+  // with full tool-calling. Cleared on unmount so a later mode opens
+  // the Copilot in read-only mode (until that mode publishes its own).
+  useEffect(() => {
+    setCopilotHost(copilotHost);
+    setCopilotContext(sceneContext);
+    return () => {
+      setCopilotHost(null);
+      setCopilotContext(null);
+    };
+  }, [copilotHost, sceneContext, setCopilotHost, setCopilotContext]);
 
   // 🎓 Tutor adapter — feeds the live camera state into the broadcast
   // module and applies incoming teacher updates back into the scene.
@@ -1086,7 +1112,7 @@ export function Viewer() {
             onClick={() => navigate("landing")}
             title={t("viewer.back")}
             aria-label={t("viewer.back")}
-            className="pointer-events-auto inline-flex min-h-[36px] shrink-0 items-center rounded-lg border border-white/10 bg-space-950/70 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-white/60 backdrop-blur transition hover:bg-white/10 hover:text-white"
+            className="pointer-events-auto inline-flex min-h-[44px] shrink-0 items-center rounded-lg border border-white/10 bg-space-950/70 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-white/60 backdrop-blur transition hover:bg-white/10 hover:text-white"
           >
             <span className="sm:hidden">←</span>
             <span className="hidden sm:inline">← {t("viewer.exit")}</span>
@@ -1111,7 +1137,7 @@ export function Viewer() {
               type="button"
               onClick={() => openCopilot(null)}
               title={t("viewer.copilot.title")}
-              className="pointer-events-auto inline-flex min-h-[36px] items-center rounded-lg border border-violet-400/40 bg-violet-400/10 px-3 py-1 font-mono text-xs uppercase tracking-widest text-violet-200 backdrop-blur transition hover:bg-violet-400/20"
+              className="pointer-events-auto inline-flex min-h-[44px] items-center rounded-lg border border-violet-400/40 bg-violet-400/10 px-3 py-1 font-mono text-xs uppercase tracking-widest text-violet-200 backdrop-blur transition hover:bg-violet-400/20"
             >
               {t("viewer.copilot.button")}
             </button>
@@ -1122,12 +1148,20 @@ export function Viewer() {
               onChange={reloadFavorites}
             />
             <MobileMenuDrawer desktop groups={mobileMenuGroups} />
+            <a
+              href="#guide"
+              title="Open the User Guide — every feature + every keyboard shortcut"
+              className="pointer-events-auto inline-flex min-h-[44px] items-center gap-1 rounded-lg border border-white/10 bg-space-950/70 px-2.5 py-1 font-mono text-xs uppercase tracking-widest text-white/75 backdrop-blur transition hover:bg-white/10 hover:text-white"
+            >
+              <span aria-hidden>📖</span>
+              <span className="hidden sm:inline">user guide</span>
+            </a>
             <button
               type="button"
               onClick={() => setTutorialOpen(true)}
               title="📖 Show me how — 12-step tutorial"
               aria-label="Show me how — open the 12-step tutorial"
-              className="pointer-events-auto inline-flex min-h-[36px] items-center gap-1 rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1 font-mono text-xs uppercase tracking-widest text-emerald-200 backdrop-blur transition hover:bg-emerald-400/20"
+              className="pointer-events-auto inline-flex min-h-[44px] items-center gap-1 rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1 font-mono text-xs uppercase tracking-widest text-emerald-200 backdrop-blur transition hover:bg-emerald-400/20"
             >
               <span aria-hidden>📖</span>
               <span className="hidden sm:inline">show me how</span>
@@ -1322,19 +1356,12 @@ export function Viewer() {
         />
       )}
 
-      {/* Cosmic Copilot — slide-in chat (lazy-loaded chunk) */}
-      {!embed && status === "live" && copilotOpen && (
-        <Suspense fallback={null}>
-          <CopilotPanel
-            open={copilotOpen}
-            onClose={() => setCopilotOpen(false)}
-            context={sceneContext}
-            seedQuestion={copilotSeed}
-            onSeedConsumed={() => setCopilotSeed(null)}
-            host={copilotHost}
-          />
-        </Suspense>
-      )}
+      {/* Cosmic Copilot — slide-in chat (lazy-loaded chunk). Mounted
+          globally in `App.tsx::GlobalCopilotOverlay` so the same panel
+          is reachable from every mode (Universe / Sky / Solar /
+          Galactic / Sandbox / Surface). This file publishes its rich
+          SceneContext + CopilotHost into the shared store; the
+          App-level mount reads them back. */}
 
       {/* Loading skeleton — the 5-stage indicator replaces the legacy
           single-bar veil. Stages glow as the scene streams tiles, stars,
@@ -1445,6 +1472,21 @@ export function Viewer() {
         <RendererBadge kind={state.rendererKind} />
       )}
       </ErrorBoundary>
+
+      {/* Mobile-only hamburger drawer with the mode switcher + help
+          links. The Sky viewer already has its own rich desktop
+          overflow drawer above (see MobileMenuDrawer `desktop`); this
+          one is the simple shared body that every scene gets on
+          phones. Both can coexist because they live under different
+          breakpoint gates. */}
+      {!embed && (
+        <div className="pointer-events-auto absolute right-3 top-12 z-30 md:hidden">
+          <MobileMenuDrawer
+            mode="viewer"
+            onShowTutorial={() => setTutorialOpen(true)}
+          />
+        </div>
+      )}
     </div>
   );
 }

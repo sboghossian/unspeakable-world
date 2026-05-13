@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { Starfield } from "./landing/Starfield";
 import { Hero } from "./landing/Hero";
 import { Highlights } from "./landing/Highlights";
@@ -27,6 +27,20 @@ import {
 } from "./lib/lesson-progress";
 import { useLangQueryParam } from "./i18n/hooks";
 import { useOgMetaSync } from "./seo/og-meta";
+import { ModeRail } from "./viewer/ui/ModeRail";
+import { useCopilotStore, type CopilotMode } from "./lib/copilot-store";
+import type { SceneContext } from "./viewer/copilot/types";
+import { logger } from "./lib/logger";
+
+// Lazy: the Copilot pulls in three backend modules (Ollama / Cloudflare /
+// Offline) plus a tokeniser; we don't want it in the first paint for any
+// route. Mounted at the App level so it's reachable from every viewer
+// mode (Universe / Solar / Galactic / Sandbox / PlanetSurface / Sky).
+const GlobalCopilotPanel = lazy(() =>
+  import("./viewer/ui/CopilotPanel").then((m) => ({
+    default: m.CopilotPanel,
+  })),
+);
 
 // Lazy: the viewer pulls in Three.js, AstronomyEngine, and ~500 KB of HiPS /
 // catalog code. The landing page should not pay that cost — most first-time
@@ -119,6 +133,15 @@ export function App() {
   return (
     <ErrorBoundary scope="panel" label="App">
       <AppRoutes />
+      {/* Vertical mode-switcher rail — hidden on landing + ancillary
+          routes; hidden on mobile (the MobileMenuDrawer in each scene
+          handles mode switching there). */}
+      <ModeRail />
+      {/* Global Cosmic Copilot overlay. Lives at the App root so any
+          mode (Universe / Sky / Solar / Galactic / Sandbox /
+          Surface) can call `useCopilotStore.setOpen(true)` to summon
+          the same panel + thread. */}
+      <GlobalCopilotOverlay />
       <DeprecatedRouteToast />
       <CertificateAutoModal />
       {/* ConsentBanner self-hides once a choice is persisted. Rendered
@@ -127,6 +150,92 @@ export function App() {
           getConsent() itself and returns null when consent is set. */}
       <ConsentBanner />
     </ErrorBoundary>
+  );
+}
+
+/**
+ * Global Cosmic Copilot overlay — the one mount, shared across every
+ * mode. Each mode's top bar just calls `useCopilotStore.setOpen(true)`.
+ *
+ * The Sky viewer (Viewer.tsx) still builds its own rich `CopilotHost`
+ * with full tool-calling (flyTo / setLayer / setOverlay / setTime /
+ * setMode), so for that mode the Copilot keeps its existing
+ * behaviour. For all other modes we mount a read-only panel today —
+ * the user gets the same thread + UI, and a future wave will wire
+ * mode-specific hosts. The store carries a `currentMode` field so
+ * we can layer those in incrementally.
+ */
+function GlobalCopilotOverlay() {
+  const open = useCopilotStore((s) => s.open);
+  const setOpen = useCopilotStore((s) => s.setOpen);
+  const seed = useCopilotStore((s) => s.seed);
+  const setSeed = useCopilotStore((s) => s.setSeed);
+  const publishedHost = useCopilotStore((s) => s.host);
+  const publishedContext = useCopilotStore((s) => s.context);
+  const route = useRoute();
+  const embed = isEmbedMode();
+
+  // Map route → CopilotMode. We don't render the panel on landing /
+  // guide / class / verify-cert / whoami — those don't have a scene
+  // to ground the conversation in.
+  const mode: CopilotMode | null = useMemo(() => {
+    switch (route) {
+      case "viewer":
+        return "viewer";
+      case "universe":
+        return "universe";
+      case "solar":
+        return "solar";
+      case "galactic":
+        return "galactic";
+      case "sandbox":
+        return "sandbox";
+      case "surface":
+        return "surface";
+      default:
+        return null;
+    }
+  }, [route]);
+
+  // Build a fallback scene context for modes that don't publish a
+  // richer one. The Sky viewer pushes a per-render snapshot into the
+  // store; this stub is what shows up when the user opens the panel
+  // from Universe / Galactic / Sandbox / Solar / Surface today.
+  const fallbackContext = useMemo<SceneContext>(() => {
+    return {
+      focusedObject: null,
+      cameraRaDeg: 0,
+      cameraDecDeg: 0,
+      fovDeg: 60,
+      overlays: mode ? [`mode:${mode}`] : [],
+      simTimeIso: new Date().toISOString(),
+      observer: null,
+    };
+  }, [mode]);
+
+  // Don't render in embed or non-scene routes. We still let the panel
+  // close cleanly if it was open before navigation.
+  if (embed) return null;
+  if (!open || mode === null) return null;
+
+  const context = publishedContext ?? fallbackContext;
+
+  return (
+    <Suspense fallback={null}>
+      <ErrorBoundary scope="panel" label="Cosmic Copilot">
+        <GlobalCopilotPanel
+          open={open}
+          onClose={() => {
+            setOpen(false);
+            setSeed(null);
+          }}
+          context={context}
+          seedQuestion={seed}
+          onSeedConsumed={() => setSeed(null)}
+          host={publishedHost}
+        />
+      </ErrorBoundary>
+    </Suspense>
   );
 }
 
@@ -213,8 +322,10 @@ function AppRoutes() {
           JSON.stringify({ from: route, at: Date.now() }),
         );
       }
-    } catch {
-      /* localStorage disabled — toast just won't gate itself */
+    } catch (err) {
+      // localStorage disabled — toast just won't gate itself. Logged
+      // so we can spot Safari Private Browsing / quota issues.
+      logger.error("[app] deprecation toast localStorage failed", err);
     }
     window.location.hash = `#universe?preset=${target}`;
   }, [route, legacy]);
