@@ -561,7 +561,7 @@ export const GUIDE_PAGES: GuidePage[] = [
           "GitHub issues — github.com/sboghossian/unspeakable-world/issues",
           "GitHub discussions — for ideas, questions, show-and-tell",
           "Email — stephanemboghossian@gmail.com (response time: best effort, days not hours)",
-          "Live build — unspeakable-world.dashable.dev",
+          "Live build — unspeakable.world",
         ],
       },
       { kind: "h2", text: "Reporting a bug" },
@@ -736,7 +736,7 @@ export const GUIDE_PAGES: GuidePage[] = [
       {
         kind: "p",
         text:
-          "If you use a figure or screenshot in a paper or article, please credit ‘The Unspeakable World — unspeakable-world.dashable.dev’ and a permalink (URL hash) to the view. Bibtex stub on the GitHub README.",
+          "If you use a figure or screenshot in a paper or article, please credit ‘The Unspeakable World — unspeakable.world’ and a permalink (URL hash) to the view. Bibtex stub on the GitHub README.",
       },
       {
         kind: "callout",
@@ -843,7 +843,7 @@ export const GUIDE_PAGES: GuidePage[] = [
       {
         kind: "p",
         text:
-          "You can clear all local data by clearing your browser's site data for unspeakable-world.dashable.dev. There is nothing to delete on our side because we never received it.",
+          "You can clear all local data by clearing your browser's site data for unspeakable.world. There is nothing to delete on our side because we never received it.",
       },
       {
         kind: "callout",

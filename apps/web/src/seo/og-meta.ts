@@ -31,7 +31,7 @@ const STATIC_DEFAULTS: OgFields = {
   description:
     "Every wavelength of every sky survey. Live ISS. Click any star and ask SIMBAD what it is. In a browser. MIT.",
   imageUrl: "/og-card.png",
-  pageUrl: "https://unspeakable-world.dashable.dev",
+  pageUrl: "https://unspeakable.world/",
 };
 
 function findObject(query: string): SeoObject | null {
@@ -137,7 +137,7 @@ function applyOgFields(fields: OgFields): void {
 
 function absoluteUrl(path: string): string {
   if (/^https?:/i.test(path)) return path;
-  if (typeof window === "undefined") return `https://unspeakable-world.dashable.dev${path}`;
+  if (typeof window === "undefined") return `https://unspeakable.world${path}`;
   return `${window.location.origin}${path}`;
 }
 

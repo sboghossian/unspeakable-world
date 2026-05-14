@@ -11,7 +11,7 @@ const PHASES: Phase[] = [
   {
     day: "Day 1",
     title: "Foundation",
-    detail: "Public repo · MIT license · landing live at unspeakable-world.dashable.dev",
+    detail: "Public repo · MIT license · landing live at unspeakable.world",
     status: "shipped",
   },
   {
